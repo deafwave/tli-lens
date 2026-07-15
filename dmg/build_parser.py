@@ -138,7 +138,8 @@ PATTERNS = [
      r"|Resistance|Movement Speed|Skill Cost|Life Regain|Mana Regain|on defeat"
      r"|Sealed Mana Compensation|Warcry Cooldown|additional damage taken|Skill Area"
      r"|Energy Shield Regain|Barrier|Consumes|Loses Fervor|chance to gain|chance to Mark"
-     r"|Charging Energy Shield|回复)", "ignore"),
+     r"|Charging Energy Shield|回复"
+     r"|while Dual Wielding)", "ignore"),   # loadout 6 is sword+shield: dual-wield conditionals are false
 ]
 _COMPILED = [(re.compile(p, re.IGNORECASE), path) for p, path in PATTERNS]
 
@@ -272,7 +273,12 @@ def apply_overrides(snap, report, overrides_path=OVERRIDES_PATH):
     with open(overrides_path, encoding="utf-8") as f:
         ov = json.load(f)
     for path, v in ov.get("add", {}).items():
-        _set_path(snap, path, v, add=True)
+        if path.split(".")[0] in ("additional", "enemy_taken"):
+            d = snap[path.split(".")[0]]
+            k = path.split(".")[1]
+            d[k] = ((1 + d.get(k, 0) / 100) * (1 + v / 100) - 1) * 100
+        else:
+            _set_path(snap, path, v, add=True)
         report["manual"].append({"path": path, "value": v, "mode": "add",
                                  "source": ov.get("_sources", {}).get(path, "UNCITED")})
     for path, v in ov.get("set", {}).items():

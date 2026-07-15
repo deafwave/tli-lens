@@ -1,0 +1,36 @@
+{
+  "set": {
+    "crit.chance_pct": 44.1,
+    "rotation.combo_points": 8,
+    "rotation.starter_weapon_pct": 406,
+    "additional.warcry_buffs": 53.6,
+    "additional.precise_auras": 147.6,
+    "additional.ice_bond": 33,
+    "enemy_taken.frostbite": 145
+  },
+  "add": {
+    "crit.damage_pct": 50,
+    "rotation.finisher_amp_pct": 5.5,
+    "rotation.attack_speed_inc_pct": 10,
+    "additional.misc": 107.2
+  },
+  "_consumes": [
+    "rating_flat", "rating_inc_pct", "fervor_effect_pct", "crit_dmg_per_fervor_rating",
+    "warcry_effect_pct", "warcry_min_enemies", "max_frostbite_rating", "frostbite_effect_pct",
+    "aura_effect_pct", "support_skill_level", "attack_skill_level", "active_skill_level",
+    "mark_effect_pct"
+  ],
+  "_sources": {
+    "crit.chance_pct": "mechanics.md#crit: rating 500 x (1 + 1.06 parsed increased + 5.76 Fervor[100 rating x 2% x (1+1.88 fervor effect)] + 1.00 Precise:Fearless[80% x 1.25 aura effect]) = 4410 -> 44.1%; Fervor rating 100 sustained is inferred",
+    "crit.damage_pct": "mechanics.md#crit: ranger node 0.5% crit damage per Fervor Rating x 100 rating = +50",
+    "rotation.combo_points": "weapon+shield mods condition 'consumes at least 8 Combo Point(s)'; Heart of Animitta +1 charge; Recuperation +1 point per starter",
+    "rotation.starter_weapon_pct": "tlidb Spectral_Slash: main hit 406% weapon attack at L20 (finisher 127% stays in base.skill_weapon_pct); +skill-level scaling unknown, not modeled",
+    "rotation.finisher_amp_pct": "mechanics.md#combo: Recuperation support +5.5% amp (skill 30 + gear 203 already parsed)",
+    "rotation.attack_speed_inc_pct": "mechanics.md#precise-fearless: +8% melee attack speed x 1.25 aura effect",
+    "additional.warcry_buffs": "mechanics.md#warcry: Shockwave 5.95%/enemy x 5 enemies (The Brave +4 min, boss Enemy Count 5) x 1.80 warcry effect = 53.6",
+    "additional.precise_auras": "mechanics.md#precise: Fearless 30, Cruelty 22, Domain Expansion 33, each x1.25 aura effect, compounded = +147.6% (Energy Fortress is defensive)",
+    "additional.ice_bond": "mechanics.md#ice-bond: Euphoria buff +33% additional Cold at L20 vs Frostbitten enemies",
+    "additional.misc": "mechanics.md#rehan-traits: Fury's Onslaught +48% and Rage Infusion +40% (tier 5, full stacks, 100% Berserk uptime), compounded 1.48x1.40 = +107.2%",
+    "enemy_taken.frostbite": "mechanics.md#frostbite: +1% additional Cold taken per rating; cap 120 base + 25 ring = 145, sustained boss hits assumed to cap it"
+  }
+}

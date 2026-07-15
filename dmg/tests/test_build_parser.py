@@ -20,3 +20,23 @@ def test_extract_lines_explicit_index_overrides_current():
 def test_every_line_has_source_and_slot():
     for l in extract_lines(BUILD):
         assert l["source"] and l["text"]
+
+from dmg.build_parser import classify, parse_build
+
+def test_classify_core_patterns():
+    assert classify("+161% Gear Physical Damage") == ("base.gear_phys_pct", 161.0)
+    assert classify("+12% Physical Damage") == ("increased.physical", 12.0)
+    assert classify("+9% damage") == ("increased.global", 9.0)
+    assert classify("+8% additional Attack Damage") == ("additional.misc", 8.0)
+    assert classify("+45% Critical Strike Damage") == ("crit.damage_pct", 45.0)
+    assert classify("+10% Attack Speed") == ("rotation.attack_speed_inc_pct", 10.0)
+    assert classify("+11% Cold Resistance") == ("ignore", None)
+    assert classify("utterly unknown modifier text") == (None, None)
+
+def test_parse_build_produces_valid_snapshot_and_report():
+    snap, report = parse_build("Rehan SS13_update1.json")
+    from dmg.damage_model import cycle_dps
+    assert cycle_dps(snap)["dps"] > 0
+    for k in ("matched", "ignored", "unmatched", "manual"):
+        assert isinstance(report[k], list)
+    assert report["matched"], "nothing matched at all"

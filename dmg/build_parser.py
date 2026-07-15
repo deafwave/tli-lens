@@ -213,6 +213,8 @@ def parse_build(build_path, loadout_index=None):
             _apply(snap, extras, path, value, line)
             report["matched"].append({**line, "path": path, "value": value})
     snap["_extras"] = extras
+    apply_overrides(snap, report)
+    resolve_extras(snap, report)
     return snap, report
 
 
@@ -223,6 +225,8 @@ def print_report(report):
     print(f"coverage: {m} matched, {i} ignored, {u} UNMATCHED of {total} lines ({pct:.0f}% handled)")
     for line in report["unmatched"]:
         print(f"  UNMATCHED [{line['source']}] {line['text']}")
+    for entry in report["manual"]:
+        print(f"  manual({entry['mode']}) {entry['path']} = {entry['value']}  [{entry['source']}]")
 
 
 def main(argv=None):
@@ -241,3 +245,57 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+
+
+OVERRIDES_PATH = Path("dmg/manual_overrides.json")
+
+
+def _set_path(d, path, value, add=False):
+    keys = path.split(".")
+    for k in keys[:-1]:
+        d = d[k]
+    d[keys[-1]] = d.get(keys[-1], 0) + value if add else value
+
+
+def apply_overrides(snap, report, overrides_path=OVERRIDES_PATH):
+    """Merge hand-researched values (mechanics.md) over the parsed snapshot.
+
+    Overrides file contract:
+      "add": {snapshot.path: delta}     added onto parsed values
+      "set": {snapshot.path: value}     absolute (e.g. crit.chance_pct from rating curve)
+      "_consumes": [extras keys]        extras the add/set values already account for
+      "_sources": {path: citation}      required; keeps every number traceable
+    """
+    if not Path(overrides_path).exists():
+        return snap
+    with open(overrides_path, encoding="utf-8") as f:
+        ov = json.load(f)
+    for path, v in ov.get("add", {}).items():
+        _set_path(snap, path, v, add=True)
+        report["manual"].append({"path": path, "value": v, "mode": "add",
+                                 "source": ov.get("_sources", {}).get(path, "UNCITED")})
+    for path, v in ov.get("set", {}).items():
+        _set_path(snap, path, v)
+        report["manual"].append({"path": path, "value": v, "mode": "set",
+                                 "source": ov.get("_sources", {}).get(path, "UNCITED")})
+    extras = snap.get("_extras", {})
+    for key in ov.get("_consumes", []):
+        if key in extras:
+            report["manual"].append({"path": f"_extras.{key}", "value": extras.pop(key),
+                                     "mode": "consumed", "source": "manual_overrides.json"})
+    return snap
+
+
+def resolve_extras(snap, report):
+    """Mechanical extras conversions that need no researched constants."""
+    extras = snap.get("_extras", {})
+    gas = extras.pop("gear_attack_speed_pct", 0)
+    if gas:
+        snap["base"]["weapon_attack_speed"] *= 1 + gas / 100
+        report["manual"].append({"path": "base.weapon_attack_speed", "mode": "derived",
+                                 "value": f"x{1 + gas / 100:g} from +{gas:g}% gear Attack Speed",
+                                 "source": "build_parser.resolve_extras"})
+    extras.pop("offhand_flat_ignored", None)
+    if not extras:
+        snap.pop("_extras", None)
+    return snap

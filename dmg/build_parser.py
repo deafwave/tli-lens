@@ -105,8 +105,8 @@ PATTERNS = [
     (rf"^{NUM} Critical Strike Rating$", "crit.rating_flat"),
     (rf"^{NUM} Attack Speed$", "base.weapon_attack_speed_set"),
     (rf"\+{NUM}% gear Attack Speed", "base.gear_attack_speed_pct"),
-    (rf"\+{NUM}% Combo Damage Enhancement", "additional.combo_enhancement"),
-    (rf"\+{NUM}% Combo Finisher Amplification", "additional.combo_finisher_amp"),
+    (rf"\+{NUM}% Combo Damage Enhancement", "rotation.finisher_amp_pct"),
+    (rf"\+{NUM}% Combo Finisher Amplification", "rotation.finisher_amp_pct"),
     (rf"\+{NUM}% Warcry Effect", "extras.warcry_effect_pct"),
     (rf"\+{NUM}% Fervor effect", "extras.fervor_effect_pct"),
     (rf"\+{NUM} to Max Frostbite Rating", "extras.max_frostbite_rating"),
@@ -127,7 +127,8 @@ PATTERNS = [
     (rf"\+{NUM}% Critical Strike Rating", "crit.rating_inc_pct"),
     (rf"\+{NUM}% Attack Speed", "rotation.attack_speed_inc_pct"),
     (rf"\+{NUM}% Attack and Cast Speed", "rotation.attack_speed_inc_pct"),
-    (rf"\+{NUM}% Frostbite Effect", "enemy_taken.frostbite"),
+    (rf"\+{NUM}% Frostbite Effect", "extras.frostbite_effect_pct"),
+    (rf"\+{NUM}% (?:increased )?Elemental Damage", "increased.elemental"),
     (rf"\+{NUM}% Elemental Penetration", "penetration.cold_pct"),
     (rf"\+{NUM}% Cold Penetration", "penetration.cold_pct"),
     (rf"\+{NUM} Strength", "extras.strength"),
@@ -190,14 +191,18 @@ def _apply(snap, extras, path, value, line):
     keys = path.split(".")
     for k in keys[:-1]:
         d = d[k]
-    d[keys[-1]] = d.get(keys[-1], 0) + value * mult
+    old = d.get(keys[-1], 0)
+    if keys[0] in ("additional", "enemy_taken"):
+        # each affix line is its own multiplier (mechanics.md) — compound, don't sum
+        d[keys[-1]] = ((1 + old / 100) * (1 + value * mult / 100) - 1) * 100
+    else:
+        d[keys[-1]] = old + value * mult
 
 
 def parse_build(build_path, loadout_index=None):
     snap = copy.deepcopy(DEFAULT_SNAPSHOT)
     for bucket in ("increased", "additional", "enemy_taken"):
         snap[bucket] = {k: 0 for k in snap[bucket]}
-    snap["additional"]["combo_finisher_amp"] = 30   # skill-inherent, per tlidb Spectral_Slash
     snap["base"].update(weapon_phys_min=0, weapon_phys_max=0,
                         weapon_flat_cold_min=0, weapon_flat_cold_max=0,
                         gear_phys_pct=0)
@@ -241,10 +246,6 @@ def main(argv=None):
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(snap, f, indent=1)
     print(f"snapshot -> {args.out}")
-
-
-if __name__ == "__main__":
-    main()
 
 
 OVERRIDES_PATH = Path("dmg/manual_overrides.json")
@@ -295,7 +296,19 @@ def resolve_extras(snap, report):
         report["manual"].append({"path": "base.weapon_attack_speed", "mode": "derived",
                                  "value": f"x{1 + gas / 100:g} from +{gas:g}% gear Attack Speed",
                                  "source": "build_parser.resolve_extras"})
+    strength = extras.pop("strength", 0)
+    if strength:
+        # +0.5% additional damage per point, one multiplier (mechanics.md 'Strength')
+        pts = strength * 0.5
+        snap["additional"]["strength"] = ((1 + snap["additional"]["strength"] / 100) * (1 + pts / 100) - 1) * 100
+        report["manual"].append({"path": "additional.strength", "mode": "derived",
+                                 "value": f"+{pts:g}% from {strength:g} Strength",
+                                 "source": "mechanics.md#strength"})
     extras.pop("offhand_flat_ignored", None)
     if not extras:
         snap.pop("_extras", None)
     return snap
+
+
+if __name__ == "__main__":
+    main()

@@ -15,17 +15,18 @@ DEFAULT_SNAPSHOT = {
         "added_damage_effectiveness_pct": 100,
     },
     "increased": {"physical": 0, "attack": 0, "melee": 0, "area": 0,
-                  "cold": 0, "global": 0, "strength_derived": 0},
-    "additional": {"fervor": 0, "combo_finisher_amp": 30, "warcry_buffs": 0,
+                  "cold": 0, "elemental": 0, "global": 0},
+    "additional": {"strength": 0, "warcry_buffs": 0, "ice_bond": 0,
                    "sealed_life_mana": 0, "blessings": 0, "precise_auras": 0, "misc": 0},
-    "enemy_taken": {"frostbite": 0, "numb": 0, "ice_bond": 0, "paralysis": 0,
+    "enemy_taken": {"frostbite": 0, "paralysis": 0,
                     "cold_infiltration": 0, "timid_curse": 0},
     "crit": {"chance_pct": 5, "damage_pct": 150},
     "penetration": {"cold_pct": 0},
     "enemy": {"cold_res_pct": 40},
     "rotation": {"starters_per_cycle": 3, "starter_weapon_pct": 100,
                  "attack_speed_inc_pct": 0, "finisher_additional_as_pct": -40,
-                 "clones": 4, "clone_falloff": 0.7},
+                 "clones": 4, "clone_falloff": 0.7,
+                 "combo_points": 4, "finisher_amp_pct": 30},
 }
 
 
@@ -57,9 +58,8 @@ def crit_multiplier(s):
 
 
 def mitigation_multiplier(s):
-    # ponytail: clamp effective res at 0; if mechanics.md finds res can go negative, relax here
-    eff_res = max(0, s["enemy"]["cold_res_pct"] - s["penetration"]["cold_pct"])
-    return 1 - eff_res / 100
+    # penetration can push resistance negative (dev FAQ via mechanics.md)
+    return 1 - (s["enemy"]["cold_res_pct"] - s["penetration"]["cold_pct"]) / 100
 
 
 def expected_hit(s, skill_pct=None):
@@ -73,7 +73,8 @@ def cycle_dps(s):
     aps = s["base"]["weapon_attack_speed"] * (1 + r["attack_speed_inc_pct"] / 100)
     finisher_aps = aps * (1 + r["finisher_additional_as_pct"] / 100)
     starter = expected_hit(s, skill_pct=r["starter_weapon_pct"]) * r["starters_per_cycle"]
-    finisher = expected_hit(s) * (1 + r["clones"] * r["clone_falloff"])
+    amp = 1 + r["combo_points"] * r["finisher_amp_pct"] / 100
+    finisher = expected_hit(s) * amp * (1 + r["clones"] * r["clone_falloff"])
     cycle_time = r["starters_per_cycle"] / aps + 1 / finisher_aps
     return {"dps": (starter + finisher) / cycle_time,
             "finisher_damage": finisher, "starter_damage": starter,

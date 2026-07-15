@@ -48,12 +48,12 @@ def test_increased_bucket_is_one_additive_sum():
 
 def test_additional_layers_multiply():
     s = base_only()
-    s["additional"]["fervor"] = 20; s["additional"]["misc"] = 20
+    s["additional"]["strength"] = 20; s["additional"]["misc"] = 20
     assert round(average_hit(s), 2) == 144.0   # 1.2*1.2, NOT 1.4
 
 def test_enemy_taken_layers_multiply_too():
     s = base_only()
-    s["enemy_taken"]["frostbite"] = 10; s["enemy_taken"]["numb"] = 10
+    s["enemy_taken"]["frostbite"] = 10; s["enemy_taken"]["paralysis"] = 10
     assert round(average_hit(s), 2) == 121.0
 
 from dmg.damage_model import crit_multiplier, mitigation_multiplier, expected_hit
@@ -70,9 +70,10 @@ def test_mitigation_res_minus_pen():
     s = snap(); s["enemy"]["cold_res_pct"] = 40; s["penetration"]["cold_pct"] = 15
     assert mitigation_multiplier(s) == 0.75
 
-def test_penetration_cannot_push_res_below_zero():
+def test_penetration_pushes_res_negative():
+    # dev-FAQ confirmed: penetration can push resistance below zero (mechanics.md)
     s = snap(); s["enemy"]["cold_res_pct"] = 10; s["penetration"]["cold_pct"] = 50
-    assert mitigation_multiplier(s) == 1.0    # clamp: mechanics.md row 'penetration'
+    assert mitigation_multiplier(s) == 1.4
 
 def test_expected_hit_composes():
     s = base_only()
@@ -86,7 +87,8 @@ def rotation_snap():
     s = base_only()
     s["rotation"] = {"starters_per_cycle": 2, "starter_weapon_pct": 100,
                      "attack_speed_inc_pct": 0, "finisher_additional_as_pct": -50,
-                     "clones": 4, "clone_falloff": 0.7}
+                     "clones": 4, "clone_falloff": 0.7,
+                     "combo_points": 0, "finisher_amp_pct": 0}
     s["base"]["weapon_attack_speed"] = 1.0
     s["base"]["skill_weapon_pct"] = 100
     s["enemy"]["cold_res_pct"] = 0
@@ -106,3 +108,11 @@ def test_cycle_dps_math():
 def test_attack_speed_inc_shortens_cycle():
     s = rotation_snap(); s["rotation"]["attack_speed_inc_pct"] = 100
     assert cycle_dps(s)["cycle_time"] == 2.0
+
+def test_finisher_amp_multiplies_points_times_amp_sum():
+    # mechanics.md: finisher x= (1 + consumed_points * amp_sum%); starters untouched
+    s = rotation_snap()
+    s["rotation"]["combo_points"] = 4; s["rotation"]["finisher_amp_pct"] = 35.5
+    r = cycle_dps(s)
+    assert round(r["finisher_damage"], 6) == round(380.0 * (1 + 4 * 0.355), 6)
+    assert r["starter_damage"] == 200.0

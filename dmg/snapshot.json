@@ -5,7 +5,7 @@
   "weapon_flat_cold_min": 0,
   "weapon_flat_cold_max": 0,
   "gear_phys_pct": 161.0,
-  "weapon_attack_speed": 1.5,
+  "weapon_attack_speed": 2.235,
   "skill_weapon_pct": 127,
   "flat_added_min": 0,
   "flat_added_max": 0,
@@ -17,23 +17,20 @@
   "melee": 81.0,
   "area": 0,
   "cold": 0,
-  "global": 239.0,
-  "strength_derived": 0
+  "elemental": 0,
+  "global": 239.0
  },
  "additional": {
-  "fervor": 0,
-  "combo_finisher_amp": 110.0,
+  "strength": 91.00000000000001,
   "warcry_buffs": 0,
+  "ice_bond": 0,
   "sealed_life_mana": 0,
   "blessings": 0,
   "precise_auras": 0,
-  "misc": 33.0,
-  "combo_enhancement": 123.0
+  "misc": 36.98266400000001
  },
  "enemy_taken": {
   "frostbite": 0,
-  "numb": 0,
-  "ice_bond": 0,
   "paralysis": 0,
   "cold_infiltration": 0,
   "timid_curse": 0
@@ -54,7 +51,9 @@
   "attack_speed_inc_pct": 110.0,
   "finisher_additional_as_pct": -40,
   "clones": 4,
-  "clone_falloff": 0.7
+  "clone_falloff": 0.7,
+  "combo_points": 4,
+  "finisher_amp_pct": 233.0
  },
  "_extras": {
   "support_skill_level": 10.0,
@@ -64,9 +63,7 @@
   "rating_flat": 500.0,
   "attack_skill_level": 5.0,
   "rating_inc_pct": 106.0,
-  "gear_attack_speed_pct": 49.0,
   "active_skill_level": 4.0,
-  "strength": 182.0,
   "warcry_effect_pct": 80.0,
   "warcry_min_enemies": 4.0,
   "crit_dmg_per_fervor_rating": 0.5,

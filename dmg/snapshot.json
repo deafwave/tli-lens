@@ -1,0 +1,58 @@
+{
+ "base": {
+  "weapon_phys_min": 227.0,
+  "weapon_phys_max": 237.0,
+  "weapon_flat_cold_min": 0,
+  "weapon_flat_cold_max": 0,
+  "gear_phys_pct": 161.0,
+  "weapon_attack_speed": 2.235,
+  "skill_weapon_pct": 127,
+  "flat_added_min": 0,
+  "flat_added_max": 0,
+  "added_damage_effectiveness_pct": 100
+ },
+ "increased": {
+  "physical": 0,
+  "attack": 171.0,
+  "melee": 81.0,
+  "area": 0,
+  "cold": 0,
+  "elemental": 0,
+  "global": 239.0
+ },
+ "additional": {
+  "strength": 91.00000000000001,
+  "warcry_buffs": 53.6,
+  "ice_bond": 33,
+  "sealed_life_mana": 0,
+  "blessings": 0,
+  "precise_auras": 147.6,
+  "misc": 183.82807980800004
+ },
+ "enemy_taken": {
+  "frostbite": 145,
+  "paralysis": 0,
+  "cold_infiltration": 0,
+  "timid_curse": 0
+ },
+ "crit": {
+  "chance_pct": 44.1,
+  "damage_pct": 335.5
+ },
+ "penetration": {
+  "cold_pct": 0
+ },
+ "enemy": {
+  "cold_res_pct": 40
+ },
+ "rotation": {
+  "starters_per_cycle": 3,
+  "starter_weapon_pct": 406,
+  "attack_speed_inc_pct": 120.0,
+  "finisher_additional_as_pct": -40,
+  "clones": 4,
+  "clone_falloff": 0.7,
+  "combo_points": 8,
+  "finisher_amp_pct": 238.5
+ }
+}

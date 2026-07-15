@@ -8,7 +8,7 @@ STANDARD_PERTURBATIONS = [
     ("+10% increased melee damage", "increased.melee", 10),
     ("+10% increased area damage", "increased.area", 10),
     ("+10% increased cold damage", "increased.cold", 10),
-    ("+10% additional damage (new line)", "additional.misc", 10),
+    ("+10 pts onto existing additional-damage pile", "additional.misc", 10),
     ("+10% Combo Finisher Amplification", "rotation.finisher_amp_pct", 10),
     ("+1 Combo Point consumed", "rotation.combo_points", 1),
     ("+10% warcry buff contribution", "additional.warcry_buffs", 10),

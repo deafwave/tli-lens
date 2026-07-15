@@ -49,3 +49,18 @@ def average_hit(s, skill_pct=None):
     for v in s["enemy_taken"].values():
         hit *= 1 + v / 100
     return hit
+
+
+def crit_multiplier(s):
+    chance = min(s["crit"]["chance_pct"], 100) / 100
+    return 1 + chance * (s["crit"]["damage_pct"] / 100 - 1)
+
+
+def mitigation_multiplier(s):
+    # ponytail: clamp effective res at 0; if mechanics.md finds res can go negative, relax here
+    eff_res = max(0, s["enemy"]["cold_res_pct"] - s["penetration"]["cold_pct"])
+    return 1 - eff_res / 100
+
+
+def expected_hit(s, skill_pct=None):
+    return average_hit(s, skill_pct) * crit_multiplier(s) * mitigation_multiplier(s)

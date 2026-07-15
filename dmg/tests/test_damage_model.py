@@ -55,3 +55,27 @@ def test_enemy_taken_layers_multiply_too():
     s = base_only()
     s["enemy_taken"]["frostbite"] = 10; s["enemy_taken"]["numb"] = 10
     assert round(average_hit(s), 2) == 121.0
+
+from dmg.damage_model import crit_multiplier, mitigation_multiplier, expected_hit
+
+def test_crit_multiplier():
+    s = snap(); s["crit"] = {"chance_pct": 50, "damage_pct": 200}
+    assert crit_multiplier(s) == 1.5          # 1 + 0.5*(2.0-1)
+
+def test_crit_chance_caps_at_100():
+    s = snap(); s["crit"] = {"chance_pct": 250, "damage_pct": 300}
+    assert crit_multiplier(s) == 3.0
+
+def test_mitigation_res_minus_pen():
+    s = snap(); s["enemy"]["cold_res_pct"] = 40; s["penetration"]["cold_pct"] = 15
+    assert mitigation_multiplier(s) == 0.75
+
+def test_penetration_cannot_push_res_below_zero():
+    s = snap(); s["enemy"]["cold_res_pct"] = 10; s["penetration"]["cold_pct"] = 50
+    assert mitigation_multiplier(s) == 1.0    # clamp: mechanics.md row 'penetration'
+
+def test_expected_hit_composes():
+    s = base_only()
+    s["crit"] = {"chance_pct": 50, "damage_pct": 200}
+    s["enemy"]["cold_res_pct"] = 50; s["penetration"]["cold_pct"] = 0
+    assert expected_hit(s) == 75.0            # 100 * 1.5 * 0.5

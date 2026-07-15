@@ -213,7 +213,7 @@ def average_hit(s, skill_pct=None):
     b = s["base"]
     pct = (skill_pct if skill_pct is not None else b["skill_weapon_pct"]) / 100
     flat = (b["flat_added_min"] + b["flat_added_max"]) / 2 * b["added_damage_effectiveness_pct"] / 100
-    hit = (_weapon_avg(b) + flat) * pct
+    hit = _weapon_avg(b) * pct + flat
     hit *= 1 + sum(s["increased"].values()) / 100
     for v in s["additional"].values():
         hit *= 1 + v / 100
@@ -222,7 +222,7 @@ def average_hit(s, skill_pct=None):
     return hit
 ```
 
-(Flat added damage scales with the skill's weapon % via added-damage effectiveness here; if Task 1 research contradicts this, adjust the `hit = (_weapon_avg(b) + flat) * pct` line and update the corresponding test values in the same commit.)
+(Flat added damage scales by added-damage effectiveness only, not by the skill's weapon % again; if Task 1 research contradicts this, adjust the `hit = _weapon_avg(b) * pct + flat` line and update the corresponding test values in the same commit.)
 
 - [ ] **Step 4: Run tests**
 

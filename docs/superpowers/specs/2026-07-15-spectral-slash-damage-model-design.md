@@ -88,7 +88,7 @@ Iron Law: failing test before implementation, each phase.
 
 - **C2:** hand-computed fixtures per stage (e.g. two "20% additional" lines ⇒ ×1.44, not ×1.40); stacking rules lifted directly from `mechanics.md` rows.
 - **C3:** fixture of ~20 real affix strings from the build with expected stat-dict outputs; coverage-report assertion.
-- **End-to-end:** parse real `Rehan SS13_update1.json` → model produces DPS → coverage ≥ agreed threshold.
+- **End-to-end:** parse real `Rehan SS13_update1.json` → model produces DPS → ≥90% of damage-relevant affix lines parsed (unmatched lines listed).
 
 ## Decisions log
 

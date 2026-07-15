@@ -64,3 +64,17 @@ def mitigation_multiplier(s):
 
 def expected_hit(s, skill_pct=None):
     return average_hit(s, skill_pct) * crit_multiplier(s) * mitigation_multiplier(s)
+
+
+def cycle_dps(s):
+    """Boss rotation: N starters build points, one finisher spends them.
+    Assumes 100% buff uptime (warcry loop); uptime factors live in bucket values."""
+    r = s["rotation"]
+    aps = s["base"]["weapon_attack_speed"] * (1 + r["attack_speed_inc_pct"] / 100)
+    finisher_aps = aps * (1 + r["finisher_additional_as_pct"] / 100)
+    starter = expected_hit(s, skill_pct=r["starter_weapon_pct"]) * r["starters_per_cycle"]
+    finisher = expected_hit(s) * (1 + r["clones"] * r["clone_falloff"])
+    cycle_time = r["starters_per_cycle"] / aps + 1 / finisher_aps
+    return {"dps": (starter + finisher) / cycle_time,
+            "finisher_damage": finisher, "starter_damage": starter,
+            "cycle_time": cycle_time}

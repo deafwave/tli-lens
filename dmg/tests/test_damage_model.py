@@ -79,3 +79,30 @@ def test_expected_hit_composes():
     s["crit"] = {"chance_pct": 50, "damage_pct": 200}
     s["enemy"]["cold_res_pct"] = 50; s["penetration"]["cold_pct"] = 0
     assert expected_hit(s) == 75.0            # 100 * 1.5 * 0.5
+
+from dmg.damage_model import cycle_dps
+
+def rotation_snap():
+    s = base_only()
+    s["rotation"] = {"starters_per_cycle": 2, "starter_weapon_pct": 100,
+                     "attack_speed_inc_pct": 0, "finisher_additional_as_pct": -50,
+                     "clones": 4, "clone_falloff": 0.7}
+    s["base"]["weapon_attack_speed"] = 1.0
+    s["base"]["skill_weapon_pct"] = 100
+    s["enemy"]["cold_res_pct"] = 0
+    s["crit"] = {"chance_pct": 0, "damage_pct": 150}   # expected_hit == average_hit
+    return s
+
+def test_cycle_dps_math():
+    r = cycle_dps(rotation_snap())
+    # starters: 2 hits * 100 = 200
+    assert r["starter_damage"] == 200.0
+    # finisher: 100 * (1 + 4 clones * 0.7) = 380
+    assert r["finisher_damage"] == 380.0
+    # cycle: 2 starters at 1.0 aps (2s) + 1 finisher at 1.0*(1-0.5)=0.5 aps (2s) = 4s
+    assert r["cycle_time"] == 4.0
+    assert r["dps"] == (200.0 + 380.0) / 4.0
+
+def test_attack_speed_inc_shortens_cycle():
+    s = rotation_snap(); s["rotation"]["attack_speed_inc_pct"] = 100
+    assert cycle_dps(s)["cycle_time"] == 2.0

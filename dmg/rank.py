@@ -46,6 +46,10 @@ def _bump(s, path, delta):
     return s
 
 
+def compare_snapshots(a, b):
+    return (cycle_dps(b)["dps"] / cycle_dps(a)["dps"] - 1) * 100
+
+
 def sensitivity(s, perturbations):
     baseline = cycle_dps(s)["dps"]
     rows = []
@@ -60,14 +64,27 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("sensitivity")
     p.add_argument("snapshot")
+    p = sub.add_parser("compare"); p.add_argument("a"); p.add_argument("b")
+    p = sub.add_parser("apply"); p.add_argument("snapshot"); p.add_argument("path"); p.add_argument("delta", type=float)
     args = ap.parse_args(argv)
-    with open(args.snapshot, encoding="utf-8") as f:
-        s = json.load(f)
-    validate_snapshot(s)
-    base = cycle_dps(s)
-    print(f"baseline DPS: {base['dps']:,.0f}  (cycle {base['cycle_time']:.2f}s)")
-    for r in sensitivity(s, STANDARD_PERTURBATIONS):
-        print(f"{r['delta_pct']:+7.2f}%  {r['label']}")
+
+    def load(path):
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+
+    if args.cmd == "sensitivity":
+        s = load(args.snapshot)
+        validate_snapshot(s)
+        base = cycle_dps(s)
+        print(f"baseline DPS: {base['dps']:,.0f}  (cycle {base['cycle_time']:.2f}s)")
+        for r in sensitivity(s, STANDARD_PERTURBATIONS):
+            print(f"{r['delta_pct']:+7.2f}%  {r['label']}")
+    elif args.cmd == "compare":
+        a, b = load(args.a), load(args.b)
+        print(f"A: {cycle_dps(a)['dps']:,.0f}  B: {cycle_dps(b)['dps']:,.0f}  delta {compare_snapshots(a, b):+.2f}%")
+    elif args.cmd == "apply":
+        s = load(args.snapshot)
+        print(f"{compare_snapshots(s, _bump(s, args.path, args.delta)):+.2f}%  ({args.path} {args.delta:+g})")
     return 0
 
 

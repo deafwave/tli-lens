@@ -30,3 +30,15 @@ def test_validate_snapshot_rejects_missing_high_impact_stats():
     s["base"]["weapon_flat_cold_min"] = s["base"]["weapon_flat_cold_max"] = 0
     with pytest.raises(SystemExit):
         validate_snapshot(s)
+
+from dmg.rank import compare_snapshots, _bump
+
+def test_compare_snapshots_delta_pct():
+    a = base_only()
+    b = _bump(a, "additional.misc", 100)
+    assert round(compare_snapshots(a, b), 1) == 100.0
+
+def test_bump_does_not_mutate_original():
+    a = base_only()
+    _bump(a, "increased.physical", 50)
+    assert a["increased"]["physical"] == 0

@@ -1,30 +1,30 @@
 ---
 name: mod-catalog
-description: "Guides maintenance of the Spectral Slash mod-catalog DPS data (dmg/catalog.py) — how every divinity-slate and hero-memory mod gets its ΔDPS score and how to change scoring rules safely. Use when a catalog score looks wrong, when adding applicability/tier/spawn rules, when regenerating rehan-ss13-progression.html data, or when the user reports a mod that 'doesn't work for this build'. Triggers include: mod catalog, catalog.py, ΔDPS wrong, slate mod score, memory affix score, tier system, rolls on, regenerate catalog."
+description: "Guides maintenance of the Spectral Slash mod-catalog DPS data (packages/dmg/src/catalog.ts) — how every divinity-slate and hero-memory mod gets its ΔDPS score and how to change scoring rules safely. Use when a catalog score looks wrong, when adding applicability/tier/spawn rules, when regenerating the progression page's catalog data (packages/page/src/data/catalog.json), or when the user reports a mod that 'doesn't work for this build'. Triggers include: mod catalog, catalog.ts, ΔDPS wrong, slate mod score, memory affix score, tier system, rolls on, regenerate catalog."
 ---
 
 # Mod Catalog DPS Maintenance
 
 ## What this system is
 
-`dmg/catalog.py` enumerates every slate mod and memory affix from the tlicompendium
+`packages/dmg/src/catalog.ts` enumerates every slate mod and memory affix from the tlicompendium
 caches (`.claude/skills/tli-build/cache/SS12.5-*.json`), scores each one's **net DPS
-impact against this specific build's snapshot** (`dmg/snapshot.json`), and injects the
-result into `rehan-ss13-progression.html` between `/*CATALOG-DATA-START*/` and
-`/*FREEWINS-DATA-*/` markers. The damage math itself lives in `dmg/damage_model.py`
-(pure function); classification regexes live in `dmg/build_parser.py` (`PATTERNS`,
-`classify`); researched mechanics and citations live in `dmg/mechanics.md`.
+impact against this specific build's snapshot** (`data/snapshot.json`), and writes the
+result to `packages/page/src/data/catalog.json`, which the Vite page (`packages/page/src/main.ts`) imports.
+The damage math itself lives in `packages/dmg/src/damageModel.ts`
+(pure function); classification regexes live in `packages/dmg/src/buildParser.ts` (`PATTERNS`,
+`classify`); researched mechanics and citations live in `docs/mechanics.md`.
 
 A score is: deep-copy the parsed snapshot → apply **all** of the mod's classifiable
-lines via `_apply_stat` → `cycle_dps` ratio vs baseline. Bucket semantics:
+lines via `applyStat` → `cycleDps` ratio vs baseline. Bucket semantics:
 `additional.*` and `enemy_taken.*` lines each compound (own multiplier);
 `increased.*` sums; `extras.*` paths use closed-form conversions whose constants
-**mirror `dmg/manual_overrides.json`** — if overrides change, update the constants
-block at the top of catalog.py (FERVOR_EFFECT, CRIT_RATING_MULT, etc.) in the same commit.
+**mirror `data/manual_overrides.json`** — if overrides change, update the constants
+block at the top of catalog.ts (FERVOR_EFFECT, CRIT_RATING_MULT, etc.) in the same commit.
 
 ## The Iron Law here
 
-**No scoring-rule change without a failing test in `dmg/tests/test_catalog.py` first.**
+**No scoring-rule change without a failing test in `packages/dmg/test/catalog.test.ts` first.**
 Every rule in this file exists because the naive version shipped a wrong number that a
 human caught. Write the test that reproduces the report, watch it fail, make the
 smallest rule change, regenerate, verify, commit with the math in the message.
@@ -53,17 +53,17 @@ an expected value or a net penalty is not a ceiling.
 ## Regenerate-and-verify loop (run all of it, every time)
 
 ```bash
-python -X utf8 -m pytest dmg/tests -q          # all green before regen
-python -X utf8 -m dmg.build_parser "Rehan SS13_update1.json" -o dmg/snapshot.json  # only if build changed
-python -X utf8 -m dmg.catalog                  # injects CATALOG + FREEWINS into the HTML
-node -e "const m=require('fs').readFileSync('rehan-ss13-progression.html','utf8').match(/<script>([\s\S]*)<\/script>/); new Function(m[1]); console.log('parses OK')"
+pnpm test                                      # all green before regen
+pnpm snapshot                                  # only if build changed
+pnpm --filter @rehan/dmg catalog               # writes packages/page/src/data/catalog.json
+node -e "JSON.parse(require('fs').readFileSync('packages/page/src/data/catalog.json','utf8')); console.log('parses OK')"
+pnpm build                                  # type-check + bundle the page
 ```
 
 Then eyeball the **top and bottom** of the sorted rows — every past bug was visible
-there. Gotchas already learned: JSON payloads must use `ensure_ascii=True` (raw
-U+2028 in tlidb text breaks JS literals); the `re.sub` replacement must be a lambda
-(`\uXXXX` in payloads trips template parsing); run Python as `python -X utf8` on
-Windows. Master bundles are gitignored — refetch with
+there. Gotchas already learned: write the JSON ASCII-escaped (raw U+2028 in tlidb
+text has bitten JS tooling before — `asciiJson` in `packages/dmg/src/py.ts`
+handles it). Master bundles are gitignored — refetch with
 `curl -O https://tlicompendium.com/data-bundles/SS12.5-{divinity-slate,hero-memory}-master.json`
 into the tli-build cache.
 
@@ -74,13 +74,13 @@ into the tli-build cache.
 | "The headline number is the score" | Compute EV for procs, net for multi-line mods, average for min/max pairs. |
 | "This mod is obviously strong" | Check it against THIS build: ES defense, sword+shield, crit-based, no low-life, 5 actives + 4 auras. A mod can be great in general and `—` here. |
 | "It's a one-line regex fix, skip the test" | Every one-line regex here shipped a wrong number once. Failing test first. |
-| "I'll fix the score in the HTML" | The HTML is generated. Fix catalog.py, regenerate, never hand-edit between markers. |
+| "I'll fix the score in the page data" | `packages/page/src/data/catalog.json` is generated. Fix catalog.ts, regenerate, never hand-edit it. |
 | "The override constants look unrelated" | They mirror manual_overrides.json. Changing one without the other silently skews every extras-path score. |
 
 ## When the user reports a wrong score
 
-1. Find the mod's exact text in the cache (`python -X utf8` + json, search by name/text).
+1. Find the mod's exact text in the cache (node + JSON.parse, search by name/text).
 2. Decide which rule class it is: EV, net-lines, applicability, tier/spawn, or a genuinely
-   new mechanic (new mechanics also get a row in `dmg/mechanics.md` with a citation).
+   new mechanic (new mechanics also get a row in `docs/mechanics.md` with a citation).
 3. Failing test → smallest rule change → full loop above → commit with the arithmetic
    in the message (e.g. "50%x16 = +8").

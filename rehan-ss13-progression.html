@@ -233,7 +233,8 @@ footer{margin-top:80px;color:var(--faint);font-size:12px;font-family:"IBM Plex M
     system, not by what you buy when. Mods are portable and slates are a menu: treat every list here as
     <strong>“any mix,”</strong> not a shopping order. Every % figure on this page is now
     <strong>computed</strong> from the parsed build (<span style="font-family:'IBM Plex Mono',monospace">dmg/</span> model,
-    94% of affix lines parsed, boss single-target) — not eyeballed.
+    95% of affix lines parsed — gear, tree, traits, <strong>memories and divinity slates with their actual rolls</strong> —
+    boss single-target) — not eyeballed.
   </p>
 </header>
 
@@ -285,8 +286,10 @@ footer{margin-top:80px;color:var(--faint);font-size:12px;font-family:"IBM Plex M
 <section class="bundles" id="ledger">
   <h2>The Damage Ledger — now computed</h2>
   <p>The forks above are specific calls. This used to be a fill-it-in method; the
-  <span class="formula">dmg/</span> model has since parsed the build (94% of affix lines) and computed the
-  real numbers. Baseline: <b>33.8M boss DPS</b>, 0.95s combo cycle (3 starters + finisher, 4 clones).</p>
+  <span class="formula">dmg/</span> model has since parsed the build (95% of affix lines, now including
+  hero memories and divinity slates with their actual rolls) and computed the real numbers.
+  Baseline: <b>284.9M boss DPS</b>, 0.75s combo cycle (3 starters + finisher, 4 clones) — the
+  memories/slates were carrying ~8× the previously-modeled damage.</p>
   <article class="bundle ledger">
     <p class="core">Your damage is a <b>product</b> of multiplier buckets —
     <span class="formula">weapon × skill% × (1+Σincreased) × ∏(1+additional) × (points×amp) × crit × enemy-taken × (1−res+pen) × speed</span>.
@@ -297,16 +300,16 @@ footer{margin-top:80px;color:var(--faint);font-size:12px;font-family:"IBM Plex M
     <table class="ledger-table">
       <thead><tr><th>#</th><th>buy</th><th>why it lands there</th><th>→ ΔDPS</th></tr></thead>
       <tbody>
-        <tr class="smallest"><td class="num">1</td><td><b>+10% Cold Penetration</b></td><td>boss at 40% res, build has 0 pen; works below zero res</td><td class="mult">+16.7%</td></tr>
+        <tr class="smallest"><td class="num">1</td><td><b>+10% Cold Penetration</b></td><td>boss at 40% res, 10% pen so far (Cold Infiltration slate); works below zero res</td><td class="mult">+14.3%</td></tr>
         <tr><td class="num">2</td><td><b>+1 Combo Point consumed</b></td><td>finisher = 1 + points × 238.5% amp</td><td class="mult">+10.6%</td></tr>
-        <tr><td class="num">3</td><td><b>any NEW additional source</b></td><td>Paralysis (+15% taken), Cold Infiltration (+13% + res shred) — unclaimed multipliers</td><td class="mult">≈ face value</td></tr>
-        <tr><td class="num">4</td><td><b>+10% Warcry contribution</b></td><td>Shockwave layer sits at ×1.54</td><td class="mult">+6.5%</td></tr>
-        <tr><td class="num">5</td><td><b>+30% Crit Damage</b></td><td>44% chance / 335% crit damage today</td><td class="mult">+6.5%</td></tr>
-        <tr><td class="num">6</td><td><b>+5% Crit Chance</b></td><td>rating ÷ 100, no level curve</td><td class="mult">+5.8%</td></tr>
-        <tr><td class="num">7</td><td><b>+10% Attack Speed</b></td><td>linear on the 0.95s cycle</td><td class="mult">+4.6%</td></tr>
-        <tr><td class="num">8</td><td><b>+10 Frostbite taken</b></td><td>enemy sits at ×2.45 already</td><td class="mult">+4.1%</td></tr>
-        <tr><td class="num">9</td><td><b>+10% Gear Phys (weapon)</b></td><td>pile at +161% on the weapon</td><td class="mult">+3.8%</td></tr>
-        <tr><td class="num">10</td><td><b>+10% Finisher Amp</b></td><td>onto the existing 238.5%</td><td class="mult">+3.5%</td></tr>
+        <tr><td class="num">3</td><td><b>any NEW additional source</b></td><td>Paralysis (+15% taken) is still an unclaimed multiplier</td><td class="mult">≈ face value</td></tr>
+        <tr><td class="num">4</td><td><b>+5% Crit Chance</b></td><td>60.5% chance / 638% crit damage — chance is the scarce half now</td><td class="mult">+6.2%</td></tr>
+        <tr><td class="num">5</td><td><b>+10% Warcry contribution</b></td><td>Shockwave layer sits at ×1.86</td><td class="mult">+5.4%</td></tr>
+        <tr><td class="num">6</td><td><b>+30% Crit Damage</b></td><td>already at 638%</td><td class="mult">+4.6%</td></tr>
+        <tr><td class="num">7</td><td><b>+10% Gear Phys (weapon)</b></td><td>pile at +161% on the weapon</td><td class="mult">+3.8%</td></tr>
+        <tr><td class="num">8</td><td><b>+10% Attack Speed</b></td><td>linear on the 0.75s cycle, pool at +177%</td><td class="mult">+3.6%</td></tr>
+        <tr><td class="num">9</td><td><b>+10% Finisher Amp</b></td><td>onto the existing 238.5%</td><td class="mult">+3.5%</td></tr>
+        <tr><td class="num">10</td><td><b>+10 Frostbite taken</b></td><td>enemy sits at ×2.88 already</td><td class="mult">+3.5%</td></tr>
         <tr><td class="num">11</td><td><b>+10% ANY “% increased”</b></td><td>the +491% additive pile — the floor of the table</td><td class="mult">+1.7%</td></tr>
       </tbody>
     </table>
@@ -323,7 +326,7 @@ footer{margin-top:80px;color:var(--faint);font-size:12px;font-family:"IBM Plex M
     <ul class="rule">
       <li><b>Re-rank after any build change:</b> <span class="formula">python -X utf8 -m dmg.build_parser "Rehan SS13_update1.json" -o dmg/snapshot.json &amp;&amp; python -X utf8 -m dmg.rank sensitivity dmg/snapshot.json</span></li>
       <li><b>Price a specific roll:</b> <span class="formula">python -X utf8 -m dmg.rank apply dmg/snapshot.json penetration.cold_pct 40</span> → +66.7%.</li>
-      <li><b>Known blind spots</b> (full list in <span class="formula">dmg/RANKINGS.md</span>): divinity slates / pactspirits / memories / prisms unparsed — if your pen lives there, the baseline shifts but pen's lead only shrinks, never flips below crit; skill levels past 20 and support-gem numerics unmodeled; Fervor-at-100 and full Berserk uptime assumed.</li>
+      <li><b>Known blind spots</b> (full list in <span class="formula">dmg/RANKINGS.md</span>): pactspirits / prisms unparsed (memories and slates now are); the “Sparks” slate's copy-adjacent-talent effect unmodeled; Cold Infiltration assumes boss Freeze uptime; skill levels past 20 and support-gem numerics unmodeled; Fervor-at-100 and full Berserk uptime assumed.</li>
       <li>Every researched mechanic is cited row-by-row in <span class="formula">dmg/mechanics.md</span> with a confidence flag.</li>
     </ul>
   </article>
@@ -369,7 +372,7 @@ const SYSTEMS = [
 
   {id:"frostbite", role:"ailment", name:"Frostbite — the enemy-side amp", gates:["finisher"],
    core:"Convert <b>100% Physical → Cold</b> (which double-dips: Physical, Cold, Elemental, Attack and Melee modifiers ALL still apply — dev-confirmed) and every hit builds <b>Frostbite Rating</b> on the enemy. It is not a DoT: each rating point is <b>+1% additional Cold damage TAKEN</b>, capped at 120 base +25 from the ring — a ×2.45 sitting on the boss.",
-   mult:"<span class='mult-tag'>Cold Penetration</span> is the computed #1 stat on the whole sheet: <b>+10% pen = +16.7% DPS</b> against a 40%-res boss, it keeps working below zero resist, and the build currently has none. Armor penetration, by contrast, is a <b>no-op</b> — fully converted hits check cold resistance only. Frostbite Effect and Max Rating are worth ~+4% per 10 on top.",
+   mult:"<span class='mult-tag'>Cold Penetration</span> is the computed #1 stat on the whole sheet: <b>+10% pen = +14.3% DPS</b> against a 40%-res boss (the Cold Infiltration slate already strips 10%), and it keeps working below zero resist. Armor penetration, by contrast, is a <b>no-op</b> — fully converted hits check cold resistance only. Frostbite sits at ×2.88 on the boss (157 rating cap × 1.20 Effect); more Effect/Max-Rating is ~+3.5% per 10.",
    feeds:[
      {src:"slate", html:"the God of Knowledge line — inflict Frostbite on Cold hit, Focus Blessing off Frostbitten targets"},
      {src:"talent", html:"Prophet's Frostbite legendaries — Effect, Cold Infiltration on Frozen, more-vs-Frozen"},
@@ -379,8 +382,8 @@ const SYSTEMS = [
    slates:["Inflicts Frostbite on Cold hit","+Frostbite Effect (stacks ×N)","Cold Infiltration on Frozen","Physical→Cold conversion","Focus Blessing on Frostbitten"]},
 
   {id:"fervor", role:"mult", name:"Fervor — the crit-rating engine", gates:["sustain"],
-   core:"Correction from the old page: Fervor is <b>not</b> an additional-damage line. Each point of Fervor Rating grants <b>+2% Critical Strike Rating</b>, scaled by Fervor Effect — and this build carries <b>+188% Fervor Effect</b> (two rings +60%, tree +68%). At 100 sustained rating that's +576% crit rating, the bulk of the computed <b>44% crit chance</b>.",
-   mult:"Fervor Effect rolls are therefore <span class='mult-tag'>crit-chance rolls in disguise</span>, and the Ranger node converts the same rating into <b>+50% Crit Damage</b> (0.5%/rating). The gloves also pay +1% Skill Area per 3 rating — clear-speed, not boss DPS.",
+   core:"Correction from the old page: Fervor is <b>not</b> an additional-damage line. Each point of Fervor Rating grants <b>+2% Critical Strike Rating</b>, scaled by Fervor Effect — and this build carries <b>+208% Fervor Effect</b> (two rings +60%, tree +68%, slate +20%). At 100 sustained rating that's +616% crit rating, the bulk of the computed <b>60.5% crit chance</b>.",
+   mult:"Fervor Effect rolls are therefore <span class='mult-tag'>crit-chance rolls in disguise</span>, and three separate 0.5%-per-rating converters (Ranger node + two slates) turn the same pool into <b>+150% Crit Damage</b>. The gloves also pay +1% Skill Area per 3 rating — clear-speed, not boss DPS.",
    feeds:[
      {src:"gear", html:"Dawn Break 'Have Fervor' (Vorax boots) to hold the resource; Ghost Slaughter gloves to spend it into area + additional damage"},
      {src:"slate", html:"Fervor Rating generation and +Fervor Effect"},
@@ -389,7 +392,7 @@ const SYSTEMS = [
    cost:"Ghost Slaughter burns Life &amp; ES per second while Fervor is active — pay for it in Sustain."},
 
   {id:"crit", role:"mult", name:"Crit — Fervor spent twice", gates:["fervor"],
-   core:"Critical Strike Damage multiplies the whole finisher, and the Ranger node converts <b>Fervor Rating → Crit Damage</b> — the pool you already built for chance gets spent a second time. Computed position: <b>44% chance / 335% crit damage</b>, so <b>+30% crit damage ≈ +6.5% DPS</b> and <b>+5% chance ≈ +5.8%</b> — crit rolls beat any % increased roll about 4:1.",
+   core:"Critical Strike Damage multiplies the whole finisher, and three Fervor→Crit-Damage converters spend the chance pool a second time. Computed position: <b>60.5% chance / 638% crit damage</b> — the memories stacked so much crit damage that <b>chance is now the scarcer half</b>: +5% chance ≈ +6.2% DPS vs +30% crit damage ≈ +4.6%.",
    mult:"Crit chance is <span class='mult-tag'>rating ÷ 100, no enemy-level curve</span> — rating stacks as base 500 × (1 + all increased-rating %), so weapon-local “Attack Crit Rating for this gear” and Fearless's +80% both feed the same pool. Crit-damage flavors (crit / physical crit / attack crit) share one additive pool over the 150% base.",
    feeds:[
      {src:"support", html:"Critical Strike Damage Increase on Spectral Slash, in place of a plain damage support"},
@@ -399,8 +402,8 @@ const SYSTEMS = [
    slates:["+0.5% Crit Damage per Fervor Rating (×2)","+Crit Rating","Crit on Fervor"]},
 
   {id:"warcry", role:"buff", name:"Warcry — free multipliers on a timer", gates:[],
-   core:"Self-cast Warcries (Shockwave, Defensive Buffer) buff damage per enemy affected — all on Activation Mediums, so they fire without a button. Computed: Shockwave pays <b>5.95% additional finisher damage per enemy × 5 enemies × 1.80 Warcry Effect ≈ a ×1.54 layer</b> on a boss.",
-   mult:"<span class='mult-tag'>Warcry Effect</span> (shield +62%, The Brave nodes) scales every warcry line at once, and “+min enemies affected” floors the stack count on lone bosses — <b>+10% warcry contribution ≈ +6.5% DPS</b>, mid-table.",
+   core:"Self-cast Warcries (Shockwave, Defensive Buffer) buff damage per enemy affected — all on Activation Mediums, so they fire without a button. Computed: Shockwave pays <b>5.95% additional finisher damage per enemy × 8 enemies (tree +4 min, slate +4 min) × 1.80 Warcry Effect ≈ a ×1.86 layer</b> on a boss.",
+   mult:"<span class='mult-tag'>Warcry Effect</span> (shield +62%, The Brave nodes) scales every warcry line at once, and “+min enemies affected” floors the stack count on lone bosses — <b>+10% warcry contribution ≈ +5.4% DPS</b>, mid-table.",
    feeds:[
      {src:"gear", html:"a Warcry-Effect off-hand (Ninth Apostle's shield) plus its +Active Skill Level"},
      {src:"skill", html:"a curse-on-hit ring frees the skill slot the Warcries move into"},
@@ -445,7 +448,7 @@ const FORKS = [
      {lbl:"Heart of Animitta", html:"Finisher Amplification is <span class='mult-tag'>additional</span> — multiplicative on that same 127%. The second-best multiply, and it also fixes the combo loop."},
      {lbl:"Timid ring / Warcry layer", html:"utility and enemy-count, not raw multiply. Genuinely good, but it doesn't scale the core hit the way the other two do."},
    ],
-   lean:"The model reordered this one: <b>Cold Penetration sources beat all three</b> (+16.7% per 10%), then Combo Points (+10.6% each). Weapon phys and Animitta Amp both land near +3.5–3.8% per 10% now that their piles are fat. The Warcry layer computes at +6.5% per 10% — better than either. Buy pen, then points, then whichever of these is cheapest."},
+   lean:"The model reordered this one: <b>Cold Penetration sources beat all three</b> (+14.3% per 10%), then Combo Points (+10.6% each), then crit <i>chance</i> (+6.2% per 5%). Weapon phys and Animitta Amp both land near +3.5–3.8% per 10% now that their piles are fat. Buy pen, then points, then chance."},
 ];
 
 /* ---------- render: system detail cards ---------- */

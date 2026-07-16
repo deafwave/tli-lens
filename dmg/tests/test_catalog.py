@@ -93,3 +93,21 @@ def test_not_at_low_life_still_modeled():
     rows = build_catalog()
     ok = [r for r in rows if "when not at Low Life" in r["text"]]
     assert ok and any(r["delta"] is not None for r in ok)
+
+def test_rows_carry_tier_and_spawn_info():
+    rows = build_catalog()
+    assert all(set(r) >= {"tier", "on"} for r in rows)
+    dd = [r for r in rows if r["name"] == "Dying Dragon"]
+    assert dd and dd[0]["tier"] == "Core Talent" and "New God" in dd[0]["on"]
+    conv = [r for r in rows if "Physical Damage to Cold Damage" in r["text"]]
+    assert conv and conv[0]["tier"] == "Legendary Medium Talent" and "Prophet" in conv[0]["on"]
+    mem = [r for r in rows if r["cat"] == "memory"]
+    assert mem and any(r["on"] for r in mem)
+
+def test_duplicate_descs_merge_spawn_slates():
+    rows = build_catalog()
+    for r in rows:
+        if r["cat"] == "slate" and "," in r["on"]:
+            break
+    else:
+        raise AssertionError("no merged multi-slate mod found")

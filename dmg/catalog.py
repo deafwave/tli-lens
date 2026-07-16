@@ -105,20 +105,37 @@ def _apply_stat(s, path, value):
 
 def _slate_mods():
     ds = _load("SS12.5-divinity-slate-en.json")["divinity-slate/i18n/en"]
+    master = {m["id"]: m for m in
+              _load("SS12.5-divinity-slate-master.json")["divinity-slate/master"]["slateMods"]}
+    generic = {"Micro Talent", "Medium Talent", "Legendary Medium Talent"}
     for guid, mod in ds["slateMods"].items():
-        yield "slate mod", mod.get("name", guid), mod.get("description", "")
+        mm = master.get(guid, {})
+        nt = mm.get("nodeType", "?")
+        # named nodeTypes (one per slate, nodeType == mod name) are the slate's Core Talent
+        yield ("slate", mod.get("name", guid), mod.get("description", ""),
+               nt if nt in generic else "Core Talent", mm.get("slateType", "?"))
     for guid, sl in ds["legendaryDivinitySlates"].items():
         for m in sl.get("mods", []):
-            yield "slate legendary", sl.get("name", guid), m.get("description", "")
+            yield ("slate", sl.get("name", guid), m.get("description", ""),
+                   "Legendary Slate", sl.get("name", guid))
+
+
+MEMORY_TIER_LABELS = {"fixedAffixes": "Fixed Affix", "randomAffixes": "Random Affix",
+                      "revivedAffixes": "Revived Affix", "specialRandomAffixes": "Special Random"}
 
 
 def _memory_mods():
     hm = _load("SS12.5-hero-memory-en.json")["hero-memory/i18n/en"]
+    root = _load("SS12.5-hero-memory-master.json")
+    hm_master = root[next(iter(root))]
     # baseStats excluded: every memory has a fixed Str/ES/AS base stat, nothing to choose
-    for cat in ("fixedAffixes", "randomAffixes", "revivedAffixes", "specialRandomAffixes"):
+    for cat, tier in MEMORY_TIER_LABELS.items():
+        master = {a["id"]: a for a in hm_master.get(cat, [])}
         for guid, aff in hm.get(cat, {}).items():
             if isinstance(aff, dict) and "template" in aff:
-                yield f"memory {cat}", aff.get("description", guid), max_roll_text(aff["template"], aff.get("rawText", ""))
+                yield ("memory", aff.get("description", guid),
+                       max_roll_text(aff["template"], aff.get("rawText", "")),
+                       tier, master.get(guid, {}).get("memoryType", "?"))
 
 
 def build_catalog():
@@ -126,19 +143,22 @@ def build_catalog():
     clean = copy.deepcopy(snapshot)
     clean.pop("_extras", None)
     base_dps = cycle_dps(clean)["dps"]
-    rows, seen = [], set()
-    for cat, name, desc in [*_slate_mods(), *_memory_mods()]:
+    groups = {}
+    for cat, name, desc, tier, on in [*_slate_mods(), *_memory_mods()]:
         desc = re.sub(r"(\d) %", r"\1%", desc or "").strip()
         # dropped, not just unmodeled: build is committed to 1h+shield
         if not desc or re.search(r"dual wield", desc, re.I):
             continue
-        key = (cat, desc)
-        if key in seen:
-            continue
-        seen.add(key)
+        g = groups.setdefault((cat, desc, tier),
+                              {"cat": cat, "name": name, "text": desc, "tier": tier, "ons": set()})
+        g["ons"].add(on)
+    rows = []
+    for g in groups.values():
+        cat, name, desc = g["cat"], g["name"], g["text"]
+        meta = {"cat": cat, "name": name, "text": desc,
+                "tier": g["tier"], "on": ", ".join(sorted(g["ons"]))}
         if MOD_DISQUALIFIERS.search(desc):
-            rows.append({"cat": cat, "name": name, "text": desc,
-                         "bucket": "— (kills ES defense)", "delta": None, "cond": False})
+            rows.append({**meta, "bucket": "— (kills ES defense)", "delta": None, "cond": False})
             continue
         nullify = bool(re.search(r"Critical Strikes do not deal additional damage", desc, re.I))
         s = copy.deepcopy(clean)
@@ -178,7 +198,7 @@ def build_catalog():
             if _apply_stat(s, "additional.misc", max(proc_evs)):
                 applied.append("additional.misc (proc EV)")
         rows.append({
-            "cat": cat, "name": name, "text": desc,
+            **meta,
             "bucket": " + ".join(dict.fromkeys(applied)) if applied else "—",
             "delta": round((cycle_dps(s)["dps"] / base_dps - 1) * 100, 2) if applied else None,
             "cond": bool(CONDITIONAL.search(desc)) and not used_ev and not nullify,

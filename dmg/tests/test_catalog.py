@@ -1,3 +1,4 @@
+import re
 import json
 from dmg.catalog import max_roll_text, impact_of, build_catalog
 
@@ -61,3 +62,21 @@ def test_crit_nullify_mods_score_negative():
     assert nullify, "crit-nullify mod missing"
     for r in nullify:
         assert r["delta"] is not None and r["delta"] < 0, (r["delta"], r["text"][:60])
+
+def test_memory_base_stats_excluded():
+    rows = build_catalog()
+    assert not [r for r in rows if r["cat"] == "memory baseStats"]
+
+def test_projectile_plural_excluded():
+    rows = build_catalog()
+    proj = [r for r in rows if re.search(r"\bProjectiles?\b", r["text"])]
+    import re as _re
+    assert all(r["delta"] is None for r in rows if _re.search(r"Projectiles?", r["text"]))
+
+def test_tradeoff_mods_score_net_not_best_line():
+    rows = build_catalog()
+    trade = [r for r in rows if "-20% additional damage for Weapons" in r["text"]]
+    assert trade, "tradeoff mod missing"
+    # net of x0.80 and x1.40 is ~x1.12, far below the +40 headline
+    for r in trade:
+        assert r["delta"] is not None and r["delta"] < 15, (r["delta"], r["text"][:60])

@@ -18,7 +18,8 @@ NOT_THIS_BUILD = re.compile(
     r"|Projectile|Bow|Crossbow|Pistol|Cannon|Staff|Wand|Two-Handed|Dual Wield"
     r"|Channeled|Curse Skill|Mobility Skill|Persistent Damage|Damage over Time|DoT|Elixir"
     r"|Min Physical Damage|Erosion Resistance"
-    r"|empty (?:Active|Passive) Skill [Ss]lot)\b", re.I)   # build has 5 actives + 4 auras: no empty slots
+    r"|empty (?:Active|Passive) Skill [Ss]lot)", re.I)   # build has 5 actives + 4 auras: no empty slots
+    # no trailing \b: plurals ("Projectiles", "Minions") must match too
 CONDITIONAL = re.compile(
     r"\b(when|after|if |for every|per stack|recently|while|next|on \w+ing|devoured|chance to)\b", re.I)
 
@@ -54,6 +55,13 @@ def impact_of(path, value, snapshot):
     s = copy.deepcopy(snapshot)
     s.pop("_extras", None)
     base = cycle_dps(s)["dps"]
+    if not _apply_stat(s, path, value):
+        return None
+    return (cycle_dps(s)["dps"] / base - 1) * 100
+
+
+def _apply_stat(s, path, value):
+    """Mutate snapshot s with one classified stat; False if unmodeled."""
     root = path.split(".")[0]
     key = path.split(".")[-1]
     if root in ("additional", "enemy_taken"):
@@ -85,8 +93,8 @@ def impact_of(path, value, snapshot):
     elif path == "crit.rating_flat":
         s["crit"]["chance_pct"] += value * CRIT_RATING_MULT / 100
     else:
-        return None
-    return (cycle_dps(s)["dps"] / base - 1) * 100
+        return False
+    return True
 
 
 def _slate_mods():
@@ -100,7 +108,8 @@ def _slate_mods():
 
 def _memory_mods():
     hm = _load("SS12.5-hero-memory-en.json")["hero-memory/i18n/en"]
-    for cat in ("baseStats", "fixedAffixes", "randomAffixes", "revivedAffixes", "specialRandomAffixes"):
+    # baseStats excluded: every memory has a fixed Str/ES/AS base stat, nothing to choose
+    for cat in ("fixedAffixes", "randomAffixes", "revivedAffixes", "specialRandomAffixes"):
         for guid, aff in hm.get(cat, {}).items():
             if isinstance(aff, dict) and "template" in aff:
                 yield f"memory {cat}", aff.get("description", guid), max_roll_text(aff["template"], aff.get("rawText", ""))
@@ -108,56 +117,61 @@ def _memory_mods():
 
 def build_catalog():
     snapshot = json.load(open(SNAPSHOT, encoding="utf-8"))
+    clean = copy.deepcopy(snapshot)
+    clean.pop("_extras", None)
+    base_dps = cycle_dps(clean)["dps"]
     rows, seen = [], set()
     for cat, name, desc in [*_slate_mods(), *_memory_mods()]:
         desc = re.sub(r"(\d) %", r"\1%", desc or "").strip()
         # dropped, not just unmodeled: build is committed to 1h+shield
         if not desc or re.search(r"dual wield", desc, re.I):
             continue
-        if re.search(r"Critical Strikes do not deal additional damage", desc, re.I):
-            # the bonus costs the entire crit multiplier: crits deal base damage only
-            m = re.search(rf"\+{NUM}% additional damage", desc)
-            s = copy.deepcopy(snapshot)
-            s.pop("_extras", None)
-            base_dps = cycle_dps(s)["dps"]
-            s["crit"]["damage_pct"] = 100
-            if m:
-                _compound(s["additional"], "misc", float(m.group(1)))
-            key = (cat, desc)
-            if key in seen:
-                continue
-            seen.add(key)
-            rows.append({"cat": cat, "name": name, "text": desc,
-                         "bucket": "additional.misc − crit nullified",
-                         "delta": round((cycle_dps(s)["dps"] / base_dps - 1) * 100, 2),
-                         "cond": False})
-            continue
-        best = None
-        for line in re.split(r"\n", desc):
-            line = line.strip()
-            if not line or NOT_THIS_BUILD.search(line):
-                continue
-            proc = re.search(rf"{NUM}% chance [^\n]*?to deal \+{NUM}% additional", line, re.I)
-            if proc:
-                # per-cast proc: expected value, not the headline number (50%x16 = +8)
-                chance, bonus = float(proc.group(1)), float(proc.group(2))
-                path, value = "additional.misc", chance * bonus / 100
-            else:
-                path, value = classify(line)
-            if path in (None, "ignore"):
-                continue
-            d = impact_of(path, value or 0, snapshot) if path != "special.cold_infiltration" else 0.0
-            if d is not None and (best is None or d > best[0]):
-                best = (d, path, bool(proc))
         key = (cat, desc)
         if key in seen:
             continue
         seen.add(key)
+        nullify = bool(re.search(r"Critical Strikes do not deal additional damage", desc, re.I))
+        s = copy.deepcopy(clean)
+        applied, used_ev = [], False
+        if nullify:
+            # the bonus costs the entire crit multiplier: crits deal base damage only
+            s["crit"]["damage_pct"] = 100
+            applied.append("crit nullified")
+        proc_evs = []
+        for line in re.split(r"\n", desc):
+            line = line.strip()
+            if not line:
+                continue
+            minmax = re.search(rf"-{NUM}% additional Min Physical Damage, and \+{NUM}% additional Max Physical Damage", line, re.I)
+            if minmax:
+                # min/max roll shift changes the AVERAGE roll: (+B - A)/2, never compound the pair
+                if _apply_stat(s, "additional.misc", (float(minmax.group(2)) - float(minmax.group(1))) / 2):
+                    applied.append("additional.misc (avg roll)")
+                continue
+            if NOT_THIS_BUILD.search(line):
+                continue
+            proc = re.search(rf"{NUM}% chance [^\n]*?to deal \+{NUM}% additional", line, re.I)
+            if proc:
+                # per-cast proc: expected value, not the headline number (50%x16 = +8);
+                # multiple proc lines in one mod are tier VARIANTS — only the best applies
+                proc_evs.append(float(proc.group(1)) * float(proc.group(2)) / 100)
+                continue
+            path, value = classify(line)
+            if path is None and re.match(rf"^-{NUM}% additional .*[Dd]amage", line):
+                path, value = "additional.misc", -float(re.match(rf"^-{NUM}%", line).group(1))
+            if path in (None, "ignore", "special.cold_infiltration"):
+                continue
+            if _apply_stat(s, path, value or 0):
+                applied.append(path)
+        if proc_evs:
+            used_ev = True
+            if _apply_stat(s, "additional.misc", max(proc_evs)):
+                applied.append("additional.misc (proc EV)")
         rows.append({
             "cat": cat, "name": name, "text": desc,
-            "bucket": best[1] if best else "—",
-            "delta": round(best[0], 2) if best else None,
-            "cond": bool(CONDITIONAL.search(desc)) and not (best and best[2]),
+            "bucket": " + ".join(dict.fromkeys(applied)) if applied else "—",
+            "delta": round((cycle_dps(s)["dps"] / base_dps - 1) * 100, 2) if applied else None,
+            "cond": bool(CONDITIONAL.search(desc)) and not used_ev and not nullify,
         })
     rows.sort(key=lambda r: (r["delta"] is None, -(r["delta"] or 0)))
     return rows

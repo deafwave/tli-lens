@@ -4,7 +4,7 @@ rehan-ss13-progression.html between the CATALOG-DATA markers."""
 import copy, json, re
 from pathlib import Path
 
-from dmg.build_parser import _load, classify
+from dmg.build_parser import _load, classify, NUM
 from dmg.damage_model import cycle_dps
 
 SNAPSHOT = Path("dmg/snapshot.json")
@@ -111,19 +111,44 @@ def build_catalog():
     rows, seen = [], set()
     for cat, name, desc in [*_slate_mods(), *_memory_mods()]:
         desc = re.sub(r"(\d) %", r"\1%", desc or "").strip()
-        if not desc:
+        # dropped, not just unmodeled: build is committed to 1h+shield
+        if not desc or re.search(r"dual wield", desc, re.I):
+            continue
+        if re.search(r"Critical Strikes do not deal additional damage", desc, re.I):
+            # the bonus costs the entire crit multiplier: crits deal base damage only
+            m = re.search(rf"\+{NUM}% additional damage", desc)
+            s = copy.deepcopy(snapshot)
+            s.pop("_extras", None)
+            base_dps = cycle_dps(s)["dps"]
+            s["crit"]["damage_pct"] = 100
+            if m:
+                _compound(s["additional"], "misc", float(m.group(1)))
+            key = (cat, desc)
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append({"cat": cat, "name": name, "text": desc,
+                         "bucket": "additional.misc − crit nullified",
+                         "delta": round((cycle_dps(s)["dps"] / base_dps - 1) * 100, 2),
+                         "cond": False})
             continue
         best = None
         for line in re.split(r"\n", desc):
             line = line.strip()
             if not line or NOT_THIS_BUILD.search(line):
                 continue
-            path, value = classify(line)
+            proc = re.search(rf"{NUM}% chance [^\n]*?to deal \+{NUM}% additional", line, re.I)
+            if proc:
+                # per-cast proc: expected value, not the headline number (50%x16 = +8)
+                chance, bonus = float(proc.group(1)), float(proc.group(2))
+                path, value = "additional.misc", chance * bonus / 100
+            else:
+                path, value = classify(line)
             if path in (None, "ignore"):
                 continue
             d = impact_of(path, value or 0, snapshot) if path != "special.cold_infiltration" else 0.0
             if d is not None and (best is None or d > best[0]):
-                best = (d, path)
+                best = (d, path, bool(proc))
         key = (cat, desc)
         if key in seen:
             continue
@@ -132,7 +157,7 @@ def build_catalog():
             "cat": cat, "name": name, "text": desc,
             "bucket": best[1] if best else "—",
             "delta": round(best[0], 2) if best else None,
-            "cond": bool(CONDITIONAL.search(desc)),
+            "cond": bool(CONDITIONAL.search(desc)) and not (best and best[2]),
         })
     rows.sort(key=lambda r: (r["delta"] is None, -(r["delta"] or 0)))
     return rows

@@ -43,3 +43,21 @@ def test_free_wins_lists_underrolled_affixes():
         assert r["delta"] > 0
     deltas = [r["delta"] for r in rows]
     assert deltas == sorted(deltas, reverse=True)
+
+def test_dual_wield_mods_dropped_entirely():
+    rows = build_catalog()
+    assert not [r for r in rows if "dual wield" in r["text"].lower()]
+
+def test_chance_procs_use_expected_value():
+    rows = build_catalog()
+    procs = [r for r in rows if "chance for that cast to deal" in r["text"]]
+    assert procs, "proc mod missing from catalog"
+    for r in procs:
+        assert r["delta"] is not None and r["delta"] < 10, (r["delta"], r["text"][:60])
+
+def test_crit_nullify_mods_score_negative():
+    rows = build_catalog()
+    nullify = [r for r in rows if "do not deal additional damage" in r["text"]]
+    assert nullify, "crit-nullify mod missing"
+    for r in nullify:
+        assert r["delta"] is not None and r["delta"] < 0, (r["delta"], r["text"][:60])

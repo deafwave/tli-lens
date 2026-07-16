@@ -17,7 +17,8 @@ NOT_THIS_BUILD = re.compile(
     r"|Wilt|Erosion|Fire Damage|Lightning Damage|Ignite|Shock Effect|Trauma|Blur"
     r"|Projectile|Bow|Crossbow|Pistol|Cannon|Staff|Wand|Two-Handed|Dual Wield"
     r"|Channeled|Curse Skill|Mobility Skill|Persistent Damage|Damage over Time|DoT|Elixir"
-    r"|Min Physical Damage|Erosion Resistance)\b", re.I)
+    r"|Min Physical Damage|Erosion Resistance"
+    r"|empty (?:Active|Passive) Skill [Ss]lot)\b", re.I)   # build has 5 actives + 4 auras: no empty slots
 CONDITIONAL = re.compile(
     r"\b(when|after|if |for every|per stack|recently|while|next|on \w+ing|devoured|chance to)\b", re.I)
 

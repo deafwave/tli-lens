@@ -18,8 +18,14 @@ NOT_THIS_BUILD = re.compile(
     r"|Projectile|Bow|Crossbow|Pistol|Cannon|Staff|Wand|Two-Handed|Dual Wield"
     r"|Channeled|Curse Skill|Mobility Skill|Persistent Damage|Damage over Time|DoT|Elixir"
     r"|Min Physical Damage|Erosion Resistance"
-    r"|empty (?:Active|Passive) Skill [Ss]lot)", re.I)   # build has 5 actives + 4 auras: no empty slots
+    r"|empty (?:Active|Passive) Skill [Ss]lot"
+    r"|(?<![Nn]ot )at Low Life)", re.I)   # build has 5 actives + 4 auras: no empty slots;
+    # ES is the defensive layer, so "at Low Life" gains are unsustainable ("not at Low Life" stays valid)
     # no trailing \b: plurals ("Projectiles", "Minions") must match too
+
+# Whole-mod dealbreakers: any line matching kills the entire mod for this build
+MOD_DISQUALIFIERS = re.compile(
+    r"(?:Max )?Energy Shield is fixed at 0", re.I)   # defense is ES-based
 CONDITIONAL = re.compile(
     r"\b(when|after|if |for every|per stack|recently|while|next|on \w+ing|devoured|chance to)\b", re.I)
 
@@ -130,6 +136,10 @@ def build_catalog():
         if key in seen:
             continue
         seen.add(key)
+        if MOD_DISQUALIFIERS.search(desc):
+            rows.append({"cat": cat, "name": name, "text": desc,
+                         "bucket": "— (kills ES defense)", "delta": None, "cond": False})
+            continue
         nullify = bool(re.search(r"Critical Strikes do not deal additional damage", desc, re.I))
         s = copy.deepcopy(clean)
         applied, used_ev = [], False

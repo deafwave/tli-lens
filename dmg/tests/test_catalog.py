@@ -80,3 +80,16 @@ def test_tradeoff_mods_score_net_not_best_line():
     # net of x0.80 and x1.40 is ~x1.12, far below the +40 headline
     for r in trade:
         assert r["delta"] is not None and r["delta"] < 15, (r["delta"], r["text"][:60])
+
+def test_es_zeroing_and_lowlife_mods_not_applicable():
+    rows = build_catalog()
+    es0 = [r for r in rows if "Energy Shield is fixed at 0" in r["text"]]
+    assert es0 and all(r["delta"] is None for r in es0)
+    lowlife = [r for r in rows if re.search(r"(?<!not )at Low Life", r["text"]) and r["delta"] is not None]
+    # gains gated on BEING at low life don't work with ES as the defensive layer
+    assert not [r for r in lowlife if "additional" in r["bucket"] and "not at Low Life" not in r["text"]], lowlife[:3]
+
+def test_not_at_low_life_still_modeled():
+    rows = build_catalog()
+    ok = [r for r in rows if "when not at Low Life" in r["text"]]
+    assert ok and any(r["delta"] is not None for r in ok)

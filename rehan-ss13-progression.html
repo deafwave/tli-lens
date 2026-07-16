@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rehan SS13 — Damage Systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0c141d;
+  --night-2:#101b27;
+  --ice-line:#1d2c3b;
+  --text:#d7e2ec;
+  --muted:#7c8ea0;
+  --faint:#54677a;
+  --frost:#7fd8e8;
+  --marble:#cfc3a8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--night)}
+body{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(1200px 500px at 50% -10%, #16283a 0%, transparent 60%),
+    radial-gradient(900px 600px at 85% 110%, #101f26 0%, transparent 55%),
+    var(--night);
+  min-height:100vh;
+  padding:0 0 96px;
+}
+.wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+
+/* ---------- header ---------- */
+header{padding:64px 0 8px}
+.patch{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.18em;
+  color:var(--faint);text-transform:uppercase;
+}
+h1{
+  font-family:Marcellus,serif;font-weight:400;
+  font-size:clamp(34px,5vw,54px);letter-spacing:.06em;
+  margin:6px 0 2px;color:#e9f1f7;
+}
+h1 .hero-sub{color:var(--frost)}
+.lede{
+  max-width:74ch;color:var(--muted);font-size:15px;line-height:1.6;margin-top:14px;
+}
+.lede strong{color:var(--text);font-weight:500}
+
+/* ---------- the one rule callout ---------- */
+.damage-note{
+  margin:24px 0 8px;padding:14px 18px;border-radius:8px;max-width:80ch;
+  border:1px solid rgba(127,216,232,.35);background:rgba(127,216,232,.06);
+  font-size:14px;line-height:1.6;color:var(--text);
+}
+.damage-note .key-lbl{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--frost);display:block;margin-bottom:6px;
+}
+.damage-note b{color:#e9f1f7}
+.add{color:var(--faint);text-decoration:line-through;text-decoration-color:rgba(124,142,160,.7)}
+.mult-tag{color:var(--frost);font-weight:600}
+
+/* ---------- section headers (shared) ---------- */
+.bundles{margin-top:52px}
+.bundles>h2{
+  font-family:Marcellus,serif;font-weight:400;font-size:26px;letter-spacing:.08em;
+  margin-bottom:6px;color:#e9f1f7;
+}
+.bundles>p{color:var(--muted);font-size:14px;max-width:72ch;line-height:1.6}
+
+/* ---------- cards (shared shell) ---------- */
+.bundle{
+  margin-top:18px;border:1px solid var(--ice-line);border-radius:10px;
+  background:linear-gradient(180deg, rgba(18,30,43,.5), rgba(12,20,29,.15));
+  padding:20px 24px 18px;
+  scroll-margin-top:24px;
+}
+.bundle:target{border-color:rgba(127,216,232,.5);box-shadow:0 0 0 1px rgba(127,216,232,.25), 0 8px 40px rgba(0,0,0,.4)}
+.bundle-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.bundle-num{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--night);
+  background:var(--frost);border-radius:4px;padding:2px 8px;font-weight:500;
+  transform:translateY(-2px);
+}
+.bundle h3{font-family:Marcellus,serif;font-weight:400;font-size:20px;letter-spacing:.05em;color:#e9f1f7}
+.role-chip{
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:2px 8px;border-radius:4px;transform:translateY(-2px);
+}
+.core{margin-top:12px;font-size:15px;line-height:1.55;color:var(--text)}
+.core b{color:#e9f1f7;font-weight:600}
+
+/* multiplier callout (reused shell) */
+.enabler{
+  margin-top:14px;padding:10px 14px;border-radius:6px;
+  border:1px solid rgba(127,216,232,.28);background:rgba(127,216,232,.05);
+  font-size:13.5px;line-height:1.55;
+}
+.enabler .key-lbl{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--frost);display:block;margin-bottom:3px;
+}
+
+/* feeds-it list */
+.chain{list-style:none;margin-top:14px}
+.chain li{
+  position:relative;padding:6px 0 6px 26px;font-size:13.5px;line-height:1.55;color:var(--muted);
+}
+.chain li::before{
+  content:"⇒";position:absolute;left:2px;top:6px;color:var(--faint);
+  font-family:"IBM Plex Mono",monospace;
+}
+.chain li b{color:var(--text);font-weight:500}
+.chain .sys{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;
+  padding:1px 6px;border-radius:3px;margin-right:7px;white-space:nowrap;vertical-align:1px;
+}
+
+/* slate menu + tags */
+.mini-lbl{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--faint);display:block;margin-bottom:6px;
+}
+.sys-menu{margin-top:16px}
+.pill{
+  display:inline-block;margin:4px 6px 0 0;padding:3px 10px;border-radius:20px;
+  border:1px solid rgba(207,195,168,.3);background:rgba(207,195,168,.06);
+  font-size:12px;color:var(--marble);
+}
+.tagrow{margin-top:14px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.05em;line-height:1.5}
+.gate-note{margin-top:14px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.05em;color:var(--frost)}
+.cost-note{margin-top:9px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.05em;color:#c9a86a}
+
+/* free wins list */
+.simple-row{
+  display:flex;gap:14px;align-items:baseline;padding:10px 0;
+  border-bottom:1px solid rgba(29,44,59,.6);font-size:13.5px;line-height:1.5;color:var(--muted);
+}
+.simple-row:last-child{border-bottom:0}
+.simple-row b{color:var(--text);font-weight:500}
+.simple-row .lever{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--frost);white-space:nowrap;min-width:82px;
+}
+
+/* forks */
+.fork-opt{
+  margin-top:10px;padding:10px 14px;border-radius:6px;border:1px solid var(--ice-line);
+  background:rgba(18,30,43,.4);font-size:13.5px;line-height:1.5;color:var(--muted);
+}
+.fork-opt b{color:var(--text);font-weight:500}
+.fork-opt .opt-lbl{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--marble);display:block;margin-bottom:3px;
+}
+.fork .lean{margin-top:14px;font-size:13px;color:var(--frost);font-style:italic;line-height:1.55}
+
+/* ---------- dependency graph ---------- */
+.treeviz{margin-top:44px}
+.treeviz>h2{
+  font-family:Marcellus,serif;font-weight:400;font-size:26px;letter-spacing:.08em;
+  margin-bottom:6px;color:#e9f1f7;
+}
+.treeviz>p{color:var(--muted);font-size:14px;max-width:74ch;line-height:1.6}
+.treeviz>p strong,.treeviz>p b{color:var(--text);font-weight:600}
+.tree-scroll{
+  margin-top:20px;overflow-x:auto;border:1px solid var(--ice-line);border-radius:10px;
+  background:linear-gradient(180deg,rgba(18,30,43,.4),rgba(12,20,29,.1));padding:12px 8px;
+}
+svg.tree{display:block;margin:0 auto}
+.tcol{
+  fill:var(--faint);font-family:"IBM Plex Mono",monospace;font-size:10px;
+  letter-spacing:.12em;text-transform:uppercase;
+}
+.tree .edge{fill:none;stroke:var(--faint);stroke-width:1.4;opacity:.5;transition:stroke .15s,opacity .15s}
+.tree .edge.hot{stroke:var(--frost);opacity:1;stroke-width:2}
+a.tnode{cursor:pointer}
+a.tnode rect{fill:rgba(16,27,39,.92);stroke-width:1.5;transition:filter .15s,opacity .15s}
+a.tnode:hover rect{filter:brightness(1.35)}
+a.tnode.dim{opacity:.3;transition:opacity .15s}
+.tnl{
+  height:100%;display:flex;align-items:center;gap:7px;padding:0 9px;pointer-events:none;
+  font-family:"IBM Plex Sans",sans-serif;font-size:11.5px;line-height:1.2;color:var(--text);
+}
+.tnl-num{
+  flex:none;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--night);
+  border-radius:4px;padding:1px 5px;font-weight:600;
+}
+
+/* ---------- damage ledger ---------- */
+.ledger-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.ledger-table th{
+  text-align:left;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint);font-weight:500;
+  padding:6px 10px;border-bottom:1px solid var(--ice-line);
+}
+.ledger-table td{padding:8px 10px;border-bottom:1px solid rgba(29,44,59,.6);color:var(--muted);line-height:1.5;vertical-align:top}
+.ledger-table tr:last-child td{border-bottom:0}
+.ledger-table td b{color:var(--text);font-weight:500}
+.ledger-table .mult{font-family:"IBM Plex Mono",monospace;color:var(--marble);white-space:nowrap}
+.ledger-table tr.smallest td{color:var(--frost)}
+.ledger-table tr.smallest .mult{color:var(--frost);font-weight:600}
+.ledger-table .num{font-family:"IBM Plex Mono",monospace;color:var(--faint)}
+.ledger .subhead{
+  margin-top:22px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--marble);
+}
+.ledger .formula{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--marble)}
+.ledger .rule{list-style:none;margin-top:12px}
+.ledger .rule li{position:relative;padding:6px 0 6px 24px;font-size:13.5px;line-height:1.55;color:var(--muted)}
+.ledger .rule li::before{content:"\203a";position:absolute;left:5px;top:4px;color:var(--frost);font-family:"IBM Plex Mono",monospace;font-weight:600}
+.ledger .rule li b{color:var(--text);font-weight:500}
+.ledger .note{margin-top:12px;font-size:12.5px;color:var(--faint);font-style:italic;line-height:1.5}
+
+footer{margin-top:80px;color:var(--faint);font-size:12px;font-family:"IBM Plex Mono",monospace}
+@media (max-width:720px){
+  .wrap{padding:0 18px}
+  header{padding:40px 0 4px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="patch">Torchlight Infinite · patch SS12.5/SS13 · build planner export + computed damage model</div>
+  <h1>REHAN <span class="hero-sub">· SEETHING SILHOUETTE</span></h1>
+  <p class="lede">
+    Rehan's damage is <strong>one skill</strong>: Spectral Slash's Combo Finisher. Everything else on this
+    page is a <strong>system</strong> that multiplies that one number — so the build is grouped by damage
+    system, not by what you buy when. Mods are portable and slates are a menu: treat every list here as
+    <strong>“any mix,”</strong> not a shopping order. Every % figure on this page is now
+    <strong>computed</strong> from the parsed build (<span style="font-family:'IBM Plex Mono',monospace">dmg/</span> model,
+    94% of affix lines parsed, boss single-target) — not eyeballed.
+  </p>
+</header>
+
+<div class="damage-note">
+  <span class="key-lbl">the one rule that decides every roll</span>
+  <b>“additional damage” multiplies; “+% damage” only adds</b> — dev-confirmed, and this build's additive
+  pile already sits at <b>+491%</b>, so a fat <span class="add">+30% damage</span> roll is worth ~+5% real DPS
+  while each <span class="mult-tag">additional</span> line from a <i>new source</i> pays face value. The
+  computed pecking order: <b>Cold Penetration &gt; Combo Points &gt; new additional sources &gt; Crit &gt;
+  Attack Speed &gt; everything “% increased.”</b> Two demotions from the old version of this page:
+  Fervor turned out to be a <b>crit-rating engine</b>, not an additional-damage line, and Frostbite is a
+  <b>damage-taken amp on the enemy</b>, not a DoT.
+  <div class="tagrow"><span class="mini-lbl">the core hit · Spectral Slash Combo Finisher</span>
+    127% weapon Attack Damage × <b>(1 + Combo Points × Finisher Amp)</b> — currently 8 × 238.5% ≈ ×20 —
+    then clones repeat it at 70% falloff.<br>
+    scales on tags: Attack · Melee · Area · Physical · Combo · Strength · Persistent</div>
+</div>
+
+<section class="treeviz" id="graph">
+  <h2>The Damage Systems</h2>
+  <p>Six systems, laid out left to right by dependency. Arrows are the only hard rule —
+  <b>A&nbsp;→&nbsp;B means B can't run until A does</b>. Everything else floats. Node colour = role: the
+  core hit, the ailment layer, a multiplier, a buff, or the sustain gate. Hover to isolate a system;
+  click to jump to it.</p>
+  <div id="sys-graph"></div>
+</section>
+
+<section class="bundles" id="systems">
+  <h2>The Systems, in Detail</h2>
+  <p>Each card leads with the <b>damage</b> it makes or multiplies, lists what feeds it — <i>any mix</i>,
+  because the mods are portable — and the slate lines you can pick from. Nothing here is a fixed slot.</p>
+  <div id="sys-cards"></div>
+</section>
+
+<section class="bundles" id="simple">
+  <h2>Free Wins</h2>
+  <p>No dependencies, no reworks — pure number upgrades you grab whenever currency is spare. The finisher
+  scales on <b>weapon</b> damage, so a weapon tier is the biggest single lever on the whole page.</p>
+  <div id="simple-list"></div>
+</section>
+
+<section class="bundles" id="forks">
+  <h2>The Forks</h2>
+  <p>Where the same budget buys very different things. These are the calls the sheet can't make for you —
+  here's the tradeoff, and which way it leans for pure damage.</p>
+  <div id="fork-cards"></div>
+</section>
+
+<section class="bundles" id="ledger">
+  <h2>The Damage Ledger — now computed</h2>
+  <p>The forks above are specific calls. This used to be a fill-it-in method; the
+  <span class="formula">dmg/</span> model has since parsed the build (94% of affix lines) and computed the
+  real numbers. Baseline: <b>33.8M boss DPS</b>, 0.95s combo cycle (3 starters + finisher, 4 clones).</p>
+  <article class="bundle ledger">
+    <p class="core">Your damage is a <b>product</b> of multiplier buckets —
+    <span class="formula">weapon × skill% × (1+Σincreased) × ∏(1+additional) × (points×amp) × crit × enemy-taken × (1−res+pen) × speed</span>.
+    The table below is the model nudging each bucket on <i>your actual snapshot</i> and reporting the DPS
+    change — the “smallest bucket” hunt, done for you.</p>
+
+    <div class="subhead">the ledger, as measured · +X of stat → +Y% boss DPS</div>
+    <table class="ledger-table">
+      <thead><tr><th>#</th><th>buy</th><th>why it lands there</th><th>→ ΔDPS</th></tr></thead>
+      <tbody>
+        <tr class="smallest"><td class="num">1</td><td><b>+10% Cold Penetration</b></td><td>boss at 40% res, build has 0 pen; works below zero res</td><td class="mult">+16.7%</td></tr>
+        <tr><td class="num">2</td><td><b>+1 Combo Point consumed</b></td><td>finisher = 1 + points × 238.5% amp</td><td class="mult">+10.6%</td></tr>
+        <tr><td class="num">3</td><td><b>any NEW additional source</b></td><td>Paralysis (+15% taken), Cold Infiltration (+13% + res shred) — unclaimed multipliers</td><td class="mult">≈ face value</td></tr>
+        <tr><td class="num">4</td><td><b>+10% Warcry contribution</b></td><td>Shockwave layer sits at ×1.54</td><td class="mult">+6.5%</td></tr>
+        <tr><td class="num">5</td><td><b>+30% Crit Damage</b></td><td>44% chance / 335% crit damage today</td><td class="mult">+6.5%</td></tr>
+        <tr><td class="num">6</td><td><b>+5% Crit Chance</b></td><td>rating ÷ 100, no level curve</td><td class="mult">+5.8%</td></tr>
+        <tr><td class="num">7</td><td><b>+10% Attack Speed</b></td><td>linear on the 0.95s cycle</td><td class="mult">+4.6%</td></tr>
+        <tr><td class="num">8</td><td><b>+10 Frostbite taken</b></td><td>enemy sits at ×2.45 already</td><td class="mult">+4.1%</td></tr>
+        <tr><td class="num">9</td><td><b>+10% Gear Phys (weapon)</b></td><td>pile at +161% on the weapon</td><td class="mult">+3.8%</td></tr>
+        <tr><td class="num">10</td><td><b>+10% Finisher Amp</b></td><td>onto the existing 238.5%</td><td class="mult">+3.5%</td></tr>
+        <tr><td class="num">11</td><td><b>+10% ANY “% increased”</b></td><td>the +491% additive pile — the floor of the table</td><td class="mult">+1.7%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subhead">stop paying for</div>
+    <ul class="rule">
+      <li><b>Armor / armor-mitigation penetration — dead.</b> Fully converted cold hits check cold resistance only.</li>
+      <li><b>Numb — dead.</b> It amplifies <i>Lightning</i> damage taken; this build deals cold.</li>
+      <li><b>Bladerunner “while Dual Wielding” nodes — dead with the shield equipped.</b> Respec candidates.</li>
+      <li><b>% increased damage of every flavor</b> — not dead, just the worst stat on the sheet at +1.7% per 10%.</li>
+    </ul>
+
+    <div class="subhead">trust &amp; re-running</div>
+    <ul class="rule">
+      <li><b>Re-rank after any build change:</b> <span class="formula">python -X utf8 -m dmg.build_parser "Rehan SS13_update1.json" -o dmg/snapshot.json &amp;&amp; python -X utf8 -m dmg.rank sensitivity dmg/snapshot.json</span></li>
+      <li><b>Price a specific roll:</b> <span class="formula">python -X utf8 -m dmg.rank apply dmg/snapshot.json penetration.cold_pct 40</span> → +66.7%.</li>
+      <li><b>Known blind spots</b> (full list in <span class="formula">dmg/RANKINGS.md</span>): divinity slates / pactspirits / memories / prisms unparsed — if your pen lives there, the baseline shifts but pen's lead only shrinks, never flips below crit; skill levels past 20 and support-gem numerics unmodeled; Fervor-at-100 and full Berserk uptime assumed.</li>
+      <li>Every researched mechanic is cited row-by-row in <span class="formula">dmg/mechanics.md</span> with a confidence flag.</li>
+    </ul>
+  </article>
+</section>
+
+<footer>Generated from “Rehan SS13_update1.json” (loadout “more_1”, sword + shield) · grouped by damage system ·
+names resolved from tlicompendium SS12.5 data bundles · % figures computed by the dmg/ damage model
+(29 tests, mechanics cited in dmg/mechanics.md) · 2026-07-15</footer>
+</div>
+
+<script>
+/* role = how a system contributes (drives node + chip colour) */
+const ROLE = {
+  core:    {label:"core hit",   color:"#7fd8e8"},
+  ailment: {label:"ailment",    color:"#79c8a6"},
+  mult:    {label:"multiplier", color:"#c9a86a"},
+  buff:    {label:"buff",       color:"#9d85dd"},
+  gate:    {label:"gate",       color:"#7c8ea0"},
+};
+/* src = where a "feeds it" line comes from (little tag) */
+const SRC = {
+  gear:    {label:"gear",    color:"#c9a86a"},
+  skill:   {label:"skill",   color:"#d7e2ec"},
+  support: {label:"support", color:"#8fb8c9"},
+  prism:   {label:"prism",   color:"#7fd8e8"},
+  talent:  {label:"talent",  color:"#9d85dd"},
+  slate:   {label:"slate",   color:"#cfc3a8"},
+};
+
+/* ---------- damage systems (gates = hard prerequisites) ---------- */
+const SYSTEMS = [
+  {id:"finisher", role:"core", name:"Combo Finisher — the hit", gates:[],
+   core:"Rehan's whole damage bar is one skill: <b>Spectral Slash's Combo Finisher</b> — 127% weapon Attack Damage <b>× (1 + Points consumed × Amp sum)</b>, then clones repeat it at 70% falloff. Amp sum is one additive stat (skill 30% + Recuperation 5.5% + Animitta 80% + weapon 62% + shield 61% = <b>238.5%</b>); at 8 points that's roughly a ×20 on the hit.",
+   mult:"Because Amp is <i>inside</i> a points × sum product, the two knobs differ: <b>+1 Combo Point = +10.6% DPS</b>, while +10% more Amp onto the existing 238.5% pile = +3.5%. Point <i>sources</i> beat Amp rolls, and both beat any <span class='add'>+% damage</span> line.",
+   feeds:[
+     {src:"gear", html:"a Combo-Finisher necklace — Heart of Animitta gives +1 Finisher charge, Finisher Amplification, and a Combo Point on crit"},
+     {src:"gear", html:"<b>+Combo Point from Combo Starters</b> — a suffix that rides on <i>either</i> ring; the slot is irrelevant, item level just sets the tier and the sign of its paired damage roll"},
+     {src:"gear", html:"damage-per-Combo-Point-consumed on the belt"},
+     {src:"support", html:"Legion (clones) and Detonation on Spectral Slash; any Activation Medium so it self-casts"},
+   ],
+   slates:["Finisher Amplification","Combo Point on Finisher crit","+additional Attack Damage","+Attack Skill Level"],
+   tags:["Attack","Melee","Area","Physical","Combo","Strength","Persistent"]},
+
+  {id:"frostbite", role:"ailment", name:"Frostbite — the enemy-side amp", gates:["finisher"],
+   core:"Convert <b>100% Physical → Cold</b> (which double-dips: Physical, Cold, Elemental, Attack and Melee modifiers ALL still apply — dev-confirmed) and every hit builds <b>Frostbite Rating</b> on the enemy. It is not a DoT: each rating point is <b>+1% additional Cold damage TAKEN</b>, capped at 120 base +25 from the ring — a ×2.45 sitting on the boss.",
+   mult:"<span class='mult-tag'>Cold Penetration</span> is the computed #1 stat on the whole sheet: <b>+10% pen = +16.7% DPS</b> against a 40%-res boss, it keeps working below zero resist, and the build currently has none. Armor penetration, by contrast, is a <b>no-op</b> — fully converted hits check cold resistance only. Frostbite Effect and Max Rating are worth ~+4% per 10 on top.",
+   feeds:[
+     {src:"slate", html:"the God of Knowledge line — inflict Frostbite on Cold hit, Focus Blessing off Frostbitten targets"},
+     {src:"talent", html:"Prophet's Frostbite legendaries — Effect, Cold Infiltration on Frozen, more-vs-Frozen"},
+     {src:"skill", html:"Ice Bond on an Activation Medium as the self-applicator"},
+     {src:"gear", html:"<b>Max Frostbite Rating</b> — a suffix that can land on any ring — plus the Physical→Cold conversion slate"},
+   ],
+   slates:["Inflicts Frostbite on Cold hit","+Frostbite Effect (stacks ×N)","Cold Infiltration on Frozen","Physical→Cold conversion","Focus Blessing on Frostbitten"]},
+
+  {id:"fervor", role:"mult", name:"Fervor — the crit-rating engine", gates:["sustain"],
+   core:"Correction from the old page: Fervor is <b>not</b> an additional-damage line. Each point of Fervor Rating grants <b>+2% Critical Strike Rating</b>, scaled by Fervor Effect — and this build carries <b>+188% Fervor Effect</b> (two rings +60%, tree +68%). At 100 sustained rating that's +576% crit rating, the bulk of the computed <b>44% crit chance</b>.",
+   mult:"Fervor Effect rolls are therefore <span class='mult-tag'>crit-chance rolls in disguise</span>, and the Ranger node converts the same rating into <b>+50% Crit Damage</b> (0.5%/rating). The gloves also pay +1% Skill Area per 3 rating — clear-speed, not boss DPS.",
+   feeds:[
+     {src:"gear", html:"Dawn Break 'Have Fervor' (Vorax boots) to hold the resource; Ghost Slaughter gloves to spend it into area + additional damage"},
+     {src:"slate", html:"Fervor Rating generation and +Fervor Effect"},
+   ],
+   slates:["Fervor Rating = 25% of current on hit","+Fervor Effect","+Crit Damage per Fervor Rating"],
+   cost:"Ghost Slaughter burns Life &amp; ES per second while Fervor is active — pay for it in Sustain."},
+
+  {id:"crit", role:"mult", name:"Crit — Fervor spent twice", gates:["fervor"],
+   core:"Critical Strike Damage multiplies the whole finisher, and the Ranger node converts <b>Fervor Rating → Crit Damage</b> — the pool you already built for chance gets spent a second time. Computed position: <b>44% chance / 335% crit damage</b>, so <b>+30% crit damage ≈ +6.5% DPS</b> and <b>+5% chance ≈ +5.8%</b> — crit rolls beat any % increased roll about 4:1.",
+   mult:"Crit chance is <span class='mult-tag'>rating ÷ 100, no enemy-level curve</span> — rating stacks as base 500 × (1 + all increased-rating %), so weapon-local “Attack Crit Rating for this gear” and Fearless's +80% both feed the same pool. Crit-damage flavors (crit / physical crit / attack crit) share one additive pool over the 150% base.",
+   feeds:[
+     {src:"support", html:"Critical Strike Damage Increase on Spectral Slash, in place of a plain damage support"},
+     {src:"slate", html:"the Fervor→Crit lines that open in the expanded divinity page"},
+     {src:"prism", html:"Crit Rating banded onto the Micro Talents around the still-stance prism"},
+   ],
+   slates:["+0.5% Crit Damage per Fervor Rating (×2)","+Crit Rating","Crit on Fervor"]},
+
+  {id:"warcry", role:"buff", name:"Warcry — free multipliers on a timer", gates:[],
+   core:"Self-cast Warcries (Shockwave, Defensive Buffer) buff damage per enemy affected — all on Activation Mediums, so they fire without a button. Computed: Shockwave pays <b>5.95% additional finisher damage per enemy × 5 enemies × 1.80 Warcry Effect ≈ a ×1.54 layer</b> on a boss.",
+   mult:"<span class='mult-tag'>Warcry Effect</span> (shield +62%, The Brave nodes) scales every warcry line at once, and “+min enemies affected” floors the stack count on lone bosses — <b>+10% warcry contribution ≈ +6.5% DPS</b>, mid-table.",
+   feeds:[
+     {src:"gear", html:"a Warcry-Effect off-hand (Ninth Apostle's shield) plus its +Active Skill Level"},
+     {src:"skill", html:"a curse-on-hit ring frees the skill slot the Warcries move into"},
+     {src:"talent", html:"Formless / The Brave Warcry nodes"},
+   ],
+   slates:["+min enemies affected by Warcry","Tenacity on Block","+Attack Skill Level"]},
+
+  {id:"sustain", role:"gate", name:"Sustain — the price of the engine", gates:[],
+   core:"Not damage — the toll. Fervor's drain and a crit-glass profile both need real recovery before either is safe to run.",
+   feeds:[
+     {src:"gear", html:"Eternity belt — kill-fed blessing stacks, replacing the flat-ES belt"},
+     {src:"slate", html:"ES Regain / restore-on-Severe-Injury lines"},
+   ],
+   slates:["ES Regain","restore ES on Severe Injury","Life on defeat"]},
+];
+
+/* ---------- free wins: no dependencies, pure number bumps ---------- */
+const SIMPLE = [
+  {lever:"weapon", html:"<b>Swordsman's Blade tier up (t0 → t1 → …)</b> — the finisher is 127% of <b>weapon</b> Attack Damage, so a weapon tier still multiplies the whole build — but the computed table demoted it: +10% gear phys ≈ +3.8% DPS now that the weapon pile is at +161%. Pen and Combo Points come first."},
+  {lever:"rings", html:"<b>Ring item level i82 → i86</b> — same +Combo Point suffix, but tier 1 flips its paired damage roll from <span class='add'>−5%</span> to <b>+1–2%</b>."},
+  {lever:"pactspirit", html:"<b>Level pactspirits</b> (Captain Kitty to L2, and so on) — flat stat and effect bumps, zero rework."},
+  {lever:"memory", html:"<b>Hero memory / trait rolls</b> — push the % lines to a higher tier when the currency's there."},
+  {lever:"slates", html:"<b>Re-roll slate lines to higher tiers</b> — the wording stays, the numbers grow."},
+  {lever:"affixes", html:"<b>Bump Cold Penetration / crit / Combo Point affixes to better tiers first</b> — per the computed ledger they pay 3–10× what any “% increased damage” tier does. Never re-roll toward %damage flavors."},
+];
+
+/* ---------- forks: same budget, different payoff ---------- */
+const FORKS = [
+  {id:"warcry-entry", name:"The Warcry layer — three ways in",
+   q:"You want the Warcry buffs, but the Timid ring that frees a skill slot for them costs a whole item's budget. Three routes:",
+   opts:[
+     {lbl:"Buy the Timid ring", html:"the ring auto-casts the Timid curse on hit, so you keep the curse <i>and</i> free its slot for a Warcry. Cleanest — but it's real money."},
+     {lbl:"Convert Bull's Rage → a Warcry", html:"no ring needed: turn a utility skill you already run into the Warcry. You lose Bull's Rage's rage/buff job, but the slot opens instantly and for free."},
+     {lbl:"Drop Timid → Resurrection Warcry", html:"skip the ring, replace the curse skill outright. You gain the Warcry but lose the Timid curse entirely — fine if the curse isn't carrying your damage."},
+   ],
+   lean:"If the Timid curse is actually pulling damage, buy the ring. If it isn't, convert Bull's Rage — it's the free path, and it keeps the ring money for the weapon."},
+
+  {id:"money-priority", name:"Where the next chunk of currency goes",
+   q:"Timid ring vs. a bigger sword vs. Heart of Animitta — same budget, very different payoff:",
+   opts:[
+     {lbl:"Bigger sword", html:"the finisher is 127% of <b>weapon</b> damage, so a weapon tier multiplies the entire build at once. Usually the highest-leverage buy in the game for an attack finisher."},
+     {lbl:"Heart of Animitta", html:"Finisher Amplification is <span class='mult-tag'>additional</span> — multiplicative on that same 127%. The second-best multiply, and it also fixes the combo loop."},
+     {lbl:"Timid ring / Warcry layer", html:"utility and enemy-count, not raw multiply. Genuinely good, but it doesn't scale the core hit the way the other two do."},
+   ],
+   lean:"The model reordered this one: <b>Cold Penetration sources beat all three</b> (+16.7% per 10%), then Combo Points (+10.6% each). Weapon phys and Animitta Amp both land near +3.5–3.8% per 10% now that their piles are fat. The Warcry layer computes at +6.5% per 10% — better than either. Buy pen, then points, then whichever of these is cheapest."},
+];
+
+/* ---------- render: system detail cards ---------- */
+{
+  const wrap = document.getElementById("sys-cards");
+  const srcTag = s => `<span class="sys" style="background:${SRC[s].color}22;color:${SRC[s].color}">${SRC[s].label}</span>`;
+  const shortName = id => SYSTEMS.find(y => y.id === id).name.split(" — ")[0];
+  SYSTEMS.forEach((s, i) => {
+    const rc = ROLE[s.role];
+    const card = document.createElement("article");
+    card.className = "bundle"; card.id = "sys-" + s.id;
+    let h = `<div class="bundle-head"><span class="bundle-num">${i+1}</span><h3>${s.name}</h3>`
+      + `<span class="role-chip" style="background:${rc.color}22;color:${rc.color}">${rc.label}</span></div>`
+      + `<p class="core">${s.core}</p>`;
+    if (s.mult) h += `<div class="enabler"><span class="key-lbl">the real multiplier</span>${s.mult}</div>`;
+    h += `<ul class="chain">${s.feeds.map(f => `<li>${srcTag(f.src)}${f.html}</li>`).join("")}</ul>`;
+    h += `<div class="sys-menu"><span class="mini-lbl">slate menu · pick to taste</span>${s.slates.map(x => `<span class="pill">${x}</span>`).join("")}</div>`;
+    if (s.tags) h += `<div class="tagrow"><span class="mini-lbl">skill tags it scales on</span>${s.tags.join(" · ")}</div>`;
+    if (s.cost) h += `<p class="cost-note">cost · ${s.cost}</p>`;
+    if (s.gates.length) h += `<p class="gate-note">gate · needs ${s.gates.map(shortName).join(" + ")} first</p>`;
+    card.innerHTML = h;
+    wrap.appendChild(card);
+  });
+}
+
+/* ---------- render: free wins ---------- */
+{
+  const wrap = document.getElementById("simple-list");
+  const card = document.createElement("article");
+  card.className = "bundle";
+  card.innerHTML = SIMPLE.map(u => `<div class="simple-row"><span class="lever">${u.lever}</span><span>${u.html}</span></div>`).join("");
+  wrap.appendChild(card);
+}
+
+/* ---------- render: forks ---------- */
+{
+  const wrap = document.getElementById("fork-cards");
+  FORKS.forEach(f => {
+    const card = document.createElement("article");
+    card.className = "bundle fork"; card.id = "fork-" + f.id;
+    card.innerHTML =
+      `<div class="bundle-head"><span class="bundle-num" style="background:var(--marble)">?</span><h3>${f.name}</h3></div>`
+      + `<p class="core">${f.q}</p>`
+      + f.opts.map(o => `<div class="fork-opt"><span class="opt-lbl">${o.lbl}</span>${o.html}</div>`).join("")
+      + `<p class="lean">lean · ${f.lean}</p>`;
+    wrap.appendChild(card);
+  });
+}
+
+/* ---------- render: damage-system graph (columns by dependency depth) ---------- */
+{
+  const NODE_W=170, NODE_H=54, COL_GAP=214, ROW_GAP=82, PADX=16, PADY=54;
+  const byId={}; SYSTEMS.forEach(s => byId[s.id]=s);
+  const depth={};
+  const dep = id => (id in depth) ? depth[id]
+    : (depth[id] = byId[id].gates.length ? Math.max(...byId[id].gates.map(dep)) + 1 : 0);
+  SYSTEMS.forEach(s => dep(s.id));
+
+  const cols={}; SYSTEMS.forEach(s => (cols[depth[s.id]] ||= []).push(s));
+  const ds = Object.keys(cols).map(Number).sort((a,b)=>a-b);
+  const maxRows = Math.max(...ds.map(d => cols[d].length));
+  const idx={}; SYSTEMS.forEach((s,i) => idx[s.id]=i+1);
+
+  const pos={};
+  ds.forEach((d,ci) => {
+    const list=cols[d], colX=PADX+ci*COL_GAP, off=(maxRows-list.length)/2;
+    list.forEach((s,ri) => { pos[s.id]={x:colX, y:PADY+(off+ri)*ROW_GAP, ci, s}; });
+  });
+  const W=PADX*2+(ds.length-1)*COL_GAP+NODE_W, H=PADY+maxRows*ROW_GAP+8;
+
+  let g=`<svg class="tree" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Damage system dependency graph">`;
+  g+=`<defs><marker id="arw" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#54677a"/></marker></defs>`;
+  ds.forEach((d,ci) => {
+    g+=`<text class="tcol" x="${PADX+ci*COL_GAP+NODE_W/2}" y="26" text-anchor="middle">${d===0 ? "no prerequisite" : "builds on the left"}</text>`;
+  });
+  for (const s of SYSTEMS) for (const gt of s.gates) {
+    const P=pos[gt], C=pos[s.id]; if (!P||!C) continue;
+    const x1=P.x+NODE_W, y1=P.y+NODE_H/2, x2=C.x, y2=C.y+NODE_H/2, dx=Math.max(46,(x2-x1)*0.45);
+    g+=`<path class="edge" data-a="${gt}" data-b="${s.id}" d="M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}" marker-end="url(#arw)"/>`;
+  }
+  for (const id in pos) {
+    const {x,y,s}=pos[id], col=ROLE[s.role].color;
+    g+=`<a class="tnode" data-id="${id}" href="#sys-${id}">`
+      +`<rect x="${x}" y="${y}" width="${NODE_W}" height="${NODE_H}" rx="8" style="stroke:${col}"/>`
+      +`<foreignObject x="${x}" y="${y}" width="${NODE_W}" height="${NODE_H}">`
+      +`<div xmlns="http://www.w3.org/1999/xhtml" class="tnl"><span class="tnl-num" style="background:${col}">${idx[id]}</span>${s.name.split(" — ")[0]}</div>`
+      +`</foreignObject></a>`;
+  }
+  g+=`</svg>`;
+
+  const root=document.getElementById("sys-graph");
+  root.innerHTML=`<div class="tree-scroll">${g}</div>`;
+
+  const nodes=[...root.querySelectorAll(".tnode")], edges=[...root.querySelectorAll(".edge")];
+  for (const nd of nodes) {
+    const id=nd.dataset.id;
+    nd.addEventListener("mouseenter",()=>{
+      const con=new Set([id]);
+      for (const e of edges) if (e.dataset.a===id||e.dataset.b===id) { e.classList.add("hot"); con.add(e.dataset.a); con.add(e.dataset.b); }
+      for (const o of nodes) if (!con.has(o.dataset.id)) o.classList.add("dim");
+    });
+    nd.addEventListener("mouseleave",()=>{
+      for (const e of edges) e.classList.remove("hot");
+      for (const o of nodes) o.classList.remove("dim");
+    });
+  }
+}
+</script>
+</body>
+</html>

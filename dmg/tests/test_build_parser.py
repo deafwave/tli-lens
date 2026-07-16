@@ -40,3 +40,25 @@ def test_parse_build_produces_valid_snapshot_and_report():
     for k in ("matched", "ignored", "unmatched", "manual"):
         assert isinstance(report[k], list)
     assert report["matched"], "nothing matched at all"
+
+from dmg.build_parser import fill_template, classify as _cl
+
+def test_fill_template_hash_and_baked_numbers():
+    # '#' templates take rolled values; baked-number templates get numbers replaced in order
+    assert fill_template("+#% Critical Strike Damage", [42]) == "+42% Critical Strike Damage"
+    assert fill_template("+36% Attack Speed", [44]) == "+44% Attack Speed"
+    assert fill_template("+16% Attack Speed", []) == "+16% Attack Speed"
+
+def test_memory_and_divinity_lines_extracted():
+    lines = extract_lines(BUILD)
+    slots = {l["slot"] for l in lines}
+    assert "memory" in slots and "slate" in slots
+    slate_texts = [l["text"] for l in lines if l["slot"] == "slate"]
+    # divinity descriptions are normalized: '30 %' -> '30%', one line per '\n'
+    assert all(" %" not in t for t in slate_texts)
+
+def test_classify_slate_and_memory_cases():
+    assert _cl("+30% additional Attack Damage") == ("additional.misc", 30.0)
+    assert _cl("+30% additional Ailment Damage dealt by attacks") == ("ignore", None)
+    assert _cl("-10% Attack Speed") == ("rotation.attack_speed_inc_pct", -10.0)
+    assert _cl("+7% additional Attack and Cast Speed for Combo Starters") == ("rotation.attack_speed_inc_pct", 7.0)

@@ -72,6 +72,62 @@ def _trait_lines(lo):
                 yield {"source": f"trait:{tier}:{name}", "slot": "trait", "text": line.strip()}
 
 
+def fill_template(template, values):
+    """Memory affix text: '#' templates take rolled values; templates with baked
+    sample numbers get their numbers replaced by the actual rolls, in order."""
+    if "#" in template:
+        return substitute(template, values)
+    if not values:
+        return template
+    vals = [f"{v:g}" if isinstance(v, float) else str(v) for v in values]
+    it = iter(vals)
+    return re.sub(r"\d+(?:\.\d+)?", lambda m: next(it, m.group(0)), template)
+
+
+def _memory_lines(lo):
+    cache = _load("SS12.5-hero-memory-en.json")["hero-memory/i18n/en"]
+    lookup = {}
+    for cat in cache.values():
+        if isinstance(cat, dict):
+            lookup.update(cat)
+    inv = {m["id"]: m for m in lo["heroMemories"]["inventory"]}
+    for slot, mem_id in lo["heroMemories"]["equipped"].items():
+        mem = inv.get(mem_id)
+        if mem is None:
+            continue
+        src = f"memory:{slot}:{mem.get('customName') or mem.get('memoryType', '?')}"
+        affixes = [mem.get("baseStat")] + (mem.get("fixedAffixes") or []) + (mem.get("randomAffixes") or [])
+        for aff in affixes:
+            if not aff:
+                continue
+            entry = lookup.get(aff["guid"])
+            if entry is None:
+                yield {"source": src, "slot": "memory", "text": f"UNRESOLVED MEMORY AFFIX {aff['guid']}"}
+                continue
+            values = [v["value"] for v in aff.get("values") or []] or [aff.get("value")]
+            text = fill_template(entry["template"], [v for v in values if v is not None])
+            for line in text.split("\n"):
+                if line.strip():
+                    yield {"source": src, "slot": "memory", "text": line.strip()}
+
+
+def _divinity_lines(lo):
+    inv = {s["id"]: s for s in lo["divinity"]["inventory"]}
+    for placement in lo["divinity"]["placements"]:
+        slate = inv.get(placement["slateId"])
+        if slate is None:
+            yield {"source": f"slate:{placement['slateId'][:12]}", "slot": "slate",
+                   "text": f"UNRESOLVED SLATE {placement['slateId']}"}
+            continue
+        name = slate.get("legendaryTemplate") or slate.get("type", "slate")
+        for aff in slate.get("affixes") or []:
+            src = f"slate:{name}:{aff.get('nodeType', '?')}"
+            desc = re.sub(r"(\d) %", r"\1%", aff.get("description") or "")
+            for line in desc.split("\n"):
+                if line.strip():
+                    yield {"source": src, "slot": "slate", "text": line.strip()}
+
+
 def _pick_loadout(build, loadout_index):
     loadouts = build["loadouts"]["loadouts"]
     if loadout_index is not None:
@@ -87,7 +143,8 @@ def extract_lines(build_path, loadout_index=None):
     with open(build_path, encoding="utf-8") as f:
         build = json.load(f)
     lo = _pick_loadout(build, loadout_index)
-    return [*_gear_lines(lo), *_tree_lines(lo), *_trait_lines(lo)]
+    return [*_gear_lines(lo), *_tree_lines(lo), *_trait_lines(lo),
+            *_memory_lines(lo), *_divinity_lines(lo)]
 
 
 import copy
@@ -115,6 +172,8 @@ PATTERNS = [
     (rf"\+{NUM} Support Skill Level", "extras.support_skill_level"),
     (rf"\+{NUM} to the minimum number of enemies affected by Warcry", "extras.warcry_min_enemies"),
     (rf"{NUM}% Critical Strike Damage per Fervor Rating", "extras.crit_dmg_per_fervor_rating"),
+    (rf"\+{NUM}% additional Attack and Cast Speed", "rotation.attack_speed_inc_pct"),
+    (r"additional Ailment Damage", "ignore"),
     (rf"\+{NUM}% additional .*[Dd]amage", "additional.misc"),
     (rf"\+{NUM}% (?:increased )?Physical Damage", "increased.physical"),
     (rf"\+{NUM}% (?:increased )?Attack Damage", "increased.attack"),
@@ -122,11 +181,13 @@ PATTERNS = [
     (rf"\+{NUM}% (?:increased )?Area Damage", "increased.area"),
     (rf"\+{NUM}% (?:increased )?Cold Damage", "increased.cold"),
     (rf"\+{NUM}% damage", "increased.global"),
+    (rf"\+{NUM}% Physical Skill Critical Strike Damage", "crit.damage_pct"),
     (rf"{NUM}% Critical Strike Damage", "crit.damage_pct"),
+    (r"Inflicts Cold Infiltration", "special.cold_infiltration"),
     (rf"\+{NUM}% Attack Critical Strike Rating", "crit.rating_inc_pct"),
     (rf"\+{NUM}% Critical Strike Rating", "crit.rating_inc_pct"),
-    (rf"\+{NUM}% Attack Speed", "rotation.attack_speed_inc_pct"),
-    (rf"\+{NUM}% Attack and Cast Speed", "rotation.attack_speed_inc_pct"),
+    (rf"(?:^|\s){NUM}% Attack Speed", "rotation.attack_speed_inc_pct"),
+    (rf"(?:^|\s){NUM}% Attack and Cast Speed", "rotation.attack_speed_inc_pct"),
     (rf"\+{NUM}% Frostbite Effect", "extras.frostbite_effect_pct"),
     (rf"\+{NUM}% (?:increased )?Elemental Damage", "increased.elemental"),
     (rf"\+{NUM}% Elemental Penetration", "penetration.cold_pct"),
@@ -139,6 +200,9 @@ PATTERNS = [
      r"|Sealed Mana Compensation|Warcry Cooldown|additional damage taken|Skill Area"
      r"|Energy Shield Regain|Barrier|Consumes|Loses Fervor|chance to gain|chance to Mark"
      r"|Charging Energy Shield|回复"
+     r"|[Ii]mmune to|Fortitude|Injury Buffer|Missing Energy Shield"
+     r"|Converts 100% of(?: Minion)? Physical Damage to Cold"
+     r"|Inflicts Frostbite|Copies the last Talent"
      r"|while Dual Wielding)", "ignore"),   # loadout 6 is sword+shield: dual-wield conditionals are false
 ]
 _COMPILED = [(re.compile(p, re.IGNORECASE), path) for p, path in PATTERNS]
@@ -179,6 +243,12 @@ def _apply(snap, extras, path, value, line):
     if path == "base.weapon_attack_speed_set":
         if line["slot"] == "mainHand":
             snap["base"]["weapon_attack_speed"] = value
+        return
+    if path == "special.cold_infiltration":
+        # mechanics.md#cold-infiltration: 13% additional Cold taken + -10% enemy cold res;
+        # boss Freeze uptime assumed (see RANKINGS caveats)
+        snap["enemy_taken"]["cold_infiltration"] = 13
+        snap["penetration"]["cold_pct"] += 10
         return
     if path == "base.gear_attack_speed_pct":
         if line["slot"] == "mainHand":

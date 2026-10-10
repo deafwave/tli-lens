@@ -66,7 +66,7 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
     return { why: "typed crit damage HoA carries (Fire/Attack/Melee/Projectile)", edits: [["add", "crit.damage_pct", +m[1]]] };
   if (/your next non-Channeled Main Skill is enhanced by Obliterate/i.test(text))
     return { why: "Obliterate", provides: ["ruinous_star"], edits: [
-      ["conv", "physical", "erosion", 100], ["conv", "fire", "erosion", 100], ["conv", "cold", "erosion", 100],
+      ["conv", "physical", "erosion", 100], ["conv", "fire", "erosion", 100], ["conv", "cold", "erosion", 100], ["conv", "lightning", "erosion", 100],
       ["add", "deterioration.hit_damage_pct", 60], ["set", "deterioration.duration_s", 1],
       ["set", "deterioration.tick_interval_s", 0.325], ["set", "deterioration.obliterate_interval_s", num(text)[0] ?? 0.5],
       ["set", "deterioration.max_stacks", 99]] };

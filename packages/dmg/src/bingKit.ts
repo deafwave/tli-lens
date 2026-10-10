@@ -120,13 +120,16 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
     } else if (AURAS[name]) {
       // Aura Amplification: +aura effect for the supported aura (5.25 at Lv1, +0.25/level)
       const amp = sups.filter((x: any) => x.supportGuid === "Aura Amplification")
-        .reduce((e: number, x: any) => e + lin(5.25, 10.25, 15.25)((x.level ?? 20) + supportBonus), 0)
-        // Precise: Malleable: +30% aura effect at L20 (+0.5/level) with an Elite within 10m — Solar Ring assumed to satisfy it
-        + sups.filter((x: any) => x.supportGuid === "Precise: Malleable")
-          .reduce((e: number, x: any) => e + 30 + 0.5 * ((x.level ?? 20) + supportBonus - 20), 0);
+        .reduce((e: number, x: any) => e + lin(5.25, 10.25, 15.25)((x.level ?? 20) + supportBonus), 0);
+      // Precise: Malleable: +30% aura effect at L20 (+0.5/level) with an Elite within 10m — Solar Ring assumed to satisfy it
+      const mall = sups.filter((x: any) => x.supportGuid === "Precise: Malleable")
+        .reduce((e: number, x: any) => e + 30 + 0.5 * ((x.level ?? 20) + supportBonus - 20), 0);
       const [path, f] = AURAS[name];
+      const v = f(sk.level ?? 20);
+      const req = name.includes("Erosion") ? { requires: ["ruinous_star"] } : {};
       add(`skill:${name}`, `L${sk.level}${amp ? ` × ${(1 + amp / 100).toFixed(4)} (Aura Amplification)` : ""}`,
-          [["add", path, f(sk.level ?? 20) * (1 + amp / 100)]], name.includes("Erosion") ? { requires: ["ruinous_star"] } : {});
+          [["add", path, v * (1 + amp / 100)]], req);
+      if (mall) add(`skill:${name}`, `Precise: Malleable +${mall}% aura effect (Elite within 10m assumed)`, [["add", path, v * mall / 100]], req);
       for (const s of supNames.filter((x: string) => x !== "Aura Amplification" && x !== "Precise: Malleable"))
         note(`skill:${name}`, s, /Restrain|Seal Conversion|Increased Area/.test(s) ? "irrelevant" : "unknown",
              /Restrain|Seal Conversion|Increased Area/.test(s) ? "aura upkeep / area" : undefined);

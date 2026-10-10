@@ -119,6 +119,11 @@ async function bingCmd(args: string[]): Promise<void> {
   } else if (sub === "climb") {
     console.log(`real build: ${fmt(dpsOf(REAL_BUILD_SOURCES))}  [${season}]`);
     print(walk(BING_ZERO, REAL_BUILD_SOURCES, pool, season, { untilNoGain: true }));
+  } else if (sub === "diagnose") {
+    const { loadForImport, diagnose } = await import("./bingDiagnose.js");
+    const files = args.slice(1).filter((a, i, all) => !a.startsWith("--") && all[i - 1] !== "--season");
+    for (const file of files)
+      for (const line of [`== ${file}`, ...diagnose(loadForImport(resolve(file)), season)]) console.log(line);
   } else if (sub === "pagedata") {
     (await import("./bingPagedata.js")).writeBingPagedata(args[1]);
   } else if (sub === "prices") {
@@ -134,7 +139,7 @@ async function bingCmd(args: string[]): Promise<void> {
     for (const { u, g } of rows.sort((a, b) => b.g - a.g))
       console.log(`${`×${g.toFixed(3)}`.padStart(8)}  ${u.label}${u.note ? `  — ${u.note}` : ""}`);
   } else {
-    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices|pagedata) [--risky] [--no-vorax] [--tier t1|t0|t0+]`);
+    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices|pagedata|diagnose) [--risky] [--no-vorax] [--tier t1|t0|t0+]`);
   }
 }
 

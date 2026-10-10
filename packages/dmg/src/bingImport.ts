@@ -160,8 +160,9 @@ const INVERSE_TYPE: Record<string, string> = { "1224626031": "micro", "122462601
 const INVERSE_IMAGE = "360701";
 
 /** Ethereal prism effects as importable lines (#bing-import):
-    - area affixes "All <type> Talent within the area also gain: X" → one line per allocated node of that
-      type in the prism's rectangle (extra talent points a prism grants are already in GeniusList);
+    - area affixes "All <type> Talent within the area also gain: X" → a talent line on each allocated node of
+      that type in the prism's rectangle, × the node's points like any talent line (tlicompendium planner);
+      extra points a prism grants are already in GeniusList; the node the prism sits on is overridden;
     - the Inverse Image reflects every talent in its 3×3 area through the tree's center
       ((col,row) → (8 − col, 6 − row)); each reflected copy keeps its source's points and deals the
       source's effect × (1 + its type's reflected-effect roll). The copies replace the nodes they land on. */
@@ -203,7 +204,8 @@ export function nativePrismLines(native: any[], prisms: NativePrisms): { source:
       const type = m[1].toLowerCase().replace("legendary medium", "legendary");
       for (const id of allocated.keys()) {
         if (!inRect(id, pl.center, w, h) || !typeOf(id).startsWith(type)) continue;
-        for (const line of m[2].split(/\n/)) out.push({ source: `prism:${pl.tree}:${id}`, slot: "prism", text: line.trim().replace(/^(\d)/, "+$1") });
+        for (const line of m[2].split(/\n/)) out.push({ source: `prism:${pl.tree}:${id}`, slot: "tree", points: allocated.get(id),
+                                                            text: line.trim().replace(/^(\d)/, "+$1") });
       }
     }
   }

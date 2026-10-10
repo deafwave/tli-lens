@@ -5,9 +5,11 @@ import path from "node:path";
 import { fromRoot, asciiJson } from "./py.js";
 import { parseBuild, printReport } from "./buildParser.js";
 import { cycleDps, type Snapshot } from "./damageModel.js";
-import { parseSeason, setActiveSeason, seasonPath, activeSeason } from "./seasons.js";
+import { parseSeason, setActiveSeason, seasonPath, activeSeason, applySeason } from "./seasons.js";
 
 const loadJson = (p: string) => JSON.parse(fs.readFileSync(p, "utf-8"));
+// snapshots with _gem_levels (Bing) carry baked SS13 values until seasoned
+const loadSnapshot = (p: string): Snapshot => applySeason(loadJson(p), activeSeason());
 // pnpm --filter runs with CWD=packages/dmg; repo-root-relative paths still resolve
 const resolve = (p: string) => {
   if (path.isAbsolute(p)) return p;
@@ -44,7 +46,7 @@ async function rankCmd(args: string[]): Promise<void> {
     await import("./rank.js");
   const cmd = args[0];
   if (cmd === "sensitivity") {
-    const s: Snapshot = loadJson(resolve(args[1] ?? seasonPath(fromRoot("data/snapshot.json"), activeSeason())));
+    const s = loadSnapshot(resolve(args[1] ?? seasonPath(fromRoot("data/snapshot.json"), activeSeason())));
     validateSnapshot(s);
     const base = cycleDps(s);
     console.log(`baseline DPS: ${Math.round(base.dps).toLocaleString("en-US")}  (cycle ${base.cycle_time.toFixed(2)}s)`);
@@ -53,12 +55,12 @@ async function rankCmd(args: string[]): Promise<void> {
       console.log(`${pct.padStart(8)}  ${r.label}`);
     }
   } else if (cmd === "compare") {
-    const a: Snapshot = loadJson(resolve(args[1]));
-    const b: Snapshot = loadJson(resolve(args[2]));
+    const a = loadSnapshot(resolve(args[1]));
+    const b = loadSnapshot(resolve(args[2]));
     const d = compareSnapshots(a, b);
     console.log(`A: ${Math.round(cycleDps(a).dps).toLocaleString("en-US")}  B: ${Math.round(cycleDps(b).dps).toLocaleString("en-US")}  delta ${d >= 0 ? "+" : ""}${d.toFixed(2)}%`);
   } else if (cmd === "apply") {
-    const s: Snapshot = loadJson(resolve(args[1]));
+    const s = loadSnapshot(resolve(args[1]));
     const delta = parseFloat(args[3]);
     const d = compareSnapshots(s, bump(s, args[2], delta));
     console.log(`${d >= 0 ? "+" : ""}${d.toFixed(2)}%  (${args[2]} ${delta >= 0 ? "+" : ""}${delta})`);

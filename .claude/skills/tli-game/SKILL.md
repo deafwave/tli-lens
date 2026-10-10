@@ -28,22 +28,32 @@ Where things live (`poorchlight/tli_dump/diagnostics/`):
 - Talent node id `<tree:2><col:2><row:2>00` (cols = point thresholds 0…18 → 1…7, rows 1…5).
 - Known exporter gaps (handled in `scrape_build.mjs` / `bingImport.ts`): Magnificent tiers missing from poorchlight's catalog (restored from the item's tier table); 1,069 catalog GUIDs carry two game ids — index game ids from the raw entry list, never a GUID-keyed map; prism base attribute `1204509011` has no text anywhere.
 
-## Screen and input
+## Screen and input (background — never steals focus)
 
 `powershell -NoProfile -ExecutionPolicy Bypass -File .claude/skills/tli-game/game.ps1 <cmd>` — coordinates are
-**game-window pixels** (client 3440×1440 on the primary monitor).
+**game client pixels** (3440×1440). The user may be using the PC while you work:
+
+- **keys** are posted window messages preceded by a posted WM_ACTIVATEAPP/WM_ACTIVATE/WM_SETFOCUS (the game drops
+  input it believes is unfocused). No focus change, no global input — works while another app is in front.
+- **screenshots** use PrintWindow (flag 3): work while the game is unfocused or covered.
+- **click / hover / wheel** need the real cursor (the game ignores message coordinates): the tool flicks the
+  cursor there for ~0.2s and restores it, and **refuses unless Torchlight is the foreground window**
+  (`TLI_FORCE_FLICK=1` overrides). Clicking outside a panel walks the character. Blink aims at the real cursor
+  too — Blink A/Bs need the game in front.
 
 | cmd | |
 |---|---|
-| `shot <out.png> [x y w h] [scale]` | screenshot (default whole window at 0.5); then `Read` the png. Crop + scale 0.6–0.8 to read numbers |
-| `key B` / `key ESC` | scancode key presses (VK-only keys are ignored) |
-| `click x y` · `move x y` · `wheel x y -6` | legacy `mouse_event` (the game ignores SendInput clicks). **A click outside a panel walks the character** — only click on panels |
-| `measure <out.png> [secs=32] [KEY every-s]` | stop any running count, Recount on the dummy panel, wait (optionally pressing a key on a timer, cursor parked on the character), screenshot the panel |
-| `burst <out.png> <frames> <ms> <x y w h> [cols] [scale]` | timestamped contact sheet — count throws (hammer-up pose, crop `1640 480 160 180`), buff uptime (buff row crop `400 20 420 60`), ticks |
+| `shot <out.png> [x y w h] [scale]` | screenshot (default whole client at 0.5); `Read` the png. Crop + scale 0.6–1 to read numbers |
+| `key F2` / `key ESC SPACE` | posted key presses (VK codes: A–Z, 0–9, F1–F10, ESC, SPACE, TAB, ENTER) |
+| `click x y` · `hover x y <out.png> [crop] [scale]` · `wheel x y -6` | cursor flick (game must be in front) |
+| `measure <prefix> [secs] [KEY every-s]` | needs the dummy count **running**; shoots the panel at start/end (`<prefix>-0/-1.png`); interval DPS = (avg₁·t₁ − avg₀·t₀)/(t₁ − t₀) — no clicks |
+| `burst <out.png> <frames> <ms> <x y w h> [cols] [scale]` | timestamped contact sheet — throws (crop `1640 480 160 180`), buff uptime (`400 20 420 60`), dummy debuffs/stacks (`1540 130 180 55`) |
+
+PowerShell gotcha: variables are case-insensitive (`$h` and `$H` are one variable).
 
 Keys (ESC menu lists them): **B** inventory + character sheet, F1 Trade House, F2 Skill, F3 Talent, F4 Hero Trait,
-F5 Pact, M World Map, P Boon, K Season Pass, J Outfit, O Help; skill bar SPACE (Blink), R (HoA — disabled under
-Firepower Coverage), mouse, E, Q, F. **ESC** opens/closes the menu; close panels with their X (character sheet X at
+F5 Pact, M World Map, P Boon, K Season Pass, J Outfit, O Help; skill bar SPACE = Blink (10.6 mana, 2 charges —
+castable even with 498/520 mana sealed), R = HoA (disabled under Firepower Coverage), mouse, E, Q, F. **ESC** opens/closes the menu; close panels with their X (character sheet X at
 3354,54; menu back arrow 3370,76) — B does not always toggle the sheet shut.
 
 Character sheet (B), right panel at x≈1900–2460: tab icons at y=320 — Overview x=2016, **Damage x=2132**,
@@ -73,6 +83,6 @@ span runs per state in one session (mechanics.md#real-build). Measured 2026-10-1
 span over 31s for the build above; self-measured with no input 498.3B (50s) and 492.8B (32s).
 
 Observed 2026-10-10 (no input, standing at the dummy): **auto-throws every ~0.48s = sheet APS 1.97 × Aggression
-1.05** (burst count); **Bull's Rage up ~62%** (37/60 samples over 30s); **Blink cannot be cast** — Mana 17–22/520
-with 498 sealed by auras, so Blade-dancer's after-Mobility +45% and Saintess Repentance (needs a Blessing) are off;
+1.05** (burst count); **Bull's Rage up ~62%** (37/60 samples over 30s); no Blink is cast unless pressed (it IS castable: 10.6 mana — an earlier "uncastable" note was an input bug), so
+with no input Blade-dancer's after-Mobility +45% and Saintess Repentance (needs a Blessing) are off;
 Feline Stimulant 5 stacks, Attack Aggression and the four aura buffs are always up.

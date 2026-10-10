@@ -16,7 +16,9 @@ parses the planner export and computes every % figure on the web page — nothin
 
 ## Commands
 
-`pnpm test` · `pnpm snapshot` · `pnpm rank` (sensitivity table) · `pnpm page` (regen page data) · `pnpm dev` / `pnpm build`
+`pnpm test` · `pnpm snapshot` · `pnpm rank` (sensitivity table) · `pnpm page` (regen page data, both seasons) · `pnpm dev` / `pnpm build`
+
+Seasons: SS14 is the default; add `--season ss13` to `snapshot`/`rank`/`catalog`/`progression` (`pnpm rank --season ss13`). SS13 outputs are `*.ss13.json`; the page switches via `?season=ss13`. SS13 is temporary — see mechanics.md#seasons.
 
 ## Invariants
 

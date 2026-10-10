@@ -13,6 +13,7 @@
     "./minionEvidence": "./src/minionEvidence.ts",
     "./playerDefenseEvidence": "./src/playerDefenseEvidence.ts",
     "./rank": "./src/rank.ts",
+    "./seasons": "./src/seasons.ts",
     "./supportEvidence": "./src/supportEvidence.ts",
     "./supports": "./src/supports.ts"
   },

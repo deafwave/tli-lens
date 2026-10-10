@@ -1,7 +1,9 @@
 import { cycleDps, additionalBonusPct, type Snapshot } from "@rehan/dmg/damageModel";
 import { supportValueAt, type SupportGem, type SupportLine } from "@rehan/dmg/supports";
 import { renderBreakdown } from "./breakdown";
-import snapshotData from "./data/snapshot.json";
+import snapshot14 from "./data/snapshot.json";
+import snapshot13 from "./data/snapshot.ss13.json";  // SS13-temp
+import { bySeason, PAGE_SEASON } from "./season";
 
 /* The DPS Calc tab runs the real damage model (linked from @rehan/dmg, no reimplementation)
    on an editable copy of the 150b-setup snapshot, so the output vets the exact formula the
@@ -19,7 +21,7 @@ const SECTIONS: [keyof Snapshot, string][] = [
   ["deterioration", "Deterioration (Ruinous Star / Obliterate)"],
 ];
 
-const REHAN_DEFAULTS = snapshotData as unknown as Snapshot;
+const REHAN_DEFAULTS = bySeason(snapshot14, snapshot13) as unknown as Snapshot;
 const label = (k: string) => k.replace(/_/g, " ");
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
 
@@ -80,7 +82,7 @@ function supportsPanel(sups: SupportGem[]): string {
          + ` — <small>${g.requires}</small></label>${lines}</details>`;
   }).join("");
   return `<fieldset class="calc-group calc-supports">`
-       + `<legend>Support skills (SS13) — pick up to 5</legend>`
+       + `<legend>Support skills (${PAGE_SEASON.toUpperCase()}) — pick up to 5</legend>`
        + `<label class="calc-field"><span>gem level</span>`
        + `<input type="number" id="sup-level" value="20" min="1" max="41" step="1"></label>`
        + `${gems}</fieldset>`;

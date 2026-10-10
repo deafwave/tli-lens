@@ -10,6 +10,7 @@ import { impactOf, applyStat } from "./catalog.js";
 import { cycleDps, type Snapshot } from "./damageModel.js";
 
 export const BUILD = fromRoot("data/Rehan.json");
+import { seasonPath, activeSeason } from "./seasons.js";
 export const OUT = fromRoot("packages/page/src/data/ladder.json");
 export const PRISMS_OUT = fromRoot("packages/page/src/data/prisms.json");
 const REFERENCE = "more_1";      // every slot at its top rung
@@ -411,7 +412,7 @@ export function buildRows(): LadderRow[] {
 }
 
 export function inject(rows: LadderRow[]): void {
-  fs.writeFileSync(OUT, asciiJson(rows), "utf-8");
+  fs.writeFileSync(seasonPath(OUT, activeSeason()), asciiJson(rows), "utf-8");
 }
 
 export interface PrismRung { label: string; delta: number | null; note: string | null }
@@ -453,7 +454,7 @@ function inverseImpact(snap: Snapshot, c: InverseCopy): number {
 const HAZE_ADDL_PCT = 12;        // Haze base affix: +12% additional Attack Damage (1H)
 
 export function buildPrisms(): PrismLadder[] {
-  const snap: Snapshot = JSON.parse(fs.readFileSync(fromRoot("data/snapshot.json"), "utf-8"));
+  const snap: Snapshot = JSON.parse(fs.readFileSync(seasonPath(fromRoot("data/snapshot.json"), activeSeason()), "utf-8"));
   const build = _load();
   // Unmatched Valor priced by parse: the reference with vs without its prism override
   // (no override = the normal 100 rating cap)
@@ -495,5 +496,5 @@ export function buildPrisms(): PrismLadder[] {
 }
 
 export function injectPrisms(ladders: PrismLadder[]): void {
-  fs.writeFileSync(PRISMS_OUT, asciiJson(ladders), "utf-8");
+  fs.writeFileSync(seasonPath(PRISMS_OUT, activeSeason()), asciiJson(ladders), "utf-8");
 }

@@ -1,12 +1,21 @@
 import "./guide-style.css";
-import ladderData from "./data/ladder.json";
-import catalogData from "./data/catalog.json";
-import prismData from "./data/prisms.json";
+import ladder14 from "./data/ladder.json";
+import catalog14 from "./data/catalog.json";
+import prisms14 from "./data/prisms.json";
+import ladder13 from "./data/ladder.ss13.json";    // SS13-temp
+import catalog13 from "./data/catalog.ss13.json";  // SS13-temp
+import prisms13 from "./data/prisms.ss13.json";    // SS13-temp
 import { esc, escAttr, gainChip, dChip, SRC, srcChip, modRows, godOf,
   type LadderRow, type CatalogRow, type Rung } from "./ui";
 import { renderLinear, resetLinearProgress } from "./linear";
 import { renderCalc } from "./calc";
 import { renderPools } from "./pools";
+import { bySeason, mountSeasonSwitch } from "./season";
+
+mountSeasonSwitch();
+const ladderData = bySeason(ladder14, ladder13);
+const catalogData = bySeason(catalog14, catalog13);
+const prismData = bySeason(prisms14, prisms13);
 
 /* ---------- data written by dmg progression + catalog CLIs ---------- */
 const LADDER = ladderData as LadderRow[];

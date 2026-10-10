@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { supportValueAt, type SupportGem } from "../src/supports.js";
-import supportsData from "../../page/src/data/supports.json";
+import supportsData from "../../page/src/data/supports.ss13.json";  // SS13-temp
+import supportsSs14 from "../../page/src/data/supports.json";
+import { SEASONS } from "../src/seasons.js";
 import modulesData from "../../page/src/data/modularization-skills.json";
 
 /* mechanics.md#supports-ss13 — SS13 support-gem data transcribed from tlidb;
@@ -34,7 +36,7 @@ describe("supportValueAt", () => {
   });
 });
 
-describe("supports.json (SS13)", () => {
+describe("supports.ss13.json (SS13-temp, frozen)", () => {
   const gems = supportsData.supports as SupportGem[];
   const byName = Object.fromEntries(gems.map((g) => [g.name, g]));
 
@@ -84,5 +86,32 @@ describe("supports.json (SS13)", () => {
     const afd = byName["Added Fire Damage"].lines[0];
     expect(supportValueAt(afd.anchors!, 20)).toBe(73);
     expect(supportValueAt(afd.anchors2!, 20)).toBe(135);
+  });
+});
+
+describe("supports.json (SS14)", () => {
+  const gems = supportsSs14.supports as SupportGem[];
+  const byName = Object.fromEntries(gems.map((g) => [g.name, g]));
+
+  test("season marked; SS14 adds Blazing Scorch, Still Charge, Target Projection, Windbolt, Seize", () => {
+    expect(supportsSs14.season).toBe("SS14");
+    expect(gems).toHaveLength(32);
+    for (const n of ["Blazing Scorch", "Still Charge", "Target Projection", "Windbolt", "Seize"])
+      expect(byName[n], n).toBeTruthy();
+  });
+});
+
+// the picker data and seasons.ts must agree, or the calc and the snapshot disagree
+describe.each([
+  ["ss13", supportsData],  // SS13-temp
+  ["ss14", supportsSs14],
+] as const)("seasons.ts anchors match supports data (%s)", (season, data) => {
+  const byName = Object.fromEntries((data.supports as SupportGem[]).map((g) => [g.name, g]));
+  const additional = (name: string) => byName[name].lines.find((l) => l.kind === "additional")!.anchors!;
+  test("Elemental Fusion and Slow Projectile", () => {
+    for (const lvl of [1, 21, 30, 41]) {
+      expect(supportValueAt(additional("Elemental Fusion"), lvl)).toBeCloseTo(supportValueAt(SEASONS[season].fusion, lvl), 9);
+      expect(supportValueAt(additional("Slow Projectile"), lvl)).toBeCloseTo(supportValueAt(SEASONS[season].slow_projectile, lvl), 9);
+    }
   });
 });

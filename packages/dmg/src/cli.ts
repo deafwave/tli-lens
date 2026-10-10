@@ -5,6 +5,7 @@ import path from "node:path";
 import { fromRoot, asciiJson } from "./py.js";
 import { parseBuild, printReport } from "./buildParser.js";
 import { cycleDps, type Snapshot } from "./damageModel.js";
+import { parseSeason, setActiveSeason, seasonPath, activeSeason } from "./seasons.js";
 
 const loadJson = (p: string) => JSON.parse(fs.readFileSync(p, "utf-8"));
 // pnpm --filter runs with CWD=packages/dmg; repo-root-relative paths still resolve
@@ -16,7 +17,7 @@ const resolve = (p: string) => {
 
 function snapshotCmd(args: string[]): void {
   let build = fromRoot("data/Rehan.json");
-  let out = fromRoot("data/snapshot.json");
+  let out = seasonPath(fromRoot("data/snapshot.json"), activeSeason());
   let loadout: number | null = null;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "-o" || args[i] === "--out") out = resolve(args[++i]);
@@ -33,7 +34,7 @@ function snapshotCmd(args: string[]): void {
   const buildJson = loadJson(build);
   const calcIdx = buildJson.loadouts.loadouts.findIndex((l: any) => l.name?.trim() === CALC_LOADOUT);
   const [calcSnap] = parseBuild(buildJson, calcIdx >= 0 ? calcIdx : loadout);
-  const pageOut = fromRoot("packages/page/src/data/snapshot.json");
+  const pageOut = seasonPath(fromRoot("packages/page/src/data/snapshot.json"), activeSeason());
   fs.writeFileSync(pageOut, asciiJson(calcSnap, 1), "utf-8");
   console.log(`snapshot (${CALC_LOADOUT}) -> ${pageOut}`);
 }
@@ -43,7 +44,7 @@ async function rankCmd(args: string[]): Promise<void> {
     await import("./rank.js");
   const cmd = args[0];
   if (cmd === "sensitivity") {
-    const s: Snapshot = loadJson(resolve(args[1] ?? fromRoot("data/snapshot.json")));
+    const s: Snapshot = loadJson(resolve(args[1] ?? seasonPath(fromRoot("data/snapshot.json"), activeSeason())));
     validateSnapshot(s);
     const base = cycleDps(s);
     console.log(`baseline DPS: ${Math.round(base.dps).toLocaleString("en-US")}  (cycle ${base.cycle_time.toFixed(2)}s)`);
@@ -89,7 +90,11 @@ async function progressionCmd(): Promise<void> {
   console.log(`progression: ${rows.length} slot ladders injected`);
 }
 
-const [cmd, ...rest] = process.argv.slice(2);
+// --season ss13|ss14 (default ss14) applies to every subcommand
+const argv = process.argv.slice(2);
+const seasonAt = argv.indexOf("--season");
+if (seasonAt >= 0) setActiveSeason(parseSeason(argv.splice(seasonAt, 2)[1]));
+const [cmd, ...rest] = argv;
 try {
   if (cmd === "snapshot") snapshotCmd(rest);
   else if (cmd === "rank") await rankCmd(rest);
@@ -97,7 +102,7 @@ try {
   else if (cmd === "progression") await progressionCmd();
   else if (cmd === "pagedata") (await import("./pagedata.js")).writePagedata();
   else {
-    console.error("usage: cli.ts <snapshot|rank|catalog|progression|pagedata> [args]");
+    console.error("usage: cli.ts <snapshot|rank|catalog|progression|pagedata> [args] [--season ss13|ss14]");
     process.exit(2);
   }
 } catch (e) {

@@ -2,6 +2,8 @@
 import fs from "node:fs";
 import { fromRoot, pyG, deepCopy } from "./py.js";
 import { DEFAULT_SNAPSHOT, type Snapshot } from "./damageModel.js";
+import { supportValueAt } from "./supports.js";
+import { SEASONS, activeSeason, seasonOverrides, type Season } from "./seasons.js";
 
 const CACHE = fromRoot(".claude/skills/tli-build/cache");
 
@@ -737,7 +739,8 @@ function apply(snap: Snapshot, extras: Record<string, number>, path: string, val
   }
 }
 
-export function parseBuild(buildOrPath: string | object, loadoutIndex?: number | null): [Snapshot, Report] {
+export function parseBuild(buildOrPath: string | object, loadoutIndex?: number | null,
+                           season: Season = activeSeason()): [Snapshot, Report] {
   const snap = deepCopy(DEFAULT_SNAPSHOT);
   for (const bucket of ["increased", "additional", "enemy_taken"] as const) {
     for (const k of Object.keys(snap[bucket])) snap[bucket][k] = 0;
@@ -762,9 +765,10 @@ export function parseBuild(buildOrPath: string | object, loadoutIndex?: number |
     }
   }
   snap._extras = extras;
-  applySupports(snap, pickLoadout(build, loadoutIndex), extras, report);
+  applySupports(snap, pickLoadout(build, loadoutIndex), extras, report, season);
   resolveExtras(snap, report);     // derives from extras the overrides then consume
   applyOverrides(snap, report);
+  applyOverrideSet(snap, report, seasonOverrides(season));
   if (!Object.keys(snap._extras ?? {}).length) delete snap._extras;
   return [snap, report];
 }
@@ -796,7 +800,10 @@ function setPath(d: any, path: string, value: number, add = false): void {
       "_sources": {path: citation}      required; keeps every number traceable */
 export function applyOverrides(snap: Snapshot, report: Report, overridesPath = OVERRIDES_PATH): Snapshot {
   if (!fs.existsSync(overridesPath)) return snap;
-  const ov = JSON.parse(fs.readFileSync(overridesPath, "utf-8"));
+  return applyOverrideSet(snap, report, JSON.parse(fs.readFileSync(overridesPath, "utf-8")));
+}
+
+function applyOverrideSet(snap: Snapshot, report: Report, ov: any): Snapshot {
   for (const [path, v] of Object.entries<number>(ov.add ?? {})) {
     const root = path.split(".")[0];
     if (root === "additional" || root === "enemy_taken") {
@@ -890,18 +897,18 @@ function prismPct(sup: any): number {
 
 /* mechanics.md#supports: closed-form per-gem values, keyed by support GUID.
    lvl = gem level + Support Skill Levels; level tables cited in mechanics.md. */
-const SUPPORT_GEMS: Record<string, [string, (s: Snapshot, sup: any, lvl: number, extras: Record<string, number>) => number]> = {
+const SUPPORT_GEMS: Record<string, [string, (s: Snapshot, sup: any, lvl: number, extras: Record<string, number>, season: Season) => number]> = {
   // Activation Medium: Still Attack grants Lv(20-30) Willpower; per-stack value is level-flat
   "adac0b98-ac92-5ebf-8bda-c7ccd47f8f4b": ["Still Attack -> Willpower",
     s => s.additional.willpower = WILLPOWER_PCT],
   "d9d16cba-b18f-58bf-bd94-88b1cb14a53c": ["Willpower",
     s => s.additional.willpower = WILLPOWER_PCT],
-  // grants Combo Damage Enhancement (SS14: 5.4 Lv1 -> 13.4 Lv21 -> 17.4 Lv41), which is the
+  // grants Combo Damage Enhancement (anchors per season in seasons.ts), which is the
   // summed-pool stat, NOT per-point amp; its +1 point/starter feeds mechanics.md#combo-economy
   "4fc73492-c05c-5f7e-bd34-40db624901b1": ["Recuperation",
-    (_s, _sup, lvl, extras) => {
+    (_s, _sup, lvl, extras, season) => {
       extras.combo_per_starter = (extras.combo_per_starter ?? 0) + 1;
-      const enh = lvl <= 21 ? 5.4 + (lvl - 1) * 0.4 : 13.4 + (lvl - 21) * 0.2;
+      const enh = supportValueAt(SEASONS[season].recuperation, lvl);
       extras.combo_enhancement = (extras.combo_enhancement ?? 0) + enh;
       return enh;
     }],
@@ -935,7 +942,8 @@ function supportName(guid: string): string {
 }
 
 /** Spectral Slash's support gems, valued at gem level + Support Skill Levels. */
-export function applySupports(snap: Snapshot, lo: any, extras: Record<string, number>, report: Report): void {
+export function applySupports(snap: Snapshot, lo: any, extras: Record<string, number>, report: Report,
+                              season: Season = activeSeason()): void {
   // "+N to All Skills' Levels" raises the supports too; its main-gem share is
   // consumed later in resolveExtras
   const supportLevels = (extras.support_skill_level ?? 0) + (extras.all_skill_levels ?? 0);
@@ -950,7 +958,7 @@ export function applySupports(snap: Snapshot, lo: any, extras: Record<string, nu
         continue;
       }
       const [name, fn] = entry;
-      const v = fn(snap, sup, (sup.level ?? 20) + supportLevels, extras);
+      const v = fn(snap, sup, (sup.level ?? 20) + supportLevels, extras, season);
       report.manual.push({ path: `support.${name}`, value: pyG(v), mode: "derived",
                            source: "mechanics.md#supports" });
     }

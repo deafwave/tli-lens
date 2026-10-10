@@ -8,6 +8,7 @@ import { _load, classify, critChance, warcryLayer, skillLevelAdditionalPct, NUM,
          FEARLESS_RATING_BASE_PCT, FEARLESS_AS_PCT } from "./buildParser.js";
 import { cycleDps, type Snapshot } from "./damageModel.js";
 
+import { seasonPath, activeSeason } from "./seasons.js";
 export const SNAPSHOT = fromRoot("data/snapshot.json");
 export const OUT = fromRoot("packages/page/src/data/catalog.json");
 
@@ -223,7 +224,7 @@ export interface CatalogRow {
 }
 
 export function buildCatalog(): CatalogRow[] {
-  const snapshot: Snapshot = JSON.parse(fs.readFileSync(SNAPSHOT, "utf-8"));
+  const snapshot: Snapshot = JSON.parse(fs.readFileSync(seasonPath(SNAPSHOT, activeSeason()), "utf-8"));
   const clean = deepCopy(snapshot);
   delete clean._extras;
   const baseCycle = cycleDps(clean);
@@ -356,5 +357,5 @@ export function buildCatalog(): CatalogRow[] {
 }
 
 export function inject(rows: CatalogRow[]): void {
-  fs.writeFileSync(OUT, asciiJson(rows), "utf-8");
+  fs.writeFileSync(seasonPath(OUT, activeSeason()), asciiJson(rows), "utf-8");
 }

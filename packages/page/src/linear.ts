@@ -7,18 +7,22 @@
    Legion + Motionless/Root at "150b", Detonation then warcries at "420b",
    Thunder Spike at "Inverse-Warcry", Still Attack at "5t Eternity",
    CSDI + Defensive Buffer at more_1. */
-import ladderData from "./data/ladder.json";
-import catalogData from "./data/catalog.json";
-import prismData from "./data/prisms.json";
+import ladder14 from "./data/ladder.json";
+import catalog14 from "./data/catalog.json";
+import prisms14 from "./data/prisms.json";
+import ladder13 from "./data/ladder.ss13.json";    // SS13-temp
+import catalog13 from "./data/catalog.ss13.json";  // SS13-temp
+import prisms13 from "./data/prisms.ss13.json";    // SS13-temp
+import { bySeason } from "./season";
 import skillbarsData from "./data/skillbars.json";
 import { esc, escAttr, gainChip, dChip, srcChip, SRC, godOf,
   type LadderRow, type CatalogRow, type Rung } from "./ui";
 import { initTalents, openTalents, type TreeStage } from "./talents";
 
-const LADDER = ladderData as LadderRow[];
-const CATALOG = catalogData as CatalogRow[];
+const LADDER = bySeason(ladder14, ladder13) as LadderRow[];
+const CATALOG = bySeason(catalog14, catalog13) as CatalogRow[];
 interface PrismRung { label: string; delta: number | null; note: string | null }
-const PRISMS = prismData as { name: string; rungs: PrismRung[] }[];
+const PRISMS = bySeason(prisms14, prisms13) as { name: string; rungs: PrismRung[] }[];
 interface BarSupport { name: string; type: string }
 interface BarSkill { name: string; supports: BarSupport[] }
 interface SkillBar { loadout: string; active: BarSkill[]; passive: BarSkill[] }

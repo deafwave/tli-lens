@@ -4,10 +4,12 @@
    (invariant #1). `use` is the more_1 reference build; the worked example is the live 150b
    snapshot, so the page snapshot's early-game values differ from the final-build claims. */
 import { additionalBonusPct, type Snapshot } from "@rehan/dmg/damageModel";
-import snapshotData from "./data/snapshot.json";
+import snapshot14 from "./data/snapshot.json";
+import snapshot13 from "./data/snapshot.ss13.json";  // SS13-temp
+import { bySeason } from "./season";
 import { esc } from "./ui";
 
-const SNAP = snapshotData as unknown as Snapshot;
+const SNAP = bySeason(snapshot14, snapshot13) as unknown as Snapshot;
 
 type Use = "used" | "gap" | "na";
 interface Pool { game: string; use: Use; note: string; feeds: string }

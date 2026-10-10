@@ -31,10 +31,9 @@ export const SLOT_CAPACITY: Record<string, number> = {
   // at most 2 Ultimate-grade craft lines per item (user 2026-10-09; grades: data/craft_pools.json)
   "mainHand.ultimate": 2,
   "hoa.support": 5,
-  // Vorax gear: 6 affix lines (3 prefixes, 3 suffixes), of which up to 2 may be legendary grafts
+  // Vorax gear: 6 lines — ≤2 grafted legendaries, ≤2 Ultimate, ≤2 Advanced, the rest Basic (user 2026-10-09)
   ...Object.fromEntries(["head", "neck", "hands", "legs", "waist", "digits1", "digits2"].flatMap(l => [
-    [`vorax.${l}.*`, 6], [`vorax.${l}.prefix`, 3], [`vorax.${l}.suffix`, 3], [`vorax.${l}.graft`, 2],
-    [`vorax.${l}.ultimate`, 2]])),
+    [`vorax.${l}.*`, 6], [`vorax.${l}.graft`, 2], [`vorax.${l}.ultimate`, 2], [`vorax.${l}.advanced`, 2]])),
 };
 
 /** HoA levels the real build already has above 20 (Lich legendary medium +1 to All Skills). */

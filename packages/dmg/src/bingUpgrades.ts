@@ -1,11 +1,11 @@
 /* Bing upgrades above the real build (mechanics.md#bing-upgrades): each a cited Source the
-   climb can add on top of REAL_BUILD_SOURCES. Rolls are the TOP of the priced tier: "t1" is
-   the best tier in the live affix data (Torchlight_Affix_Review.xlsx, read from game memory,
-   matches the catalog's T1 line for line); "t0+" is the catalog's top tier, which the live
-   data does not show. SS14 craft pools are not public yet. Pure: no I/O. */
+   climb can add on top of REAL_BUILD_SOURCES. Rolls are the TOP of the priced tier (catalog
+   values; T1 matches the live affix library Torchlight_Affix_Review.xlsx line for line, T0
+   matches an in-game Sierra tooltip): "t0" is the clean ceiling, "t1" the cheaper tier, "t0+"
+   a corrupted T0 line (user 2026-10-09). SS14 craft pools are not public yet. Pure: no I/O. */
 import type { Source } from "./bingLedger.js";
 
-export type Tier = "t1" | "t0+";
+export type Tier = "t1" | "t0" | "t0+";
 
 const CAT = "poorchlight tli_dump/data/compendium-catalog-ss13.json";
 const HAMMER = `${CAT} gearAffixPools two_handed/two-handed_hammer`;
@@ -18,45 +18,45 @@ const w = (id: string, label: string, slot: string, edits: Source["edits"], extr
      requires: ["sierra"], ...extra });
 
 type Line = [id: string, label: string, kind: "prefix" | "suffix", edits: Source["edits"],
-             extra?: Partial<Source> & { ultimate?: boolean }];
+             extra?: Partial<Source> & { ultimate?: boolean; advanced?: boolean }];
 
-export function upgrades(tier: Tier = "t1") {
-  const v = (t1: number, t0p: number) => (tier === "t0+" ? t0p : t1);
+export function upgrades(tier: Tier = "t0") {
+  const v = (t1: number, t0: number, t0p: number) => (tier === "t1" ? t1 : tier === "t0" ? t0 : t0p);
 
   const UPGRADES: Source[] = [
     // ---- main-hand craft (3 prefixes, 3 suffixes, corrosion implicit, base affix; ≤2 Ultimate) ----
-    w("w_attack_levels", `Weapon prefix: +${v(6, 8)} to Attack Skill Level`, "prefix",
-      [["add", "aux.skill_level", v(6, 8)]],
+    w("w_attack_levels", `Weapon prefix: +${v(6, 7, 8)} to Attack Skill Level`, "prefix",
+      [["add", "aux.skill_level", v(6, 7, 8)]],
       { caps: ULT, note: "skill-level bands (×1.10 to L30, ×1.08 beyond) confirmed for HoA by the user 2026-10-09" }),
-    w("w_pen", `Weapon prefix: +${v(60, 101)}% Elemental and Erosion Resistance Penetration`, "prefix",
-      [["add", "penetration.erosion_pct", v(60, 101)], ["add", "penetration.cold_pct", v(60, 101)]], { caps: ULT }),
-    w("w_melee", `Weapon prefix: +${v(216, 365)}% Melee Damage`, "prefix",
-      [["add", "increased.melee", v(216, 365)]], { replaces: ["sierra_melee"] }),
-    w("w_adds", `Weapon prefix: adds ${v(73, 123)}–${v(89, 151)} Physical`, "prefix",
-      [["add", "base.weapon_phys_min", v(73, 123)], ["add", "base.weapon_phys_max", v(89, 151)]],
+    w("w_pen", `Weapon prefix: +${v(60, 78, 101)}% Elemental and Erosion Resistance Penetration`, "prefix",
+      [["add", "penetration.erosion_pct", v(60, 78, 101)], ["add", "penetration.cold_pct", v(60, 78, 101)]], { caps: ULT }),
+    w("w_melee", `Weapon prefix: +${v(216, 281, 365)}% Melee Damage`, "prefix",
+      [["add", "increased.melee", v(216, 281, 365)]], { replaces: ["sierra_melee"] }),
+    w("w_adds", `Weapon prefix: adds ${v(73, 95, 123)}–${v(89, 115, 151)} Physical`, "prefix",
+      [["add", "base.weapon_phys_min", v(73, 95, 123)], ["add", "base.weapon_phys_max", v(89, 115, 151)]],
       { replaces: ["sierra_adds"] }),
-    w("w_gear_phys", `Weapon prefix: +${v(80, 136)}% Gear Physical Damage`, "prefix",
-      [["add", "base.gear_phys_pct", v(80, 136)]], { replaces: ["sierra_gear_phys"] }),
-    w("w_hybrid", `Weapon prefix: +${v(110, 190)}% Gear Physical, adds ${v(55, 92)}–${v(67, 113)} Physical`, "prefix",
-      [["add", "base.gear_phys_pct", v(110, 190)], ["add", "base.weapon_phys_min", v(55, 92)],
-       ["add", "base.weapon_phys_max", v(67, 113)]], { caps: ULT }),
-    w("w_erosion_adds", `Weapon prefix: adds ${v(167, 281)}–${v(195, 329)} Erosion`, "prefix",
-      [["add", "base.weapon_flat_erosion_min", v(167, 281)], ["add", "base.weapon_flat_erosion_max", v(195, 329)]]),
-    w("w_stationary", `Weapon suffix: +${v(100, 153)}% additional Attack Damage after standing still`, "suffix",
-      [["add", "additional.standing_still", v(100, 153)], ["add", "aux.as_more_sierra", -20]],
+    w("w_gear_phys", `Weapon prefix: +${v(80, 104, 136)}% Gear Physical Damage`, "prefix",
+      [["add", "base.gear_phys_pct", v(80, 104, 136)]], { replaces: ["sierra_gear_phys"] }),
+    w("w_hybrid", `Weapon prefix: +${v(110, 145, 190)}% Gear Physical, adds ${v(55, 71, 92)}–${v(67, 87, 113)} Physical`, "prefix",
+      [["add", "base.gear_phys_pct", v(110, 145, 190)], ["add", "base.weapon_phys_min", v(55, 71, 92)],
+       ["add", "base.weapon_phys_max", v(67, 87, 113)]], { caps: ULT }),
+    w("w_erosion_adds", `Weapon prefix: adds ${v(167, 216, 281)}–${v(195, 254, 329)} Erosion`, "prefix",
+      [["add", "base.weapon_flat_erosion_min", v(167, 216, 281)], ["add", "base.weapon_flat_erosion_max", v(195, 254, 329)]]),
+    w("w_stationary", `Weapon suffix: +${v(100, 124, 153)}% additional Attack Damage after standing still`, "suffix",
+      [["add", "additional.standing_still", v(100, 124, 153)], ["add", "aux.as_more_sierra", -20]],
       { replaces: ["sierra_stationary"] }),
-    w("w_physical", `Weapon suffix: +${v(216, 365)}% Physical Damage`, "suffix",
-      [["add", "increased.physical", v(216, 365)]], { replaces: ["sierra_physical"] }),
-    w("w_erosion", `Weapon suffix: +${v(216, 365)}% Erosion Damage`, "suffix",
-      [["add", "increased.erosion", v(216, 365)]], { requires: ["sierra", "ruinous_star"] }),
-    w("w_crit_rating", `Weapon suffix: +${v(360, 608)}% Critical Strike Rating`, "suffix",
-      [["add", "aux.crit_rating_pct", v(360, 608)]], { replaces: ["sierra_crit_rating"] }),
-    w("w_crit_damage", `Weapon suffix: +${v(180, 304)}% Critical Strike Damage`, "suffix",
-      [["add", "crit.damage_pct", v(180, 304)]]),
-    w("w_additional_melee", `Weapon suffix: +${v(60, 101)}% additional Melee Damage`, "suffix",
-      [["add", "additional.weapon_melee", v(60, 101)]], { caps: ULT }),
-    w("w_attack_speed", `Weapon suffix: +${v(72, 122)}% Attack and Cast Speed`, "suffix",
-      [["add", "aux.as_inc", v(72, 122)]]),
+    w("w_physical", `Weapon suffix: +${v(216, 281, 365)}% Physical Damage`, "suffix",
+      [["add", "increased.physical", v(216, 281, 365)]], { replaces: ["sierra_physical"] }),
+    w("w_erosion", `Weapon suffix: +${v(216, 281, 365)}% Erosion Damage`, "suffix",
+      [["add", "increased.erosion", v(216, 281, 365)]], { requires: ["sierra", "ruinous_star"] }),
+    w("w_crit_rating", `Weapon suffix: +${v(360, 468, 608)}% Critical Strike Rating`, "suffix",
+      [["add", "aux.crit_rating_pct", v(360, 468, 608)]], { replaces: ["sierra_crit_rating"] }),
+    w("w_crit_damage", `Weapon suffix: +${v(180, 234, 304)}% Critical Strike Damage`, "suffix",
+      [["add", "crit.damage_pct", v(180, 234, 304)]]),
+    w("w_additional_melee", `Weapon suffix: +${v(60, 78, 101)}% additional Melee Damage`, "suffix",
+      [["add", "additional.weapon_melee", v(60, 78, 101)]], { caps: ULT }),
+    w("w_attack_speed", `Weapon suffix: +${v(72, 94, 122)}% Attack and Cast Speed`, "suffix",
+      [["add", "aux.as_inc", v(72, 94, 122)]]),
     w("w_main_levels", "Weapon corrosion implicit: +2 Main Skill Level", "corrosion", [["add", "aux.skill_level", 2]],
       { cite: `${HAMMER} corrosionImplicits T0 (+1–2 Main Skill Level)` }),
     w("w_demolisher_base", "Weapon base affix: +32% additional skill damage when Demolisher Charge is consumed", "base",
@@ -107,41 +107,41 @@ export function upgrades(tier: Tier = "t1") {
 
   /** Priced but kept out of the default climb until an in-game read settles them. */
   const RISKY_UPGRADES: Source[] = [
-    w("w_to_life", `Weapon suffix: ${v(60, 101)}% additional damage applied to Life`, "suffix",
-      [["add", "additional.weapon_to_life", v(60, 101)]],
+    w("w_to_life", `Weapon suffix: ${v(60, 78, 101)}% additional damage applied to Life`, "suffix",
+      [["add", "additional.weapon_to_life", v(60, 78, 101)]],
       { caps: ULT, note: "SS14: 'most True Damage is no longer affected by damage-to-Life bonuses' — if that covers "
         + "Deterioration (~90% of DPS) this line barely moves DPS (handoff §5.2)" }),
   ];
 
   /* ---- Vorax gear (mechanics.md#bing-vorax) ----
      A Vorax piece replaces the item in its slot: a package base (the limb) plus up to 6 lines
-     (3 prefixes, 3 suffixes, ≤2 Ultimate, ≤2 grafted legendary mods). Chest is not offered:
+     (≤2 grafted legendary mods, ≤2 Ultimate, ≤2 Advanced, the rest Basic; user 2026-10-09). Chest is not offered:
      Ruinous Star's Obliterate cannot be grafted. */
   const VX = `${CAT} vorax craftAffix ${tier.toUpperCase()}`;
   const L = {
-    active: ["active_levels", `+${v(2, 4)} Active Skill Level`, "prefix", [["add", "aux.skill_level", v(2, 4)]],
+    active: ["active_levels", `+${v(2, 3, 4)} Active Skill Level`, "prefix", [["add", "aux.skill_level", v(2, 3, 4)]],
       { ultimate: true }],
-    fire: ["fire_levels", `+${v(1, 3)} Fire Skill Level`, "prefix", [["add", "aux.skill_level", v(1, 3)]]],
-    damage: ["damage", `+${v(72, 122)}% damage`, "prefix", [["add", "increased.global", v(72, 122)]]],
-    detDamage: ["det_damage", `+${v(50, 85)}% Deterioration Damage`, "prefix",
-      [["add", "deterioration.damage_inc_pct", v(50, 85)]], { ultimate: true, requires: ["ruinous_star"] }],
-    pen: ["pen", `+${v(20, 34)}% Elemental and Erosion Resistance Penetration`, "prefix",
-      [["add", "penetration.erosion_pct", v(20, 34)], ["add", "penetration.cold_pct", v(20, 34)]], { ultimate: true }],
-    str: ["str", `+${v(60, 101)} Strength`, "prefix", [["add", "aux.str_flat", v(60, 101)]]],
-    support: ["support_levels", `+${v(9, 13)} Support Skill Level`, "suffix",
-      [["add", "aux.support_level", v(9, 13)]], { ultimate: true }],
-    nearby: ["nearby_taken", `+${v(24, 41)}% additional damage taken by Nearby enemies`, "suffix",
-      [["add", "enemy_taken.vorax_nearby", v(24, 41)]], { ultimate: true, requires: ["solar_ring"] }],
-    detDuration: ["det_duration", `+${v(32, 54)}% additional Deterioration Duration`, "suffix",
-      [["add", "deterioration.duration_inc_pct", v(32, 54)]], { ultimate: true, requires: ["ruinous_star"] }],
-    double: ["double", `+${v(26, 44)}% chance to deal Double Damage`, "suffix",
-      [["add", "crit.double_damage_chance_pct", v(26, 44)]], { ultimate: true }],
-    mainHand: ["main_hand", `+${v(23, 39)}% additional damage for Main-Hand Weapons`, "suffix",
-      [["add", "additional.vorax_main_hand", v(23, 39)]], { ultimate: true }],
-    critDamage: ["crit_damage", `+${v(60, 101)}% Critical Strike Damage`, "suffix",
-      [["add", "crit.damage_pct", v(60, 101)]]],
-    critRating: ["crit_rating", `+${v(120, 203)}% Critical Strike Rating`, "suffix",
-      [["add", "aux.crit_rating_pct", v(120, 203)]]],
+    fire: ["fire_levels", `+${v(1, 2, 3)} Fire Skill Level`, "prefix", [["add", "aux.skill_level", v(1, 2, 3)]], { advanced: true }],
+    damage: ["damage", `+${v(72, 94, 122)}% damage`, "prefix", [["add", "increased.global", v(72, 94, 122)]]],
+    detDamage: ["det_damage", `+${v(50, 65, 85)}% Deterioration Damage`, "prefix",
+      [["add", "deterioration.damage_inc_pct", v(50, 65, 85)]], { ultimate: true, requires: ["ruinous_star"] }],
+    pen: ["pen", `+${v(20, 26, 34)}% Elemental and Erosion Resistance Penetration`, "prefix",
+      [["add", "penetration.erosion_pct", v(20, 26, 34)], ["add", "penetration.cold_pct", v(20, 26, 34)]], { ultimate: true }],
+    str: ["str", `+${v(60, 78, 101)} Strength`, "prefix", [["add", "aux.str_flat", v(60, 78, 101)]], { advanced: true }],
+    support: ["support_levels", `+${v(9, 11, 13)} Support Skill Level`, "suffix",
+      [["add", "aux.support_level", v(9, 11, 13)]], { ultimate: true }],
+    nearby: ["nearby_taken", `+${v(24, 31, 41)}% additional damage taken by Nearby enemies`, "suffix",
+      [["add", "enemy_taken.vorax_nearby", v(24, 31, 41)]], { ultimate: true, requires: ["solar_ring"] }],
+    detDuration: ["det_duration", `+${v(32, 42, 54)}% additional Deterioration Duration`, "suffix",
+      [["add", "deterioration.duration_inc_pct", v(32, 42, 54)]], { ultimate: true, requires: ["ruinous_star"] }],
+    double: ["double", `+${v(26, 34, 44)}% chance to deal Double Damage`, "suffix",
+      [["add", "crit.double_damage_chance_pct", v(26, 34, 44)]], { ultimate: true }],
+    mainHand: ["main_hand", `+${v(23, 30, 39)}% additional damage for Main-Hand Weapons`, "suffix",
+      [["add", "additional.vorax_main_hand", v(23, 30, 39)]], { ultimate: true }],
+    critDamage: ["crit_damage", `+${v(60, 78, 101)}% Critical Strike Damage`, "suffix",
+      [["add", "crit.damage_pct", v(60, 78, 101)]], { advanced: true }],
+    critRating: ["crit_rating", `+${v(120, 156, 203)}% Critical Strike Rating`, "suffix",
+      [["add", "aux.crit_rating_pct", v(120, 156, 203)]]],
   } satisfies Record<string, Line>;
 
   const G: Record<string, [string, string, Source["edits"], Partial<Source>]> = {
@@ -170,9 +170,10 @@ export function upgrades(tier: Tier = "t1") {
     return [
       { id, label: `Vorax ${label}`, group: "upgrade", package: true, replaces, edits: [],
         cite: `${CAT} vorax limb; replaces ${replaces.join(", ")}` },
-      ...lines.map(([lid, llabel, kind, edits, { ultimate, ...extra } = {}]): Source => ({
+      ...lines.map(([lid, llabel, kind, edits, { ultimate, advanced, ...extra } = {}]): Source => ({
         id: `${id}_${lid}`, label: `Vorax ${label} ${kind}: ${llabel}`, group: "upgrade",
-        slot: `vorax.${limb}.${kind}`, caps: ultimate ? [`vorax.${limb}.ultimate`] : undefined,
+        slot: `vorax.${limb}.${kind}`,
+        caps: ultimate ? [`vorax.${limb}.ultimate`] : advanced ? [`vorax.${limb}.advanced`] : undefined,
         edits: own(edits), cite: VX, ...extra, requires: [id, ...extra.requires ?? []] })),
       ...grafts.map((g): Source => {
         const [gid, glabel, edits, extra] = G[g];

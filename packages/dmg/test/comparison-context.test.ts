@@ -130,7 +130,7 @@ describe("guarded loadout comparison context", () => {
 
   it("keeps a portable capture without a proven active skill reference-only", () => {
     const source = readJson(fromRoot(
-      "../poorchlight/tli_dump/ui/fixtures/rust-portable-snapshot.json",
+      "packages/dmg/test/fixtures/poorchlight/rust-portable-snapshot.json",
     ));
     const loadout = importBuild(source, emptyCatalog).loadouts[0];
 

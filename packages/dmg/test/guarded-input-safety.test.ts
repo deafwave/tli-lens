@@ -14,7 +14,7 @@ import {
 
 const readJson = (path: string) => JSON.parse(fs.readFileSync(path, "utf8"));
 const catalog = readJson(
-  fromRoot("../poorchlight/tli_dump/data/compendium-catalog-ss13.json"),
+  fromRoot("packages/dmg/test/fixtures/poorchlight/compendium-catalog-ss13.json"),
 );
 const defenseOptions = {
   catalog,

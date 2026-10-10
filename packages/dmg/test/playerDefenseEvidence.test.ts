@@ -17,7 +17,7 @@ import {
 } from "../src/playerDefenseEvidence.js";
 
 const readJson = (path: string) => JSON.parse(fs.readFileSync(path, "utf8"));
-const catalogPath = fromRoot("../poorchlight/tli_dump/data/compendium-catalog-ss13.json");
+const catalogPath = fromRoot("packages/dmg/test/fixtures/poorchlight/compendium-catalog-ss13.json");
 const catalogText = fs.readFileSync(catalogPath, "utf8");
 const catalog = JSON.parse(catalogText);
 const options = {

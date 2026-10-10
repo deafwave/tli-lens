@@ -1,0 +1,462 @@
+{
+  "schemaVersion": 3,
+  "capturedAt": "2026-07-22T12:34:56.789Z",
+  "source": {
+    "kind": "liveMemory",
+    "executable": "torchlight_infinite.exe",
+    "profile": "steam-ss13-fixture",
+    "catalogPatch": "SS13",
+    "layoutCompatible": true,
+    "processState": "connected"
+  },
+  "compendiumImportable": false,
+  "player": {
+    "playerId": "948566916589547520",
+    "teamPlayerIds": [
+      "946927945556275200"
+    ],
+    "items": [
+      {
+        "source": {
+          "collection": "LocalItems",
+          "key": "7173_fixture-instance"
+        },
+        "instanceId": "fixture-instance",
+        "identity": {
+          "base": {
+            "gameId": "7173",
+            "domain": "skill",
+            "compendiumId": "8ef8fd83-0234-5097-ad30-cb46340eddfd",
+            "label": "Blazing Bullet",
+            "metadata": {
+              "category": "Active",
+              "skillType": "active",
+              "icon": "/images/skill/UI_Skill_SabotRounds_Icon_128.webp"
+            }
+          },
+          "special": null
+        },
+        "location": {
+          "bag": null,
+          "equipSlot": null,
+          "page": 101,
+          "slot": 2
+        },
+        "itemLevel": 90,
+        "rarity": 4,
+        "quality": null,
+        "corroded": true,
+        "affixes": {
+          "bAffixInfoList": null,
+          "baseAttrInfoList": null,
+          "fixedBaseAffix": null,
+          "prefixInfoList": [
+            {
+              "DynArgs": [
+                62.0
+              ],
+              "Id": 51443711
+            }
+          ],
+          "suffixInfoList": [],
+          "enchantAffixList": null,
+          "chipAffixList": null
+        },
+        "data": {
+          "AffixList": {
+            "FutureAffixList": {
+              "FutureId": 99
+            }
+          },
+          "ConfigSpecialId": 0,
+          "LinkData": {
+            "StorageClass": "fixture-link-extra"
+          },
+          "ServerPlayerItem": {
+            "BaseId": 7173
+          }
+        },
+        "diagnostics": []
+      }
+    ]
+  },
+  "proBuild": {
+    "id": "fixture-build-id",
+    "name": "15T SS20",
+    "sourcePage": null,
+    "loadout": {
+      "hero": {
+        "identity": {
+          "gameId": "4001",
+          "domain": "hero-trait",
+          "compendiumId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
+          "label": "Bing: Blast Nova",
+          "metadata": {
+            "category": "hero-trait",
+            "icon": "/images/hero-trait/UI_Portrait_Bing_01_128.webp"
+          }
+        },
+        "sourceName": "SS13hss",
+        "level": 90,
+        "sourceData": {
+          "HeroId": 810,
+          "HeroPurchaseId": 4001,
+          "Level": 90,
+          "Name": "SS13hss",
+          "PlayerId": "946927945556275200"
+        }
+      },
+      "heroMemories": {
+        "sourceCollection": null,
+        "items": []
+      },
+      "etherealPrisms": {
+        "sourceCollection": null,
+        "items": []
+      },
+      "gear": {
+        "sourceCollection": "WearItems",
+        "items": [
+          {
+            "source": {
+              "collection": "WearItems",
+              "key": "main_hand"
+            },
+            "instanceId": "fixture-instance",
+            "identity": {
+              "base": {
+                "gameId": "1019",
+                "domain": "gear",
+                "compendiumId": "c41e5cc1-3a43-535d-98a7-11018a94e2ec",
+                "label": "Sierra Reverberation Maul",
+                "metadata": {
+                  "category": "two_handed",
+                  "subtype": "two-handed_hammer",
+                  "icon": "/images/rare-gear/two_handed/two-handed_hammer/Icon_Equip_Weapon_2HMace_Norm_001_112.webp",
+                  "requiredLevel": 86,
+                  "implicits": [
+                    {
+                      "description": "220 - 220 Physical Damage",
+                      "modifierId": "510020",
+                      "rawText": "220 - 220 Physical Damage",
+                      "values": [
+                        {
+                          "maxValue": 220,
+                          "minValue": 220,
+                          "value": 220
+                        },
+                        {
+                          "maxValue": 220,
+                          "minValue": 220,
+                          "value": 220
+                        }
+                      ]
+                    },
+                    {
+                      "description": "500 Critical Strike Rating",
+                      "modifierId": "740000",
+                      "rawText": "500 Critical Strike Rating",
+                      "values": [
+                        {
+                          "maxValue": 500,
+                          "minValue": 500,
+                          "value": 500
+                        }
+                      ]
+                    },
+                    {
+                      "description": "1.5 Attack Speed",
+                      "modifierId": "740001",
+                      "rawText": "1.5 Attack Speed",
+                      "values": [
+                        {
+                          "maxValue": 1.5,
+                          "minValue": 1.5,
+                          "value": 1.5
+                        }
+                      ]
+                    }
+                  ],
+                  "prefixAffixes": [
+                    {
+                      "affixId": "04689f5a-3991-5ae8-a599-414e60fe5248",
+                      "tierId": "0088f499-2ff8-5733-b397-09d6bf6da96d",
+                      "modifierId": "107110001",
+                      "descriptionTemplate": "+#% Gear Physical Damage",
+                      "rawText": "+(49–80)% Gear Physical Damage",
+                      "tier": "1",
+                      "values": [
+                        {
+                          "maxValue": 80,
+                          "minValue": 49,
+                          "sign": "+",
+                          "unit": "%"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "special": null
+            },
+            "location": {
+              "bag": null,
+              "equipSlot": null,
+              "page": 101,
+              "slot": 2
+            },
+            "itemLevel": 90,
+            "rarity": 4,
+            "quality": null,
+            "corroded": true,
+            "affixes": {
+              "bAffixInfoList": null,
+              "baseAttrInfoList": null,
+              "fixedBaseAffix": null,
+              "prefixInfoList": [
+                {
+                  "DynArgs": [
+                    62.0
+                  ],
+                  "Id": 107110001
+                }
+              ],
+              "suffixInfoList": [],
+              "enchantAffixList": null,
+              "chipAffixList": null
+            },
+            "data": {
+              "AffixList": {
+                "FutureAffixList": {
+                  "FutureId": 99
+                }
+              },
+              "ConfigSpecialId": 0,
+              "LinkData": {
+                "StorageClass": "fixture-link-extra"
+              },
+              "ServerPlayerItem": {
+                "BaseId": 1019
+              }
+            },
+            "diagnostics": []
+          }
+        ]
+      },
+      "vorax": {
+        "sourceCollection": null,
+        "items": []
+      },
+      "skills": {
+        "sourceCollection": "Skills",
+        "items": [
+          {
+            "source": {
+              "collection": "Skills",
+              "key": "skill_1"
+            },
+            "instanceId": "fixture-instance",
+            "identity": {
+              "base": {
+                "gameId": "7746",
+                "domain": "skill",
+                "compendiumId": "eeace5dd-0f31-505d-97df-a34f0ae45188",
+                "label": "Whirlwind: Whirling Blade (Noble)",
+                "metadata": {
+                  "category": "Noble_Support",
+                  "skillType": "noble_support",
+                  "skillTierProgression": [
+                    {
+                      "tier": 2,
+                      "value1Max": 31,
+                      "value1Min": 29
+                    },
+                    {
+                      "tier": 1,
+                      "value1Max": 35,
+                      "value1Min": 33
+                    },
+                    {
+                      "tier": 0,
+                      "value1Max": 41,
+                      "value1Min": 37
+                    }
+                  ],
+                  "skillSlotRestriction": 3,
+                  "skillDefaultRank": 1,
+                  "icon": "/images/skill/UI_Skill_Cyclone_support03_Icon_128.webp"
+                }
+              },
+              "special": null
+            },
+            "location": {
+              "bag": null,
+              "equipSlot": null,
+              "page": 101,
+              "slot": 2
+            },
+            "itemLevel": 90,
+            "rarity": 4,
+            "quality": null,
+            "corroded": true,
+            "affixes": {
+              "bAffixInfoList": null,
+              "baseAttrInfoList": null,
+              "fixedBaseAffix": null,
+              "prefixInfoList": [
+                {
+                  "DynArgs": [
+                    62.0
+                  ],
+                  "Id": 51400002
+                }
+              ],
+              "suffixInfoList": [],
+              "enchantAffixList": null,
+              "chipAffixList": null
+            },
+            "data": {
+              "AffixList": {
+                "FutureAffixList": {
+                  "FutureId": 99
+                }
+              },
+              "ConfigSpecialId": 0,
+              "LinkData": {
+                "StorageClass": "fixture-link-extra"
+              },
+              "ServerPlayerItem": {
+                "BaseId": 7746
+              }
+            },
+            "diagnostics": []
+          }
+        ]
+      },
+      "skillTree": {
+        "sourceCollection": "GeniusInfos",
+        "records": [
+          {
+            "sourceKey": "[1]",
+            "identity": {
+              "gameId": "5",
+              "domain": null,
+              "compendiumId": null,
+              "label": null
+            },
+            "data": {
+              "CareerId": 5
+            }
+          }
+        ]
+      },
+      "divinity": {
+        "sourceCollection": null,
+        "records": []
+      },
+      "pactspirits": {
+        "sourceCollection": "PetDatas",
+        "records": [
+          {
+            "sourceKey": "[1]",
+            "identity": {
+              "gameId": "12130",
+              "domain": "pactspirit",
+              "compendiumId": "f3abd1bc-addd-5d34-8d40-d9996f62181c",
+              "label": "Iron Lion",
+              "metadata": {
+                "category": "pactspirit",
+                "icon": "/images/pactspirit/UI_Pet_SSR_TieZhuXiongShi_01_116.webp",
+                "nodeIds": [
+                  "1",
+                  "2",
+                  "3",
+                  "4",
+                  "5",
+                  "6",
+                  "7",
+                  "8",
+                  "9",
+                  "10",
+                  "11"
+                ]
+              }
+            },
+            "data": {
+              "Icon": "UI_Pet_SSR_TieZhuXiongShi_01_116",
+              "InstallServantType": 1,
+              "Name": "Iron Lion",
+              "PetConfigId": 12130,
+              "StarRank": 1,
+              "bEquip": true
+            }
+          }
+        ]
+      },
+      "kismets": {
+        "sourceCollection": null,
+        "records": []
+      },
+      "scentBottle": {
+        "sourceCollection": null,
+        "records": []
+      },
+      "unmappedSourceCollections": {
+        "unclassifiedWearItems": {
+          "sourceCollection": "WearItems",
+          "items": []
+        },
+        "otherWearItems": {
+          "sourceCollection": "OtherWearItems",
+          "items": []
+        },
+        "jewelItems": {
+          "sourceCollection": "JewelItems",
+          "items": []
+        },
+        "heroCharacterItems": {
+          "sourceCollection": "HeroCharacterItems",
+          "items": []
+        }
+      }
+    }
+  },
+  "mappingIssues": [
+    {
+      "kind": "catalogUnresolved",
+      "path": "proBuild.loadout.skillTree.records[0].identity",
+      "sourcePath": "ViewPlayerData.GeniusInfos.[1]",
+      "message": "Game catalog ID 5 has not been resolved through a season-pinned Compendium catalog."
+    },
+    {
+      "kind": "ambiguous",
+      "path": "proBuild.loadout.skills.items",
+      "sourcePath": "ViewPlayerView.ViewList.General.UIData.SkillData.ChildDataList",
+      "message": "The flat skill collection was preserved without exact main/support positions because the independent slot proofs were rejected: SkillGroups is absent."
+    },
+    {
+      "kind": "sourcePartial",
+      "path": "proBuild.loadout.hero",
+      "sourcePath": "HeroCharacterState",
+      "message": "Exact hero tree identity and equipped memories were not materialized: HeroCharacterState is absent."
+    },
+    {
+      "kind": "sourcePartial",
+      "path": "proBuild.loadout.kismets",
+      "sourcePath": "ContractPointAssignments",
+      "message": "Exact Kismet placements were not materialized: ContractPointAssignments is absent."
+    },
+    {
+      "kind": "sourcePartial",
+      "path": "proBuild.loadout.divinity",
+      "sourcePath": "DivinitySlateState",
+      "message": "Exact Divinity slates were not materialized: DivinitySlateState was not captured."
+    },
+    {
+      "kind": "ambiguous",
+      "path": "proBuild.loadout.skillTree.records",
+      "sourcePath": "ViewPlayerData.GeniusInfos",
+      "message": "Talent records were preserved without planner allocations because the all-or-nothing GeniusInfos proof was rejected: GeniusInfos career 1 has no finite Index."
+    }
+  ]
+}

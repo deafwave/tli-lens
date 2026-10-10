@@ -303,7 +303,7 @@ function portableFixture() {
 
 function rustPortableFixture(): any {
   return JSON.parse(fs.readFileSync(
-    fromRoot("../poorchlight/tli_dump/ui/fixtures/rust-portable-snapshot.json"),
+    fromRoot("packages/dmg/test/fixtures/poorchlight/rust-portable-snapshot.json"),
     "utf8",
   ));
 }
@@ -324,7 +324,7 @@ describe("canonical snapshot adapter", () => {
     const read = (file: string) => JSON.parse(fs.readFileSync(fromRoot(file), "utf8"));
     const bingSource = read("data/builds/bing_china.json");
     const wuxiaSource = read("data/builds/WuxiaSS13.json");
-    const portableSource = read("../poorchlight/tli_dump/ui/fixtures/rust-portable-snapshot.json");
+    const portableSource = read("packages/dmg/test/fixtures/poorchlight/rust-portable-snapshot.json");
     const bing = normalizeBuildSnapshot(bingSource);
     const wuxia = normalizeBuildSnapshot(wuxiaSource);
     const portable = normalizeBuildSnapshot(portableSource);

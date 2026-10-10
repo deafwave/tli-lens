@@ -30,7 +30,7 @@ describe("SS13 formula evidence", () => {
   });
 
   it("pins the formula IDs to the poorchlight SS13 identity catalog", () => {
-    const catalog = readJson(fromRoot("../poorchlight/tli_dump/data/compendium-catalog-ss13.json"));
+    const catalog = readJson(fromRoot("packages/dmg/test/fixtures/poorchlight/compendium-catalog-ss13.json"));
     const hammer = catalog.entries.find((entry: any) => entry.id === HAMMER_OF_ASH_ID);
     const bingHero = catalog.entries.find((entry: any) => entry.id === BING_BLAST_NOVA_ID);
 

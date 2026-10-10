@@ -35,16 +35,18 @@ describe("Bing calculator: applySeason", () => {
     expect(s.additional_typed!.erosion.passivation).toBeCloseTo(64, 6);
     expect(s.additional.slow_projectile).toBeCloseTo(31.5, 6);
     expect(s.additional_typed!.elemental.fusion).toBeCloseTo(36, 6);
+    expect(s.additional.steamroll).toBeCloseTo(43, 6);
   });
   test("SS14 gives 52.5 / 29.5 / 32.7", () => {
     const s = applySeason(bing(), "ss14");
     expect(s.additional_typed!.erosion.passivation).toBeCloseTo(52.5, 6);
     expect(s.additional.slow_projectile).toBeCloseTo(29.5, 6);
     expect(s.additional_typed!.elemental.fusion).toBeCloseTo(32.7, 6);
+    expect(s.additional.steamroll).toBeCloseTo(39.7, 6);   // tlidb SS14: 28.5/38.5/44.5
   });
-  test("real build loses 9.71% from SS13 to SS14", () => {
+  test("real build loses 11.8% from SS13 to SS14 (supports incl. Steamroll)", () => {
     const r = cycleDps(applySeason(bing(), "ss14")).dps / cycleDps(applySeason(bing(), "ss13")).dps;
-    expect(r).toBeCloseTo(0.9029, 4);
+    expect(r).toBeCloseTo(0.8821, 4);   // 0.9029 x Steamroll 1.397/1.43
   });
   test("does not mutate its input; no _gem_levels = unchanged copy", () => {
     const raw = bing();
@@ -69,7 +71,14 @@ describe("Rehan model per season", () => {
     const [snap] = parseBuild(BUILD);
     expect(snap.additional.ice_bond).toBe(24);
     expect(snap.additional.combo_enhancement).toBeCloseTo(15.2 + 62 + 61, 1);
-    expect(Math.round(cycleDps(snap).dps)).toBe(1_546_974_996_356);
+    expect(Math.round(cycleDps(snap).dps)).toBe(1_490_459_105_411);
+  });
+  test("Steamroll (tower Lv25): SS13 +43% / -15% AS, SS14 +39.7% / -20% AS", () => {
+    const [s13] = parseBuild(BUILD, undefined, "ss13");
+    const [s14] = parseBuild(BUILD, undefined, "ss14");
+    expect(s13.additional.steamroll).toBeCloseTo(43, 6);
+    expect(s14.additional.steamroll).toBeCloseTo(39.7, 6);
+    expect(s14.rotation.attack_speed_inc_pct - s13.rotation.attack_speed_inc_pct).toBe(-5);
   });
   test("an explicit season argument beats the active season", () => {
     setActiveSeason("ss14");

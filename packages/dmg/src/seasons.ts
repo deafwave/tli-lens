@@ -8,7 +8,8 @@
 
    Only values that differ between seasons live here. Sources: SS14 patch notes
    (https://torchlight.xd.com/ss14pn/) and tlidb SS13Season/SS14Season blocks
-   (Seething_Silhouette, Ice_Bond, Recuperation, Passivation, Slow_Projectile, Elemental_Fusion). */
+   (Seething_Silhouette, Ice_Bond, Recuperation, Passivation, Slow_Projectile, Elemental_Fusion,
+   Steamroll). */
 import { supportValueAt } from "./supports.js";
 import type { Snapshot } from "./damageModel.js";
 
@@ -25,6 +26,8 @@ export interface SeasonValues {
   passivation: Anchors;      // up to +X% additional Erosion Damage
   slow_projectile: Anchors;  // +X% additional damage
   fusion: Anchors;           // Elemental Fusion: +X% additional Elemental Damage
+  steamroll: Anchors;        // +X% additional Melee Damage (tlidb; not in the patch notes)
+  steamroll_as: number;      // Steamroll: X% Attack Speed (increased)
 }
 
 export const SEASONS: Record<Season, SeasonValues> = {
@@ -34,6 +37,7 @@ export const SEASONS: Record<Season, SeasonValues> = {
     passivation: { 1: 41, 21: 61, 41: 81 },
     slow_projectile: { 1: 19.5, 21: 29.5, 41: 39.5 },
     fusion: { 1: 25.5, 21: 35.5, 41: 45.5 },
+    steamroll: { 1: 31, 21: 41, 41: 51 }, steamroll_as: -15,
   },
   ss14: {
     seething: 34, fury: 68, ice_bond: 24,
@@ -41,6 +45,7 @@ export const SEASONS: Record<Season, SeasonValues> = {
     passivation: { 1: 31, 21: 51, 41: 61 },
     slow_projectile: { 1: 18.5, 21: 28.5, 41: 33.5 },
     fusion: { 1: 22.5, 21: 32.5, 41: 36.5 },
+    steamroll: { 1: 28.5, 21: 38.5, 41: 44.5 }, steamroll_as: -20,
   },
 };
 
@@ -83,6 +88,9 @@ const GEM_TARGETS: Record<string, string[]> = {
   passivation: ["additional_typed", "erosion", "passivation"],
   slow_projectile: ["additional", "slow_projectile"],
   fusion: ["additional_typed", "elemental", "fusion"],
+  // its attack-speed line is not re-seasoned here: rotation.attack_speed_inc_pct is a
+  // sheet read whose Steamroll share is unverified (docs/bing-hoa-handoff.md)
+  steamroll: ["additional", "steamroll"],
 };
 
 /** Copy of `snap` with its `_gem_levels` support values read from `season`'s anchors. */

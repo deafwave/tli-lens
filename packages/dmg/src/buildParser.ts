@@ -285,10 +285,9 @@ const SHOCKWAVE_PER_ENEMY = 5.95;            // Shockwave Warcry at L20, per ene
 const SHOCKWAVE_MAX_STACKS = 8;              // "stacking up to 8 time(s)" — cache:SS12.5-skill-en.json; doubled to 16 by "Doubles Max Warcry Skill Effects" (user 2026-07-16)
 const MARK_TAKEN_PCT = 30;                   // Spectral Slash starter's Mark, skill-inherent
 const TIMID_CURSE_TAKEN_PCT = 39;            // Timid at L20: +39% additional Hit Damage taken
-// tower-sequence Steamroll; tlidb: +31% additional Melee at Lv1, +41 Lv21, +51 Lv41
-// (+0.5/level), -15% Attack Speed flat; the Ailment line is a no-op
-const steamrollAddlPct = (lvl: number): number => 31 + (lvl - 1) * 0.5;
-const STEAMROLL_AS_PCT = -15;
+// tower-sequence Steamroll: additional Melee anchors + flat Attack Speed per season
+// (seasons.ts); the Ailment line is a no-op
+const steamrollAddlPct = (lvl: number, season: Season): number => supportValueAt(SEASONS[season].steamroll, lvl);
 // Blessings at base 4 stacks (user-confirmed 2026-07-15); granted on crit / on hitting
 // a Frostbitten enemy, so full stacks on a boss
 const BLESSING_BASE_STACKS = 4;
@@ -502,7 +501,8 @@ export interface Report {
 const nums = (text: string): number[] => (text.match(/\d+(?:\.\d+)?/g) ?? []).map(parseFloat);
 
 /** Route a classified value into the snapshot. Special paths handled here. */
-function apply(snap: Snapshot, extras: Record<string, number>, path: string, value: number, line: Line): void {
+function apply(snap: Snapshot, extras: Record<string, number>, path: string, value: number, line: Line,
+               season: Season): void {
   const mult = line.slot === "tree" ? (line.points ?? 1) : 1;
   if (path.startsWith("crit.damage_typed.") || path.startsWith("crit.damage_tagged.")
       || path.startsWith("penetration.typed.")) {
@@ -663,8 +663,8 @@ function apply(snap: Snapshot, extras: Record<string, number>, path: string, val
   }
   if (path === "special.tower_steamroll") {
     snap.additional.steamroll =
-      ((1 + (snap.additional.steamroll ?? 0) / 100) * (1 + steamrollAddlPct(value) / 100) - 1) * 100;
-    snap.rotation.attack_speed_inc_pct += STEAMROLL_AS_PCT;
+      ((1 + (snap.additional.steamroll ?? 0) / 100) * (1 + steamrollAddlPct(value, season) / 100) - 1) * 100;
+    snap.rotation.attack_speed_inc_pct += SEASONS[season].steamroll_as;
     return;
   }
   if (path === "special.timid_curse") {
@@ -760,7 +760,7 @@ export function parseBuild(buildOrPath: string | object, loadoutIndex?: number |
     } else if (path === "ignore") {
       report.ignored.push(line);
     } else {
-      apply(snap, extras, path, value ?? 0, line);
+      apply(snap, extras, path, value ?? 0, line, season);
       report.matched.push({ ...line, path, value });
     }
   }
@@ -920,11 +920,11 @@ const SUPPORT_GEMS: Record<string, [string, (s: Snapshot, sup: any, lvl: number,
     (s, sup) => s.additional.detonation_prism = prismPct(sup)],
   // socketed copy for the re-socket counterfactual (tower sequence frees this socket)
   "4830642f-32e5-56ef-9de7-61ed678cb883": ["Steamroll",
-    (s, _sup, lvl) => {
+    (s, _sup, lvl, _extras, season) => {
       s.additional.steamroll =
-        ((1 + (s.additional.steamroll ?? 0) / 100) * (1 + steamrollAddlPct(lvl) / 100) - 1) * 100;
-      s.rotation.attack_speed_inc_pct += STEAMROLL_AS_PCT;
-      return steamrollAddlPct(lvl);
+        ((1 + (s.additional.steamroll ?? 0) / 100) * (1 + steamrollAddlPct(lvl, season) / 100) - 1) * 100;
+      s.rotation.attack_speed_inc_pct += SEASONS[season].steamroll_as;
+      return steamrollAddlPct(lvl, season);
     }],
   // +1 Clone per enemy within 15m: a boss is 1 enemy -> +1
   "3ee2f012-e08f-5eb7-b54a-8c58e9b4549c": ["Legion (Noble)",

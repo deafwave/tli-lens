@@ -71,7 +71,9 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       // per-source geometric gain, so a pair must beat two singles to be taken together;
       // by cost: free moves first (by gain), then log-gain per FE
       const score = !opts.byCost ? (d / prev) ** (1 / count)
-        : d <= prev ? -Infinity : cost > 0 ? Math.log(d / prev) / cost : 1e9 + Math.log(d / prev);
+        // below the stop threshold a move can't be taken, so it must not outrank one that can
+        : d <= prev * (opts.untilNoGain ? 1.0005 : 1) ? -Infinity
+        : cost > 0 ? Math.log(d / prev) / cost : 1e9 + Math.log(d / prev);
       if (!best || score > best.score + 1e-12) best = { add, remove, dps: d, score, cost };
       return d;
     };

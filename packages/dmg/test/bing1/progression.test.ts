@@ -77,4 +77,14 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
     const after = compose(BING_ZERO, [...REAL_BUILD_SOURCES, rising]).deterioration!.additional_damage_pct!;
     expect(1 + after / 100).toBeCloseTo((1 + before / 100) * 1.165, 9);
   });
+
+  test("by cost, a cheap sub-threshold move does not end the stage while a real upgrade fits", () => {
+    const tiny: Source = { id: "tiny", label: "tiny", group: "upgrade", cite: "test", cost: 0.01,
+                           edits: [["add", "additional.test_tiny", 0.01]] };
+    const big: Source = { id: "big", label: "big", group: "upgrade", cite: "test", cost: 100,
+                          edits: [["add", "additional.test_big", 50]] };
+    const steps = walk(BING_ZERO, REAL_BUILD_SOURCES, [tiny, big], "ss14",
+      { byCost: true, untilNoGain: true, budget: 1000 });
+    expect(steps.flatMap(s => s.ids)).toContain("big");
+  });
 });

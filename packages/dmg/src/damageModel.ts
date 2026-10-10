@@ -109,12 +109,20 @@ function weaponAvg(b: Record<string, number>): number {
 
 /** Average pre-crit, pre-mitigation hit. skillPct overrides base.skill_weapon_pct
     (used for starter vs finisher). */
+// Non-conversion path: flat elemental adds (cold/fire/lightning) join the lumped elemental hit,
+// like weapon-base elements in weaponAvg; scaled by added-damage effectiveness, never re-gained.
+function flatAddedElementalAvg(b: Record<string, number>): number {
+  return ((b.flat_added_cold_min ?? 0) + (b.flat_added_cold_max ?? 0)
+        + (b.flat_added_fire_min ?? 0) + (b.flat_added_fire_max ?? 0)
+        + (b.flat_added_lightning_min ?? 0) + (b.flat_added_lightning_max ?? 0)) / 2;
+}
+
 export function averageHit(s: Snapshot, skillPct?: number): number {
   const b = s.base;
   const pct = (skillPct ?? b.skill_weapon_pct) / 100;
   const flat = (b.flat_added_min + b.flat_added_max) / 2 * b.added_damage_effectiveness_pct / 100;
   // "Adds Cold Damage to Attacks and Spells": already cold, so no phys->cold re-gain
-  const flatCold = ((b.flat_added_cold_min ?? 0) + (b.flat_added_cold_max ?? 0)) / 2 * b.added_damage_effectiveness_pct / 100;
+  const flatCold = flatAddedElementalAvg(b) * b.added_damage_effectiveness_pct / 100;
   let hit = weaponAvg(b) * pct + flat + flatCold;
   // "Adds X% of Physical Damage to Cold Damage": gained from the pre-conversion phys
   // portion (weapon phys + global flat adds, which are physical); flat cold is not re-gained
@@ -423,7 +431,7 @@ function mitSumNode(s: Snapshot, pct: number): TNode {
   const b = s.base;
   const eff = b.added_damage_effectiveness_pct / 100;
   const flat = (b.flat_added_min + b.flat_added_max) / 2 * eff;
-  const flatCold = ((b.flat_added_cold_min ?? 0) + (b.flat_added_cold_max ?? 0)) / 2 * eff;
+  const flatCold = flatAddedElementalAvg(b) * eff;
   const rawEle = weaponAvg(b) * pct + flat + flatCold
                + (weaponPhysAvg(b) * pct + flat) * (b.gain_phys_as_cold_pct ?? 0) / 100;
   const children: TNode[] = [];

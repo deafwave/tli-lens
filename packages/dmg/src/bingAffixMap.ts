@@ -126,6 +126,10 @@ const IRRELEVANT: [RegExp, string][] = [
   [/Cooldown|Duration|Skill Cost|Mana Cost|Sealed|Elemental Ailments|Aim|Brisk Wind|Agility/i, "utility"],
 ];
 
+// Targets the rules recognise but bingLedger.compose does not read yet: until it does, such a
+// line is "unknown" (listed for review) rather than "mapped" and silently worth ×1.
+const UNMODELED = new Set(["aux.crit_local_pct", "aux.crit_flat", "aux.aura_effect"]);
+
 /** Classify one affix (may be multi-line). `key` (e.g. "weapon_s3") names its own buckets. */
 export function affixEdits(text: string, key: string): AffixMapping {
   const lines = text.split(/\n| \/ /).map(l => l.trim().replace(/\.$/, "")).filter(Boolean);
@@ -141,7 +145,7 @@ export function affixEdits(text: string, key: string): AffixMapping {
       const why = IRRELEVANT.find(([re]) => re.test(line));
       hit = why ? why[1] : null;
     }
-    if (hit === null) return { kind: "unknown" };
+    if (hit === null || (typeof hit !== "string" && hit.some(e => UNMODELED.has(e[1])))) return { kind: "unknown" };
     if (typeof hit === "string") irrelevant ??= hit;
     else edits.push(...hit);
   }

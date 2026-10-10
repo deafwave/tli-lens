@@ -48,4 +48,19 @@ describe("Bing guide", () => {
       if (st.sources.includes("deaths_touch")) expect(st.sources.some(id => id.startsWith("craft_gloves_"))).toBe(false);
     }
   }, 60_000);
+
+  test("rare items respect 3 prefix / 3 suffix / 2 Ultimate even when no legendary is affordable", () => {
+    const LEGENDARY = new Set(["Fool's Crown", "Death's Touch", "Ruinous Star", "Blade-dancer's Steps",
+      "Formation Breaker", "Broken Sun Ring", "Kaleidoscope"]);
+    const rareOnly = { library, price: (n: string) => (LEGENDARY.has(n) ? undefined : PRICES[n]) };
+    const { pool, start } = guidePool(rareOnly);
+    const byId = new Map([...start, ...pool].map(s => [s.id, s]));
+    const last = buildGuide(rareOnly).stages.at(-1)!;
+    const count = new Map<string, number>();
+    for (const s of last.sources.map(id => byId.get(id)!))
+      for (const key of [s.slot, ...s.caps ?? []]) if (key) count.set(key, (count.get(key) ?? 0) + 1);
+    for (const [key, n] of count)
+      if (/\.(prefix|suffix)$/.test(key)) expect(n, key).toBeLessThanOrEqual(3);
+      else if (key.endsWith(".ultimate")) expect(n, key).toBeLessThanOrEqual(2);
+  }, 120_000);
 });

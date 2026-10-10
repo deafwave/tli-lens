@@ -291,6 +291,14 @@ describe("erosion damage (separate mitigation)", () => {
     expect(expectedHit(s)).toBeCloseTo(250.0, 6);    // weapon 100 + erosion 100×1.5
   });
 
+  test("flat fire/lightning adds join the elemental hit without conversion too", () => {
+    const s = eroSnap();
+    s.enemy.cold_res_pct = 0;
+    s.base.flat_added_fire_min = 40;
+    s.base.flat_added_fire_max = 60;
+    expect(expectedHit(s)).toBeCloseTo(150.0, 6);    // weapon 100 + fire 50 x 100% effectiveness
+  });
+
   test("increased.erosion is additive with the shared pool, with or without conversion", () => {
     const s = eroSnap();
     s.enemy.cold_res_pct = 0;

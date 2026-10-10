@@ -89,7 +89,7 @@ export interface GuideResult {
 const itemOf = (s: Source): string | undefined => s.slot?.split(".")[0];
 
 /** Every source the guide may take, with costs and levels. */
-export function guidePool(inputs: GuideInputs): { start: Source[]; pool: Source[]; unpriced: Source[] } {
+export function guidePool(inputs: GuideInputs, itemLevel = 100): { start: Source[]; pool: Source[]; unpriced: Source[] } {
   const { library, price } = inputs;
   const rare: Source[] = Object.keys(GUIDE_ITEMS).map(item => ({
     id: `rare_${item}`, label: `Rare ${item}`, group: "gear", edits: [], cite: "guide start: an empty rare base",
@@ -103,7 +103,7 @@ export function guidePool(inputs: GuideInputs): { start: Source[]; pool: Source[
 
   // crafted rare lines on every guide item, every reachable tier
   for (const [item, gearType] of Object.entries(GUIDE_ITEMS)) {
-    for (const o of craftOptions(library, gearType, 100)) {
+    for (const o of craftOptions(library, gearType, itemLevel)) {   // item level = character level
       const unit = ember(o.grade);
       const src = craftSource(o, item, unit === undefined ? null : unit * o.expectedEmbers);
       if (!src) continue;
@@ -120,9 +120,10 @@ export function guidePool(inputs: GuideInputs): { start: Source[]; pool: Source[
   }
   // plain auras, replaced by their Precise versions
   for (const [id, name, path, value, precise] of PLAIN_AURAS) {
-    pool.push({ id, label: name, group: "aura", family: `aura_${precise}`, edits: [["add", path, value]],
-                cite: "tlidb plain aura L20 (scratch levels table)", cost: price(name) ?? 0,
-                requires: precise === "erosion_amp" ? ["ruinous_star"] : undefined });
+    const aura: Source = { id, label: name, group: "aura", family: `aura_${precise}`, edits: [["add", path, value]],
+                cite: "tlidb plain aura L20 (scratch levels table)", cost: price(name),
+                requires: precise === "erosion_amp" ? ["ruinous_star"] : undefined };
+    (aura.cost === undefined ? unpriced : pool).push(aura);   // missing price = unpriced, not free
   }
 
   for (const s0 of REAL_BUILD_SOURCES) {
@@ -145,7 +146,7 @@ export function guidePool(inputs: GuideInputs): { start: Source[]; pool: Source[
     } else if (s.id === "frenzy_hound") {
       Object.assign(s, { level: 75, cost: 0 });
     } else if (s.id in GEM_PRICES) {
-      s.cost = price(GEM_PRICES[s.id]) ?? 0;
+      s.cost = price(GEM_PRICES[s.id]);   // missing price = unpriced, not free
       const plain = PLAIN_AURAS.find(a => a[4] === s.id);
       if (plain) s.family = `aura_${s.id}`;
     } else {
@@ -159,9 +160,11 @@ export function guidePool(inputs: GuideInputs): { start: Source[]; pool: Source[
 export function buildGuide(inputs: GuideInputs): GuideResult {
   const season = inputs.season ?? "ss14";
   const stages = inputs.stages ?? DEFAULT_STAGES;
-  const { start, pool, unpriced } = guidePool(inputs);
+  const { start, unpriced } = guidePool(inputs);
   const dpsOf = (set: Source[]) => cycleDps(applySeason(compose(GUIDE_ZERO, effective(set)), season)).dps;
-  const byId = new Map([...start, ...pool].map(s => [s.id, s]));
+  // every guide item is a rare with 3 prefix / 3 suffix pools and at most 2 Ultimate lines
+  const itemCapacity = Object.fromEntries(Object.keys(GUIDE_ITEMS).flatMap(item =>
+    [[`${item}.prefix`, 3], [`${item}.suffix`, 3], [`${item}.ultimate`, 2]]));
 
   let have = [...start];
   let budgetLeft = 0;
@@ -169,9 +172,13 @@ export function buildGuide(inputs: GuideInputs): GuideResult {
   const out: GuideResult["stages"] = [];
   for (const [n, st] of stages.entries()) {
     budgetLeft += st.budget;
-    const stagePath = walk(GUIDE_ZERO, have, pool.filter(s => !have.includes(s)), season, {
+    // crafts are priced at this stage's item level (= character level)
+    const { pool } = guidePool(inputs, st.level);
+    const byId = new Map([...have, ...pool].map(s => [s.id, s]));
+    const owned = new Set(have.map(s => s.id));
+    const stagePath = walk(GUIDE_ZERO, have, pool.filter(s => !owned.has(s.id)), season, {
       byCost: true, untilNoGain: true, maxLevel: st.level, budget: budgetLeft,
-      capacity: { talent: talentPoints(st.level) },
+      capacity: { talent: talentPoints(st.level), ...itemCapacity },
     });
     let spent = 0;
     for (const step of stagePath) {

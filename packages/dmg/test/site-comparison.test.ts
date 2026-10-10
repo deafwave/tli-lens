@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { baseOnly } from "./helpers.js";
 import { describe, expect, it } from "vitest";
 import demoData from "../../page/src/data/demo-builds.json";
 import {
@@ -74,6 +75,18 @@ describe("comparison website model", () => {
       .toBeGreaterThan(0);
     expect(rollbacks.find((rollback) => rollback.id === "increased")?.delta)
       .toBeLessThan(0);
+  });
+
+  it("offers a rollback for a conversion-only change", () => {
+    const before: any = baseOnly();
+    before.enemy.cold_res_pct = 50;
+    before.enemy.erosion_res_pct = 0;
+    const after = structuredClone(before);
+    after.conversion = [{ from: "physical", to: "erosion", pct: 100 }];
+
+    const conversion = buildRollbackEvaluations(before, after)
+      .find((rollback) => rollback.id === "conversion");
+    expect(conversion?.delta).toBeLessThan(0);
   });
 
   it("prioritizes the real Bing support and tree changes before assigning DPS", () => {

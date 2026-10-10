@@ -204,8 +204,11 @@ export function buildRollbackEvaluations(
 ): RollbackEvaluation[] {
   const afterDps = safeDps(after);
   return GROUPS.flatMap((group) => {
+    // fields only lists numeric leaves; array/string layers (conversion, tags) change too
+    const layerChanged = group.keys.some((key) =>
+      JSON.stringify((before as any)[key]) !== JSON.stringify((after as any)[key]));
+    if (!layerChanged) return [];
     const fields = changedFields(before, after, group.keys, safeDps(before));
-    if (!fields.length) return [];
     const candidate = clone(after);
     for (const key of group.keys) {
       const previousValue = (before as any)[key];

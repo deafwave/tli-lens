@@ -32,6 +32,8 @@ const HOA_SUPPORTS: Record<string, Effect> = {
     ["add", "additional.upheaval_explosion", 17.8 * (x.roll?.[0] ?? 32) / 32]],
 };
 
+const SEASONED = new Set(["Elemental Fusion", "Passivation", "Steamroll", "Slow Projectile"]);
+
 /** Aura passives: [path, value(level)] at the aura's own level. */
 const AURAS: Record<string, [string, (lv: number) => number]> = {
   "Precise: Precise Projectiles": ["additional.precise_projectiles", aura(21, 40)],
@@ -75,7 +77,7 @@ export interface Kit {
   extraLines: { source: string; slot: string; text: string }[];
 }
 
-export function kitSources(lo: any, raw: any, lines: ImportedLine[]): Kit {
+export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonus = 0): Kit {
   const sources: Source[] = [];
   const extraLines: Kit["extraLines"] = [];
   let n = 0;
@@ -96,16 +98,18 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[]): Kit {
     if (name === "Hammer of Ash") {
       for (const sp of sups) {
         const f = HOA_SUPPORTS[sp.supportGuid];
-        if (f) add("skill:Hammer of Ash", `${sp.supportGuid} L${sp.level ?? "-"}`, f(sp.level ?? 20, { roll: sp.rollValues, tier: sp.tier }));
+        // seasoned gems take the bonus through _gem_levels in compose; table-priced ones here
+        const lv = (sp.level ?? 20) + (SEASONED.has(sp.supportGuid) ? 0 : supportBonus);
+        if (f) add("skill:Hammer of Ash", `${sp.supportGuid} L${lv}`, f(lv, { roll: sp.rollValues, tier: sp.tier }));
         else note("skill:Hammer of Ash", `${sp.supportGuid} L${sp.level ?? "-"}`, "unknown");
       }
     } else if (AURAS[name]) {
       // Aura Amplification: +aura effect for the supported aura (5.25 at Lv1, +0.25/level)
       const amp = sups.filter((x: any) => x.supportGuid === "Aura Amplification")
-        .reduce((e: number, x: any) => e + lin(5.25, 10.25, 15.25)(x.level ?? 20), 0)
+        .reduce((e: number, x: any) => e + lin(5.25, 10.25, 15.25)((x.level ?? 20) + supportBonus), 0)
         // Precise: Malleable: +30% aura effect at L20 (+0.5/level) with an Elite within 10m — Solar Ring assumed to satisfy it
         + sups.filter((x: any) => x.supportGuid === "Precise: Malleable")
-          .reduce((e: number, x: any) => e + 30 + 0.5 * ((x.level ?? 20) - 20), 0);
+          .reduce((e: number, x: any) => e + 30 + 0.5 * ((x.level ?? 20) + supportBonus - 20), 0);
       const [path, f] = AURAS[name];
       add(`skill:${name}`, `L${sk.level}${amp ? ` × ${(1 + amp / 100).toFixed(4)} (Aura Amplification)` : ""}`,
           [["add", path, f(sk.level ?? 20) * (1 + amp / 100)]], name.includes("Erosion") ? { requires: ["ruinous_star"] } : {});

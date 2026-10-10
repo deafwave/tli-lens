@@ -228,7 +228,10 @@ function* pactspiritLines(lo: any): Generator<Line> {
 /* Vorax gear (Dawn Break boots) sits in lo.vorax.inventory, not gear.inventory, and its
    mods live in `affixes` with values already baked into modifierDescription. */
 function* voraxLines(lo: any): Generator<Line> {
-  for (const it of lo.vorax?.inventory ?? []) {
+  // only pieces actually worn: referenced from gear.equipped (e.g. boots) or vorax.equipped
+  const worn = new Set([...Object.values(lo.gear?.equipped ?? {}), ...Object.values(lo.vorax?.equipped ?? {})]
+    .filter(Boolean));
+  for (const it of (lo.vorax?.inventory ?? []).filter((it: any) => worn.has(it.id))) {
     const src = `vorax:${it.limbType ?? "?"}`;
     const descs = [it.baseAffix?.description,
                    ...(it.affixes ?? []).filter(Boolean).map((a: any) => a.modifierDescription)];

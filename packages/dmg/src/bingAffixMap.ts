@@ -131,7 +131,7 @@ const IRRELEVANT: [RegExp, string][] = [
 
 // Targets the rules recognise but bingLedger.compose does not read yet: until it does, such a
 // line is "unknown" (listed for review) rather than "mapped" and silently worth ×1.
-const UNMODELED = new Set(["aux.crit_local_pct", "aux.crit_flat", "aux.aura_effect"]);
+const UNMODELED = new Set(["aux.aura_effect"]);
 
 /** Classify one affix (may be multi-line). `key` (e.g. "weapon_s3") names its own buckets. */
 export function affixEdits(text: string, key: string): AffixMapping {

@@ -39,4 +39,25 @@ describe("Bing importer", () => {
     expect([...new Set(inv.map(l => l.source))].sort()).toEqual(["inverse:12:12040100", "inverse:12:12060100", "inverse:12:12060200"]);
     expect(inv.some(l => l.text === "+40% Attack Critical Strike Rating when holding a Two-Handed Weapon")).toBe(true);
   });
+  test("Support Skill Level raises table-priced supports; spare Vorax and empty trees are safe", () => {
+    // Off The Beaten Track +4 Support Skill Level: Critical Strike Damage Increase L20 -> L24
+    expect(hanshan().sources.some(s => /Critical Strike Damage Increase L24/.test(s.label))).toBe(true);
+
+    const d = load("data/bing1/scraped/hanshan-40t.json");
+    const lo = d.compendium.loadouts.loadouts[0];
+    const vxLines = (r: ReturnType<typeof importBing>) => r.lines.filter(l => l.source.startsWith("vorax:")).length;
+    const base = vxLines(importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms));
+    const spare = structuredClone(lo.vorax.inventory[0]);
+    spare.id = "unequipped-spare";
+    lo.vorax.inventory.push(spare);
+    delete lo.skillTree.slots[0].nodePoints;
+    const r = importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms);
+    expect(vxLines(r)).toBe(base);
+  });
+
+  test("the Formation Breaker Sentry line needs a Sentry source", () => {
+    const r = hanshan();
+    const sentryLine = r.sources.find(s => /proximity to Sentries/.test(s.label));
+    if (sentryLine) expect(sentryLine.requires).toContain("sentry");
+  });
 });

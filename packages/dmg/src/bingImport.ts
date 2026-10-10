@@ -114,7 +114,8 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
   if ((m = text.match(/^(\d+)% of the increase\/decrease on Knockback distance is also applied to damage bonus/i)))
     return { why: "Ranger knockback → damage", edits: [["add", "aux.knockback_conv", +m[1]]] };
   if ((m = text.match(/^\+(\d+)% additional damage taken by enemies in proximity to Sentries$/i)))
-    return { why: "Formation Breaker taken near Sentries", edits: [["add", `enemy_taken.sentry_${m[1]}`, +m[1]]] };
+    return { why: "Formation Breaker taken near Sentries", edits: [["add", `enemy_taken.sentry_${m[1]}`, +m[1]]],
+             requires: ["sentry"] };
   return null;
 }
 
@@ -131,7 +132,7 @@ export function fillTreesFromNative(payload: any, native: any[], loadoutIndex = 
     for (const [key, points] of Object.entries<number>(rec.GeniusList ?? {})) {
       const e = byGame.get(key.replace(/\D/g, ""));
       const slot = e && slots.find(s => s.treeId === e.metadata?.treeId);
-      if (slot && points > 0) slot.nodePoints[e.id] = points;
+      if (slot && points > 0) (slot.nodePoints ??= {})[e.id] = points;
     }
     for (const id of rec.BonusTalents ?? []) {
       const e = byGame.get(String(id));
@@ -235,9 +236,15 @@ export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]
   // the reference build's +1 level (Lich) is inside the calibrated geometry fold-in (#bing-ledger)
   sources.push({ id: "imp_level_baseline", label: "skill-level baseline of the calibrated reference", group: "upgrade",
                  edits: [["add", "aux.skill_level", -1]], cite: "bingLedger HOA_LEVELS_ABOVE_20" });
-  const kit = kitSources(lo, raw, lines);
-  sources.push(...kit.sources);
   const prismLines = nativeTalents && nativePrisms ? nativePrismLines(nativeTalents, nativePrisms) : [];
+  // "+N Support Skill Level" also raises the table-priced supports the kit levels (seasoned gems get it in compose)
+  const supportBonus = ([...extracted, ...memoryLines, ...prismLines] as Line[]).reduce((sum, l) => {
+    const m = affixEdits(l.text, "support_probe");
+    const n = m.kind === "mapped" ? m.edits.reduce((x, e) => x + (e[0] === "add" && e[1] === "aux.support_level" ? e[2] : 0), 0) : 0;
+    return sum + n * (l.slot === "tree" ? l.points ?? 1 : 1);
+  }, 0);
+  const kit = kitSources(lo, raw, lines, supportBonus);
+  sources.push(...kit.sources);
   for (const l of [...extracted, ...memoryLines, ...kit.extraLines, ...prismLines] as Line[]) {
     const s = structural(l.text, l.slot);
     if (s) { add(l.source, l.text, scale(s.edits, l.slot === "tree" ? l.points ?? 1 : 1), s.provides, s.requires); lines.push({ source: l.source, text: l.text, kind: "structural", why: s.why }); continue; }

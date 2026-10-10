@@ -5,6 +5,8 @@
   "type": "module",
   "exports": {
     "./bingFactorLedger": "./src/bingFactorLedger.ts",
+    "./bingCraft": "./src/bingCraft.ts",
+    "./bingGuide": "./src/bingGuide.ts",
     "./bingIntrinsic": "./src/bingIntrinsic.ts",
     "./damageModel": "./src/damageModel.ts",
     "./guardedCompiler": "./src/guardedCompiler.ts",

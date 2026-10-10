@@ -126,8 +126,11 @@ export function guidePool(inputs: GuideInputs): { start: Source[]; pool: Source[
   }
 
   for (const s0 of REAL_BUILD_SOURCES) {
-    if (start.includes(s0) || s0.id.startsWith("sierra") || UNPRICED.has(s0.group)) {
-      if (UNPRICED.has(s0.group) && s0.group !== "residual") unpriced.push(s0);
+    if (start.includes(s0) || s0.id.startsWith("sierra") || s0.group === "residual") continue;
+    if (UNPRICED.has(s0.group)) {
+      // no market source: bought only once the user prices it (by its label)
+      const cost = price(s0.label);
+      (cost === undefined ? unpriced : pool).push({ ...s0, cost });
       continue;
     }
     const s: Source = { ...s0 };

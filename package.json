@@ -11,7 +11,7 @@
     "snapshot": "pnpm --filter @rehan/dmg snapshot",
     "rank": "pnpm --filter @rehan/dmg rank sensitivity",
     "bing": "pnpm --filter @rehan/dmg bing",
-    "page": "pnpm --filter @rehan/dmg snapshot && pnpm --filter @rehan/dmg catalog && pnpm --filter @rehan/dmg progression && pnpm --filter @rehan/dmg pagedata && pnpm page:ss13",
+    "page": "pnpm --filter @rehan/dmg snapshot && pnpm --filter @rehan/dmg catalog && pnpm --filter @rehan/dmg progression && pnpm --filter @rehan/dmg pagedata && pnpm --filter @rehan/dmg bing pagedata && pnpm page:ss13",
     "page:ss13": "pnpm --filter @rehan/dmg snapshot --season ss13 && pnpm --filter @rehan/dmg catalog --season ss13 && pnpm --filter @rehan/dmg progression --season ss13",
     "skills": "tsx scripts/update_skills.ts",
     "demo": "tsx scripts/generate_demo_analysis.ts"

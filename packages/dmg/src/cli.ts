@@ -119,6 +119,8 @@ async function bingCmd(args: string[]): Promise<void> {
   } else if (sub === "climb") {
     console.log(`real build: ${fmt(dpsOf(REAL_BUILD_SOURCES))}  [${season}]`);
     print(walk(BING_ZERO, REAL_BUILD_SOURCES, pool, season, { untilNoGain: true }));
+  } else if (sub === "pagedata") {
+    (await import("./bingPagedata.js")).writeBingPagedata(args[1]);
   } else if (sub === "prices") {
     // price = the best legal one-step swap from the real build: the walk drops dependents
     // (effective) and makes room in full craft pools, which a bare add-on-top did not
@@ -132,7 +134,7 @@ async function bingCmd(args: string[]): Promise<void> {
     for (const { u, g } of rows.sort((a, b) => b.g - a.g))
       console.log(`${`×${g.toFixed(3)}`.padStart(8)}  ${u.label}${u.note ? `  — ${u.note}` : ""}`);
   } else {
-    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices) [--risky] [--no-vorax] [--tier t1|t0|t0+]`);
+    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices|pagedata) [--risky] [--no-vorax] [--tier t1|t0|t0+]`);
   }
 }
 

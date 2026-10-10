@@ -29,6 +29,8 @@ function guideCleanUrls(): Plugin {
 // vercel rewrites in prod and the middleware above in dev).
 export default defineConfig({
   plugins: [guideCleanUrls()],
+  // live prices: same-origin proxy to ETOR (vercel.json rewrites it in production)
+  server: { proxy: { "/etor-api": { target: "https://etor-beta.710421059.xyz", changeOrigin: true } } },
   build: {
     rollupOptions: {
       input: {

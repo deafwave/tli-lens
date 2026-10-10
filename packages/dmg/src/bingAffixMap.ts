@@ -119,6 +119,8 @@ const RULES: Rule[] = [
   [r(`\\+${N}% (?:Attack and Cast|Attack) Speed`), m => [["add", "aux.as_inc", +m[1]]]],
   [r(`\\+${N}% Demolisher Charge Restoration Speed`), m => [["add", "rotation.demolisher_resto_pct", +m[1]]]],
   [r(`\\+${N}% Aura Effect`), m => [["add", "aux.aura_effect", +m[1]]]],
+  // distance only; a Ranger knockback→damage line converts it (compose: aux.knockback × aux.knockback_conv)
+  [r(`\\+${N}% Knockback distance`), m => [["add", "aux.knockback", +m[1]]]],
   [r(`\\+${N}% (?:Projectile Speed|Skill Area)`), () => "geometry (folded into hits_per_bomb; mechanics.md#bing-skill-area)"],
 ];
 

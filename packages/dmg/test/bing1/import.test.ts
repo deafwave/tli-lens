@@ -18,11 +18,11 @@ describe("Bing importer", () => {
     expect(r.snapshot.additional.strength).toBeCloseTo(169.5, 6);   // sheet Str 339
   });
 
-  test("July import sits below the hand snapshot by exactly its unexplained residuals (×1.25–1.40)", () => {
+  test("July import sits below the hand snapshot by exactly its unexplained residuals (×1.20–1.26)", () => {
     const imp = cycleDps(applySeason(july().snapshot, "ss13")).dps;
     const hand = cycleDps(applySeason(load("data/bing1/real_buld_3_snapshot.json"), "ss13")).dps;
-    expect(hand / imp).toBeGreaterThan(1.25);
-    expect(hand / imp).toBeLessThan(1.40);
+    expect(hand / imp).toBeGreaterThan(1.20);
+    expect(hand / imp).toBeLessThan(1.26);
   });
 
   test("scraped 40T build: talents rebuilt from native records, traits from memories, only listed unknowns", () => {
@@ -59,5 +59,15 @@ describe("Bing importer", () => {
     const r = hanshan();
     const sentryLine = r.sources.find(s => /proximity to Sentries/.test(s.label));
     if (sentryLine) expect(sentryLine.requires).toContain("sentry");
+  });
+  test("pactspirit boards drop the nodes a kismet occupies; Iron Lion's knockback and fate import", () => {
+    const sum = (r: ReturnType<typeof importBing>, label: RegExp, path: string) => r.sources
+      .filter(s => label.test(s.label)).flatMap(s => s.edits)
+      .reduce((t, e) => t + (e[0] === "add" && e[1] === path ? e[2] as number : 0), 0);
+    // hanshan: kismets on Saintess nodes 4/5/6 (+14/+14/+28% Erosion) -> 112 - 56
+    expect(sum(hanshan(), /^pactspirit: Portrait of a Fallen Saintess/, "increased.erosion")).toBe(56);
+    // July: the full Iron Lion board reproduces the hand ledger's knockback source and +6 fate damage
+    expect(sum(july(), /^pactspirit: Iron Lion/, "aux.knockback")).toBe(48);
+    expect(sum(july(), /^pactspirit: Iron Lion/, "increased.global")).toBe(6);
   });
 });

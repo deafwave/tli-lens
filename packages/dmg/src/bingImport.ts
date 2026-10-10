@@ -243,7 +243,10 @@ export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]
     const n = m.kind === "mapped" ? m.edits.reduce((x, e) => x + (e[0] === "add" && e[1] === "aux.support_level" ? e[2] : 0), 0) : 0;
     return sum + n * (l.slot === "tree" ? l.points ?? 1 : 1);
   }, 0);
-  const kit = kitSources(lo, raw, lines, supportBonus);
+  const pactBoards = new Map(Object.values<any>(_load("SS12.5-pactspirit-en.json")["pactspirit/i18n/en"].pactspirits)
+    .map(p => [p.name as string, Object.fromEntries(Object.entries<any>(p.nodes ?? {})
+      .map(([n, node]) => [n, String(node.description)]))]));
+  const kit = kitSources(lo, raw, lines, supportBonus, name => pactBoards.get(name));
   sources.push(...kit.sources);
   for (const l of [...extracted, ...memoryLines, ...kit.extraLines, ...prismLines] as Line[]) {
     const s = structural(l.text, l.slot);

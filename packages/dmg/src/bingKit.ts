@@ -5,6 +5,7 @@
    reference ledger (#real-build). Anything without a table is reported, not guessed. */
 import type { Edit, Source } from "./bingLedger.js";
 import type { ImportedLine } from "./bingImport.js";
+import { affixEdits } from "./bingAffixMap.js";
 
 const lin = (l1: number, l21: number, l41: number) => (lv: number) =>
   lv <= 21 ? l1 + (l21 - l1) * (lv - 1) / 20 : l21 + (l41 - l21) * (lv - 21) / 20;
@@ -55,20 +56,32 @@ const TRAITS: Record<string, (lv: number) => Edit[]> = {
   "Frenzy Hound": lv => [["add", "additional.frenzy_hound", 30 + 5 * lv]],
 };
 
-/** Pactspirits at a level — the reference build's calibrated encodings (#real-build, bing1 pactspirits). */
+/** Pactspirits at a level: the notable / level effects beyond the board nodes (#real-build, bing1
+    pactspirits). Board nodes come from the catalog via pactNodeEdits — a full board reproduces the
+    calibrated encodings (Saintess +112 Erosion / +10 pen / +6 damage, Kitty +48 Attack / +88 crit / +16 AS). */
 const PACTS: Record<string, (lv: number) => Edit[] | null> = {
-  "Iron Lion": () => [["add", "increased.projectile", 40], ["add", "rotation.proj_added", 1]],
-  "Portrait of a Fallen Saintess": lv => lv >= 4 ? [["add", "increased.erosion", 112], ["add", "increased.global", 6],
-    ["add", "penetration.erosion_pct", 10], ["add", "additional_typed.erosion.repentance", (1.04 ** 6 - 1) * 100]] : null,
+  "Iron Lion": () => [["add", "rotation.proj_added", 1]],
+  "Portrait of a Fallen Saintess": lv => lv >= 4 ? [["add", "additional_typed.erosion.repentance", (1.04 ** 6 - 1) * 100]] : null,
   // tlidb: L5 +16% additional damage vs Cursed, +4% additional damage
   "Poisoned Omen": lv => lv >= 5 ? [["add", "additional.poisoned_omen", 4]] : null,
-  "Kitty Express": lv => lv >= 6 ? [["add", "increased.attack", 48], ["add", "increased.global", 6],
-    ["add", "aux.crit_rating_pct", 88], ["add", "aux.as_inc", 16]] : null,
+  "Kitty Express": lv => lv >= 6 ? [] : null,
 };
-/** Kitty nodes a kismet replaces (bing1 pactspirits: node 3 Attack Damage II, node 7 Attack Speed I). */
-const KITTY_NODE: Record<string, Edit[]> = {
-  "3": [["add", "increased.attack", -24]], "7": [["add", "aux.as_inc", -4]],
-};
+const NOTABLE_NODE = "10";   // its effects are the level-dependent PACTS entry
+
+/** Board-node edits: every allocated node except the notable and the nodes a kismet occupies. */
+function pactNodeEdits(nodes: Record<string, string> | undefined, allocated: string[], occupied: Set<string>): Edit[] {
+  const out: Edit[] = [];
+  for (const n of allocated) {
+    if (n === NOTABLE_NODE || occupied.has(n)) continue;
+    for (const line of String(nodes?.[n] ?? "").split("\n").map(l => l.trim()).filter(Boolean)) {
+      const fate = /^\+(\d+) \* 1% damage$/.exec(line);   // Undetermined Fate Slots
+      if (fate) { out.push(["add", "increased.global", +fate[1]]); continue; }
+      const m = affixEdits(line, "pact");
+      if (m.kind === "mapped") out.push(...m.edits);
+    }
+  }
+  return out;
+}
 
 export interface Kit {
   sources: Source[];
@@ -77,7 +90,8 @@ export interface Kit {
   extraLines: { source: string; slot: string; text: string }[];
 }
 
-export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonus = 0): Kit {
+export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonus = 0,
+                           pactNodes: (name: string) => Record<string, string> | undefined = () => undefined): Kit {
   const sources: Source[] = [];
   const extraLines: Kit["extraLines"] = [];
   let n = 0;
@@ -161,9 +175,9 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
   pacts.forEach((p, i) => {
     const edits = PACTS[p.guid]?.(p.level);
     if (!edits) { note("pactspirit", `${p.guid} L${p.level}`, "unknown"); return; }
-    const replaced = p.guid === "Kitty Express"
-      ? kismets.filter(k => k.pactspritIndex === i).flatMap(k => KITTY_NODE[String(k.nodeId).split("_").at(-1)!] ?? []) : [];
-    add("pactspirit", `${p.guid} L${p.level}`, [...edits, ...replaced]);
+    const occupied = new Set(kismets.filter(k => k.pactspritIndex === i).map(k => String(k.nodeId).split("_").at(-1)!));
+    const nodes = pactNodeEdits(pactNodes(p.guid), (p.allocatedNodes ?? []).map(String), occupied);
+    add("pactspirit", `${p.guid} L${p.level}`, [...edits, ...nodes]);
     if (p.guid === "Poisoned Omen" && p.level >= 5)
       add("pactspirit", "Poisoned Omen: +16% additional damage vs Cursed", [["add", "additional.omen_cursed", 16]], { requires: ["curse"] });
     if (p.guid === "Kitty Express" && names.size && traitLevels["Firepower Coverage"])

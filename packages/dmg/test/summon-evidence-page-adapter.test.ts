@@ -145,4 +145,15 @@ describe("page summon evidence adapter", () => {
       }],
     });
   });
+
+  it("treats identical summon setups at different loadout indices as unchanged", () => {
+    const summons = summonEvidenceForCompendium(wuxia(), 8);
+    expect(summons.length).toBeGreaterThan(0);
+    const relocated = JSON.parse(JSON.stringify(summons)
+      .replaceAll("loadouts.loadouts[8]", "loadouts.loadouts[3]"));
+    expect(compareSummonTerms(
+      { summonEvidence: summons } as any,
+      { summonEvidence: relocated } as any,
+    )).toEqual([]);
+  });
 });

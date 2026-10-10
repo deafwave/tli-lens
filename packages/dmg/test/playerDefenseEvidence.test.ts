@@ -355,6 +355,33 @@ describe("guarded SS13 player-defence evidence", () => {
     }));
   });
 
+  it("parses real DoT/threshold/combined phrasings without inventing stats", () => {
+    const build = wuxia();
+    const equippedId = Object.values(build.loadouts.loadouts[0].gear.equipped)
+      .find((value): value is string => typeof value === "string" && value.length > 0);
+    const equipped = build.loadouts.loadouts[0].gear.inventory
+      .find((item: any) => item.id === equippedId);
+    const lines = [
+      "-30% additional Damage Over Time taken when having at least 5000 Armor",
+      "+120 Max Life and Max Energy Shield",
+      "+6% Max Life, Max Mana, and Max Energy Shield",
+      "+12% additional damage taken by Nearby enemies",
+    ];
+    for (const description of lines) equipped.prefixes.push({ description });
+    const result = compileSs13PlayerDefenseEvidence(build, 0, options);
+    if (result.status !== "source-terms") throw new Error("expected source terms");
+    const termsFor = (text: string) => result.terms
+      .filter((term) => term.text === text)
+      .map((term) => [term.stat, term.operation, term.value]);
+
+    expect(termsFor(lines[0])).toEqual([["additional-damage-taken", "additional-percent", -30]]);
+    expect(termsFor(lines[1])).toEqual([
+      ["max-life", "add-flat", 120], ["max-energy-shield", "add-flat", 120]]);
+    expect(termsFor(lines[2])).toEqual([
+      ["max-life", "increase-percent", 6], ["max-energy-shield", "increase-percent", 6]]);
+    expect(termsFor(lines[3])).toEqual([]);
+  });
+
   it("never sums per-level or runtime-conditional defence text as unconditional", () => {
     const build = wuxia();
     const base = compileSs13PlayerDefenseEvidence(build, 0, options);

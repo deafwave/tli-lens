@@ -159,6 +159,21 @@ describe("component-scoped SS13 Bing factor ledger", () => {
       condition: "not stationary",
       direction: "loss",
     });
+
+    // Adding Upheaval also adds its generic ×1.2 to every scenario.
+    const build = bing();
+    for (const skill of build.loadouts.loadouts[5].skills.activeSkills) {
+      if (Array.isArray(skill?.supports)) {
+        skill.supports = skill.supports.map((support: any) =>
+          support?.supportGuid === "4ba9d077-d4f6-5a60-bd8e-423319a27f97" ? null : support);
+      }
+    }
+    const added = compareBingFactorLedgers(build, 5, 6);
+    if (added.status !== "calculated-partial") throw new Error("expected comparison");
+    const ordinary = added.selectedHitScenarios.find((scenario) =>
+      scenario.scenarioId === "ordinary-not-stationary");
+    if (ordinary?.status !== "calculated-partial") throw new Error("expected scenario");
+    expect(ordinary.ratio).toBeCloseTo(expected["ordinary-not-stationary"] * 1.2, 12);
     expect(scenarios["explosion-stationary"]).toMatchObject({
       component: "projectile-explosion-hit",
       condition: "stationary for at least 0.1s",
@@ -198,10 +213,14 @@ describe("component-scoped SS13 Bing factor ledger", () => {
         value: -30,
       }),
     );
-    expect(upheaval.nonComposedEffects).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: "additional-damage", value: 20 }),
-      expect.objectContaining({ id: "explosion-base-radius", value: 30 }),
-    ]));
+    // Upheaval's generic +20% is its own composed factor, not non-composed evidence
+    expect(upheaval.nonComposedEffects.map((effect) => effect.id))
+      .toEqual(["explosion-base-radius"]);
+    expect(result.terms.upheavalAdditionalDamage).toMatchObject({
+      status: "calculated-partial",
+      inputValue: 1.2,
+      rawPercent: 20,
+    });
     expect(stationary.provenance).toContainEqual(
       SS13_SIERRA_STATIONARY_SOURCE,
     );

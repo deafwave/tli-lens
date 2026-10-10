@@ -90,7 +90,8 @@ export function applyStat(s: Snapshot, path: string, value: number): boolean {
              && key in ((s as any)[root] ?? {})) {
     (s as any)[root][key] += value;
   } else if (path === "extras.support_skill_level") {
-    s.rotation.finisher_amp_pct += 0.3 * value;
+    // Recuperation past Lv21: +0.2 Combo Damage Enhancement per level (mechanics.md Recuperation row)
+    s.additional.combo_enhancement = (s.additional.combo_enhancement ?? 0) + 0.2 * value;
     s.crit.additional_on_crit_pct = (s.crit.additional_on_crit_pct ?? 0) + 0.5 * value;
   } else if (path === "extras.attack_skill_level" || path === "extras.active_skill_level") {
     // marginal band value joins the summed pool (mechanics.md#additional)

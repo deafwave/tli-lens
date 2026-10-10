@@ -61,6 +61,7 @@ describe("per-loadout Bing factor display seam", () => {
       "weapon-foundation",
       "stationary-attack-damage",
       "slow-projectile-additional-damage",
+      "upheaval-additional-damage",
       "upheaval-explosion-hit-damage",
       "source-visible-emissions",
     ]);

@@ -510,7 +510,8 @@ function blockerSetFingerprint(
       .map((blocker) => ({
         code: blocker.code,
         message: blocker.message,
-        evidence: blocker.evidence ?? null,
+        // drop the loadout/skill locator so the same exclusion matches across loadouts
+        evidence: blocker.evidence?.replace(/^loadouts\.loadouts\[\d+\]\.skills\.\w+\[\d+\]/, "") ?? null,
       }))
       .sort((left, right) =>
         left.code.localeCompare(right.code)

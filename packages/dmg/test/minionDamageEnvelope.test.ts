@@ -10,6 +10,7 @@ import {
 } from "../src/minionActionEvidence.js";
 import {
   compileKnownMinionDamageActions,
+  knownMinionDamageCoverageMatches,
 } from "../src/minionDamageEnvelope.js";
 import {
   compareWuxiaSummonEvidence,
@@ -341,5 +342,16 @@ describe("confirmed Spirit Magus per-contact damage envelope", () => {
       expect.objectContaining({ code: "invalid-minion-damage-factor" }),
     );
     expect(scattered?.knownDamage.multiplier).toBeGreaterThan(0);
+  });
+
+  it("matches the same exclusion across loadouts but not across sockets", () => {
+    const envelope = (evidence: string) => ({
+      status: "known-damage-envelope" as any,
+      excluded: [{ code: "unsupported-support", message: "Unknown support", evidence }],
+    });
+    const at = (loadout: number, support: number) => envelope(
+      `loadouts.loadouts[${loadout}].skills.activeSkills[2].supports[${support}]`);
+    expect(knownMinionDamageCoverageMatches(at(8, 1), at(3, 1))).toBe(true);
+    expect(knownMinionDamageCoverageMatches(at(8, 1), at(8, 2))).toBe(false);
   });
 });

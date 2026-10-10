@@ -210,13 +210,20 @@ function evidenceFingerprint(value: SummonSourceEvidence) {
     actor: value.actor,
     damageTags: value.damageTags,
     baseline: value.baseline,
-    actions: value.actions,
+    // locators/provenance name the loadout; identical setups must compare equal
+    actions: value.actions.map((action) => ({
+      ...action,
+      knownDamage: {
+        ...action.knownDamage,
+        excluded: action.knownDamage.excluded.map(({ code, message }) => ({ code, message })),
+      },
+    })),
     supports: value.supports.map(({ blockerEvidence: _blockerEvidence, ...support }) =>
       support),
     terms: value.terms,
     minionDps: value.minionDps,
     playerEhp: value.playerEhp,
-  });
+  }, (key, child) => key === "provenance" ? undefined : child);
 }
 
 export function compareSummonTerms(

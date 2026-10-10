@@ -31,7 +31,7 @@ describe("page Bing component-factor adapter", () => {
       isTargetHits: false,
     });
     expect(display.evidence).toEqual(expected);
-    expect(display.factorRows).toHaveLength(5);
+    expect(display.factorRows).toHaveLength(6);
     expect(display.factorRows).toEqual(expect.arrayContaining([
       expect.objectContaining({
         factorId: "weapon-foundation",

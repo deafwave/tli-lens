@@ -183,8 +183,9 @@ describe("comparison website model", () => {
       finding.id === "bing-factor-ledger:projectile-explosion-hit");
 
     expect(plan.summary.comparisonKind).toBe("progression");
-    expect(ordinary?.evidence.join(" ")).not.toContain("Upheaval");
-    expect(explosion?.evidence.join(" ")).toContain("Upheaval");
+    expect(ordinary?.evidence.join(" ")).toContain("Upheaval additional damage");
+    expect(ordinary?.evidence.join(" ")).not.toContain("explosion Hit Damage");
+    expect(explosion?.evidence.join(" ")).toContain("Upheaval additional explosion Hit Damage");
     expect(ordinary?.evidence.join(" ")).toContain(
       "emissions remain a separate lane",
     );
@@ -579,6 +580,19 @@ describe("comparison website model", () => {
       expect(swap?.nextExperiment).toContain("swap in socket 1");
       expect(swap?.nextExperiment).not.toContain("source-record correction");
     }
+  });
+
+  it("flags a different main skill placed in the same socket", () => {
+    const fixture = (demoData as any).builds.find((item: any) =>
+      item.id === "bing").loadouts[3];
+    const before = structuredClone(fixture);
+    const after = structuredClone(fixture);
+    const main = after.skills.find((skill: any) => skill.name === "Hammer of Ash");
+    main.guid = "replacement-skill";
+    main.name = "Replacement Skill";
+
+    expect(compareStructure(before, after).insights.map((insight) => insight.id))
+      .toContain("main-skill-changed");
   });
 
   it("keeps duplicate support IDs distinct in structural socket evidence", () => {

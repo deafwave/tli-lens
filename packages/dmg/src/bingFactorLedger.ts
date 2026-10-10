@@ -50,6 +50,7 @@ export type BingFactorId =
   | "weapon-foundation"
   | "stationary-attack-damage"
   | "slow-projectile-additional-damage"
+  | "upheaval-additional-damage"
   | "upheaval-explosion-hit-damage"
   | "source-visible-emissions";
 
@@ -106,6 +107,7 @@ export interface BingFactorTerms {
   weaponFoundation: CalculatedBingFactorTerm;
   stationaryAttackDamage: BingFactorTerm;
   slowProjectileAdditionalDamage: BingFactorTerm;
+  upheavalAdditionalDamage: BingFactorTerm;
   upheavalExplosionHitDamage: BingFactorTerm;
   sourceVisibleEmissions: BingFactorTerm;
 }
@@ -181,6 +183,7 @@ export interface BingFactorChanges {
   weaponFoundation: BingFactorChange;
   stationaryAttackDamage: BingFactorChange;
   slowProjectileAdditionalDamage: BingFactorChange;
+  upheavalAdditionalDamage: BingFactorChange;
   upheavalExplosionHitDamage: BingFactorChange;
   sourceVisibleEmissions: BingFactorChange;
 }
@@ -282,6 +285,12 @@ const FACTOR_SPECS: Record<BingFactorId, FactorSpec> = {
   "slow-projectile-additional-damage": {
     factorId: "slow-projectile-additional-damage",
     label: "Slow Projectile additional damage",
+    scope: "hit components of the supported Hammer of Ash skill",
+    condition: null,
+  },
+  "upheaval-additional-damage": {
+    factorId: "upheaval-additional-damage",
+    label: "Upheaval additional damage",
     scope: "hit components of the supported Hammer of Ash skill",
     condition: null,
   },
@@ -537,6 +546,8 @@ function stationaryAttackTerm(
 interface SupportFactorSpec extends FactorSpec {
   supportId: string;
   effectId: string;
+  /** Other effects of this support composed by their own factor. */
+  siblingEffectIds?: string[];
 }
 
 function supportSourcePath(support: SupportSourceTerms): string {
@@ -547,11 +558,11 @@ function supportSourcePath(support: SupportSourceTerms): string {
 
 function nonComposedSupportEffects(
   support: SupportSourceTerms,
-  selectedEffectId: string,
+  composedEffectIds: readonly string[],
   sourcePath: string,
 ): BingNonComposedEffect[] {
   return support.effects
-    .filter((effect) => effect.id !== selectedEffectId)
+    .filter((effect) => !composedEffectIds.includes(effect.id))
     .map((effect): BingNonComposedEffect => ({
       id: effect.id,
       label: effect.label,
@@ -641,7 +652,7 @@ function supportFactorTerm(
     sourcePaths: [sourcePath],
     nonComposedEffects: nonComposedSupportEffects(
       installed,
-      factor.effectId,
+      [factor.effectId, ...(factor.siblingEffectIds ?? [])],
       sourcePath,
     ),
     provenance: uniqueProvenance([
@@ -726,15 +737,23 @@ export function compileBingFactorLedger(
     supportId: SLOW_PROJECTILE_SUPPORT_ID,
     effectId: "additional-damage",
   });
+  const upheavalGeneric = supportFactorTerm(supportEvidence, {
+    ...FACTOR_SPECS["upheaval-additional-damage"],
+    supportId: UPHEAVAL_MAGNIFICENT_SUPPORT_ID,
+    effectId: "additional-damage",
+    siblingEffectIds: ["additional-explosion-hit-damage"],
+  });
   const upheaval = supportFactorTerm(supportEvidence, {
     ...FACTOR_SPECS["upheaval-explosion-hit-damage"],
     supportId: UPHEAVAL_MAGNIFICENT_SUPPORT_ID,
     effectId: "additional-explosion-hit-damage",
+    siblingEffectIds: ["additional-damage"],
   });
   const terms: BingFactorTerms = {
     weaponFoundation: weaponFoundationTerm(envelope),
     stationaryAttackDamage: stationary,
     slowProjectileAdditionalDamage: slow,
+    upheavalAdditionalDamage: upheavalGeneric,
     upheavalExplosionHitDamage: upheaval,
     sourceVisibleEmissions: emissionsTerm(envelope),
   };
@@ -878,6 +897,7 @@ const SCENARIOS: ScenarioSpec[] = [
     factorKeys: [
       "weaponFoundation",
       "slowProjectileAdditionalDamage",
+      "upheavalAdditionalDamage",
     ],
   },
   {
@@ -888,6 +908,7 @@ const SCENARIOS: ScenarioSpec[] = [
     factorKeys: [
       "weaponFoundation",
       "slowProjectileAdditionalDamage",
+      "upheavalAdditionalDamage",
       "upheavalExplosionHitDamage",
     ],
   },
@@ -900,6 +921,7 @@ const SCENARIOS: ScenarioSpec[] = [
       "weaponFoundation",
       "stationaryAttackDamage",
       "slowProjectileAdditionalDamage",
+      "upheavalAdditionalDamage",
     ],
   },
   {
@@ -911,6 +933,7 @@ const SCENARIOS: ScenarioSpec[] = [
       "weaponFoundation",
       "stationaryAttackDamage",
       "slowProjectileAdditionalDamage",
+      "upheavalAdditionalDamage",
       "upheavalExplosionHitDamage",
     ],
   },
@@ -1004,6 +1027,10 @@ export function compareBingFactorLedgerResults(
     slowProjectileAdditionalDamage: compareFactorTerms(
       before.terms.slowProjectileAdditionalDamage,
       after.terms.slowProjectileAdditionalDamage,
+    ),
+    upheavalAdditionalDamage: compareFactorTerms(
+      before.terms.upheavalAdditionalDamage,
+      after.terms.upheavalAdditionalDamage,
     ),
     upheavalExplosionHitDamage: compareFactorTerms(
       before.terms.upheavalExplosionHitDamage,

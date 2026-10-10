@@ -361,7 +361,7 @@ function primarySkillInsights(before: AnalyzedLoadout, after: AnalyzedLoadout) {
   const right = primarySkill(after);
   if (!left || !right) return insights;
   const hybrid = beforeMinions.length > 0 || afterMinions.length > 0;
-  if (skillKey(left) !== skillKey(right)) {
+  if (actorSkillKey(left) !== actorSkillKey(right)) {
     insights.push({
       id: hybrid ? "player-main-skill-changed" : "main-skill-changed",
       priority: 120,

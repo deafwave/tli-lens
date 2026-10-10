@@ -76,13 +76,24 @@ def load_build(src):
     return get_shared_build(src)
 
 
+def cache_json(path, url):
+    """Write url's body to path only if it is JSON, so a bad response never
+    replaces a good cache entry."""
+    data = fetch(url)
+    try:
+        json.loads(data)
+    except ValueError:
+        raise SystemExit(f"{url} did not return JSON; kept the existing cache at {path}")
+    with open(path, "wb") as f:
+        f.write(data)
+
+
 def bundle_names(prefix, lang="en", refresh=False):
     """Download every dataset bundle for a season into cache/."""
     os.makedirs(CACHE, exist_ok=True)
     mpath = os.path.join(CACHE, "manifest.json")
     if refresh or not os.path.exists(mpath):
-        with open(mpath, "wb") as f:
-            f.write(fetch(f"{SITE}/data-bundles/manifest.json"))
+        cache_json(mpath, f"{SITE}/data-bundles/manifest.json")
     with open(mpath, encoding="utf-8") as f:
         manifest = json.load(f)
 
@@ -98,8 +109,7 @@ def bundle_names(prefix, lang="en", refresh=False):
     for key in want:
         p = os.path.join(CACHE, key + ".json")
         if refresh or not os.path.exists(p):
-            with open(p, "wb") as f:
-                f.write(fetch(SITE + manifest["bundles"][key]["path"]))
+            cache_json(p, SITE + manifest["bundles"][key]["path"])
         paths.append(p)
     return paths
 

@@ -378,7 +378,7 @@ const MINION_CONTEXT = /\b(?:minions?|spirit mag(?:us|i)|synthetic troop)\b/i;
 const PLAYER_FROM_MINION_CONTEXT =
   /\bdamage taken is transferred to\b[^.\n]*\bminion\b|\bis also applied to you\b/i;
 const OFFENSIVE_CONTEXT =
-  /\bresistance penetration\b|\barmor dmg mitigation penetration\b|\bdemolisher charge restoration\b|\bdamage taken by enemies\b|\badditional damage taken by enemies\b|\benem(?:y|ies)\b[^.\n]*\bresistance\b|\bresistance\b[^.\n]*\benem(?:y|ies)\b/i;
+  /\bresistance penetration\b|\barmor dmg mitigation penetration\b|\bdemolisher charge restoration\b|\bdamage taken by\b[^.\n]*\benem(?:y|ies)\b|\benem(?:y|ies)\b[^.\n]*\bresistance\b|\bresistance\b[^.\n]*\benem(?:y|ies)\b/i;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -2062,16 +2062,16 @@ function parsePlayerTerms(line: SourceLine): PlayerDefenseTerm[] {
   };
 
   // One numeric source can explicitly apply to both named stats.
-  matches(/([+-]?\s*\d+(?:\.\d+)?)\s*%\s+Max Life and Max Energy Shield/gi, (match) => {
-    const value = signedNumber(match[1]);
-    add("max-life", "increase-percent", value, "percent");
-    add("max-energy-shield", "increase-percent", value, "percent");
-  });
-  matches(/([+-]?\s*\d+(?:\.\d+)?)\s*%\s+Max Energy Shield and Max Life/gi, (match) => {
-    const value = signedNumber(match[1]);
-    add("max-life", "increase-percent", value, "percent");
-    add("max-energy-shield", "increase-percent", value, "percent");
-  });
+  matches(
+    /([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+(?:Max Life and Max Energy Shield|Max Energy Shield and Max Life|Max Life, Max Mana,? and Max Energy Shield)/gi,
+    (match) => {
+      const value = signedNumber(match[1]);
+      const operation = match[2] ? "increase-percent" : "add-flat";
+      const unit = match[2] ? "percent" : "flat";
+      add("max-life", operation, value, unit);
+      add("max-energy-shield", operation, value, unit);
+    },
+  );
   matches(/([+-]?\s*\d+(?:\.\d+)?)\s+(Armor) and Evasion/gi, (match) => {
     const value = signedNumber(match[1]);
     add("armor", "add-flat", value, "flat");
@@ -2093,7 +2093,7 @@ function parsePlayerTerms(line: SourceLine): PlayerDefenseTerm[] {
     add("spell-block-chance", "chance-percent", value, "percent");
   });
 
-  matches(/([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Max Life\b/gi, (match) => {
+  matches(/(?<![\d.])(?<!\b(?:at least|per)\s*)([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Max Life\b/gi, (match) => {
     add(
       "max-life",
       match[2] ? "increase-percent" : "add-flat",
@@ -2101,7 +2101,7 @@ function parsePlayerTerms(line: SourceLine): PlayerDefenseTerm[] {
       match[2] ? "percent" : "flat",
     );
   });
-  matches(/([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Max Energy Shield\b/gi, (match) => {
+  matches(/(?<![\d.])(?<!\b(?:at least|per)\s*)([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Max Energy Shield\b/gi, (match) => {
     add(
       "max-energy-shield",
       match[2] ? "increase-percent" : "add-flat",
@@ -2137,7 +2137,7 @@ function parsePlayerTerms(line: SourceLine): PlayerDefenseTerm[] {
     );
   });
   matches(
-    /([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Armor\b(?!\s+(?:Effective|DMG|Mitigation|Penetration))/gi,
+    /(?<![\d.])(?<!\b(?:at least|per)\s*)([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Armor\b(?!\s+(?:Effective|DMG|Mitigation|Penetration))/gi,
     (match) => {
       add(
         "armor",
@@ -2147,7 +2147,7 @@ function parsePlayerTerms(line: SourceLine): PlayerDefenseTerm[] {
       );
     },
   );
-  matches(/([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Evasion\b/gi, (match) => {
+  matches(/(?<![\d.])(?<!\b(?:at least|per)\s*)([+-]?\s*\d+(?:\.\d+)?)\s*(%)?\s+Evasion\b/gi, (match) => {
     add(
       "evasion",
       match[2] ? "increase-percent" : "add-flat",
@@ -2209,7 +2209,7 @@ function parsePlayerTerms(line: SourceLine): PlayerDefenseTerm[] {
     },
   );
   matches(
-    /([+-]?\s*\d+(?:\.\d+)?)\s*%\s+additional(?:\s+(?:Physical|Elemental|Hit|Damage Over Time))?\s+Damage taken\b/gi,
+    /([+-]?\s*\d+(?:\.\d+)?)\s*%\s+additional(?:\s+(?:Physical|Elemental|Hit))?\s+Damage(?:\s+Over Time)?\s+taken\b(?!\s+by\b)/gi,
     (match) => {
       add("additional-damage-taken", "additional-percent", signedNumber(match[1]), "percent");
     },

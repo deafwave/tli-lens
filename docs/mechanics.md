@@ -52,13 +52,14 @@ Pinned sources: the SS13 skill master/text bundles, the repository's
 
 ### Bing component factor ledger <a id="guarded-bing-factor-ledger"></a>
 
-`compileBingFactorLedger` extends the guarded Bing intrinsic evidence with four
+`compileBingFactorLedger` extends the guarded Bing intrinsic evidence with five
 source-complete hit inputs while keeping source-visible emissions separate:
 
 - the average weapon-sourced Hammer of Ash hit foundation;
 - Sierra Reverberation Maul's conditional additional Attack Damage after
   standing still for 0.1s;
-- Slow Projectile's generic additional-damage line; and
+- Slow Projectile's generic additional-damage line;
+- Upheaval's generic +20% additional damage line (whole supported skill); and
 - Upheaval's projectile-explosion-only additional Hit Damage line.
 
 Every `additional` line is its own `(1 + value / 100)` factor, following
@@ -74,10 +75,11 @@ For supplied Bing loadouts 5 → 6, the exact factor changes are:
 | Weapon foundation | 4,832.4978 | 4,761.207 | 0.9852476291 (-1.4752%) |
 | Sierra stationary Attack layer | ×1.96 | ×2.18 | 1.1122448980 (+11.2245%) |
 | Slow Projectile generic layer | ×1.29 | ×1.27 | 0.9844961240 (-1.5504%) |
+| Upheaval generic layer | ×1.2 | ×1.2 | 1 (unchanged) |
 | Upheaval explosion-only layer | ×1.37 | ×1.46 | 1.0656934307 (+6.5693%) |
 | Source-visible emissions / throw | 18.9 | 13.5 | 0.7142857143 (-28.5714%) |
 
-The first four inputs produce selected-changing-factor ratios of 0.9699724720
+The five hit inputs produce selected-changing-factor ratios of 0.9699724720
 for an ordinary non-stationary hit, 1.0336932914 for a non-stationary
 projectile-explosion hit, 1.0788469332 for a stationary ordinary hit, and
 1.1497200894 for a stationary projectile-explosion hit. These are partial
@@ -196,7 +198,7 @@ Bucket = snapshot path (values in %, per plan schema). "Stacks with" says which 
 | "+25% additional damage against Low Life enemies" (Warrior slate) | `additional.low_life_execute` | Execute buff, live only while the boss is below 35% Life — the last 35% of its HP. DPS-equivalent over the whole fight is the harmonic mean over HP share: `1/(0.65 + 0.35/1.25)` ⇒ **+7.53%**, not the +25% headline | Low Life = 35% (user 2026-07-16) | build export (loadout 5 slate); user 2026-07-16 | inferred (HP-share averaging) |
 | "+#% damage against Low Life enemies" (increased variant, Warrior slate) | `extras.low_life_inc_pct` → `additional.low_life_execute` | Same execute gate, but the bonus joins the **increased pool**, so its live multiplier is diluted first: `+50` on this build's pool is `50/(100+Σincreased)` before the same HP-share averaging. Must classify ahead of the generic `+#% damage` pattern or the gate is silently dropped and it scores at full uptime (user 2026-07-16: "should not be 8%") | +50% scores +2.37, not the full-uptime +7.09 | tlicompendium slate bundle; user 2026-07-16 | inferred (HP-share averaging; pool dilution) |
 | Aura Effect | scales `additional.precise_auras` + Fearless's crit rating & AS lines | Multiplies **every** aura-granted value: the three damage auras (Fearless 30, Cruelty 22×2, Domain 33) and Precise: Fearless's +80% crit rating and +8% melee AS lines (catalog `aura_effect_pct` scoring rescales all of them) | Aura Amplification support +5.25%/aura; Precise: Cruelty self-ramp +2.5% additional aura effect/stack up to 40 (=+100%, own multiplier on the aura values) | cache:SS12.5-skill-en.json; user 2026-07-16 (all auras, not just the damage values) | confirmed |
-| Support Skill Levels (+N) | raises leveled support gems (Recuperation, Critical Strike Damage Increase) | Each +1 level adds the gem's per-level slope: +0.2 amp (Recuperation past Lv21; SS13 was +0.3) and +0.5 crit-gated additional (Crit Strike Damage Increase) | build has +10 → supports read at L30 | tlidb progression tables (see #supports) | reported (tables); prism ranks are NOT support levels |
+| Support Skill Levels (+N) | raises leveled support gems (Recuperation, Critical Strike Damage Increase) | Each +1 level adds the gem's per-level slope: +0.2 Combo Damage Enhancement (Recuperation past Lv21; SS13 was +0.3 amp) and +0.5 crit-gated additional (Crit Strike Damage Increase) | build has +10 → supports read at L30 | tlidb progression tables (see #supports) | reported (tables); prism ranks are NOT support levels |
 | Attack/Active Skill Levels (+1) <a id="skill-levels"></a> | `additional.skill_levels` (derived in `resolveExtras`) | Each level is its **own multiplier** (scales the skill's base, so it rides the whole pipeline): ×1.10 per gem level 21–30, ×1.08 past 30, gem base L20 — like every [additional](#additional) source, so the marginal +1 level is always its full band value (+10%/+8%, user 2026-07-17 confirmed vs the diluted reading). The export parses +9 net (mainhand +4, offhand +4, tree +1), but `manual_overrides.json` **pins it to the live +2** (Spectral Slash 20+2) → band ×1.1² = ×1.21 (+21%) | "+4 to Attack Skill Level" (mainhand), "+4 Active Skill Level" (offhand), "+1 to Attack Skill Level" (tree); live pin +2 | user-reported per-level bands 2026-07-15; +10%/level and live 20+2 confirmed 2026-07-17 | confirmed (bands, own multiplier) |
 | Persistent / Physical Skill Levels (+1) | `extras.attack_skill_level` (same path as above) | Spectral Slash carries the Persistent and Physical tags, so both wordings raise the main gem | "+1 Persistent Skill Level", "+1 Physical Skill Level" (divinity slates); the "Physical Damage can't be converted" variant is a whole-mod disqualifier — it kills the phys→cold conversion | user 2026-07-16 (tags) | reported |
 | All Skills' Levels (+1) | `extras.all_skill_levels` → main gem + `support_skill_level` | Pays the main gem's ×1.10 **and** every leveled support's per-level slope at once | "+1 to All Skills' Levels" (divinity slate / Lich tree) | user 2026-07-16 | reported |
@@ -286,7 +288,7 @@ their actual roll in `rollValues`. Boss single-target, full uptime (the build st
 | Gem (build state) | Value modeled | Notes |
 |---|---|---|
 | Activation Medium: Still Attack (roll 30) | `additional.willpower` = (1.06⁶−1) = +41.85% | Grants Lv(20–30) Willpower: 6 stacks × +6%/stack, "(multiplies)"; per-stack value is level-flat |
-| Recuperation L30 | +15.2 into the finisher amp sum | SS14: 5.4 (Lv1) → 13.4 (Lv21) → 17.4 (Lv41) (SS13: 5.5 → 15.5 → 21.5); its +1 Combo Point is in `rotation.combo_points` |
+| Recuperation L30 | +15.2 into the summed `additional.combo_enhancement` pool | SS14: 5.4 (Lv1) → 13.4 (Lv21) → 17.4 (Lv41) (SS13: 5.5 → 15.5 → 21.5); its +1 Combo Point is in `rotation.combo_points` |
 | Spectral Slash: Detonation (Magnificent, rank 1, roll 30) | `additional.detonation_prism` = 1.20×1.30−1 = +56% | Base +20% and rolled +(26–30)% are separate lines that net together; clone-kill explosion never fires on a boss |
 | Critical Strike Damage Increase L30 | `crit.additional_on_crit_pct` = 40.5 | 26 (Lv1) + 0.5/level; multiplies **crit hits only**: crit layer = 1 + chance×(CD×1.405−1) |
 | Spectral Slash: Legion (Noble, tier 2, rank 1, roll −4) | `additional.legion_prism` = 1.20×0.96−1 = +15.2% | Rolled malus (2–5 range positive at tier 0; this tier rolled −4); its +1 Clone per enemy (≤5) is unmodeled → understated vs boss |

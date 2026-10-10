@@ -142,7 +142,46 @@ export function fillTreesFromNative(payload: any, native: any[], loadoutIndex = 
   return out;
 }
 
-export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]): ImportResult {
+/** Native talent node id <tree><row:2><col:2>00 → grid position. */
+const nodePos = (id: string) => ({ tree: Math.floor(+id / 1e6), row: Math.floor(+id / 1e4) % 100, col: Math.floor(+id / 100) % 100 });
+
+export interface NativePrisms {
+  items: { configBaseId: string; itemId: string; affixes: Record<string, { id: string; args: number[] }[]> }[];
+  placements: { itemId: string; tree: number; center: string }[];
+}
+
+/** Ethereal prism area effects ("All Medium Talent within the area also gain: …") as one line per
+    allocated node of that type inside the prism's rectangle (#bing-import). Talent points a prism adds
+    ("can be allocated … 1 additional time") are already in the native GeniusList totals. */
+export function nativePrismLines(native: any[], prisms: NativePrisms): { source: string; slot: string; text: string }[] {
+  const byGame = new Map<string, any>();
+  for (const e of catalogById().values()) if (e.gameId) byGame.set(`${e.domain}:${e.gameId}`, e);
+  const allocated = new Map<string, number>();
+  for (const rec of native) for (const [k, pts] of Object.entries<number>(rec.GeniusList ?? {})) if (pts > 0) allocated.set(k.replace(/\D/g, ""), pts);
+  const out: { source: string; slot: string; text: string }[] = [];
+  for (const pl of prisms.placements) {
+    const item = prisms.items.find(i => i.itemId === pl.itemId);
+    const texts = Object.values(item?.affixes ?? {}).flat()
+      .map(a => byGame.get(`ethereal-prism:${a.id}`)?.label as string | undefined).filter((t): t is string => !!t);
+    const size = texts.map(t => t.match(/expands to (\d+)x(\d+)/)).find(Boolean);
+    const [w, h] = size ? [+size[1], +size[2]] : [1, 1];
+    const c = nodePos(pl.center);
+    for (const t of texts) {
+      const m = t.match(/^All (Micro|Medium|Legendary Medium) Talent within the area also gain: (.+)$/s);
+      if (!m) continue;
+      const type = m[1].toLowerCase().replace("legendary medium", "legendary");
+      for (const id of allocated.keys()) {
+        const p = nodePos(id), node = byGame.get(`talent-tree:${id}`);
+        if (p.tree !== c.tree || Math.abs(p.row - c.row) > (h - 1) / 2 || Math.abs(p.col - c.col) > (w - 1) / 2) continue;
+        if (!String(node?.metadata?.talentNodeType ?? "").startsWith(type)) continue;
+        for (const line of m[2].split("\n")) out.push({ source: `prism:${pl.tree}:${id}`, slot: "prism", text: line.trim().replace(/^(\d)/, "+$1") });
+      }
+    }
+  }
+  return out;
+}
+
+export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[], nativePrisms?: NativePrisms): ImportResult {
   if (nativeTalents?.length) payload = fillTreesFromNative(payload, nativeTalents, loadoutIndex);
   const resolved = resolveGuids(payload);
   const lo = resolved.loadouts.loadouts[loadoutIndex];
@@ -167,7 +206,8 @@ export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]
                  edits: [["add", "aux.skill_level", -1]], cite: "bingLedger HOA_LEVELS_ABOVE_20" });
   const kit = kitSources(lo, raw, lines);
   sources.push(...kit.sources);
-  for (const l of [...extracted, ...memoryLines, ...kit.extraLines] as Line[]) {
+  const prismLines = nativeTalents && nativePrisms ? nativePrismLines(nativeTalents, nativePrisms) : [];
+  for (const l of [...extracted, ...memoryLines, ...kit.extraLines, ...prismLines] as Line[]) {
     const s = structural(l.text, l.slot);
     if (s) { add(l.source, l.text, scale(s.edits, l.slot === "tree" ? l.points ?? 1 : 1), s.provides, s.requires); lines.push({ source: l.source, text: l.text, kind: "structural", why: s.why }); continue; }
     const key = `${l.source.replace(/[^a-z0-9]+/gi, "_")}_${n}`;

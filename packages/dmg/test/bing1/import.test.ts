@@ -8,7 +8,7 @@ import { importBing } from "../../src/bingImport.js";
 /* mechanics.md#bing-import — the importer against the hand-encoded reference and a scraped build. */
 const load = (p: string) => JSON.parse(fs.readFileSync(fromRoot(p), "utf-8"));
 const july = () => importBing(load("data/bing1/real_buld_3.json"));
-const hanshan = () => { const d = load("data/bing1/scraped/hanshan-40t.json"); return importBing(d.compendium, 0, d.nativeTalents); };
+const hanshan = () => { const d = load("data/bing1/scraped/hanshan-40t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 
 describe("Bing importer", () => {
   test("July export: every line classified; crit chance matches the in-game sheet (65.05%)", () => {
@@ -31,5 +31,7 @@ describe("Bing importer", () => {
     expect(r.lines.some(l => l.source.startsWith("tree:"))).toBe(true);
     expect(r.lines.filter(l => l.kind === "unknown").map(l => l.text)).toEqual(["+1 Max Charges"]);
     expect(cycleDps(applySeason(r.snapshot, "ss13")).deterioration_dps).toBeGreaterThan(0);
+    // Phantasmagoria (Shadowmaster, 3x3): +17.5 Str on each of the three allocated medium nodes in its area
+    expect(r.lines.filter(l => l.source.startsWith("prism:") && l.text === "+17.5 Strength")).toHaveLength(3);
   });
 });

@@ -4,10 +4,12 @@ import { cycleDps } from "../../src/damageModel.js";
 import { fromRoot } from "../../src/py.js";
 import { applySeason } from "../../src/seasons.js";
 import { importBing } from "../../src/bingImport.js";
+import { BING_ZERO, compose, effective } from "../../src/bingLedger.js";
 
 /* mechanics.md#bing-import — the importer against the hand-encoded reference and a scraped build. */
 const load = (p: string) => JSON.parse(fs.readFileSync(fromRoot(p), "utf-8"));
 const july = () => importBing(load("data/bing1/real_buld_3.json"));
+const pro1t = () => { const d = load("data/bing1/scraped/pro-1t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 const hanshan = () => { const d = load("data/bing1/scraped/hanshan-40t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 
 describe("Bing importer", () => {
@@ -70,4 +72,15 @@ describe("Bing importer", () => {
     expect(sum(july(), /^pactspirit: Iron Lion/, "aux.knockback")).toBe(48);
     expect(sum(july(), /^pactspirit: Iron Lion/, "increased.global")).toBe(6);
   });
+  test("1T dummy build: Ice Bond is a Sentry charge engine; Entangled Pain, Bull's Rage and Tenacity import", () => {
+    const r = pro1t();
+    const snap: any = compose(BING_ZERO, effective(r.sources));
+    expect(snap.rotation.demolisher_every_n).toBe(1);
+    expect(snap.rotation.demolisher_resto_pct).toBeUndefined();
+    expect(snap.additional.tenacity).toBeCloseTo((1.08 ** 6 - 1) * 100, 6);   // 4 base + 2 max stacks
+    expect(snap.additional.bulls_rage).toBe(25.5);                              // L17
+    expect(r.sources.find(s => /Entangled Pain/.test(s.label))?.provides).toContain("curse");
+    expect(r.lines.filter(l => l.kind === "unknown").map(l => l.text).sort()).toEqual([
+      "+1 Max Charges", "+30% Bond Gaining Speed", "Converts 50% of Lightning Damage to Fire Damage", "Unable to trigger Empower Skills"]);
+  }, 30_000);
 });

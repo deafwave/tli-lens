@@ -116,7 +116,13 @@ const RULES: Rule[] = [
   [r(`-${N}% additional (?:Dexterity|Intelligence)`), () => "off-stat (Bing scales Strength)"],
   [r(`\\+${N}% inflicted Paralysis Effect`), () => "paralysis (the build inflicts none)"],
   [r(`\\+${N}% damage for Channeled Skills`), () => "channeled skills"],
-  [r(`\\+${N}% (?:Attack and Cast|Attack) Speed`), m => [["add", "aux.as_inc", +m[1]]]],
+  [r(`${N}% (?:Attack and Cast|Attack) Speed`), m => [["add", "aux.as_inc", +m[1]]]],
+  // Tenacity Blessing: 4 base stacks (tlidb); Sacrifice turns each into ×(1+v) additional (mechanics.md#tenacity)
+  [r(`Changes the base effect of Tenacity Blessing to: \\+${N}% additional damage`), m => [["add", "aux.tenacity_more", +m[1]]]],
+  [r(`\\+${N} to Max Tenacity Blessing Stacks`), m => [["add", "aux.tenacity_stacks", +m[1]]]],
+  [r(`\\+${N}% chance to gain ${N} stack\\(s\\) of Tenacity Blessing when hitting an enemy`),
+    m => [["add", "aux.tenacity_gain", +m[1]]]],
+  [r(`\\+${N}% Attack Damage while Tenacity Blessing is active`), m => [["add", "aux.tenacity_attack", +m[1]]]],
   [r(`\\+${N}% Demolisher Charge Restoration Speed`), m => [["add", "rotation.demolisher_resto_pct", +m[1]]]],
   [r(`\\+${N}% Aura Effect`), m => [["add", "aux.aura_effect", +m[1]]]],
   // distance only; a Ranger knockback→damage line converts it (compose: aux.knockback × aux.knockback_conv)

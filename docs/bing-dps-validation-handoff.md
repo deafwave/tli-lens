@@ -20,6 +20,7 @@ validated against in-game measurements.
 | User's own build, July export `data/bing1/real_buld_3.json` imported automatically | **484B** | measured **557.75B** (span mean, lv85 training dummy, 2026-07-20) | **−13%** |
 | Same build, hand-encoded snapshot `data/bing1/real_buld_3_snapshot.json` | 596.2B | 557.75B | +6.9% |
 | Scraped Pro Build 「寒山寺40万亿」 `data/bing1/scraped/hanshan-40t.json` | **129.6T** | title says **40万亿 = 40T** | **×3.2** |
+| Scraped Pro Build 「寒山寺宾一5000火 1w亿」 `data/bing1/scraped/pro-1t.json` | **246.4B** (was 23.5B) | title **1w亿 = 1T**; the user confirms it is **training-dummy DPS** | **×4 low** |
 
 - The hand snapshot only reaches +6.9% through four **residuals** with no export line behind them
   (flat 30 phys / 22.1 erosion adds, +36% crit damage, ×1.091 attack speed, Haze prism) — see
@@ -27,8 +28,22 @@ validated against in-game measurements.
 - The 40T title is the only reference for that build. **Unknown: what that number measures**
   (which dummy/boss, span vs peak, season). Settle this first if at all possible — it can be the
   whole gap.
-- Run `pnpm bing diagnose data/bing1/scraped/hanshan-40t.json data/bing1/real_buld_3.json --season ss13`
+- The model is now **too high on one build and too low on another** (40T ×3.2 high, 1T ×4 low), so
+  no global constant fixes both. Real ratio 40T/1T = 40; model ratio = 526 — something scales ~13×
+  too steeply between a mid build and a maxed one (suspects: skill-levels ÷2.36, Strength 439% vs
+  96% additional, the 40T-only switches in §2), or the 40T figure is not dummy DPS (§5).
+- Run `pnpm bing diagnose data/bing1/scraped/pro-1t.json data/bing1/scraped/hanshan-40t.json data/bing1/real_buld_3.json --season ss13`
   to reproduce every table below.
+
+**Fixed 2026-10-10 from the 1T build (23.5B → 246.4B):** Ice Bond is a **Sentry** skill, so with
+Activation Medium: Motionless + Formation Breaker it is the n=1 charge engine (was Flame-Core-only,
+×3.65); Entangled Pain (curse, +39% additional DoT taken, ticks only, ×1.33); Bull's Rage (Euphoria
++27% additional Melee, ×1.26); Tenacity Blessing with Onslaughter **Sacrifice** (+8% additional per
+stack, 4+2 stacks, ×1.59 — was discarded as "mechanic this build does not use"); signed attack-speed
+lines (Great Strength −10%). `mechanics.md#bing-sentry-curse`, `#tenacity`. Still unmodeled on it:
+Tyrant's "**Unable to trigger Empower Skills**" (Ice Bond and Bull's Rage are Empower-tagged and
+auto-cast by Activation Medium — does the glove stop that? if so the n=1 engine is wrong and the
+gap grows), "+1 Max Charges", "+30% Bond Gaining Speed", 50% Lightning→Fire (moot: all→Erosion).
 
 ## 2. Where the model is confident vs where it is not
 
@@ -58,6 +73,8 @@ conservative reading (`packages/dmg/src/bingDiagnose.ts` `UNVERIFIED`):
 | cursed | "+X% additional vs Cursed" lines live (Timid / Corruption curse) | 1.25 | — | — |
 | malleable | Precise: Malleable +30% aura effect (needs an Elite within 10m — assumed via Solar Ring) | 1.17 | — | — |
 | corona | corroded Broken Sun "Corona" = +60% taken (Solar Ring +40%) | 1.14 | — | — |
+| entangled | Entangled Pain at full uptime (5s / 8s CD) — 1T build ÷1.33 | — | — | curse on/off |
+| bulls-rage | Bull's Rage Euphoria at full uptime (6s / 10s CD) — 1T build ÷1.26 | — | — | skill on/off |
 | *all at once* | | **÷8** (≈130T → ≈16T) | ÷1.5 | |
 
 **Calibration constants carried from the user's rig to every other build** (not in `UNVERIFIED`
@@ -90,12 +107,11 @@ ranking.
 | `data/bing1/scraped/` | scraped builds (`compendium` export + `nativeTalents` + `nativePrisms`) |
 
 **Scraping a build from the game** (any Pro Build or Hunter File page open in game; the tab does
-not matter — Overview is enough):
+not matter — Overview is enough; re-scraping the 1T build with the Talent tab open was byte-identical):
 
 ```bash
-cd poorchlight && ./target/release/tli_dump.exe --portable-json > out/portable.json   # needs an elevated shell
-# planner export from the dump (poorchlight's JS exporter):
-node -e 'import("file:///…/poorchlight/tli_dump/ui/compendium-export.mjs").then(m=>…createCompendiumExport(portable))'
+node scripts/scrape_build.mjs <slug> --stated "<DPS as stated>"   # elevated shell; writes data/bing1/scraped/<slug>.json
+pnpm bing diagnose data/bing1/scraped/<slug>.json --season ss13
 ```
 
 `tli_dump` also writes the **raw** read to `poorchlight/tli_dump/diagnostics/_last_live_snapshot.json`

@@ -26,6 +26,10 @@ export const UNVERIFIED: Assumption[] = [
     tweak: s => { if (s.enemy_taken.solar_ring === 60) s.enemy_taken.solar_ring = 40; } },
   { id: "malleable", what: "Precise: Malleable +30% aura effect (an Elite within 10m via Solar Ring)",
     drop: /Malleable/ },
+  { id: "entangled", what: "Entangled Pain curse (+39% additional DoT taken) at full uptime (5s / 8s CD)",
+    drop: /Entangled Pain/ },
+  { id: "bulls-rage", what: "Bull's Rage Euphoria (+27% additional Melee) at full uptime (6s / 10s CD)",
+    drop: /Bull's Rage/ },
   { id: "proximity", what: "Solar Ring makes every proximity line live under Firepower Coverage",
     tweak: s => { for (const k of Object.keys(s.enemy_taken)) if (/proximity|solar/.test(k)) delete s.enemy_taken[k]; } },
 ];

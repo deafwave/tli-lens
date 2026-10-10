@@ -362,6 +362,11 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
       + Math.min(aux.lunar_cap ?? Infinity, (s.increased.erosion ?? 0) * aux.lunar_pct / 100);
   if (aux.knockback_conv && aux.knockback)
     s.increased.ranger_knockback = Math.min(100, aux.knockback * aux.knockback_conv / 100);
+  // Tenacity Blessing on hit: full stacks at a dummy; Sacrifice stacks multiply like the base DR (tlidb)
+  if (aux.tenacity_gain) {
+    if (aux.tenacity_attack) s.increased.attack = (s.increased.attack ?? 0) + aux.tenacity_attack;
+    if (aux.tenacity_more) s.additional.tenacity = ((1 + pct("tenacity_more")) ** (4 + (aux.tenacity_stacks ?? 0)) - 1) * 100;
+  }
   const str = Math.round((aux.str_flat ?? 0) * (1 + pct("str_pct")));   // sheet shows integer Str (339)
   if (str) s.additional.strength = str / 2;
   let as = (1 + pct("as_inc")) * (1 + pct("as_local"));

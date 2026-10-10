@@ -11,6 +11,8 @@ const lin = (l1: number, l21: number, l41: number) => (lv: number) =>
   lv <= 21 ? l1 + (l21 - l1) * (lv - 1) / 20 : l21 + (l41 - l21) * (lv - 21) / 20;
 /** Auras: Lv1 → Lv20 linear (tlidb shows only those two); +1/level past 20 assumed. */
 const aura = (l1: number, l20: number) => (lv: number) => l1 + (l20 - l1) * (Math.min(lv, 20) - 1) / 19 + Math.max(0, lv - 20) * (l20 - l1) / 19;
+/** tlidb Sentry-tagged skills seen on Bing builds (Ice Bond: "place 1 Ice Sentry") */
+const SENTRIES = new Set(["Flame Core", "Ice Bond"]);
 
 type Effect = (lv: number, x: { roll?: number[]; tier?: number }) => Edit[];
 /** Supports on Hammer of Ash. Seasoned gems go through `_gem_levels` (applySeason fills the value). */
@@ -138,8 +140,15 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
     } else if (name === "Fixate") {
       // tlidb Fixate L20: +3% additional damage per enemy affected (one boss), Mark +10% crit damage taken × 1.08 Mark Effect
       add("skill:Fixate", `L${sk.level}`, [["add", "additional.fixate", 3], ["add", "crit.crit_dmg_taken_pct", 10.8]]);
-    } else if (name === "Flame Core" && supNames.includes("Activation Medium: Motionless")) {
-      add("skill:Flame Core", "Sentry + Activation Medium: Motionless → charge per Sentry use (#real-build)",
+    } else if (name === "Entangled Pain") {
+      // tlidb L20: Cursed enemies take +39% additional Damage Over Time (L1 20) — det ticks only; 5s / 8s CD, uptime assumed full
+      add("skill:Entangled Pain", `L${sk.level}`, [["add", "aux.det_more_entangled_pain", aura(20, 39)(sk.level ?? 20)]],
+          { provides: ["curse"] });
+    } else if (name === "Bull's Rage") {
+      // tlidb L20: Euphoria +27% additional Melee Skill Damage (L1 17.5) for 6s / 10s CD — uptime assumed full
+      add("skill:Bull's Rage", `L${sk.level} Euphoria`, [["add", "additional.bulls_rage", aura(17.5, 27)(sk.level ?? 20)]]);
+    } else if (SENTRIES.has(name) && supNames.includes("Activation Medium: Motionless")) {
+      add(`skill:${name}`, "Sentry + Activation Medium: Motionless → charge per Sentry use (#real-build)",
           [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1]],
           { requires: ["fb_charge"], provides: ["sentry"] });
     } else if (name === "Blink") {

@@ -376,6 +376,19 @@ export function deteriorationTickSum(d: Record<string, number>): number {
   return sum;
 }
 
+/** mechanics.md#deterioration — "Stacks up to 99 times. Each stack is calculated
+    independently": with more live stacks than `max_stacks`, only that many deal damage.
+    Live = inflictions/s × duration; a bomb throw inflicts bombs × (projectiles + the
+    explosion) stacks (60fps frame count, 2 bombs ⇒ 13–16). Bomb rotation only. */
+function stackCapFactor(s: Snapshot, d: Record<string, number>, enhancedPerSec: number): number {
+  const r = s.rotation;
+  if (!d.max_stacks || r.bombs_per_throw === undefined) return 1;
+  const perThrow = r.bombs_per_throw * ((r.proj_base ?? 0) + (r.proj_added ?? 0) + 1);
+  const live = enhancedPerSec * perThrow * Math.min(d.chance_pct, 100) / 100
+             * d.duration_s * (1 + (d.duration_inc_pct ?? 0) / 100);
+  return live > d.max_stacks ? d.max_stacks / live : 1;
+}
+
 /* ── Explain-layer trace builders (mechanics.md#skill-type) ───────────────────
    Each chip's factor is a value cycleDps already computed — no number is re-derived.
    resolve(trace.root) folds them back to cycleDps().dps (asserted by trace.test.ts),
@@ -587,6 +600,8 @@ export function cycleDps(s: Snapshot) {
            * deteriorationTickSum(d)
            * ratio
            * (1 + (d.additional_damage_pct ?? 0) / 100);
+    const cap = stackCapFactor(s, d, uses / cycleTime * enhancedShare);
+    detDps *= cap;
     // child is the hit-DPS node (shared): removing a per-hit chip correctly drops the DoT too
     dotNode = { label: "Deterioration", value: 0, op: "product", children: [rotationNode], chips: [
       { kind: "dot", label: "enhanced share", op: "×", factor: enhancedShare },
@@ -595,6 +610,7 @@ export function cycleDps(s: Snapshot) {
       { kind: "dot", label: `tick sum`, op: "×", factor: deteriorationTickSum(d) },
       ...(ratio !== 1 ? [{ kind: "dot" as const, label: "increased ratio", op: "×" as const, factor: ratio }] : []),
       ...(d.additional_damage_pct ? [{ kind: "dot" as const, label: "additional", op: "×" as const, factor: 1 + d.additional_damage_pct / 100 }] : []),
+      ...(cap !== 1 ? [{ kind: "dot" as const, label: `${d.max_stacks}-stack cap`, op: "×" as const, factor: cap }] : []),
     ] };
   }
 

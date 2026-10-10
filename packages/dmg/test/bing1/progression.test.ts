@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { cycleDps } from "../../src/damageModel.js";
 import { applySeason } from "../../src/seasons.js";
 import { BING_ZERO, REAL_BUILD_SOURCES, SLOT_CAPACITY, compose, type Source } from "../../src/bingLedger.js";
-import { UPGRADES } from "../../src/bingUpgrades.js";
+import { UPGRADES, VORAX } from "../../src/bingUpgrades.js";
 import { walk } from "../../src/bingProgression.js";
 
 const dps = (set: Source[]) => cycleDps(applySeason(compose(BING_ZERO, set), "ss14")).dps;
@@ -19,36 +19,42 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
 
   test("build-up never takes a source before what it requires", () => {
     const seen = new Set<string>();
+    const byId = (id: string) => REAL_BUILD_SOURCES.find(s => s.id === id)!;
     for (const step of buildUpSteps()) {
-      for (const id of step.ids) {
-        const src = REAL_BUILD_SOURCES.find(s => s.id === id)!;
-        for (const r of src.requires ?? []) expect(seen.has(r) || step.ids.includes(r), `${id} before ${r}`).toBe(true);
-      }
-      step.ids.forEach(id => seen.add(id));
+      const now = new Set([...seen, ...step.ids.flatMap(id => [id, ...byId(id).provides ?? []])]);
+      for (const id of step.ids)
+        for (const r of byId(id).requires ?? []) expect(now.has(r), `${id} before ${r}`).toBe(true);
+      now.forEach(id => seen.add(id));
     }
   });
 
   test("climb only gains, honors craft-pool capacity, and drops what it replaces", () => {
-    const steps = walk(BING_ZERO, REAL_BUILD_SOURCES, UPGRADES, "ss14", { untilNoGain: true });
+    const pool = [...UPGRADES, ...VORAX];
+    const steps = walk(BING_ZERO, REAL_BUILD_SOURCES, pool, "ss14", { untilNoGain: true });
     expect(steps.length).toBeGreaterThan(0);
+    const inKey = (slot: string | undefined, key: string) =>
+      !!slot && (key.endsWith(".*") ? slot.startsWith(key.slice(0, -1)) : slot === key);
     let have = [...REAL_BUILD_SOURCES];
     for (const step of steps) {
       expect(step.gain).toBeGreaterThan(1);
       have = [...have.filter(s => !step.removed.includes(s.id)),
-              ...step.ids.map(id => UPGRADES.find(u => u.id === id)!)];
-      for (const [slot, cap] of Object.entries(SLOT_CAPACITY))
-        expect(have.filter(s => s.slot === slot).length, slot).toBeLessThanOrEqual(cap);
+              ...step.ids.map(id => pool.find(u => u.id === id)!)];
+      for (const [key, cap] of Object.entries(SLOT_CAPACITY))
+        expect(have.filter(s => inKey(s.slot, key)).length, key).toBeLessThanOrEqual(cap);
       for (const id of step.ids)
-        for (const r of UPGRADES.find(u => u.id === id)!.replaces ?? [])
+        for (const r of pool.find(u => u.id === id)!.replaces ?? [])
           expect(have.some(s => s.id === r), `${id} keeps ${r}`).toBe(false);
+      for (const s of have.filter(h => h.id.startsWith("vx_") && !h.package))
+        expect(have.some(h => h.package && s.requires?.includes(h.id)), `${s.id} without its limb`).toBe(true);
     }
     expect(steps.at(-1)!.dps).toBeCloseTo(dps(have), -3);
   });
 
   test("upgrades are cited and their requires resolve against the real build", () => {
-    const ids = new Set([...REAL_BUILD_SOURCES, ...UPGRADES].map(s => s.id));
-    expect(ids.size).toBe(REAL_BUILD_SOURCES.length + UPGRADES.length);
-    for (const u of UPGRADES) {
+    const all = [...REAL_BUILD_SOURCES, ...UPGRADES, ...VORAX];
+    const ids = new Set([...all.map(s => s.id), ...all.flatMap(s => s.provides ?? [])]);
+    expect(new Set(all.map(s => s.id)).size).toBe(all.length);
+    for (const u of [...UPGRADES, ...VORAX]) {
       expect(u.cite, u.id).toMatch(/\S/);
       for (const r of [...u.requires ?? [], ...u.replaces ?? []]) expect(ids.has(r), `${u.id} → ${r}`).toBe(true);
     }

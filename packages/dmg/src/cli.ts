@@ -96,10 +96,11 @@ async function progressionCmd(): Promise<void> {
 
 async function bingCmd(args: string[]): Promise<void> {
   const { BING_ZERO, REAL_BUILD_SOURCES, compose } = await import("./bingLedger.js");
-  const { UPGRADES, RISKY_UPGRADES } = await import("./bingUpgrades.js");
+  const { UPGRADES, RISKY_UPGRADES, VORAX } = await import("./bingUpgrades.js");
   const { walk } = await import("./bingProgression.js");
   const season = activeSeason();
-  const pool = args.includes("--risky") ? [...UPGRADES, ...RISKY_UPGRADES] : UPGRADES;
+  const pool = [...UPGRADES, ...(args.includes("--no-vorax") ? [] : VORAX),
+                ...(args.includes("--risky") ? RISKY_UPGRADES : [])];
   const fmt = (d: number) => d >= 1e12 ? `${(d / 1e12).toFixed(2)}T` : d >= 1e9 ? `${(d / 1e9).toFixed(2)}B`
     : d >= 1e6 ? `${(d / 1e6).toFixed(2)}M` : d >= 1e3 ? `${(d / 1e3).toFixed(1)}k` : d.toFixed(0);
   const dpsOf = (set: typeof REAL_BUILD_SOURCES) => cycleDps(applySeason(compose(BING_ZERO, set), season)).dps;
@@ -115,11 +116,11 @@ async function bingCmd(args: string[]): Promise<void> {
     print(walk(BING_ZERO, REAL_BUILD_SOURCES, pool, season, { untilNoGain: true }));
   } else if (sub === "prices") {
     const base = dpsOf(REAL_BUILD_SOURCES);
-    const rows = pool.map(u => ({ u, g: dpsOf([...REAL_BUILD_SOURCES.filter(s => !u.replaces?.includes(s.id)), u]) / base }));
+    const rows = pool.filter(u => !u.requires?.some(r => r.startsWith("vx_"))).map(u => ({ u, g: dpsOf([...REAL_BUILD_SOURCES.filter(s => !u.replaces?.includes(s.id)), u]) / base }));
     for (const { u, g } of rows.sort((a, b) => b.g - a.g))
       console.log(`${`×${g.toFixed(3)}`.padStart(8)}  ${u.label}${u.note ? `  — ${u.note}` : ""}`);
   } else {
-    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices) [--risky]`);
+    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices) [--risky] [--no-vorax]`);
   }
 }
 

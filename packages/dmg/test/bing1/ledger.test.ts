@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { cycleDps, type Snapshot } from "../../src/damageModel.js";
 import { fromRoot } from "../../src/py.js";
 import { applySeason } from "../../src/seasons.js";
-import { BING_ZERO, REAL_BUILD_SOURCES, compose } from "../../src/bingLedger.js";
+import { BING_ZERO, REAL_BUILD_SOURCES, compose, effective } from "../../src/bingLedger.js";
 
 /* The real-build source ledger (mechanics.md#bing-ledger): every snapshot line of
    real_buld_3 attributed to the item/tree/slate/support/pact that grants it, so the
@@ -48,10 +48,17 @@ describe("Bing real-build source ledger", () => {
   test("sources are well-formed: unique ids, cited, requirements resolve", () => {
     const ids = new Set(REAL_BUILD_SOURCES.map(s => s.id));
     expect(ids.size).toBe(REAL_BUILD_SOURCES.length);
+    const provided = new Set([...ids, ...REAL_BUILD_SOURCES.flatMap(s => s.provides ?? [])]);
     for (const s of REAL_BUILD_SOURCES) {
       expect(s.cite, s.id).toMatch(/\S/);
-      for (const r of s.requires ?? []) expect(ids.has(r), `${s.id} requires ${r}`).toBe(true);
+      for (const r of s.requires ?? []) expect(provided.has(r), `${s.id} requires ${r}`).toBe(true);
     }
+    expect(effective(REAL_BUILD_SOURCES)).toHaveLength(REAL_BUILD_SOURCES.length);
+  });
+
+  test("dropping Broken Sun drops every Solar-Ring proximity line with it", () => {
+    const left = effective(REAL_BUILD_SOURCES.filter(s => s.id !== "broken_sun")).map(s => s.id);
+    for (const id of ["well_matched", "slate_corner_taken", "slate_corner_knockback"]) expect(left).not.toContain(id);
   });
 
   test("residuals stay small: each moves the real build by under 10%", () => {

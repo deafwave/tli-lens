@@ -92,3 +92,81 @@ export const RISKY_UPGRADES: Source[] = [
     { note: "SS14: 'most True Damage is no longer affected by damage-to-Life bonuses' — if that covers "
       + "Deterioration (88% of DPS) this line is ~×1.1, not ×2.0 (handoff §5.2)" }),
 ];
+
+/* ---- Vorax gear (mechanics.md#bing-vorax) ----
+   A Vorax piece replaces the item in its slot: a package base (the limb) plus up to 6 lines
+   (3 prefixes, 3 suffixes, of which up to 2 may be grafted legendary mods), each the top of
+   its SS13 T0+ range. Chest is not offered: Ruinous Star's Obliterate cannot be grafted. */
+const VX = `${CAT} vorax craftAffix T0+`;
+type Line = [id: string, label: string, kind: "prefix" | "suffix", edits: Source["edits"], extra?: Partial<Source>];
+const L = {
+  active: ["active_levels", "+4 Active Skill Level", "prefix", [["add", "aux.skill_level", 4]]],
+  fire: ["fire_levels", "+3 Fire Skill Level", "prefix", [["add", "aux.skill_level", 3]]],
+  damage: ["damage", "+122% damage", "prefix", [["add", "increased.global", 122]]],
+  detDamage: ["det_damage", "+85% Deterioration Damage", "prefix", [["add", "deterioration.damage_inc_pct", 85]],
+    { requires: ["ruinous_star"] }],
+  pen: ["pen", "+34% Elemental and Erosion Resistance Penetration", "prefix",
+    [["add", "penetration.erosion_pct", 34], ["add", "penetration.cold_pct", 34]]],
+  str: ["str", "+101 Strength", "prefix", [["add", "aux.str_flat", 101]]],
+  support: ["support_levels", "+13 Support Skill Level", "suffix", [["add", "aux.support_level", 13]]],
+  nearby: ["nearby_taken", "+41% additional damage taken by Nearby enemies", "suffix",
+    [["add", "enemy_taken.vorax_nearby", 41]], { requires: ["solar_ring"] }],
+  detDuration: ["det_duration", "+54% additional Deterioration Duration", "suffix",
+    [["add", "deterioration.duration_inc_pct", 54]], { requires: ["ruinous_star"] }],
+  double: ["double", "+44% chance to deal Double Damage", "suffix", [["add", "crit.double_damage_chance_pct", 44]]],
+  mainHand: ["main_hand", "+39% additional damage for Main-Hand Weapons", "suffix", [["add", "additional.vorax_main_hand", 39]]],
+  critDamage: ["crit_damage", "+101% Critical Strike Damage", "suffix", [["add", "crit.damage_pct", 101]]],
+  critRating: ["crit_rating", "+203% Critical Strike Rating", "suffix", [["add", "aux.crit_rating_pct", 203]]],
+} satisfies Record<string, Line>;
+
+const GRAFT = (name: string) => `${CAT} vorax legendaryMod "${name}" (normal top roll)`;
+const G: Record<string, [string, string, Source["edits"], Partial<Source>]> = {
+  solar: ["graft_solar", "graft: Broken Sun's Solar Ring", [["add", "enemy_taken.solar_ring", 40],
+    ["add", "additional.sun_area_empower", 28]], { provides: ["solar_ring"], replaces: ["broken_sun"],
+    cite: GRAFT("Broken Sun Ring"), note: "moves Solar Ring off the necklace, freeing it" }],
+  foolsAdds: ["graft_fools_adds", "graft: Fool's Crown adds 108–138 Physical to the Main-Hand Weapon",
+    [["add", "base.weapon_phys_min", 108], ["add", "base.weapon_phys_max", 138]], { cite: GRAFT("Fool's Crown") }],
+  bladeDancer: ["graft_blade_dancer", "graft: Blade-dancer's +45% additional after Mobility",
+    [["add", "additional.blade_dancer", 45]], { cite: GRAFT("Blade-dancer's Steps") }],
+  kaleido: ["graft_kaleido", "graft: Kaleidoscope buffs +50% (moves the 48 ring's buff)",
+    [["add", "additional.kaleido_graft", 50]], { replaces: ["kaleido_48"], cite: GRAFT("Kaleidoscope") }],
+  fbCharge: ["graft_fb_charge", "graft: Formation Breaker's Demolisher Charge on Sentry use",
+    [], { provides: ["fb_charge"], replaces: ["formation_breaker"], cite: GRAFT("Formation Breaker"),
+          note: "moves the charge engine's belt line, freeing the belt" }],
+  fbTaken: ["graft_fb_taken", "graft: Formation Breaker's +30% taken near Sentries",
+    [["add", "enemy_taken.fb_sentry", 30]], { requires: ["charge_engine"], cite: GRAFT("Formation Breaker") }],
+};
+
+function vorax(limb: string, label: string, replaces: string[], lines: Line[], grafts: string[] = []): Source[] {
+  const id = `vx_${limb}`;
+  return [
+    { id, label: `Vorax ${label}`, group: "upgrade", package: true, replaces, edits: [],
+      cite: `${CAT} vorax limb; replaces ${replaces.join(", ")}` },
+    ...lines.map(([lid, llabel, kind, edits, extra]): Source => ({
+      id: `${id}_${lid}`, label: `Vorax ${label} ${kind}: ${llabel}`, group: "upgrade", slot: `vorax.${limb}.${kind}`,
+      edits, cite: VX, ...extra, requires: [id, ...extra?.requires ?? []] })),
+    ...grafts.map(g => {
+      const [gid, glabel, edits, extra] = G[g];
+      return { id: `${id}_${gid}`, label: `Vorax ${label} ${glabel}`, group: "upgrade" as const,
+               slot: `vorax.${limb}.graft`, edits, cite: "", ...extra, requires: [id, ...extra.requires ?? []] };
+    }),
+  ];
+}
+
+export const VORAX: Source[] = [
+  ...vorax("head", "Head", ["fools_crown"],
+    [L.active, L.damage, L.detDamage, L.str, L.support, L.nearby, L.detDuration, L.critDamage, L.critRating],
+    ["solar", "foolsAdds"]),
+  ...vorax("neck", "Neck", ["broken_sun"],
+    [L.active, L.damage, L.detDamage, L.str, L.support, L.nearby, L.detDuration, L.critDamage]),
+  ...vorax("hands", "Hands", ["deaths_touch"], [L.active, L.damage, L.critDamage, L.critRating]),
+  ...vorax("legs", "Legs", ["blade_dancer"],
+    [L.fire, L.damage, L.detDamage, L.pen, L.detDuration, L.double, L.mainHand, L.critDamage, L.critRating],
+    ["bladeDancer", "kaleido", "fbCharge", "fbTaken"]),
+  ...vorax("waist", "Waist", ["formation_breaker"],
+    [L.damage, L.detDamage, L.pen, L.str, L.detDuration, L.double, L.mainHand]),
+  ...vorax("digits1", "Digits (48 ring)", ["kaleido_48"],
+    [L.damage, L.detDamage, L.pen, L.str, L.detDuration, L.double, L.mainHand, L.critDamage, L.critRating]),
+  ...vorax("digits2", "Digits (60 ring)", ["kaleido_60"],
+    [L.damage, L.detDamage, L.pen, L.str, L.detDuration, L.double, L.mainHand, L.critDamage, L.critRating]),
+];

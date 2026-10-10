@@ -29,6 +29,9 @@ export type SourceGroup =
 export const SLOT_CAPACITY: Record<string, number> = {
   "mainHand.prefix": 3, "mainHand.suffix": 3, "mainHand.corrosion": 1, "mainHand.base": 1,
   "hoa.support": 5,
+  // Vorax gear: 6 affix lines (3 prefixes, 3 suffixes), of which up to 2 may be legendary grafts
+  ...Object.fromEntries(["head", "neck", "hands", "legs", "waist", "digits1", "digits2"].flatMap(l => [
+    [`vorax.${l}.*`, 6], [`vorax.${l}.prefix`, 3], [`vorax.${l}.suffix`, 3], [`vorax.${l}.graft`, 2]])),
 };
 
 /** HoA levels the real build already has above 20 (Lich legendary medium +1 to All Skills). */
@@ -40,12 +43,16 @@ export interface Source {
   group: SourceGroup;
   edits: Edit[];
   cite: string;
-  /** source ids that must already be present for this one to deal damage */
+  /** source ids (or `provides` capabilities) that must be present for this one to deal damage */
   requires?: string[];
+  /** capabilities this source satisfies besides its own id (a graft carrying Solar Ring) */
+  provides?: string[];
   /** craft pool this line occupies (capacity in SLOT_CAPACITY) */
   slot?: string;
   /** source ids this one removes when taken (a corroded roll replacing the normal item) */
   replaces?: string[];
+  /** a base taken together with its best lines (sources that require it), e.g. a Vorax piece */
+  package?: boolean;
   note?: string;
 }
 
@@ -114,8 +121,9 @@ export const REAL_BUILD_SOURCES: Source[] = [
             ["conv", "cold", "erosion", 100],
             det("hit_damage_pct", 60), ["set", "deterioration.duration_s", 1], det("duration_inc_pct", 30),
             ["set", "deterioration.tick_interval_s", 0.325], ["set", "deterioration.ramp_pct", 40],
-            ["set", "deterioration.ramp_max_ticks", 6], ["set", "deterioration.obliterate_interval_s", 0.5]],
-    cite: "mechanics.md Obliterate + #deterioration (strict 0.325s grid, 40%/6 ramp roll), #real-build" },
+            ["set", "deterioration.ramp_max_ticks", 6], ["set", "deterioration.obliterate_interval_s", 0.5],
+            ["set", "deterioration.max_stacks", 99]],
+    cite: "mechanics.md Obliterate + #deterioration (strict 0.325s grid, 40%/6 ramp roll, 99-stack cap), #real-build" },
   { id: "blade_dancer", label: "Blade-dancer's Steps", group: "gear",
     edits: [["add", "additional.blade_dancer", 45]],
     cite: `${RB} boots: +45% additional damage 5s after a Mobility Skill (Blink)` },
@@ -125,14 +133,17 @@ export const REAL_BUILD_SOURCES: Source[] = [
   { id: "kaleido_60", label: "Kaleidoscope (60 ring)", group: "gear",
     edits: [["add", "additional.kaleido_2", 60], ["add", "aux.as_inc", 7]],
     cite: "mechanics.md#real-build: 60-ring A/B ÷1.735 vs ÷1.60 encoded (+8% hot, flagged)" },
-  { id: "broken_sun", label: "Broken Sun Ring (Solar Ring)", group: "gear",
+  { id: "broken_sun", label: "Broken Sun Ring (Solar Ring)", group: "gear", provides: ["solar_ring"],
     edits: [["add", "enemy_taken.solar_ring", 40], ["add", "additional.sun_area_empower", 28]],
     cite: "mechanics.md#real-build: Solar Ring gates proximity lines at range; Broken-Sun A/B ÷2.88",
     note: "Well Matched, Marksman and the Ranger proximity slate need it under Firepower Coverage" },
-  { id: "charge_engine", label: "Charge engine: Formation Breaker + Flame Core + AM: Motionless", group: "engine",
-    edits: [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1],
-            ["add", "enemy_taken.fb_sentry", 30]],
-    cite: "mechanics.md#real-build: charge per Sentry use (0.25s) outpaces throws ⇒ n=1; FB +30% taken near Sentries" },
+  { id: "formation_breaker", label: "Formation Breaker", group: "gear", provides: ["fb_charge"],
+    edits: [["add", "enemy_taken.fb_sentry", 30]], requires: ["charge_engine"],
+    cite: `${RB} belt: Demolisher Charge per Sentry use (0.25s); +30% additional damage taken near Sentries` },
+  { id: "charge_engine", label: "Charge engine: Flame Core (Sentry) + AM: Motionless", group: "engine",
+    edits: [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1]],
+    requires: ["fb_charge"],
+    cite: "mechanics.md#real-build: charge per Sentry use (0.25s) outpaces throws ⇒ n=1" },
 
   // ---- HoA supports (values re-seasoned from _gem_levels) ----
   { id: "fusion", slot: "hoa.support", label: "Elemental Fusion", group: "support",
@@ -202,7 +213,7 @@ export const REAL_BUILD_SOURCES: Source[] = [
     cite: `${RB} skillTree onslaughter (27+54+36 attack; 4%×3 + 10% 2H base; Str% 4×3+12; Paralysis effect dead at chance 0)` },
   { id: "well_matched", label: "Well Matched (Onslaughter notable)", group: "tree",
     edits: [["add", "additional.well_matched", 40]],
-    cite: "mechanics.md#real-build: proximity line carried by Solar Ring", requires: ["broken_sun"] },
+    cite: "mechanics.md#real-build: proximity line carried by Solar Ring", requires: ["solar_ring"] },
   { id: "tree_lich", label: "Lich tree", group: "tree",
     edits: [["add", "increased.global", 108], ["add", "aux.crit_rating_pct", 105],
             ["add", "crit.damage_pct", 15], ["add", "aux.as_inc", 18]],
@@ -227,11 +238,11 @@ export const REAL_BUILD_SOURCES: Source[] = [
   { id: "slate_corner_taken", label: "A Corner of Divinity (Marksman + Ranger taken)", group: "slate",
     edits: [["add", "increased.projectile", 60], ["add", "enemy_taken.ranger", 15]],
     cite: `${RB} divinity; proximity lines carried by Solar Ring (mechanics.md#real-build)`,
-    requires: ["broken_sun"] },
+    requires: ["solar_ring"] },
   { id: "slate_corner_knockback", label: "A Corner of Divinity (Marksman + Ranger knockback)", group: "slate",
     edits: [["add", "increased.projectile", 60], ["add", "increased.ranger_knockback", 57.6]],
     cite: "mechanics.md#real-build: Ranger slate knockback→damage +57.6 (increased-type)",
-    requires: ["broken_sun"] },
+    requires: ["solar_ring"] },
 
   // ---- hero memories ----
   { id: "memory_origin", label: "Memory of Origin", group: "memory",
@@ -299,6 +310,17 @@ function setPath(o: any, path: string, f: (v: number | undefined) => number | un
 }
 
 /** Apply `sources` to a copy of `zero` and derive crit chance, Strength and attack speed. */
+/** The sources that still deal damage: drops, to a fixpoint, any whose `requires` are unmet. */
+export function effective(sources: Source[]): Source[] {
+  let set = sources;
+  for (;;) {
+    const have = new Set(set.flatMap(s => [s.id, ...s.provides ?? []]));
+    const next = set.filter(s => (s.requires ?? []).every(r => have.has(r)));
+    if (next.length === set.length) return set;
+    set = next;
+  }
+}
+
 export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   const s: any = structuredClone(zero);
   for (const src of sources) for (const e of src.edits) {
@@ -317,6 +339,8 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   let as = (1 + pct("as_inc")) * (1 + pct("as_local"));
   for (const k of Object.keys(aux)) if (k.startsWith("as_more")) as *= 1 + pct(k);
   s.rotation.attack_speed_inc_pct = (as - 1) * 100;
+  // "+N Support Skill Level" raises every socketed seasoned gem (applySeason reads the level)
+  if (aux.support_level) for (const gem of Object.keys(s._gem_levels ?? {})) s._gem_levels[gem] += aux.support_level;
   if (aux.skill_level) {
     const band = (l: number) => 1 + skillLevelAdditionalPct(l) / 100;
     s.additional.skill_levels = (band(HOA_LEVELS_ABOVE_20 + aux.skill_level) / band(HOA_LEVELS_ABOVE_20) - 1) * 100;

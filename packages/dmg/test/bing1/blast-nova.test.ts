@@ -910,4 +910,23 @@ describe("Bing real build — real_buld_3 (frozen-aura calibration 2026-07-20)",
     ti.enemy_taken.timid = 0;
     expect(cycleDps(s).dps / cycleDps(ti).dps).toBeCloseTo(1.390, 3);
   });
+
+  // tlidb Deterioration: "Stacks up to 99 times. Each stack is calculated independently."
+  // Live stacks = inflictions/s x duration; an enhanced throw inflicts bombs x (projectiles +
+  // explosion) stacks (60fps frame count: 2 bombs => 13-16). mechanics.md#deterioration
+  test("99-stack cap: inert on the real build (~38 live), binds at long duration", () => {
+    const s = snap();
+    expect(s.deterioration!.max_stacks).toBe(99);
+    const uncapped = snap();
+    delete uncapped.deterioration!.max_stacks;
+    expect(cycleDps(s).dps).toBeCloseTo(cycleDps(uncapped).dps, 0);
+
+    const long = snap(), longUncapped = snap();
+    for (const x of [long, longUncapped]) x.deterioration!.duration_inc_pct = 400;   // 5s => ~117 live
+    delete longUncapped.deterioration!.max_stacks;
+    const live = 2.5 * 7 * 0.98 * 1.379 * 5;
+    const capped = cycleDps(long), free = cycleDps(longUncapped);
+    expect(capped.deterioration_dps / free.deterioration_dps).toBeCloseTo(99 / live, 3);
+    expect(capped.dps - capped.deterioration_dps).toBeCloseTo(free.dps - free.deterioration_dps, 0);
+  });
 });

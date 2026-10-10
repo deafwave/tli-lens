@@ -150,9 +150,23 @@ page checks; vitest's 5s timeout bites walk tests under full-suite load.
 5. Then re-derive F≈1.35 (§2) and the calibration constants per build (H as a function of skill
    area / projectile speed — `mechanics.md#bing-skill-area` has the measured points).
 
-## 5. Ask the user
+## 5. User answers (2026-10-10) and what follows
 
-- What the 40T title means / where the build came from.
-- Which suspects they can toggle on their character (Spindle pair? corroded Broken Sun? Lucky
-  source? Malleable gem? a +1 Fire Skill Level slate?).
-- Whether the next agent may drive gear swaps and the DPS tester autonomously in their game.
+- **The 40T reference is probably measured on Ordrak** (a boss; "whatever China would use"),
+  not the lv85 training dummy the model targets (30% elemental / 30% erosion res, no boss
+  modifiers). The user also recalls the **training dummy's readout capping around 25T**
+  ("5T after 1 second → 25T?" — unverified). So before blaming any mechanic: establish Ordrak's
+  resistances / damage reduction / boss-specific modifiers and level, whether Passivation-style
+  "vs enemies with more Life" and Deterioration behave differently on it, and whether the dummy
+  display caps. Add an `enemy` profile for Ordrak to the model and re-run `diagnose` against both
+  targets. This alone may explain most of the ×3.2.
+- **The next agent may drive the game** (gear swaps, the DPS tester) — **but the user has little
+  spare gear to swap.** Prefer experiments that need no new items: aura / support / curse toggles,
+  talent respecs, slate and memory swaps the user owns, ±duration via kismets/slates around the
+  tick boundary, standing still vs moving, Broken Sun on/off. Make up for limited A/B options with
+  (a) memory reads of the character sheet and the DPS readout (every toggle then checks
+  intermediate stats too) and (b) many more scraped Pro Builds with stated DPS figures — each is a
+  calibration point at no in-game cost.
+
+Still to ask: which of the `UNVERIFIED` suspects the user can toggle (a Spindle pair, a corroded
+Broken Sun, a Lucky source, a Malleable gem, a +1 Fire Skill Level slate).

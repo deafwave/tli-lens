@@ -79,6 +79,19 @@ its Damage section (269,269) shows live buffs (Kaleidoscope turns, Bull's Rage) 
 Floating damage numbers over the dummy (crop `1950 380 700 450`, burst 150ms): yellow 6–24B, purple 4–58B at
 this build. Their semantics (which is crit / True-damage Deterioration, whether numbers merge) are not established yet.
 
+## Memory combat reads (preferred)
+
+`node .claude/skills/tli-game/combat.mjs [secs=60] [--label x]` polls `tli_dump --combat-json` (~1.1s/read): DPS =
+Δ dummy total damage / Δ wall clock (exact, no screenshots), buff uptime %, dummy debuffs with stacks (Deterioration,
+Timid, Frostbitten). Appends to `scratch/measurements.jsonl`. Needs the dummy count running (Recount once). Use
+**≥180s windows** — 60s windows swing ±10% (Kaleidoscope 8s rotation, bomb RNG). Never move between A and B.
+
+**Toggling skills for A/Bs** (F2 Skill panel; slots on the left at x=120: SPACE 400, R 484, mouse 568, E 652, Q 736;
+centre skill 1720,720; popup unequip button 2245,970; confirm 1860,936; picker inventory row 1 y=516, Install
+1454,623). Gate every step with `&&` and **screenshot the popup title before unequip** — a refused click leaves the
+panel on Hammer of Ash, and the next click would unequip it. Unequip keeps the supports socketed; reinstall from the
+picker's Inventory (not Shop). DPS reads low for ~1–2 min after a reinstall, then recovers.
+
 ## DPS readings
 
 The training dummy's panel (top-left of the hideout, crop `0 140 680 440`) shows span average, duration,

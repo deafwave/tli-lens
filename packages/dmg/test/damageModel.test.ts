@@ -291,6 +291,18 @@ describe("erosion damage (separate mitigation)", () => {
     expect(expectedHit(s)).toBeCloseTo(250.0, 6);    // weapon 100 + erosion 100×1.5
   });
 
+  test("increased.erosion is additive with the shared pool, with or without conversion", () => {
+    const s = eroSnap();
+    s.enemy.cold_res_pct = 0;
+    s.enemy.erosion_res_pct = 0;
+    s.base.flat_added_erosion_min = 100;
+    s.base.flat_added_erosion_max = 100;
+    s.increased.global = 100;
+    s.increased.erosion = 50;
+    expect(expectedHit(s)).toBeCloseTo(450.0, 6);    // weapon 100×2 + erosion 100×(1+1+0.5)
+    expect(expectedHit({ ...s, conversion: [] })).toBeCloseTo(expectedHit(s), 6);
+  });
+
   test("weapon base erosion feeds the erosion portion, scaled by skill pct not effectiveness", () => {
     const s = eroSnap();
     s.enemy.cold_res_pct = 0;

@@ -403,6 +403,8 @@ export const PATTERNS: [string, string][] = [
   [`\\+${NUM}% additional Bomb Damage`, "additional.bomb"],
   [`Projectile Quantity \\+${NUM}`, "rotation.proj_added"],
   [`^(-\\d+(?:\\.\\d+)?)% additional damage$`, "additional.misc"],
+  // minion damage is not player hit damage; must precede the catch-all below
+  [`\\+${NUM}% additional Minion`, "ignore"],
   [`\\+${NUM}% additional .*[Dd]amage`, "additional.misc"],
   [`\\+${NUM}% (?:increased )?Physical Damage`, "increased.physical"],
   [`\\+${NUM}% (?:increased )?Attack Damage`, "increased.attack"],

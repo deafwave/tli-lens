@@ -154,10 +154,16 @@ function increasedApplies(s: Snapshot, k: string): boolean {
   return k !== "erosion" && skillTagApplies(s, k);
 }
 
-function damageEnvelope(s: Snapshot): number {
+function increasedPool(s: Snapshot): number {
   let inc = 0;
   for (const [k, v] of Object.entries(s.increased)) if (increasedApplies(s, k)) inc += v;
-  let m = 1 + inc / 100;
+  return inc;
+}
+
+// `extraInc` joins the one additive increased sum (mechanics.md: erosion increases are
+// additive with the rest, scoped to the erosion portion).
+function damageEnvelope(s: Snapshot, extraInc = 0): number {
+  let m = 1 + (increasedPool(s) + extraInc) / 100;
   m *= additionalMultiplier(s);
   for (const v of Object.values(s.enemy_taken)) m *= 1 + v / 100;
   return m * paralysisTaken(s);
@@ -182,7 +188,7 @@ export function erosionBase(s: Snapshot, pct: number): number {
 
 export function erosionAvg(s: Snapshot, skillPct?: number): number {
   const pct = (skillPct ?? s.base.skill_weapon_pct) / 100;
-  return erosionBase(s, pct) * damageEnvelope(s) * (1 + (s.increased.erosion ?? 0) / 100);
+  return erosionBase(s, pct) * damageEnvelope(s, s.increased.erosion ?? 0);
 }
 
 export function erosionMitigation(s: Snapshot): number {
@@ -411,7 +417,9 @@ function mitSumNode(s: Snapshot, pct: number): TNode {
   const eroBase = erosionBase(s, pct);
   if (eroBase) {
     const chips: Chip[] = [{ kind: "base", label: "erosion base", op: "base", factor: eroBase }];
-    const eroInc = 1 + (s.increased.erosion ?? 0) / 100;
+    // the hoisted envelope already applies (1 + pool); this tops it up to (1 + pool + erosion)
+    const pool = 100 + increasedPool(s);
+    const eroInc = (pool + (s.increased.erosion ?? 0)) / pool;
     if (eroInc !== 1) chips.push({ kind: "increased", label: `erosion +${s.increased.erosion}%`, op: "×", factor: eroInc });
     chips.push({ kind: "mitigation", label: "erosion mit", op: "×", factor: erosionMitigation(s) });
     children.push({ label: "erosion hit", value: 0, op: "product", chips });
@@ -423,6 +431,10 @@ function mitSumNode(s: Snapshot, pct: number): TNode {
 // final-type mitigation AND its own crit (typed crit damage gates by history). Sums to
 // expectedHit. Envelope is expanded into per-factor chips (not one lumped ×) so the
 // page impact badges show which increased/additional/taken line is moving DPS.
+function hitByTypeNode(s: Snapshot, pct: number): TNode {
+  return s.conversion ? convPortionsNode(s, pct) : mitSumNode(s, pct);
+}
+
 function convPortionsNode(s: Snapshot, pct: number): TNode {
   const children: TNode[] = convert(basePortions(s, pct), s.conversion!).map(p => ({
     label: [...p.types].join("→"), value: 0, op: "product" as const,
@@ -479,8 +491,7 @@ export function bombRotation(s: Snapshot): RotationResult {
     ? Math.ceil((3 / (1 + r.demolisher_resto_pct / 100)) * throwRate)
     : (r.demolisher_every_n ?? 3);
   const hitDps = bombsPerSec * perBomb * ((demoN - 1 + demoM) / demoN);
-  const hitChild = s.conversion ? convPortionsNode(s, s.base.skill_weapon_pct / 100)
-                                 : mitSumNode(s, s.base.skill_weapon_pct / 100);
+  const hitChild = hitByTypeNode(s, s.base.skill_weapon_pct / 100);
   const perHit = perHitNode(s, hitChild);
   const rotationNode: TNode = { label: `rotation (${skillType})`, value: 0, op: "product", children: [perHit],
     chips: [
@@ -525,10 +536,10 @@ export function comboRotation(s: Snapshot): RotationResult {
   // starter/finisher share the per-hit envelope (hoisted to perHit); their paths hold
   // only the rotational multipliers over the type-split hit at their own weapon %.
   const starterPath: TNode = { label: "starter path", value: 0, op: "product",
-    children: [mitSumNode(s, r.starter_weapon_pct / 100)],
+    children: [hitByTypeNode(s, r.starter_weapon_pct / 100)],
     chips: [{ kind: "rotation", label: `starters ×${r.starters_per_cycle} (Mark)`, op: "×", factor: 1 + (r.starters_per_cycle - 1) * mark }] };
   const finisherPath: TNode = { label: "finisher path", value: 0, op: "product",
-    children: [mitSumNode(s, s.base.skill_weapon_pct / 100)],
+    children: [hitByTypeNode(s, s.base.skill_weapon_pct / 100)],
     chips: [
       { kind: "rotation", label: `finisher amp ×${amp.toFixed(2)}`, op: "×", factor: amp },
       { kind: "rotation", label: `clone spread (${clones} clones)`, op: "×", factor: 1 + clones * r.clone_falloff },

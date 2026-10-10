@@ -42,6 +42,10 @@ describe("trace reconciles to cycleDps().dps", () => {
     ["bomb", bombSnap], ["combo", comboSnap],
     ["bomb + det", () => Object.assign(bombSnap(), { deterioration: det() })],
     ["combo + det", () => Object.assign(comboSnap(), { deterioration: det() })],
+    ["bomb + increased pool", () => { const s = bombSnap(); s.increased.global = 100; return s; }],
+    ["combo + conversion", () => Object.assign(comboSnap(), {
+      conversion: [{ from: "physical", to: "cold", pct: 100 }],
+      crit: { chance_pct: 20, damage_pct: 150 }, increased: { global: 50 } })],
   ];
   for (const [name, mk] of cases) {
     test(name, () => {

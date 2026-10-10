@@ -398,11 +398,7 @@ const GUARDS: PlayerDefenseDisplayGuards = {
 };
 
 function compactNumber(value: number): string {
-  if (Object.is(value, -0) || value === 0) return "0";
-  if (Number.isInteger(value)) return Math.abs(value).toLocaleString("en-US");
-  return Math.abs(value)
-    .toLocaleString("en-US", { maximumFractionDigits: 4 })
-    .replace(/\.?0+$/, "");
+  return Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 4 });
 }
 
 function signed(value: number, unit: "flat" | "percent"): string {

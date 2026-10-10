@@ -95,7 +95,7 @@ async function progressionCmd(): Promise<void> {
 }
 
 async function bingCmd(args: string[]): Promise<void> {
-  const { BING_ZERO, REAL_BUILD_SOURCES, compose } = await import("./bingLedger.js");
+  const { BING_ZERO, REAL_BUILD_SOURCES, compose, effective } = await import("./bingLedger.js");
   const { UPGRADES, RISKY_UPGRADES, VORAX } = await import("./bingUpgrades.js");
   const { walk } = await import("./bingProgression.js");
   const season = activeSeason();
@@ -103,7 +103,8 @@ async function bingCmd(args: string[]): Promise<void> {
                 ...(args.includes("--risky") ? RISKY_UPGRADES : [])];
   const fmt = (d: number) => d >= 1e12 ? `${(d / 1e12).toFixed(2)}T` : d >= 1e9 ? `${(d / 1e9).toFixed(2)}B`
     : d >= 1e6 ? `${(d / 1e6).toFixed(2)}M` : d >= 1e3 ? `${(d / 1e3).toFixed(1)}k` : d.toFixed(0);
-  const dpsOf = (set: typeof REAL_BUILD_SOURCES) => cycleDps(applySeason(compose(BING_ZERO, set), season)).dps;
+  const dpsOf = (set: typeof REAL_BUILD_SOURCES) =>
+    cycleDps(applySeason(compose(BING_ZERO, effective(set)), season)).dps;
   const print = (steps: ReturnType<typeof walk>) => steps.forEach((s, i) => console.log(
     `${String(i + 1).padStart(3)} ${`×${s.gain.toFixed(3)}`.padStart(8)} ${fmt(s.dps).padStart(9)}  ${s.labels.join(" + ")}`
     + (s.removed.length ? `  (drops ${s.removed.join(", ")})` : "")));
@@ -115,8 +116,15 @@ async function bingCmd(args: string[]): Promise<void> {
     console.log(`real build: ${fmt(dpsOf(REAL_BUILD_SOURCES))}  [${season}]`);
     print(walk(BING_ZERO, REAL_BUILD_SOURCES, pool, season, { untilNoGain: true }));
   } else if (sub === "prices") {
-    const base = dpsOf(REAL_BUILD_SOURCES);
-    const rows = pool.filter(u => !u.requires?.some(r => r.startsWith("vx_"))).map(u => ({ u, g: dpsOf([...REAL_BUILD_SOURCES.filter(s => !u.replaces?.includes(s.id)), u]) / base }));
+    // price = the best legal one-step swap from the real build: the walk drops dependents
+    // (effective) and makes room in full craft pools, which a bare add-on-top did not
+    const price = (u: (typeof pool)[number]) => {
+      try { return walk(BING_ZERO, REAL_BUILD_SOURCES, [u], season, { pairs: false })[0]?.gain ?? null; }
+      catch { return null; }   // requires something the real build lacks
+    };
+    const rows = pool.filter(u => !u.requires?.some(r => r.startsWith("vx_")))
+      .map(u => ({ u, g: price(u) }))
+      .filter((row): row is { u: (typeof pool)[number]; g: number } => row.g !== null);
     for (const { u, g } of rows.sort((a, b) => b.g - a.g))
       console.log(`${`×${g.toFixed(3)}`.padStart(8)}  ${u.label}${u.note ? `  — ${u.note}` : ""}`);
   } else {

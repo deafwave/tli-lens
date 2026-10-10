@@ -66,4 +66,17 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
     // L21 → L31 crosses into the ×1.08 band at L31
     expect(dps([...REAL_BUILD_SOURCES, lvl(10)]) / dps(REAL_BUILD_SOURCES)).toBeCloseTo(1.1 ** 9 * 1.08, 6);
   });
+  test("each Vorax limb's additional line is its own multiplier, not one summed key", () => {
+    const lines = VORAX.filter(s => s.id.endsWith("_main_hand"));
+    const keys = lines.flatMap(s => s.edits.map(e => e[1]));
+    expect(lines.length).toBeGreaterThan(1);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  test("Rising Evil compounds with the existing additional Deterioration", () => {
+    const rising = UPGRADES.find(s => s.id === "s_rising_evil")!;
+    const before = compose(BING_ZERO, REAL_BUILD_SOURCES).deterioration!.additional_damage_pct ?? 0;
+    const after = compose(BING_ZERO, [...REAL_BUILD_SOURCES, rising]).deterioration!.additional_damage_pct!;
+    expect(1 + after / 100).toBeCloseTo((1 + before / 100) * 1.165, 9);
+  });
 });

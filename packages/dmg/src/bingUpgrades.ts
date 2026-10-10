@@ -77,7 +77,7 @@ export const UPGRADES: Source[] = [
 
   // ---- SS14 supports (take a HoA support socket) ----
   { id: "s_rising_evil", label: "Rising Evil (SS14): +16.5% additional Deterioration", group: "upgrade",
-    slot: "hoa.support", edits: [["add", "deterioration.additional_damage_pct", 16.5]],
+    slot: "hoa.support", edits: [["add", "aux.det_more_rising_evil", 16.5]],
     cite: "SS14 patch notes (torchlight.xd.com/ss14pn): 被辅助技能额外 +16.5% 恶化伤害",
     requires: ["ruinous_star"], note: "its 10% extra-stack chance with Evil is unmodeled" },
   { id: "s_honed_edge", label: "Honed Edge (SS14): +20% additional, +36% crit rating (2H)", group: "upgrade",
@@ -139,16 +139,21 @@ const G: Record<string, [string, string, Source["edits"], Partial<Source>]> = {
 
 function vorax(limb: string, label: string, replaces: string[], lines: Line[], grafts: string[] = []): Source[] {
   const id = `vx_${limb}`;
+  // Each limb's line is its own source: additional / taken lines get a per-limb key so
+  // compose multiplies them (mechanics.md#additional) instead of summing one shared key.
+  const own = (edits: Source["edits"]): Source["edits"] => edits.map(e =>
+    e[0] === "add" && /^(additional|enemy_taken)\./.test(e[1]) ? ["add", `${e[1]}_${limb}`, e[2]] : e);
   return [
     { id, label: `Vorax ${label}`, group: "upgrade", package: true, replaces, edits: [],
       cite: `${CAT} vorax limb; replaces ${replaces.join(", ")}` },
     ...lines.map(([lid, llabel, kind, edits, extra]): Source => ({
       id: `${id}_${lid}`, label: `Vorax ${label} ${kind}: ${llabel}`, group: "upgrade", slot: `vorax.${limb}.${kind}`,
-      edits, cite: VX, ...extra, requires: [id, ...extra?.requires ?? []] })),
+      edits: own(edits), cite: VX, ...extra, requires: [id, ...extra?.requires ?? []] })),
     ...grafts.map(g => {
       const [gid, glabel, edits, extra] = G[g];
       return { id: `${id}_${gid}`, label: `Vorax ${label} ${glabel}`, group: "upgrade" as const,
-               slot: `vorax.${limb}.graft`, edits, cite: "", ...extra, requires: [id, ...extra.requires ?? []] };
+               slot: `vorax.${limb}.graft`, edits: own(edits), cite: "", ...extra,
+               requires: [id, ...extra.requires ?? []] };
     }),
   ];
 }

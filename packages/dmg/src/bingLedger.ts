@@ -338,6 +338,11 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   if (str) s.additional.strength = str / 2;
   let as = (1 + pct("as_inc")) * (1 + pct("as_local"));
   for (const k of Object.keys(aux)) if (k.startsWith("as_more")) as *= 1 + pct(k);
+  // "+X% additional Deterioration Damage" sources are each their own ×(1+v) (mechanics.md:275)
+  for (const k of Object.keys(aux)) if (k.startsWith("det_more") && s.deterioration) {
+    s.deterioration.additional_damage_pct =
+      ((1 + (s.deterioration.additional_damage_pct ?? 0) / 100) * (1 + pct(k)) - 1) * 100;
+  }
   s.rotation.attack_speed_inc_pct = (as - 1) * 100;
   // "+N Support Skill Level" raises every socketed seasoned gem (applySeason reads the level)
   if (aux.support_level) for (const gem of Object.keys(s._gem_levels ?? {})) s._gem_levels[gem] += aux.support_level;

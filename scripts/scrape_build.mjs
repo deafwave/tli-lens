@@ -43,6 +43,25 @@ const nativePrisms = ps && typeof ps.Items === "object" ? {
 } : null;
 
 const pro = portable.proBuild ?? {};
+// poorchlight's catalog lacks some Magnificent tiers (Upheaval T2) and drops the support; the item's
+// own tier table identifies the roll, so put it back into the owner skill's socket
+const omitted = exp.omitted.filter(o => o.section !== "skillSupports");
+let restored = 0;
+for (const it of pro.loadout?.skills?.items ?? []) {
+  const at = it.data?.compendiumPlacement, meta = it.identity?.base?.metadata ?? {};
+  const rolls = Object.values(it.data?.ServerPlayerItem?.Prefix ?? {}).flatMap(a => Object.values(a.DynArgs ?? {})).map(Number);
+  if (at?.kind !== "support" || at.ownerKind !== "active" || !meta.skillTierProgression || !rolls.length) continue;
+  const sockets = exp.payload.loadouts.loadouts[0].skills.activeSkills[at.ownerSlot]?.supports;
+  if (!sockets || sockets[at.slot]) continue;
+  const tier = meta.skillTierProgression.find(t => rolls[0] >= t.value1Min && rolls[0] <= t.value1Max)?.tier;
+  if (tier === undefined) throw new Error(`${it.identity.base.label}: roll ${rolls} matches no tier`);
+  sockets[at.slot] = { icon: meta.icon, rank: 1, rollValues: rolls, supportGuid: it.identity.base.compendiumId,
+                       tier, type: meta.skillType };
+  restored++;
+}
+if (restored < exp.omitted.filter(o => o.section === "skillSupports").reduce((n, o) => n + (o.observedCount ?? 1), 0))
+  omitted.push(...exp.omitted.filter(o => o.section === "skillSupports"));
+exp.omitted = omitted;
 const out = {
   source: `tli_dump live page, ${new Date().toISOString()}`, proBuildId: pro.id ?? null, name: pro.name ?? null,
   statedDps: opt("--stated", null), compendium: exp.payload,

@@ -13,12 +13,14 @@ import { kitSources, type Kit } from "./bingKit.js";
 import type { Snapshot } from "./damageModel.js";
 
 const CATALOG = "packages/dmg/test/fixtures/poorchlight/compendium-catalog-ss13.json";
+let entries: any[] | null = null;
 let catalog: Map<string, any> | null = null;
+function catalogEntries(): any[] {
+  return entries ??= Object.values<any>(JSON.parse(fs.readFileSync(fromRoot(CATALOG), "utf-8")).entries);
+}
+// one GUID can carry two game ids (prism series 1214… / 1224…, same label): look game ids up in catalogEntries
 function catalogById(): Map<string, any> {
-  if (catalog) return catalog;
-  const raw = JSON.parse(fs.readFileSync(fromRoot(CATALOG), "utf-8"));
-  catalog = new Map(Object.values<any>(raw.entries).map(e => [e.id, e]));
-  return catalog;
+  return catalog ??= new Map(catalogEntries().map(e => [e.id, e]));
 }
 
 /** Copy of `payload` with catalog GUID values replaced by labels — talent trees keep their
@@ -125,7 +127,7 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
     geniusNodeId / tlidbId bridges. Used when the export left the allocations empty. */
 export function fillTreesFromNative(payload: any, native: any[], loadoutIndex = 0): any {
   const byGame = new Map<string, any>();
-  for (const e of catalogById().values()) if (e.domain === "talent-tree") byGame.set(String(e.gameId), e);
+  for (const e of catalogEntries()) if (e.domain === "talent-tree") byGame.set(String(e.gameId), e);
   const out = structuredClone(payload);
   const slots: any[] = out.loadouts.loadouts[loadoutIndex].skillTree.slots;
   for (const rec of native) {
@@ -169,7 +171,7 @@ const INVERSE_IMAGE = "360701";
       source's effect × (1 + its type's reflected-effect roll). The copies replace the nodes they land on. */
 export function nativePrismLines(native: any[], prisms: NativePrisms): { source: string; slot: string; text: string; points?: number }[] {
   const byGame = new Map<string, any>();
-  for (const e of catalogById().values()) if (e.gameId) byGame.set(`${e.domain}:${e.gameId}`, e);
+  for (const e of catalogEntries()) if (e.gameId) byGame.set(`${e.domain}:${e.gameId}`, e);
   const allocated = new Map<string, number>();
   for (const rec of native) for (const [k, pts] of Object.entries<number>(rec.GeniusList ?? {})) if (pts > 0) allocated.set(k.replace(/\D/g, ""), pts);
   const treeText = _load("SS12.5-talent-tree-en.json");
@@ -197,6 +199,13 @@ export function nativePrismLines(native: any[], prisms: NativePrisms): { source:
     }
     const texts = Object.values(item?.affixes ?? {}).flat()
       .map(a => byGame.get(`ethereal-prism:${a.id}`)?.label as string | undefined).filter((t): t is string => !!t);
+    // the prism's own base affix (Haze "+12% additional Base Damage for Two-Handed Weapons"); the
+    // catalog joins its 1H/2H halves with no separator
+    for (const a of item?.affixes.BAffixInfoList ?? []) {
+      const label = byGame.get(`ethereal-prism:${a.id}`)?.label as string | undefined;
+      for (const line of label?.split(/(?<=[a-z])(?=[+-]\d)|\n/) ?? [])
+        out.push({ source: `prism:${pl.tree}:base`, slot: "prism", text: line.trim() });
+    }
     const size = texts.map(t => t.match(/expands to (\d+)x(\d+)/)).find(Boolean);
     const [w, h] = size ? [+size[1], +size[2]] : [1, 1];
     for (const t of texts) {

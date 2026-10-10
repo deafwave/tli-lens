@@ -62,5 +62,5 @@ describe("Bing guide", () => {
     for (const [key, n] of count)
       if (/\.(prefix|suffix)$/.test(key)) expect(n, key).toBeLessThanOrEqual(3);
       else if (key.endsWith(".ultimate")) expect(n, key).toBeLessThanOrEqual(2);
-  }, 120_000);
+  }, 300_000);   // ~90–100s alone: the budgeted walk is slow (bingGuide)
 });

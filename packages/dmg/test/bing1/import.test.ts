@@ -10,6 +10,7 @@ import { BING_ZERO, compose, effective } from "../../src/bingLedger.js";
 const load = (p: string) => JSON.parse(fs.readFileSync(fromRoot(p), "utf-8"));
 const july = () => importBing(load("data/bing1/real_buld_3.json"));
 const pro1t = () => { const d = load("data/bing1/scraped/pro-1t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
+const mine = () => { const d = load("data/bing1/scraped/my-build-2026-10-10.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 const hanshan = () => { const d = load("data/bing1/scraped/hanshan-40t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 
 describe("Bing importer", () => {
@@ -82,5 +83,11 @@ describe("Bing importer", () => {
     expect(r.sources.find(s => /Entangled Pain/.test(s.label))?.provides).toContain("curse");
     expect(r.lines.filter(l => l.kind === "unknown").map(l => l.text).sort()).toEqual([
       "+1 Max Charges", "+30% Bond Gaining Speed", "Converts 50% of Lightning Damage to Fire Damage", "Unable to trigger Empower Skills"]);
+  }, 30_000);
+  test("Haze prism: 4x3 area and base affix import (catalog GUIDs shared by two game ids); sheet crit damage 324", () => {
+    const r = mine();
+    expect(compose(BING_ZERO, effective(r.sources)).crit.damage_pct).toBe(324);   // in-game sheet 2026-10-10
+    expect(r.sources.some(s => /prism:51:base: \+12% additional Base Damage for Two-Handed Weapons/.test(s.label))).toBe(true);
+    expect(r.lines.filter(l => l.kind === "unknown")).toEqual([]);
   }, 30_000);
 });

@@ -115,6 +115,7 @@ const RULES: Rule[] = [
   [r(`\\+${N}% (?:Dexterity|Intelligence)`), () => "off-stat (Bing scales Strength)"],
   [r(`-${N}% additional (?:Dexterity|Intelligence)`), () => "off-stat (Bing scales Strength)"],
   [r(`\\+${N}% inflicted Paralysis Effect`), () => "paralysis (the build inflicts none)"],
+  [/when holding a One-Handed Weapon$/i, () => "one-handed only (Bing holds a Two-Handed Weapon)"],
   [r(`\\+${N}% damage for Channeled Skills`), () => "channeled skills"],
   [r(`${N}% (?:Attack and Cast|Attack) Speed`), m => [["add", "aux.as_inc", +m[1]]]],
   // Tenacity Blessing: 4 base stacks (tlidb); Sacrifice turns each into ×(1+v) additional (mechanics.md#tenacity)

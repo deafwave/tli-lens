@@ -19,6 +19,7 @@ validated against in-game measurements.
 |---|---|---|---|
 | User's own build, July export `data/bing1/real_buld_3.json` imported automatically | **484B** | measured **557.75B** (span mean, lv85 training dummy, 2026-07-20) | **−13%** |
 | Same build, hand-encoded snapshot `data/bing1/real_buld_3_snapshot.json` | 596.2B | 557.75B | +6.9% |
+| **User's build 2026-10-10** (DeafwaveB, memory-scraped, all sections verified) `data/bing1/scraped/my-build-2026-10-10.json` | **454.1B** (was 368.9B) | measured **484.26B** span, 31s, lv85 dummy, same day | **−6.2%** |
 | Scraped Pro Build 「寒山寺40万亿」 `data/bing1/scraped/hanshan-40t.json` | **129.6T** | title says **40万亿 = 40T** | **×3.2** |
 | Scraped Pro Build 「寒山寺宾一5000火 1w亿」 `data/bing1/scraped/pro-1t.json` | **246.4B** (was 23.5B) | title **1w亿 = 1T**; the user confirms it is **training-dummy DPS** | **×4 low** |
 
@@ -34,6 +35,14 @@ validated against in-game measurements.
   96% additional, the 40T-only switches in §2), or the 40T figure is not dummy DPS (§5).
 - Run `pnpm bing diagnose data/bing1/scraped/pro-1t.json data/bing1/scraped/hanshan-40t.json data/bing1/real_buld_3.json --season ss13`
   to reproduce every table below.
+
+**Fixed 2026-10-10 from the user's build (368.9B → 454.1B), found by diffing the character sheet's
+static breakdowns (`.claude/skills/tli-game`):** the catalog has 1,069 GUIDs shared by two game ids, and a
+GUID-keyed map dropped the Haze prism's "expands to 4x3" affix (area fell to 1×1, −36 crit damage); the
+importer never read a prism's own base affix (Haze +12% additional 2H base damage). Sheet and model now
+agree exactly on Strength, crit chance, crit damage, typed increased, attack speed, pen, projectiles.
+These were July's "+36 crit damage" residual and hand-ledger `haze_prism`. The remaining −6% is in
+dynamic mechanics the sheet cannot show (Deterioration, conditional buffs, geometry).
 
 **Fixed 2026-10-10 from the 1T build (23.5B → 246.4B):** Ice Bond is a **Sentry** skill, so with
 Activation Medium: Motionless + Formation Breaker it is the n=1 charge engine (was Flame-Core-only,

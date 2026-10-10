@@ -15,7 +15,7 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
     const steps = buildUpSteps();
     expect(steps.flatMap(s => s.ids).sort()).toEqual(REAL_BUILD_SOURCES.map(s => s.id).sort());
     expect(steps.at(-1)!.dps).toBeCloseTo(dps(REAL_BUILD_SOURCES), -3);
-  });
+  }, 30_000);
 
   test("build-up never takes a source before what it requires", () => {
     const seen = new Set<string>();

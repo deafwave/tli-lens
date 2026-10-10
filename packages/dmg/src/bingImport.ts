@@ -1,0 +1,199 @@
+/* Bing build importer (mechanics.md#bing-import): a planner export (tlicompendium / tli_dump
+   "Copy TLI Compendium JSON") → ledger sources → snapshot, with every line it cannot model
+   reported. Lines come from buildParser.extractLines after resolving catalog GUIDs; each
+   line maps through bingAffixMap, except the structural ones handled here (Obliterate,
+   Solar Ring, Kaleidoscope, the charge engine, Death's Touch's fixed rating). Skills,
+   traits and pactspirits come from tables in bingKit.ts. */
+import fs from "node:fs";
+import { fromRoot } from "./py.js";
+import { extractLines, type Line } from "./buildParser.js";
+import { affixEdits } from "./bingAffixMap.js";
+import { BING_ZERO, compose, effective, type Edit, type Source } from "./bingLedger.js";
+import { kitSources, type Kit } from "./bingKit.js";
+import type { Snapshot } from "./damageModel.js";
+
+const CATALOG = "packages/dmg/test/fixtures/poorchlight/compendium-catalog-ss13.json";
+let catalog: Map<string, any> | null = null;
+function catalogById(): Map<string, any> {
+  if (catalog) return catalog;
+  const raw = JSON.parse(fs.readFileSync(fromRoot(CATALOG), "utf-8"));
+  catalog = new Map(Object.values<any>(raw.entries).map(e => [e.id, e]));
+  return catalog;
+}
+
+/** Copy of `payload` with catalog GUID values replaced by labels — talent trees keep their
+    GUIDs (buildParser.treeLines resolves nodes and notables by GUID). */
+export function resolveGuids(payload: any): any {
+  const byId = catalogById();
+  const walk = (v: any, key = ""): any => key === "skillTree" ? v
+    : Array.isArray(v) ? v.map(x => walk(x))
+    : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x, k)]))
+    : typeof v === "string" ? byId.get(v)?.label ?? v : v;
+  return walk(payload);
+}
+
+export interface ImportedLine { source: string; text: string; kind: "mapped" | "irrelevant" | "unknown" | "structural"; why?: string }
+export interface ImportResult { sources: Source[]; lines: ImportedLine[]; snapshot: Snapshot; kit: Kit }
+
+const isWeaponSlot = (slot: string) => slot === "mainHand" || slot === "offHand";
+const scale = (edits: Edit[], k: number): Edit[] =>
+  k === 1 ? edits : edits.map(e => (e[0] === "add" ? ["add", e[1], e[2] * k] : e) as Edit);
+const num = (s: string) => (s.match(/[+-]?\d+(?:\.\d+)?/g) ?? []).map(Number);
+
+/** Structural lines: what they do is not an affix bucket. Returns edits/provides, or null. */
+function structural(text: string, slot: string): { edits: Edit[]; provides?: string[]; requires?: string[]; why: string } | null {
+  let m: RegExpMatchArray | null;
+  if (slot === "mainHand" && (m = text.match(/^(\d+) - (\d+) Physical Damage$/)))
+    return { why: "weapon base damage (zero rig is the 175 Destroyer Mallet)",
+             edits: [["add", "base.weapon_phys_min", +m[1] - 175], ["add", "base.weapon_phys_max", +m[2] - 175]] };
+  if (slot === "mainHand" && (m = text.match(/^([\d.]+) Attack Speed$/)))
+    return { why: "weapon base attack speed", edits: [["set", "base.weapon_attack_speed", +m[1]]] };
+  if (slot === "mainHand" && /^\d+ Critical Strike Rating$/.test(text)) return { why: "weapon base crit rating (500, the model's base)", edits: [] };
+  if ((m = text.match(/^\+?(\d+)% additional Attack Damage after standing still/i)))
+    return { why: "stationary attack (-20% additional AS)", edits: [["add", `additional.standing_${m[1]}`, +m[1]], ["add", "aux.as_more_standing", -20]] };
+  if ((m = text.match(/^\+(\d+)% additional damage for \d+ s after using Mobility Skills$/i)))
+    return { why: "after Mobility (Blink keeps it up)", edits: [["add", `additional.after_mobility_${m[1]}`, +m[1]]] };
+  if ((m = text.match(/^Deals up to \+(\d+)% additional Attack Damage to enemies in proximity/i)))
+    return { why: "Well Matched — Solar Ring places the boss in proximity", requires: ["solar_ring"],
+             edits: [["add", `additional.well_matched_${m[1]}`, +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% additional damage taken by enemies in Proximity$/i)))
+    return { why: "proximity taken — Solar Ring", requires: ["solar_ring"],
+             edits: [["add", `enemy_taken.proximity_${m[1]}`, +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% (\w+) Damage against enemies in proximity$/i)))
+    return { why: "proximity — Solar Ring under Firepower Coverage", requires: ["solar_ring"],
+             edits: [["add", `increased.${m[2].toLowerCase()}`, +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% (?:Fire Skill|attack|Attack|Melee|Projectile) Critical Strike Damage$/)))
+    return { why: "typed crit damage HoA carries (Fire/Attack/Melee/Projectile)", edits: [["add", "crit.damage_pct", +m[1]]] };
+  if (/your next non-Channeled Main Skill is enhanced by Obliterate/i.test(text))
+    return { why: "Obliterate", provides: ["ruinous_star"], edits: [
+      ["conv", "physical", "erosion", 100], ["conv", "fire", "erosion", 100], ["conv", "cold", "erosion", 100],
+      ["add", "deterioration.hit_damage_pct", 60], ["set", "deterioration.duration_s", 1],
+      ["set", "deterioration.tick_interval_s", 0.325], ["set", "deterioration.obliterate_interval_s", num(text)[0] ?? 0.5],
+      ["set", "deterioration.max_stacks", 99]] };
+  if ((m = text.match(/once every ([\d.]+)s while it lasts\. The damage gains a (\d+)% additional damage increment each time, up to (\d+)/i)))
+    return { why: "Obliterate tick ramp", edits: [["set", "deterioration.ramp_pct", +m[2]], ["set", "deterioration.ramp_max_ticks", +m[3]]] };
+  // Solar Ring +40% / corroded Corona +60% additional damage taken; both place enemies "within 3m" (tlidb Broken Sun Ring)
+  if (/^(Solar Ring|Corona)$/i.test(text))
+    return { why: "Solar Ring / Corona proximity", provides: ["solar_ring"],
+             edits: [["add", "enemy_taken.solar_ring", /Corona/i.test(text) ? 60 : 40]] };
+  // Broken Sun's area line delivers 28 of a 41 roll on the reference rig (#real-build) and only on empowered throws
+  if ((m = text.match(/^\+(\d+)% additional Area Damage for this skill when Demolisher Charge is consumed/i)))
+    return { why: "Broken Sun area-on-empower (calibrated 28/41 delivery)",
+             edits: [["mul", "rotation.demolisher_empower_mult", 1 + (+m[1] * 28 / 41) / 100]] };
+  if ((m = text.match(/^Has (\d+) point\(s\) of fixed Fervor Rating/i)))
+    return { why: "Fervor: +2% crit rating per Fervor Rating (tlidb Fervor)", edits: [["set", "aux.fervor", +m[1]], ["add", "aux.crit_rating_pct", 2 * +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% additional damage per (\d+) Fervor Rating/i)))
+    return { why: "Dawn Break per-Fervor additional", edits: [["set", "aux.fervor_add_pct", +m[1]], ["set", "aux.fervor_step", +m[2]]] };
+  if (/^Have Fervor$/i.test(text)) return { why: "Fervor enabler", edits: [] };
+  if ((m = text.match(/there is a (\d+)% chance for that cast to deal \+(\d+)% additional damage/i)))
+    return { why: "Transition roll (expected value)", edits: [["add", `additional.transition_${m[2]}`, +m[1] * +m[2] / 100]] };
+  if ((m = text.match(/^\+(\d+)% additional Wilt and Deterioration Duration\. \+(\d+)% additional Erosion Damage/i)))
+    return { why: "Profane (always on: Deterioration inflicts it)", requires: ["ruinous_star"],
+             edits: [["add", "deterioration.duration_inc_pct", +m[1]], ["add", "additional_typed.erosion.profane", +m[2]]] };
+  if (/^Gains Profane when inflicting Wilt or Deterioration$/i.test(text))
+    return { why: "Profane: +7% additional Deterioration Duration, +7% additional Erosion (tlidb Profane)", requires: ["ruinous_star"],
+             edits: [["add", "deterioration.duration_inc_pct", 7], ["add", "additional_typed.erosion.profane", 7]] };
+  if ((m = text.match(/^\+(\d+)% additional damage against Cursed enemies$/i)))
+    return { why: "vs Cursed (Timid / Spindle Corruption curse)", requires: ["curse"],
+             edits: [["add", `additional.cursed_${m[1]}`, +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% additional Attack Damage at Low Life$/i)))
+    return { why: "No Loose Ends — assumed run at Low Life (the build took it)", edits: [["add", `additional.low_life_${m[1]}`, +m[1]]] };
+  if ((m = text.match(/^\+?(\d+)% of the bonus to Erosion Damage also applied to Deterioration Damage, up to \+(\d+)%/i)))
+    return { why: "lunar memory: erosion increases also raise Deterioration", edits: [["set", "aux.lunar_pct", +m[1]], ["set", "aux.lunar_cap", +m[2]]] };
+  if (/Skill Area/i.test(text) && /^\+\d+% /.test(text))
+    return { why: "geometry — folded into hits_per_bomb (#bing-skill-area), not re-priced", edits: [] };
+  if (/Critical Strike Rating is fixed at (\d+) for the Weapon/i.test(text))
+    return { why: "weapon crit rating fixed", edits: [["set", "aux.crit_fixed", 1]] };
+  if (/Gains Demolisher Charge when using Sentry Skills/i.test(text))
+    return { why: "Formation Breaker charge line", provides: ["fb_charge"], edits: [] };
+  if ((m = text.match(/Gains the following buffs by turns.*?\+(\d+)% additional Erosion Damage/is)))
+    return { why: "Kaleidoscope rings (full value, #real-build)", edits: [["add", `additional.kaleido_${m[1]}`, +m[1]]] };
+  if (/^Lucky Critical Strike$/i.test(text)) return { why: "Lucky Critical Strike", edits: [["set", "aux.crit_lucky", 1]] };
+  if ((m = text.match(/^([+-]?\d+)% Critical Strike Rating$/))) return { why: "crit rating", edits: [["add", "aux.crit_rating_pct", +m[1]]] };
+  if (/Hero Trait Level/i.test(text)) return { why: "hero trait level (bingKit traits)", edits: [] };
+  if ((m = text.match(/^(\d+)% of the increase\/decrease on Knockback distance is also applied to damage bonus/i)))
+    return { why: "Ranger knockback → damage", edits: [["add", "aux.knockback_conv", +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% additional damage taken by enemies in proximity to Sentries$/i)))
+    return { why: "Formation Breaker taken near Sentries", edits: [["add", `enemy_taken.sentry_${m[1]}`, +m[1]]] };
+  return null;
+}
+
+/** Import a planner export (raw GUIDs or already resolved). */
+/** Native talent records (tli_dump `skillTree.records[].data`: GeniusList node → points,
+    BonusTalents notables) → planner nodePoints / selectedNotable GUIDs, via the catalog's
+    geniusNodeId / tlidbId bridges. Used when the export left the allocations empty. */
+export function fillTreesFromNative(payload: any, native: any[], loadoutIndex = 0): any {
+  const byGame = new Map<string, any>();
+  for (const e of catalogById().values()) if (e.domain === "talent-tree") byGame.set(String(e.gameId), e);
+  const out = structuredClone(payload);
+  const slots: any[] = out.loadouts.loadouts[loadoutIndex].skillTree.slots;
+  for (const rec of native) {
+    for (const [key, points] of Object.entries<number>(rec.GeniusList ?? {})) {
+      const e = byGame.get(key.replace(/\D/g, ""));
+      const slot = e && slots.find(s => s.treeId === e.metadata?.treeId);
+      if (slot && points > 0) slot.nodePoints[e.id] = points;
+    }
+    for (const id of rec.BonusTalents ?? []) {
+      const e = byGame.get(String(id));
+      const slot = e && slots.find(s => s.treeId === e.metadata?.treeId);
+      if (slot) slot[`selectedNotable${e.metadata.talentThreshold}`] = e.id;
+    }
+  }
+  return out;
+}
+
+export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]): ImportResult {
+  if (nativeTalents?.length) payload = fillTreesFromNative(payload, nativeTalents, loadoutIndex);
+  const resolved = resolveGuids(payload);
+  const lo = resolved.loadouts.loadouts[loadoutIndex];
+  const raw = payload.loadouts.loadouts[loadoutIndex];
+  const lines: ImportedLine[] = [];
+  const sources: Source[] = [];
+  let n = 0;
+  const add = (source: string, text: string, edits: Edit[], provides?: string[], requires?: string[]) =>
+    sources.push({ id: `imp_${n++}`, label: `${source}: ${text}`, group: "upgrade", edits, provides, requires,
+                   cite: `import ${source}` });
+
+  const extracted: Line[] = [...extractLines(resolved, loadoutIndex)]
+    .filter(l => !/^(memory|pactspirit|trait):/.test(l.source));
+  const memoryLines = memoryAffixes(raw).map(text => ({ source: "memory", slot: "memory", text }));
+  // legendary random affix slots (Death's Touch's "Adds … to the Main-Hand Weapon") — extractLines skips them
+  const inv = new Map<string, any>((lo.gear?.inventory ?? []).map((it: any) => [it.id, it]));
+  for (const [slot, id] of Object.entries<string>(lo.gear?.equipped ?? {}))
+    for (const a of inv.get(id)?.randomAffixSlots ?? [])
+      if (a?.description) memoryLines.push({ source: `gear:${slot}:random`, slot, text: a.description });
+  // the reference build's +1 level (Lich) is inside the calibrated geometry fold-in (#bing-ledger)
+  sources.push({ id: "imp_level_baseline", label: "skill-level baseline of the calibrated reference", group: "upgrade",
+                 edits: [["add", "aux.skill_level", -1]], cite: "bingLedger HOA_LEVELS_ABOVE_20" });
+  const kit = kitSources(lo, raw, lines);
+  sources.push(...kit.sources);
+  for (const l of [...extracted, ...memoryLines, ...kit.extraLines] as Line[]) {
+    const s = structural(l.text, l.slot);
+    if (s) { add(l.source, l.text, scale(s.edits, l.slot === "tree" ? l.points ?? 1 : 1), s.provides, s.requires); lines.push({ source: l.source, text: l.text, kind: "structural", why: s.why }); continue; }
+    const key = `${l.source.replace(/[^a-z0-9]+/gi, "_")}_${n}`;
+    const m = affixEdits(l.text, isWeaponSlot(l.slot) ? `weapon_${key}` : `gear_${key}`);
+    if (m.kind === "mapped") add(l.source, l.text, scale(m.edits, l.slot === "tree" ? l.points ?? 1 : 1));
+    lines.push({ source: l.source, text: l.text, kind: m.kind, why: m.kind === "irrelevant" ? m.why : undefined });
+  }
+
+  const snapshot = compose(BING_ZERO, effective(sources));
+  return { sources, lines, snapshot, kit };
+}
+
+/** Hero-memory affix texts (catalog template filled with the rolled value). */
+function memoryAffixes(raw: any): string[] {
+  const byId = catalogById();
+  const inv = new Map<string, any>((raw.heroMemories?.inventory ?? []).map((m: any) => [m.id, m]));
+  const out: string[] = [];
+  for (const id of Object.values<string>(raw.heroMemories?.equipped ?? {})) {
+    const m = inv.get(id);
+    if (!m) continue;
+    for (const a of [m.baseStat, ...m.fixedAffixes ?? [], ...m.randomAffixes ?? [], m.lunarPhaseAffix].filter(Boolean)) {
+      const meta = byId.get(a.guid)?.metadata;
+      const template: string | undefined = meta?.memoryTemplate ?? (typeof a.guid === "string" && a.guid.includes("#") ? a.guid : undefined);
+      if (template) out.push(template.includes("#") ? template.replace("#", String(a.value)) : template);
+      else if (typeof a.guid === "string" && !/^[0-9a-f-]{36}$/.test(a.guid)) out.push(a.guid);
+    }
+  }
+  return out;
+}

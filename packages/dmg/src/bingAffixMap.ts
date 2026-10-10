@@ -113,6 +113,9 @@ const RULES: Rule[] = [
   [r(`\\+${N}% Strength`), m => [["add", "aux.str_pct", +m[1]]]],
   [r(`\\+${N} (?:Dexterity|Intelligence)`), () => "off-stat (Bing scales Strength)"],
   [r(`\\+${N}% (?:Dexterity|Intelligence)`), () => "off-stat (Bing scales Strength)"],
+  [r(`-${N}% additional (?:Dexterity|Intelligence)`), () => "off-stat (Bing scales Strength)"],
+  [r(`\\+${N}% inflicted Paralysis Effect`), () => "paralysis (the build inflicts none)"],
+  [r(`\\+${N}% damage for Channeled Skills`), () => "channeled skills"],
   [r(`\\+${N}% (?:Attack and Cast|Attack) Speed`), m => [["add", "aux.as_inc", +m[1]]]],
   [r(`\\+${N}% Demolisher Charge Restoration Speed`), m => [["add", "rotation.demolisher_resto_pct", +m[1]]]],
   [r(`\\+${N}% Aura Effect`), m => [["add", "aux.aura_effect", +m[1]]]],
@@ -132,7 +135,9 @@ const UNMODELED = new Set(["aux.crit_local_pct", "aux.crit_flat", "aux.aura_effe
 
 /** Classify one affix (may be multi-line). `key` (e.g. "weapon_s3") names its own buckets. */
 export function affixEdits(text: string, key: string): AffixMapping {
-  const lines = text.split(/\n| \/ /).map(l => l.trim().replace(/\.$/, "")).filter(Boolean);
+  // a Hammer of Ash build always holds its two-handed maul
+  const lines = text.split(/\n| \/ /).map(l => l.trim().replace(/\.$/, "")
+    .replace(/ when holding a Two-Handed Weapon$/i, "")).filter(Boolean);
   const edits: Edit[] = [];
   let irrelevant: string | null = null;
   for (const line of lines) {

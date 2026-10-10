@@ -345,7 +345,23 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   const aux: Record<string, number> = s.aux ?? {};
   delete s.aux;
   const pct = (k: string) => (aux[k] ?? 0) / 100;
-  if (aux.crit_rating_pct) s.crit.chance_pct = Math.min(100, 5 * (1 + pct("crit_rating_pct")));
+  // crit rating: weapon base 500 (fixed by Death's Touch, else × local % + flat) × (1 + Σ rating %);
+  // Lucky Critical Strike rolls twice (mechanics.md#bing-import)
+  if (aux.crit_rating_pct || aux.crit_local_pct || aux.crit_flat || aux.crit_lucky) {
+    const base = aux.crit_fixed ? 500 : 500 * (1 + pct("crit_local_pct")) + (aux.crit_flat ?? 0);
+    const c = Math.min(100, base / 100 * (1 + pct("crit_rating_pct")));
+    s.crit.chance_pct = aux.crit_lucky ? 100 * (1 - (1 - c / 100) ** 2) : c;
+  }
+  // a Ranger slate converts knockback distance into damage, capped at +100% (tlidb Melee Knockback)
+  // Fervor: "+X% additional damage per N Fervor Rating" (Dawn Break), whole steps
+  if (aux.fervor && aux.fervor_add_pct)
+    s.additional.fervor = Math.floor(aux.fervor / (aux.fervor_step || 1)) * aux.fervor_add_pct;
+  // lunar memory: X% of the erosion increases also raise Deterioration Damage, up to the cap
+  if (aux.lunar_pct && s.deterioration)
+    s.deterioration.damage_inc_pct = (s.deterioration.damage_inc_pct ?? 0)
+      + Math.min(aux.lunar_cap ?? Infinity, (s.increased.erosion ?? 0) * aux.lunar_pct / 100);
+  if (aux.knockback_conv && aux.knockback)
+    s.increased.ranger_knockback = Math.min(100, aux.knockback * aux.knockback_conv / 100);
   const str = Math.round((aux.str_flat ?? 0) * (1 + pct("str_pct")));   // sheet shows integer Str (339)
   if (str) s.additional.strength = str / 2;
   let as = (1 + pct("as_inc")) * (1 + pct("as_local"));

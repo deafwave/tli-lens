@@ -3,7 +3,7 @@
 Written 2026-10-10 for an agent that runs subagents and has **full control of the game**
 (Torchlight: Infinite, `torchlight_infinite.exe`; it was PID 35124 on 2026-10-09 — re-check).
 Repo: `rehan_guide` (GitHub `deafwave/rehan-torchlight`, push to `main`; another agent also
-pushes there — always `git fetch && git rebase torchlight/main` before pushing). Memory reader:
+edits the importer and pushes there — always `git fetch && git rebase torchlight/main` before pushing). Memory reader:
 sibling repo `poorchlight` (`tli_dump`).
 
 **The question:** the DPS calculator disagrees with reality by more than any single mechanic
@@ -17,9 +17,9 @@ validated against in-game measurements.
 
 | Build | Model (SS13) | Reference | Off by |
 |---|---|---|---|
-| User's own build, July export `data/bing1/real_buld_3.json` imported automatically | **460B** | measured **557.75B** (span mean, lv85 training dummy, 2026-07-20) | **−17%** |
+| User's own build, July export `data/bing1/real_buld_3.json` imported automatically | **484B** | measured **557.75B** (span mean, lv85 training dummy, 2026-07-20) | **−13%** |
 | Same build, hand-encoded snapshot `data/bing1/real_buld_3_snapshot.json` | 596.2B | 557.75B | +6.9% |
-| Scraped Pro Build 「寒山寺40万亿」 `data/bing1/scraped/hanshan-40t.json` | **136T** | title says **40万亿 = 40T** | **×3.4** |
+| Scraped Pro Build 「寒山寺40万亿」 `data/bing1/scraped/hanshan-40t.json` | **129.6T** | title says **40万亿 = 40T** | **×3.2** |
 
 - The hand snapshot only reaches +6.9% through four **residuals** with no export line behind them
   (flat 30 phys / 22.1 erosion adds, +36% crit damage, ×1.091 attack speed, Haze prism) — see
@@ -58,7 +58,7 @@ conservative reading (`packages/dmg/src/bingDiagnose.ts` `UNVERIFIED`):
 | cursed | "+X% additional vs Cursed" lines live (Timid / Corruption curse) | 1.25 | — | — |
 | malleable | Precise: Malleable +30% aura effect (needs an Elite within 10m — assumed via Solar Ring) | 1.17 | — | — |
 | corona | corroded Broken Sun "Corona" = +60% taken (Solar Ring +40%) | 1.14 | — | — |
-| *all at once* | | **÷8.1** (136T → 17T) | ÷1.54 | |
+| *all at once* | | **÷8** (≈130T → ≈16T) | ÷1.5 | |
 
 **Calibration constants carried from the user's rig to every other build** (not in `UNVERIFIED`
 yet — add them): `hits_per_bomb` (geometry fold-in fitted RS-off on the July rig: Firepower Coverage

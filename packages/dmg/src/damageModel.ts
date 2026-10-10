@@ -256,8 +256,11 @@ function basePortions(s: Snapshot, pct: number): Portion[] {
                  + ((b.flat_added_cold_min ?? 0) + (b.flat_added_cold_max ?? 0)) / 2 * eff
                  + physPart * (b.gain_phys_as_cold_pct ?? 0) / 100;
   // weapon-base fire/lightning enter as their own conversion-history portions (mechanics.md#weapon-base-elements)
-  const firePart = ((b.weapon_flat_fire_min ?? 0) + (b.weapon_flat_fire_max ?? 0)) / 2 * pct;
-  const lightPart = ((b.weapon_flat_lightning_min ?? 0) + (b.weapon_flat_lightning_max ?? 0)) / 2 * pct;
+  // flat "Adds X Fire/Lightning Damage to Attacks" scale by added-damage effectiveness, like phys/cold
+  const firePart = ((b.weapon_flat_fire_min ?? 0) + (b.weapon_flat_fire_max ?? 0)) / 2 * pct
+                 + ((b.flat_added_fire_min ?? 0) + (b.flat_added_fire_max ?? 0)) / 2 * eff;
+  const lightPart = ((b.weapon_flat_lightning_min ?? 0) + (b.weapon_flat_lightning_max ?? 0)) / 2 * pct
+                  + ((b.flat_added_lightning_min ?? 0) + (b.flat_added_lightning_max ?? 0)) / 2 * eff;
   const eroPart = erosionBase(s, pct);
   return ([[physPart, "physical"], [coldPart, "cold"], [firePart, "fire"],
            [lightPart, "lightning"], [eroPart, "erosion"]] as const)

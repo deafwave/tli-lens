@@ -467,7 +467,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 405215378.2848699,
+            "dps": 344770068.7957464,
             "deteriorationDps": 0,
             "cycleTime": 1.186623516720604,
             "modeled": 105,
@@ -1503,6 +1503,50 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1,
+                  "kind": "multiplier",
+                  "formatted": "×1"
+                },
+                "rawPercent": 0,
+                "sourcePaths": [
+                  "loadouts.loadouts[0].skills.activeSkills[Hammer of Ash].supports"
+                ],
+                "nonComposedEffects": [],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[0].skills.activeSkills[Hammer of Ash].supports",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -1809,6 +1853,52 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1,
+                  "inputKind": "multiplier",
+                  "rawPercent": 0,
+                  "sourcePaths": [
+                    "loadouts.loadouts[0].skills.activeSkills[Hammer of Ash].supports"
+                  ],
+                  "nonComposedEffects": [],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[0].skills.activeSkills[Hammer of Ash].supports",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -1817,6 +1907,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1,
                   "inputKind": "multiplier",
                   "rawPercent": 0,
@@ -3302,12 +3395,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 8.000000000000007,
               "precise_auras": 201.04,
-              "misc": 18922.052347656856,
+              "misc": 16606.646895390862,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -4354,7 +4447,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 532021108.8938019,
+            "dps": 452660397.7629793,
             "deteriorationDps": 0,
             "cycleTime": 1.20415982484948,
             "modeled": 128,
@@ -5412,6 +5505,50 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1,
+                  "kind": "multiplier",
+                  "formatted": "×1"
+                },
+                "rawPercent": 0,
+                "sourcePaths": [
+                  "loadouts.loadouts[1].skills.activeSkills[Hammer of Ash].supports"
+                ],
+                "nonComposedEffects": [],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[1].skills.activeSkills[Hammer of Ash].supports",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -5729,6 +5866,52 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1,
+                  "inputKind": "multiplier",
+                  "rawPercent": 0,
+                  "sourcePaths": [
+                    "loadouts.loadouts[1].skills.activeSkills[Hammer of Ash].supports"
+                  ],
+                  "nonComposedEffects": [],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[1].skills.activeSkills[Hammer of Ash].supports",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -5737,6 +5920,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1,
                   "inputKind": "multiplier",
                   "rawPercent": 0,
@@ -7191,12 +7377,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 23026.987437627882,
+              "misc": 20211.92038656034,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -8278,7 +8464,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 571518092.9042466,
+            "dps": 486265681.82732797,
             "deteriorationDps": 0,
             "cycleTime": 1.1161846778285134,
             "modeled": 128,
@@ -9411,6 +9597,50 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1,
+                  "kind": "multiplier",
+                  "formatted": "×1"
+                },
+                "rawPercent": 0,
+                "sourcePaths": [
+                  "loadouts.loadouts[2].skills.activeSkills[Hammer of Ash].supports"
+                ],
+                "nonComposedEffects": [],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[2].skills.activeSkills[Hammer of Ash].supports",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -9865,6 +10095,52 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1,
+                  "inputKind": "multiplier",
+                  "rawPercent": 0,
+                  "sourcePaths": [
+                    "loadouts.loadouts[2].skills.activeSkills[Hammer of Ash].supports"
+                  ],
+                  "nonComposedEffects": [],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[2].skills.activeSkills[Hammer of Ash].supports",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -9873,6 +10149,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1,
                   "inputKind": "multiplier",
                   "rawPercent": 0,
@@ -11467,12 +11746,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 22263.984411555786,
+              "misc": 19541.79174304037,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -12566,7 +12845,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 177471376.8196971,
+            "dps": 150998264.31658268,
             "deteriorationDps": 0,
             "cycleTime": 1.2180807476801099,
             "modeled": 78,
@@ -13770,6 +14049,61 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1.2,
+                  "kind": "multiplier",
+                  "formatted": "×1.2"
+                },
+                "rawPercent": 20,
+                "sourcePaths": [
+                  "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
+                ],
+                "nonComposedEffects": [
+                  {
+                    "id": "explosion-base-radius",
+                    "label": "base explosion radius",
+                    "value": 30,
+                    "unit": "percent",
+                    "scope": "projectile explosions only",
+                    "condition": null,
+                    "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                    "sourcePath": "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
+                  }
+                ],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[3].skills.activeSkills[0].supports[2]",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -13784,16 +14118,6 @@
                   "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
                 ],
                 "nonComposedEffects": [
-                  {
-                    "id": "additional-damage",
-                    "label": "additional damage",
-                    "value": 20,
-                    "unit": "percent",
-                    "scope": "supported skill",
-                    "condition": null,
-                    "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                    "sourcePath": "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
-                  },
                   {
                     "id": "explosion-base-radius",
                     "label": "base explosion radius",
@@ -14279,6 +14603,63 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1.2,
+                  "inputKind": "multiplier",
+                  "rawPercent": 20,
+                  "sourcePaths": [
+                    "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
+                  ],
+                  "nonComposedEffects": [
+                    {
+                      "id": "explosion-base-radius",
+                      "label": "base explosion radius",
+                      "value": 30,
+                      "unit": "percent",
+                      "scope": "projectile explosions only",
+                      "condition": null,
+                      "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                      "sourcePath": "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
+                    }
+                  ],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[3].skills.activeSkills[0].supports[2]",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -14287,6 +14668,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1.37,
                   "inputKind": "multiplier",
                   "rawPercent": 37,
@@ -14294,16 +14678,6 @@
                     "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
                   ],
                   "nonComposedEffects": [
-                    {
-                      "id": "additional-damage",
-                      "label": "additional damage",
-                      "value": 20,
-                      "unit": "percent",
-                      "scope": "supported skill",
-                      "condition": null,
-                      "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                      "sourcePath": "loadouts.loadouts[3].skills.activeSkills[0].supports[2]"
-                    },
                     {
                       "id": "explosion-base-radius",
                       "label": "base explosion radius",
@@ -16154,12 +16528,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 44.666666666666664,
               "sealed_life_mana": 0,
               "blessings": 19.999999999999996,
               "precise_auras": 201.04,
-              "misc": 6842.024064774107,
+              "misc": 5997.025845046273,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -17212,13 +17586,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 262195598.17215413,
+            "dps": 208490012.4679053,
             "deteriorationDps": 0,
             "cycleTime": 1.2180807476801099,
-            "modeled": 83,
-            "ignored": 30,
+            "modeled": 82,
+            "ignored": 31,
             "unmodeled": 34,
-            "coverage": 0.7094017094017094,
+            "coverage": 0.7068965517241379,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -18395,6 +18769,61 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1.2,
+                  "kind": "multiplier",
+                  "formatted": "×1.2"
+                },
+                "rawPercent": 20,
+                "sourcePaths": [
+                  "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
+                ],
+                "nonComposedEffects": [
+                  {
+                    "id": "explosion-base-radius",
+                    "label": "base explosion radius",
+                    "value": 30,
+                    "unit": "percent",
+                    "scope": "projectile explosions only",
+                    "condition": null,
+                    "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                    "sourcePath": "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
+                  }
+                ],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[4].skills.activeSkills[0].supports[2]",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -18409,16 +18838,6 @@
                   "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
                 ],
                 "nonComposedEffects": [
-                  {
-                    "id": "additional-damage",
-                    "label": "additional damage",
-                    "value": 20,
-                    "unit": "percent",
-                    "scope": "supported skill",
-                    "condition": null,
-                    "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                    "sourcePath": "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
-                  },
                   {
                     "id": "explosion-base-radius",
                     "label": "base explosion radius",
@@ -18892,6 +19311,63 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1.2,
+                  "inputKind": "multiplier",
+                  "rawPercent": 20,
+                  "sourcePaths": [
+                    "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
+                  ],
+                  "nonComposedEffects": [
+                    {
+                      "id": "explosion-base-radius",
+                      "label": "base explosion radius",
+                      "value": 30,
+                      "unit": "percent",
+                      "scope": "projectile explosions only",
+                      "condition": null,
+                      "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                      "sourcePath": "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
+                    }
+                  ],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[4].skills.activeSkills[0].supports[2]",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -18900,6 +19376,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1.37,
                   "inputKind": "multiplier",
                   "rawPercent": 37,
@@ -18907,16 +19386,6 @@
                     "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
                   ],
                   "nonComposedEffects": [
-                    {
-                      "id": "additional-damage",
-                      "label": "additional damage",
-                      "value": 20,
-                      "unit": "percent",
-                      "scope": "supported skill",
-                      "condition": null,
-                      "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                      "sourcePath": "loadouts.loadouts[4].skills.activeSkills[0].supports[2]"
-                    },
                     {
                       "id": "explosion-base-radius",
                       "label": "base explosion radius",
@@ -20706,10 +21175,10 @@
           },
           "coverage": {
             "observed": 147,
-            "classified": 83,
-            "ignored": 30,
+            "classified": 82,
+            "ignored": 31,
             "unsupported": 34,
-            "classificationRate": 0.7094017094017094
+            "classificationRate": 0.7068965517241379
           },
           "snapshot": {
             "base": {
@@ -20751,12 +21220,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 44.666666666666664,
               "sealed_life_mana": 0,
               "blessings": 19.999999999999996,
               "precise_auras": 201.04,
-              "misc": 7625.084379280625,
+              "misc": 6240.906878848124,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -21808,7 +22277,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 3094441905.3005967,
+            "dps": 2632849111.23217,
             "deteriorationDps": 0,
             "cycleTime": 0.813621503276676,
             "modeled": 116,
@@ -22997,6 +23466,61 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1.2,
+                  "kind": "multiplier",
+                  "formatted": "×1.2"
+                },
+                "rawPercent": 20,
+                "sourcePaths": [
+                  "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
+                ],
+                "nonComposedEffects": [
+                  {
+                    "id": "explosion-base-radius",
+                    "label": "base explosion radius",
+                    "value": 30,
+                    "unit": "percent",
+                    "scope": "projectile explosions only",
+                    "condition": null,
+                    "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                    "sourcePath": "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
+                  }
+                ],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[5].skills.activeSkills[0].supports[2]",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -23011,16 +23535,6 @@
                   "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
                 ],
                 "nonComposedEffects": [
-                  {
-                    "id": "additional-damage",
-                    "label": "additional damage",
-                    "value": 20,
-                    "unit": "percent",
-                    "scope": "supported skill",
-                    "condition": null,
-                    "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                    "sourcePath": "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
-                  },
                   {
                     "id": "explosion-base-radius",
                     "label": "base explosion radius",
@@ -23506,6 +24020,63 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1.2,
+                  "inputKind": "multiplier",
+                  "rawPercent": 20,
+                  "sourcePaths": [
+                    "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
+                  ],
+                  "nonComposedEffects": [
+                    {
+                      "id": "explosion-base-radius",
+                      "label": "base explosion radius",
+                      "value": 30,
+                      "unit": "percent",
+                      "scope": "projectile explosions only",
+                      "condition": null,
+                      "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                      "sourcePath": "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
+                    }
+                  ],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[5].skills.activeSkills[0].supports[2]",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -23514,6 +24085,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1.37,
                   "inputKind": "multiplier",
                   "rawPercent": 37,
@@ -23521,16 +24095,6 @@
                     "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
                   ],
                   "nonComposedEffects": [
-                    {
-                      "id": "additional-damage",
-                      "label": "additional damage",
-                      "value": 20,
-                      "unit": "percent",
-                      "scope": "supported skill",
-                      "condition": null,
-                      "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                      "sourcePath": "loadouts.loadouts[5].skills.activeSkills[0].supports[2]"
-                    },
                     {
                       "id": "explosion-base-radius",
                       "label": "base explosion radius",
@@ -25197,12 +25761,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 29.600000000000005,
               "precise_auras": 201.04,
-              "misc": 27465.758558045643,
+              "misc": 24110.394662781786,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -26292,7 +26856,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 19863208746.271248,
+            "dps": 16900246666.210775,
             "deteriorationDps": 0,
             "cycleTime": 0.813621503276676,
             "modeled": 123,
@@ -27476,6 +28040,61 @@
               },
               {
                 "status": "calculated-partial",
+                "factorId": "upheaval-additional-damage",
+                "label": "Upheaval additional damage",
+                "scope": "hit components of the supported Hammer of Ash skill",
+                "condition": null,
+                "value": {
+                  "raw": 1.2,
+                  "kind": "multiplier",
+                  "formatted": "×1.2"
+                },
+                "rawPercent": 20,
+                "sourcePaths": [
+                  "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
+                ],
+                "nonComposedEffects": [
+                  {
+                    "id": "explosion-base-radius",
+                    "label": "base explosion radius",
+                    "value": 30,
+                    "unit": "percent",
+                    "scope": "projectile explosions only",
+                    "condition": null,
+                    "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                    "sourcePath": "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
+                  }
+                ],
+                "provenance": [
+                  {
+                    "source": "imported Compendium/tli_dump loadout",
+                    "locator": "loadouts.loadouts[6].skills.activeSkills[0].supports[2]",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                    "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                    "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                    "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                    "confidence": "source-data"
+                  },
+                  {
+                    "source": "rehan_guide/docs/mechanics.md",
+                    "locator": "#guarded-bing-factor-ledger",
+                    "confidence": "confirmed-mechanic"
+                  }
+                ],
+                "isDps": false,
+                "isTotalHit": false,
+                "isTargetHits": false
+              },
+              {
+                "status": "calculated-partial",
                 "factorId": "upheaval-explosion-hit-damage",
                 "label": "Upheaval additional explosion Hit Damage",
                 "scope": "projectile explosion hits only",
@@ -27490,16 +28109,6 @@
                   "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
                 ],
                 "nonComposedEffects": [
-                  {
-                    "id": "additional-damage",
-                    "label": "additional damage",
-                    "value": 20,
-                    "unit": "percent",
-                    "scope": "supported skill",
-                    "condition": null,
-                    "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                    "sourcePath": "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
-                  },
                   {
                     "id": "explosion-base-radius",
                     "label": "base explosion radius",
@@ -27984,6 +28593,63 @@
                   "isTotalHit": false,
                   "isTargetHits": false
                 },
+                "upheavalAdditionalDamage": {
+                  "status": "calculated-partial",
+                  "factorId": "upheaval-additional-damage",
+                  "label": "Upheaval additional damage",
+                  "scope": "hit components of the supported Hammer of Ash skill",
+                  "condition": null,
+                  "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
+                  "effectId": "additional-damage",
+                  "siblingEffectIds": [
+                    "additional-explosion-hit-damage"
+                  ],
+                  "inputValue": 1.2,
+                  "inputKind": "multiplier",
+                  "rawPercent": 20,
+                  "sourcePaths": [
+                    "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
+                  ],
+                  "nonComposedEffects": [
+                    {
+                      "id": "explosion-base-radius",
+                      "label": "base explosion radius",
+                      "value": 30,
+                      "unit": "percent",
+                      "scope": "projectile explosions only",
+                      "condition": null,
+                      "reason": "Cadence, geometry, and utility terms are reported but never composed into a hit-factor ratio.",
+                      "sourcePath": "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
+                    }
+                  ],
+                  "provenance": [
+                    {
+                      "source": "imported Compendium/tli_dump loadout",
+                      "locator": "loadouts.loadouts[6].skills.activeSkills[0].supports[2]",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-master.json",
+                      "locator": "skill/{Support,Magnificent_Support,Activation_Medium}/master.skills[id][id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "91a676a558e6a7b811edc9256caec53c539398f93aac3b9a1f55c5c998d7ae91",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "https://tlicompendium.com/data-bundles/SS13-skill-en.json",
+                      "locator": "skill/*/i18n/en.skills[id].templateDescription[id=4ba9d077-d4f6-5a60-bd8e-423319a27f97]",
+                      "sha256": "10b5cf27e8f50acca7ff2ec5a7534d5eb5e8e1eee83493f86851967fc0cd7cb1",
+                      "confidence": "source-data"
+                    },
+                    {
+                      "source": "rehan_guide/docs/mechanics.md",
+                      "locator": "#guarded-bing-factor-ledger",
+                      "confidence": "confirmed-mechanic"
+                    }
+                  ],
+                  "isDps": false,
+                  "isTotalHit": false,
+                  "isTargetHits": false
+                },
                 "upheavalExplosionHitDamage": {
                   "status": "calculated-partial",
                   "factorId": "upheaval-explosion-hit-damage",
@@ -27992,6 +28658,9 @@
                   "condition": null,
                   "supportId": "4ba9d077-d4f6-5a60-bd8e-423319a27f97",
                   "effectId": "additional-explosion-hit-damage",
+                  "siblingEffectIds": [
+                    "additional-damage"
+                  ],
                   "inputValue": 1.46,
                   "inputKind": "multiplier",
                   "rawPercent": 46,
@@ -27999,16 +28668,6 @@
                     "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
                   ],
                   "nonComposedEffects": [
-                    {
-                      "id": "additional-damage",
-                      "label": "additional damage",
-                      "value": 20,
-                      "unit": "percent",
-                      "scope": "supported skill",
-                      "condition": null,
-                      "reason": "This source term is unchanged or outside this factor's component scope; it is not part of the selected changing-factor scenario.",
-                      "sourcePath": "loadouts.loadouts[6].skills.activeSkills[0].supports[2]"
-                    },
                     {
                       "id": "explosion-base-radius",
                       "label": "base explosion radius",
@@ -30031,12 +30690,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 44.666666666666664,
               "sealed_life_mana": 0,
               "blessings": 29.600000000000005,
               "precise_auras": 201.04,
-              "misc": 101124.05805927597,
+              "misc": 88802.84625481958,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -31138,7 +31797,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "7f844a9e-9abc-59b6-9baf-18b43efc753e",
-            "dps": 186172025.6025677,
+            "dps": 158401051.67409775,
             "deteriorationDps": 0,
             "cycleTime": 0.6080707573244888,
             "modeled": 107,
@@ -33034,12 +33693,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 29.600000000000005,
               "precise_auras": 201.04,
-              "misc": 738.65447362928,
+              "misc": 636.571632865376,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -34056,7 +34715,7 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "7f844a9e-9abc-59b6-9baf-18b43efc753e",
-            "dps": 382124665.5098311,
+            "dps": 325123759.5522795,
             "deteriorationDps": 0,
             "cycleTime": 0.5904455179817498,
             "modeled": 111,
@@ -35987,12 +36646,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 29.600000000000005,
               "precise_auras": 201.04,
-              "misc": 822.5199209922083,
+              "misc": 710.2287961519139,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -37042,13 +37701,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 3547616094.585437,
+            "dps": 720882711.8297552,
             "deteriorationDps": 0,
             "cycleTime": 1.1703746262781023,
-            "modeled": 82,
-            "ignored": 98,
+            "modeled": 74,
+            "ignored": 106,
             "unmodeled": 50,
-            "coverage": 0.6212121212121212,
+            "coverage": 0.5967741935483871,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -38273,10 +38932,10 @@
           },
           "coverage": {
             "observed": 230,
-            "classified": 82,
-            "ignored": 98,
+            "classified": 74,
+            "ignored": 106,
             "unsupported": 50,
-            "classificationRate": 0.6212121212121212
+            "classificationRate": 0.5967741935483871
           },
           "snapshot": {
             "base": {
@@ -38317,12 +38976,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 25,
               "precise_auras": 201.04,
-              "misc": 70136.63820513495,
+              "misc": 14632.620257894116,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -39414,7 +40073,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (62% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (60% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1jut38w",
@@ -39436,13 +40095,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 6949585205.44877,
+            "dps": 1299196091.0626066,
             "deteriorationDps": 0,
             "cycleTime": 1.1703746262781023,
-            "modeled": 85,
-            "ignored": 97,
+            "modeled": 77,
+            "ignored": 105,
             "unmodeled": 51,
-            "coverage": 0.625,
+            "coverage": 0.6015625,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -40603,10 +41262,10 @@
           },
           "coverage": {
             "observed": 233,
-            "classified": 85,
-            "ignored": 97,
+            "classified": 77,
+            "ignored": 105,
             "unsupported": 51,
-            "classificationRate": 0.625
+            "classificationRate": 0.6015625
           },
           "snapshot": {
             "base": {
@@ -40647,12 +41306,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 25,
               "precise_auras": 201.04,
-              "misc": 77045.91939227695,
+              "misc": 14787.338556985182,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -41759,7 +42418,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (63% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (60% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_ey66ck",
@@ -41781,13 +42440,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 631659658.2189345,
+            "dps": 179369554.9638476,
             "deteriorationDps": 0,
             "cycleTime": 1.3810420590081605,
-            "modeled": 61,
-            "ignored": 89,
+            "modeled": 57,
+            "ignored": 93,
             "unmodeled": 40,
-            "coverage": 0.6039603960396039,
+            "coverage": 0.5876288659793815,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -42750,10 +43409,10 @@
           },
           "coverage": {
             "observed": 190,
-            "classified": 61,
-            "ignored": 89,
+            "classified": 57,
+            "ignored": 93,
             "unsupported": 40,
-            "classificationRate": 0.6039603960396039
+            "classificationRate": 0.5876288659793815
           },
           "snapshot": {
             "base": {
@@ -42794,12 +43453,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 38967.87940602995,
+              "misc": 11351.798889988604,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -43800,7 +44459,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (60% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (59% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1vc9x0c",
@@ -43822,13 +44481,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 979815754.7272235,
+            "dps": 278233877.350251,
             "deteriorationDps": 0,
             "cycleTime": 0.9363893677243612,
-            "modeled": 64,
-            "ignored": 89,
+            "modeled": 60,
+            "ignored": 93,
             "unmodeled": 41,
-            "coverage": 0.6095238095238096,
+            "coverage": 0.594059405940594,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -44722,10 +45381,10 @@
           },
           "coverage": {
             "observed": 194,
-            "classified": 64,
-            "ignored": 89,
+            "classified": 60,
+            "ignored": 93,
             "unsupported": 41,
-            "classificationRate": 0.6095238095238096
+            "classificationRate": 0.594059405940594
           },
           "snapshot": {
             "base": {
@@ -44766,12 +45425,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 54869.56221291673,
+              "misc": 16012.99054629207,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -45768,7 +46427,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (61% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (59% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1isvuaw",
@@ -45790,13 +46449,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 1045046207.1917264,
+            "dps": 296757075.842362,
             "deteriorationDps": 0,
             "cycleTime": 0.9363893677243612,
-            "modeled": 64,
-            "ignored": 90,
+            "modeled": 60,
+            "ignored": 94,
             "unmodeled": 42,
-            "coverage": 0.6037735849056604,
+            "coverage": 0.5882352941176471,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -46690,10 +47349,10 @@
           },
           "coverage": {
             "observed": 196,
-            "classified": 64,
-            "ignored": 90,
+            "classified": 60,
+            "ignored": 94,
             "unsupported": 42,
-            "classificationRate": 0.6037735849056604
+            "classificationRate": 0.5882352941176471
           },
           "snapshot": {
             "base": {
@@ -46734,12 +47393,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 54869.56221291673,
+              "misc": 16012.99054629207,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -47738,7 +48397,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (60% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (59% affix coverage). Absolute map DPS is not claimed."
         }
       ]
     },
@@ -47768,13 +48427,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 4237238.72572519,
+            "dps": 2279103.332348629,
             "deteriorationDps": 0,
             "cycleTime": 1.0912698412698414,
-            "modeled": 73,
-            "ignored": 69,
+            "modeled": 69,
+            "ignored": 73,
             "unmodeled": 55,
-            "coverage": 0.5703125,
+            "coverage": 0.5564516129032258,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -53726,10 +54385,10 @@
           },
           "coverage": {
             "observed": 197,
-            "classified": 73,
-            "ignored": 69,
+            "classified": 69,
+            "ignored": 73,
             "unsupported": 55,
-            "classificationRate": 0.5703125
+            "classificationRate": 0.5564516129032258
           },
           "snapshot": {
             "base": {
@@ -53772,12 +54431,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1912.060946682044,
+              "misc": 1017.1474523528044,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -54741,7 +55400,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (57% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (56% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1ot9ooe",
@@ -54763,13 +55422,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 16192834.454051437,
+            "dps": 8064551.20483939,
             "deteriorationDps": 0,
             "cycleTime": 0.8175399479747305,
-            "modeled": 83,
-            "ignored": 92,
+            "modeled": 78,
+            "ignored": 97,
             "unmodeled": 59,
-            "coverage": 0.5845070422535211,
+            "coverage": 0.5693430656934306,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -61321,10 +61980,10 @@
           },
           "coverage": {
             "observed": 234,
-            "classified": 83,
-            "ignored": 92,
+            "classified": 78,
+            "ignored": 97,
             "unsupported": 59,
-            "classificationRate": 0.5845070422535211
+            "classificationRate": 0.5693430656934306
           },
           "snapshot": {
             "base": {
@@ -61368,12 +62027,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 2094.756080640774,
+              "misc": 1028.3189268763329,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -62451,7 +63110,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (58% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (57% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_tktxea",
@@ -62473,13 +63132,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 12356864.786144989,
+            "dps": 6154115.209533929,
             "deteriorationDps": 0,
             "cycleTime": 0.8175399479747305,
-            "modeled": 78,
-            "ignored": 100,
+            "modeled": 73,
+            "ignored": 105,
             "unmodeled": 65,
-            "coverage": 0.5454545454545454,
+            "coverage": 0.5289855072463768,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -69287,10 +69946,10 @@
           },
           "coverage": {
             "observed": 243,
-            "classified": 78,
-            "ignored": 100,
+            "classified": 73,
+            "ignored": 105,
             "unsupported": 65,
-            "classificationRate": 0.5454545454545454
+            "classificationRate": 0.5289855072463768
           },
           "snapshot": {
             "base": {
@@ -69334,12 +69993,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1792.0311040006673,
+              "misc": 872.6887300658044,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -70427,7 +71086,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (55% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (53% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1uwz7u3",
@@ -70449,13 +71108,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 16730645.726449817,
+            "dps": 8369596.684966142,
             "deteriorationDps": 0,
             "cycleTime": 0.8175399479747305,
-            "modeled": 81,
-            "ignored": 94,
+            "modeled": 75,
+            "ignored": 100,
             "unmodeled": 72,
-            "coverage": 0.5294117647058824,
+            "coverage": 0.5102040816326531,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -77148,10 +77807,10 @@
           },
           "coverage": {
             "observed": 247,
-            "classified": 81,
-            "ignored": 94,
+            "classified": 75,
+            "ignored": 100,
             "unsupported": 72,
-            "classificationRate": 0.5294117647058824
+            "classificationRate": 0.5102040816326531
           },
           "snapshot": {
             "base": {
@@ -77195,12 +77854,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 2461.7260245456146,
+              "misc": 1222.8566728894934,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -78317,7 +78976,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (53% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (51% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_pyjaoz",
@@ -78339,13 +78998,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 53614515.19460909,
+            "dps": 26820953.355641134,
             "deteriorationDps": 0,
             "cycleTime": 0.8517228029423152,
-            "modeled": 79,
-            "ignored": 98,
+            "modeled": 73,
+            "ignored": 104,
             "unmodeled": 74,
-            "coverage": 0.5163398692810458,
+            "coverage": 0.4965986394557823,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -85109,10 +85768,10 @@
           },
           "coverage": {
             "observed": 251,
-            "classified": 79,
-            "ignored": 98,
+            "classified": 73,
+            "ignored": 104,
             "unsupported": 74,
-            "classificationRate": 0.5163398692810458
+            "classificationRate": 0.4965986394557823
           },
           "snapshot": {
             "base": {
@@ -85153,12 +85812,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 3694.92376422767,
+              "misc": 1859.6710095123988,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -86283,7 +86942,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (52% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_luqu22",
@@ -86305,13 +86964,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 119529100.69136998,
+            "dps": 39673288.09411989,
             "deteriorationDps": 0,
             "cycleTime": 0.6964229186451409,
-            "modeled": 93,
-            "ignored": 97,
+            "modeled": 84,
+            "ignored": 106,
             "unmodeled": 73,
-            "coverage": 0.5602409638554217,
+            "coverage": 0.535031847133758,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -92901,10 +93560,10 @@
           },
           "coverage": {
             "observed": 263,
-            "classified": 93,
-            "ignored": 97,
+            "classified": 84,
+            "ignored": 106,
             "unsupported": 73,
-            "classificationRate": 0.5602409638554217
+            "classificationRate": 0.535031847133758
           },
           "snapshot": {
             "base": {
@@ -92945,12 +93604,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 5428.776364231607,
+              "misc": 1794.2698714390538,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -94106,7 +94765,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (56% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (54% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_hlzlr6",
@@ -94128,13 +94787,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 73447226.16375011,
+            "dps": 23379002.304763902,
             "deteriorationDps": 0,
             "cycleTime": 0.7189542483660132,
-            "modeled": 90,
-            "ignored": 100,
+            "modeled": 81,
+            "ignored": 109,
             "unmodeled": 78,
-            "coverage": 0.5357142857142857,
+            "coverage": 0.5094339622641509,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -100583,10 +101242,10 @@
           },
           "coverage": {
             "observed": 268,
-            "classified": 90,
-            "ignored": 100,
+            "classified": 81,
+            "ignored": 109,
             "unsupported": 78,
-            "classificationRate": 0.5357142857142857
+            "classificationRate": 0.5094339622641509
           },
           "snapshot": {
             "base": {
@@ -100628,12 +101287,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 5665.048858429537,
+              "misc": 1794.2698714390538,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -101793,7 +102452,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (54% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (51% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1wjgn0i",
@@ -101815,13 +102474,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 96535781.81135379,
+            "dps": 31809860.664960265,
             "deteriorationDps": 0,
             "cycleTime": 0.7189542483660132,
-            "modeled": 88,
-            "ignored": 110,
+            "modeled": 78,
+            "ignored": 120,
             "unmodeled": 79,
-            "coverage": 0.5269461077844312,
+            "coverage": 0.4968152866242038,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -107964,10 +108623,10 @@
           },
           "coverage": {
             "observed": 277,
-            "classified": 88,
-            "ignored": 110,
+            "classified": 78,
+            "ignored": 120,
             "unsupported": 79,
-            "classificationRate": 0.5269461077844312
+            "classificationRate": 0.4968152866242038
           },
           "snapshot": {
             "base": {
@@ -108009,12 +108668,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 7251.129100360671,
+              "misc": 2400.436230299552,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -109186,7 +109845,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (53% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1h1w98a",
@@ -109208,13 +109867,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 135887469.32894123,
+            "dps": 48651599.17136082,
             "deteriorationDps": 0,
             "cycleTime": 0.7024265644955301,
-            "modeled": 85,
-            "ignored": 113,
+            "modeled": 76,
+            "ignored": 122,
             "unmodeled": 84,
-            "coverage": 0.5029585798816568,
+            "coverage": 0.475,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -115945,10 +116604,10 @@
           },
           "coverage": {
             "observed": 282,
-            "classified": 85,
-            "ignored": 113,
+            "classified": 76,
+            "ignored": 122,
             "unsupported": 84,
-            "classificationRate": 0.5029585798816568
+            "classificationRate": 0.475
           },
           "snapshot": {
             "base": {
@@ -115989,12 +116648,12 @@
             "additional": {
               "strength": 108,
               "warcry_buffs": 0,
-              "ice_bond": 28,
+              "ice_bond": 24,
               "fervor": 0,
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 6935.537714732324,
+              "misc": 2500.179256328983,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -117160,7 +117819,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (48% affix coverage). Absolute map DPS is not claimed."
         }
       ]
     }

@@ -14,7 +14,7 @@ import {
 import { cycleDps, resolve } from "../src/damageModel.js";
 import type { AnalyzedLoadout } from "../../page/src/analysis-types.js";
 
-const demo = demoData as { builds: Array<{ id: string; loadouts: AnalyzedLoadout[] }> };
+const demo = demoData as unknown as { builds: Array<{ id: string; loadouts: AnalyzedLoadout[] }> };
 
 function scalingLessonAfter(): AnalyzedLoadout {
   const build = demo.builds.find((b) => b.id === "scaling-lesson");

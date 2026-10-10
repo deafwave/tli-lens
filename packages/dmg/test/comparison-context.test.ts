@@ -80,7 +80,7 @@ describe("guarded loadout comparison context", () => {
   });
 
   it("classifies adjacent bundled Bing and Wuxia loadouts as progression", () => {
-    const fixtures = demoData as DemoData;
+    const fixtures = demoData as unknown as DemoData;
     for (const buildId of ["bing", "wuxia"]) {
       const build = fixtures.builds.find((candidate) =>
         candidate.id === buildId);
@@ -96,7 +96,7 @@ describe("guarded loadout comparison context", () => {
   });
 
   it("keeps bundled fixture lineage separate from runtime imports", () => {
-    const fixture = (demoData as DemoData).builds.find((candidate) =>
+    const fixture = (demoData as unknown as DemoData).builds.find((candidate) =>
       candidate.id === "bing");
     if (!fixture) throw new Error("missing bing fixture");
     const runtime = importBuild(bingSource(), emptyCatalog);
@@ -229,7 +229,7 @@ describe("guarded loadout comparison context", () => {
   });
 
   it("keeps the explicit teaching fixture reference-only beside an import", () => {
-    const fixture = (demoData as DemoData).builds.find((build) =>
+    const fixture = (demoData as unknown as DemoData).builds.find((build) =>
       build.id === "scaling-lesson");
     if (!fixture) throw new Error("missing teaching fixture");
     const teaching = fixture.loadouts[0];

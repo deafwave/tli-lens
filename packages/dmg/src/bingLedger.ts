@@ -63,6 +63,8 @@ export interface Source {
   cost?: number;
   /** character / item level it needs */
   level?: number;
+  /** capacity it occupies in its pools (a talent tree's points); default 1 */
+  size?: number;
   note?: string;
 }
 

@@ -16,19 +16,22 @@ export interface PathStep {
   dps: number;
   /** DPS multiplier this step adds (dps / previous dps) */
   gain: number;
+  /** FE spent on this step (0 when free or unpriced) */
+  cost: number;
 }
 
-interface Move { add: Source[]; remove: Source[]; dps: number; score: number }
+interface Move { add: Source[]; remove: Source[]; dps: number; score: number; cost: number }
 
 /** Capacity keys a slot counts against: its own, plus every `prefix.*` group above it. */
-function capacityKeys(slot: string): string[] {
+function capacityKeys(slot: string, cap: Record<string, number>): string[] {
   const parts = slot.split(".");
   const keys = [slot, ...parts.slice(0, -1).map((_, i) => `${parts.slice(0, i + 1).join(".")}.*`)];
-  return keys.filter(k => k in SLOT_CAPACITY);
+  return keys.filter(k => k in cap);
 }
 /** Every capacity key a source counts against. */
-export const keysOf = (s: Source): string[] =>
-  [...(s.slot ? capacityKeys(s.slot) : []), ...(s.caps ?? []).filter(k => k in SLOT_CAPACITY)];
+export const keysOf = (s: Source, cap: Record<string, number> = SLOT_CAPACITY): string[] =>
+  [...(s.slot ? capacityKeys(s.slot, cap) : []), ...(s.caps ?? []).filter(k => k in cap)];
+const sizeOf = (s: Source) => s.size ?? 1;
 
 export interface WalkOptions {
   untilNoGain?: boolean;
@@ -37,12 +40,19 @@ export interface WalkOptions {
   maxLevel?: number;
   /** order by log-DPS gained per FE (free moves first); unpriced sources are skipped */
   byCost?: boolean;
+  /** FE available; moves costing more than what is left are skipped */
+  budget?: number;
+  /** capacity overrides (e.g. the talent-point budget at this level) */
+  capacity?: Record<string, number>;
 }
 
 export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Season,
                      opts: WalkOptions = {}): PathStep[] {
   const dpsOf = (set: Source[]) => cycleDps(applySeason(compose(zero, effective(set)), season)).dps;
   const pairs = opts.pairs ?? true;
+  const cap = { ...SLOT_CAPACITY, ...opts.capacity };
+  const keys = (s: Source) => keysOf(s, cap);
+  let spent = 0;
   let have = [...start];
   let left = pool.filter(s => !have.includes(s) && (s.level ?? 0) <= (opts.maxLevel ?? Infinity)
     && (!opts.byCost || s.cost !== undefined || s.package));
@@ -55,23 +65,30 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       (s.requires ?? []).every(r => ids.has(r) || r === partner?.id || !!partner?.provides?.includes(r));
     let best: Move | null = null;
     const consider = (add: Source[], remove: Source[], count = add.length): number => {
-      const d = dpsOf([...have.filter(s => !remove.includes(s)), ...add]);
       const cost = add.reduce((c, s) => c + (s.cost ?? 0), 0);
+      if (opts.budget !== undefined && spent + cost > opts.budget) return 0;
+      const d = dpsOf([...have.filter(s => !remove.includes(s)), ...add]);
       // per-source geometric gain, so a pair must beat two singles to be taken together;
       // by cost: free moves first (by gain), then log-gain per FE
       const score = !opts.byCost ? (d / prev) ** (1 / count)
         : d <= prev ? -Infinity : cost > 0 ? Math.log(d / prev) / cost : 1e9 + Math.log(d / prev);
-      if (!best || score > best.score + 1e-12) best = { add, remove, dps: d, score };
+      if (!best || score > best.score + 1e-12) best = { add, remove, dps: d, score, cost };
       return d;
     };
 
     /** Ways to make room for `c`: the items it replaces, plus one occupant of each full pool. */
     const roomFor = (c: Source): Source[][] => {
       let options: Source[][] = [have.filter(s => c.replaces?.includes(s.id) || (!!c.family && s.family === c.family))];
-      for (const key of keysOf(c)) {
+      for (const key of keys(c)) {
         options = options.flatMap(removed => {
-          const occupants = have.filter(s => keysOf(s).includes(key) && !removed.includes(s));
-          return occupants.length < SLOT_CAPACITY[key] ? [removed] : occupants.map(o => [...removed, o]);
+          const occupants = have.filter(s => keys(s).includes(key) && !removed.includes(s));
+          const used = occupants.reduce((n, s) => n + sizeOf(s), 0);
+          if (used + sizeOf(c) <= cap[key]) return [removed];
+          // sized sources (talent trees) only fill free room; single lines swap one occupant out
+          // a sized source (talent tree) swaps out one sized occupant that frees enough room
+          return sizeOf(c) > 1
+            ? occupants.filter(o => sizeOf(o) > 1 && used - sizeOf(o) + sizeOf(c) <= cap[key]).map(o => [...removed, o])
+            : occupants.filter(o => sizeOf(o) === 1).map(o => [...removed, o]);
         });
       }
       return options;
@@ -80,7 +97,8 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
     const single = new Map<Source, number>();
     for (const c of left) {
       if (!ready(c) || c.package) continue;
-      single.set(c, Math.max(...roomFor(c).map(r => consider([c], r))));
+      const rooms = roomFor(c);
+      if (rooms.length) single.set(c, Math.max(...rooms.map(r => consider([c], r))));
     }
 
     if (pairs) {
@@ -88,12 +106,23 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       // a synergy between two weak singles is missed (raise PAIR_POOL if one turns up)
       const PAIR_POOL = 12;
       const strong = [...single.entries()].sort((a, b) => b[1] - a[1]).slice(0, PAIR_POOL).map(e => e[0]);
-      const pairable = [...new Set([...strong, ...left.filter(s => !ready(s) && !s.package)])];
-      const free = (s: Source) => !s.replaces?.length && !s.family && !keysOf(s).some(k =>
-        have.filter(h => keysOf(h).includes(k)).length + 2 > SLOT_CAPACITY[k]);
+      // enablers (what other sources require — Ruinous Star) are worth ~nothing alone: always pair them
+      const required = new Set(left.flatMap(s => s.requires ?? []));
+      const enablers = left.filter(s => !s.package && [s.id, ...s.provides ?? []].some(x => required.has(x)));
+      const pairable = [...new Set([...strong, ...enablers, ...left.filter(s => !ready(s) && !s.package)])];
+      const fits = (add: Source[], remove: Source[]) => Object.keys(cap).every(k => {
+        const used = [...have.filter(h => !remove.includes(h)), ...add]
+          .filter(h => keys(h).includes(k)).reduce((n, h) => n + sizeOf(h), 0);
+        return used <= cap[k];
+      });
       for (let i = 0; i < pairable.length; i++) for (let j = i + 1; j < pairable.length; j++) {
         const [a, b] = [pairable[i], pairable[j]];
-        if (free(a) && free(b) && ready(a, b) && ready(b, a)) consider([a, b], []);
+        if (!ready(a, b) || !ready(b, a) || (a.family && a.family === b.family)) continue;
+        const rooms = (x: Source) => roomFor(x).slice(0, sizeOf(x) > 1 ? 3 : 1);
+        for (const ra of rooms(a)) for (const rb of rooms(b)) {
+          const remove = [...new Set([...ra, ...rb])];
+          if (fits([a, b], remove)) consider([a, b], remove);
+        }
       }
     }
 
@@ -101,7 +130,8 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       const removed = have.filter(s => p.replaces?.includes(s.id));
       const base = [...have.filter(s => !removed.includes(s)), p];
       const lines = left.filter(s => s.requires?.includes(p.id));
-      const inner = walk(zero, base, lines, season, { ...opts, untilNoGain: true, pairs: false });
+      const inner = walk(zero, base, lines, season,
+        { ...opts, untilNoGain: true, pairs: false, budget: opts.budget === undefined ? undefined : opts.budget - spent - (p.cost ?? 0) });
       const added = inner.flatMap(st => st.ids).map(id => lines.find(l => l.id === id)!);
       const dropped = new Set(inner.flatMap(st => st.removed));
       const kept = added.filter(l => !dropped.has(l.id));
@@ -118,7 +148,8 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
     // sources left without what they require (a corroded roll whose item a Vorax piece replaced)
     const dead = opts.untilNoGain ? next.filter(s => !effective(next).includes(s)) : [];
     out.push({ ids: m.add.map(s => s.id), labels: m.add.map(s => s.label),
-               removed: [...m.remove, ...dead].map(s => s.id), dps: m.dps, gain: m.dps / prev });
+               removed: [...m.remove, ...dead].map(s => s.id), dps: m.dps, gain: m.dps / prev, cost: m.cost });
+    spent += m.cost;
     have = next.filter(s => !dead.includes(s));
     left = left.filter(s => !m.add.includes(s) && !m.remove.includes(s));
     prev = m.dps;

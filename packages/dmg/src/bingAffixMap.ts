@@ -83,8 +83,9 @@ const RULES: Rule[] = [
     [["add", `additional_typed.${ADDITIONAL_TYPED[m[2].toLowerCase()]}.${k}`, +m[1]]]],
   [r(`\\+${N}% additional damage for Main-Hand Weapons`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
   [r(`\\+${N}% additional Base Damage for Two-Handed Weapons`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
-  [r(`\\+${N}% additional (?:skill )?damage when Demolisher Charge is consumed\\.?`), (m, k) =>
-    [["add", `additional.${k}`, +m[1]]]],
+  // only empowered (charge-consuming) throws get it: it scales the empower factor M (mechanics.md#bing-bombs)
+  [r(`\\+${N}% additional (?:skill )?damage when Demolisher Charge is consumed\\.?`), m =>
+    [["mul", "rotation.demolisher_empower_mult", 1 + +m[1] / 100]]],
   [r(`\\+?${N}% additional Attack Damage after standing still for ${N}s\\. -${N}% additional Attack Speed`),
     (m, k) => [["add", `additional.${k}`, +m[1]], ["add", `aux.as_more_${k}`, -m[3]]]],
   [r(`${N}% additional damage applied to Life`), (m, k) => [["add", `additional.${k}_to_life`, +m[1]]]],

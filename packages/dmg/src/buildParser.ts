@@ -894,12 +894,12 @@ const SUPPORT_GEMS: Record<string, [string, (s: Snapshot, sup: any, lvl: number,
     s => s.additional.willpower = WILLPOWER_PCT],
   "d9d16cba-b18f-58bf-bd94-88b1cb14a53c": ["Willpower",
     s => s.additional.willpower = WILLPOWER_PCT],
-  // grants Combo Damage Enhancement (5.5 Lv1 -> 15.5 Lv21 -> 21.5 Lv41), which is the
+  // grants Combo Damage Enhancement (SS14: 5.4 Lv1 -> 13.4 Lv21 -> 17.4 Lv41), which is the
   // summed-pool stat, NOT per-point amp; its +1 point/starter feeds mechanics.md#combo-economy
   "4fc73492-c05c-5f7e-bd34-40db624901b1": ["Recuperation",
     (_s, _sup, lvl, extras) => {
       extras.combo_per_starter = (extras.combo_per_starter ?? 0) + 1;
-      const enh = lvl <= 21 ? 5.5 + (lvl - 1) * 0.5 : 15.5 + (lvl - 21) * 0.3;
+      const enh = lvl <= 21 ? 5.4 + (lvl - 1) * 0.4 : 13.4 + (lvl - 21) * 0.2;
       extras.combo_enhancement = (extras.combo_enhancement ?? 0) + enh;
       return enh;
     }],

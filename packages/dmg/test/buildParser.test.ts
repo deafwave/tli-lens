@@ -30,9 +30,9 @@ describe("spectral slash support gems", () => {
   });
   test("recuperation grants Enhancement at L30 (gem 20 + 10 support levels), not amp", () => {
     const [snap] = parseBuild(BUILD);
-    // amp = skill 30 + Animitta 80 only; Recuperation's 18.2 sits in the Enhancement pool
+    // amp = skill 30 + Animitta 80 only; Recuperation's 15.2 (SS14) sits in the Enhancement pool
     expect(snap.rotation.finisher_amp_pct).toBeCloseTo(110, 1);
-    expect(snap.additional.combo_enhancement).toBeCloseTo(18.2 + 62 + 61, 1);
+    expect(snap.additional.combo_enhancement).toBeCloseTo(15.2 + 62 + 61, 1);
   });
   test("prisms score both lines: base 20% and the actual roll", () => {
     const [snap] = parseBuild(BUILD);

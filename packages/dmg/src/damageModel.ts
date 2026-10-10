@@ -578,6 +578,8 @@ export function cycleDps(s: Snapshot) {
     // those EXCEPT hit-only "Hit Damage" (a hit is not a DoT), and adds DoT-only damage_inc
     let incSum = 1;
     for (const [k, v] of Object.entries(s.increased)) if (increasedApplies(s, k)) incSum += v / 100;
+    // the feeding hit is Erosion, whose additive pool also carries increased.erosion
+    incSum += (s.increased.erosion ?? 0) / 100;
     const dotInc = incSum - (s.increased.hit ?? 0) / 100 + (d.damage_inc_pct ?? 0) / 100;
     const ratio = dotInc / incSum;
     detDps = hitDps * enhancedShare * (Math.min(d.chance_pct, 100) / 100)

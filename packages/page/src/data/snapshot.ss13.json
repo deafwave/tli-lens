@@ -75,7 +75,7 @@
  "rotation": {
   "starters_per_cycle": 2,
   "starter_weapon_pct": 406,
-  "attack_speed_inc_pct": 294,
+  "attack_speed_inc_pct": 308,
   "starter_additional_as_pct": 0,
   "finisher_additional_as_pct": -16,
   "extra_clones": 1,

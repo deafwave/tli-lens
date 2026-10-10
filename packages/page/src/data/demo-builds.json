@@ -26,8 +26,8 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "bing-blast-nova",
             "skillId": "hammer-of-ash",
-            "dps": 596211165603.2933,
-            "deteriorationDps": 529493090250.99646,
+            "dps": 595028363347.4417,
+            "deteriorationDps": 528310287995.1447,
             "cycleTime": 0.7251631617113851,
             "modeled": 1,
             "ignored": 0,
@@ -43,6 +43,12 @@
             "classificationRate": 1
           },
           "snapshot": {
+            "_gem_levels": {
+              "passivation": 24,
+              "slow_projectile": 25,
+              "fusion": 22,
+              "steamroll": 25
+            },
             "base": {
               "weapon_phys_min": 444,
               "weapon_phys_max": 503,
@@ -242,8 +248,8 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "bing-blast-nova",
             "skillId": "hammer-of-ash",
-            "dps": 472220162186.1295,
-            "deteriorationDps": 419347855139.23834,
+            "dps": 471362793435.71375,
+            "deteriorationDps": 418490486388.8225,
             "cycleTime": 0.7251631617113851,
             "modeled": 1,
             "ignored": 0,
@@ -259,6 +265,12 @@
             "classificationRate": 1
           },
           "snapshot": {
+            "_gem_levels": {
+              "passivation": 24,
+              "slow_projectile": 25,
+              "fusion": 22,
+              "steamroll": 25
+            },
             "base": {
               "weapon_phys_min": 444,
               "weapon_phys_max": 503,
@@ -467,13 +479,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 344770068.7957464,
+            "dps": 265207745.22749722,
             "deteriorationDps": 0,
             "cycleTime": 1.186623516720604,
-            "modeled": 105,
-            "ignored": 49,
+            "modeled": 104,
+            "ignored": 50,
             "unmodeled": 34,
-            "coverage": 0.7553956834532374,
+            "coverage": 0.7536231884057971,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -3348,10 +3360,10 @@
           },
           "coverage": {
             "observed": 188,
-            "classified": 105,
-            "ignored": 49,
+            "classified": 104,
+            "ignored": 50,
             "unsupported": 34,
-            "classificationRate": 0.7553956834532374
+            "classificationRate": 0.7536231884057971
           },
           "snapshot": {
             "base": {
@@ -3400,7 +3412,7 @@
               "sealed_life_mana": 0,
               "blessings": 8.000000000000007,
               "precise_auras": 201.04,
-              "misc": 16606.646895390862,
+              "misc": 12751.266842608351,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -4425,7 +4437,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (76% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (75% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1yia1vq",
@@ -4447,13 +4459,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 452660397.7629793,
+            "dps": 348200305.9715228,
             "deteriorationDps": 0,
             "cycleTime": 1.20415982484948,
-            "modeled": 128,
-            "ignored": 48,
+            "modeled": 127,
+            "ignored": 49,
             "unmodeled": 29,
-            "coverage": 0.8152866242038217,
+            "coverage": 0.8141025641025641,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -7332,10 +7344,10 @@
           },
           "coverage": {
             "observed": 205,
-            "classified": 128,
-            "ignored": 48,
+            "classified": 127,
+            "ignored": 49,
             "unsupported": 29,
-            "classificationRate": 0.8152866242038217
+            "classificationRate": 0.8141025641025641
           },
           "snapshot": {
             "base": {
@@ -7382,7 +7394,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 20211.92038656034,
+              "misc": 15524.554143507967,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -8442,7 +8454,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (82% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (81% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1ni6k2k",
@@ -8464,13 +8476,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 486265681.82732797,
+            "dps": 325261325.6370086,
             "deteriorationDps": 0,
             "cycleTime": 1.1161846778285134,
-            "modeled": 128,
-            "ignored": 45,
+            "modeled": 126,
+            "ignored": 47,
             "unmodeled": 41,
-            "coverage": 0.757396449704142,
+            "coverage": 0.7544910179640718,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -11701,10 +11713,10 @@
           },
           "coverage": {
             "observed": 214,
-            "classified": 128,
-            "ignored": 45,
+            "classified": 126,
+            "ignored": 47,
             "unsupported": 41,
-            "classificationRate": 0.757396449704142
+            "classificationRate": 0.7544910179640718
           },
           "snapshot": {
             "base": {
@@ -11751,7 +11763,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 19541.79174304037,
+              "misc": 13038.322236147402,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -12823,7 +12835,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (76% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (75% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1whn8ko",
@@ -12845,13 +12857,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 150998264.31658268,
+            "dps": 87827985.6429156,
             "deteriorationDps": 0,
             "cycleTime": 1.2180807476801099,
-            "modeled": 78,
-            "ignored": 30,
+            "modeled": 75,
+            "ignored": 33,
             "unmodeled": 37,
-            "coverage": 0.6782608695652174,
+            "coverage": 0.6696428571428571,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -16483,10 +16495,10 @@
           },
           "coverage": {
             "observed": 145,
-            "classified": 78,
-            "ignored": 30,
+            "classified": 75,
+            "ignored": 33,
             "unsupported": 37,
-            "classificationRate": 0.6782608695652174
+            "classificationRate": 0.6696428571428571
           },
           "snapshot": {
             "base": {
@@ -16533,7 +16545,7 @@
               "sealed_life_mana": 0,
               "blessings": 19.999999999999996,
               "precise_auras": 201.04,
-              "misc": 5997.025845046273,
+              "misc": 3446.328832366598,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -17564,7 +17576,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (68% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (67% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1935ncr",
@@ -17586,13 +17598,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 208490012.4679053,
+            "dps": 121268002.01710358,
             "deteriorationDps": 0,
             "cycleTime": 1.2180807476801099,
-            "modeled": 82,
-            "ignored": 31,
+            "modeled": 79,
+            "ignored": 34,
             "unmodeled": 34,
-            "coverage": 0.7068965517241379,
+            "coverage": 0.6991150442477876,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -21175,10 +21187,10 @@
           },
           "coverage": {
             "observed": 147,
-            "classified": 82,
-            "ignored": 31,
+            "classified": 79,
+            "ignored": 34,
             "unsupported": 34,
-            "classificationRate": 0.7068965517241379
+            "classificationRate": 0.6991150442477876
           },
           "snapshot": {
             "base": {
@@ -21225,7 +21237,7 @@
               "sealed_life_mana": 0,
               "blessings": 19.999999999999996,
               "precise_auras": 201.04,
-              "misc": 6240.906878848124,
+              "misc": 3588.1819856612615,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -22255,7 +22267,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (71% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (70% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_mkz21",
@@ -22277,13 +22289,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 2632849111.23217,
+            "dps": 1761103084.4362345,
             "deteriorationDps": 0,
             "cycleTime": 0.813621503276676,
-            "modeled": 116,
-            "ignored": 46,
+            "modeled": 114,
+            "ignored": 48,
             "unmodeled": 47,
-            "coverage": 0.7116564417177914,
+            "coverage": 0.7080745341614907,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -25716,10 +25728,10 @@
           },
           "coverage": {
             "observed": 209,
-            "classified": 116,
-            "ignored": 46,
+            "classified": 114,
+            "ignored": 48,
             "unsupported": 47,
-            "classificationRate": 0.7116564417177914
+            "classificationRate": 0.7080745341614907
           },
           "snapshot": {
             "base": {
@@ -25766,7 +25778,7 @@
               "sealed_life_mana": 0,
               "blessings": 29.600000000000005,
               "precise_auras": 201.04,
-              "misc": 24110.394662781786,
+              "misc": 16094.243921593174,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -26856,13 +26868,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "6f020b6a-022b-50eb-8299-e5fc7492ea8f",
-            "dps": 16900246666.210775,
+            "dps": 11304512820.207865,
             "deteriorationDps": 0,
             "cycleTime": 0.813621503276676,
-            "modeled": 123,
-            "ignored": 53,
+            "modeled": 121,
+            "ignored": 55,
             "unmodeled": 41,
-            "coverage": 0.75,
+            "coverage": 0.7469135802469136,
             "confidence": "experimental"
           },
           "partialMetrics": [
@@ -30645,10 +30657,10 @@
           },
           "coverage": {
             "observed": 217,
-            "classified": 123,
-            "ignored": 53,
+            "classified": 121,
+            "ignored": 55,
             "unsupported": 41,
-            "classificationRate": 0.75
+            "classificationRate": 0.7469135802469136
           },
           "snapshot": {
             "base": {
@@ -30695,7 +30707,7 @@
               "sealed_life_mana": 0,
               "blessings": 29.600000000000005,
               "precise_auras": 201.04,
-              "misc": 88802.84625481958,
+              "misc": 59366.786792521416,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -31797,9 +31809,9 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "7f844a9e-9abc-59b6-9baf-18b43efc753e",
-            "dps": 158401051.67409775,
+            "dps": 163917506.21001166,
             "deteriorationDps": 0,
-            "cycleTime": 0.6080707573244888,
+            "cycleTime": 0.5876068376068375,
             "modeled": 107,
             "ignored": 51,
             "unmodeled": 48,
@@ -33724,7 +33736,7 @@
             "rotation": {
               "starters_per_cycle": 2,
               "starter_weapon_pct": 406,
-              "attack_speed_inc_pct": 302,
+              "attack_speed_inc_pct": 316,
               "starter_additional_as_pct": 0,
               "finisher_additional_as_pct": -40,
               "extra_clones": 0,
@@ -34715,9 +34727,9 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "c89dce15-cbeb-562d-83ec-993059bbf0ec",
             "skillId": "7f844a9e-9abc-59b6-9baf-18b43efc753e",
-            "dps": 325123759.5522795,
+            "dps": 336118282.8221632,
             "deteriorationDps": 0,
-            "cycleTime": 0.5904455179817498,
+            "cycleTime": 0.5711318795430946,
             "modeled": 111,
             "ignored": 53,
             "unmodeled": 50,
@@ -36677,7 +36689,7 @@
             "rotation": {
               "starters_per_cycle": 2,
               "starter_weapon_pct": 406,
-              "attack_speed_inc_pct": 314,
+              "attack_speed_inc_pct": 328,
               "starter_additional_as_pct": 0,
               "finisher_additional_as_pct": -40,
               "extra_clones": 0,
@@ -37701,13 +37713,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 720882711.8297552,
+            "dps": 28558493.444107335,
             "deteriorationDps": 0,
             "cycleTime": 1.1703746262781023,
-            "modeled": 74,
+            "modeled": 69,
             "ignored": 106,
-            "unmodeled": 50,
-            "coverage": 0.5967741935483871,
+            "unmodeled": 55,
+            "coverage": 0.5564516129032258,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -38932,10 +38944,10 @@
           },
           "coverage": {
             "observed": 230,
-            "classified": 74,
+            "classified": 69,
             "ignored": 106,
-            "unsupported": 50,
-            "classificationRate": 0.5967741935483871
+            "unsupported": 55,
+            "classificationRate": 0.5564516129032258
           },
           "snapshot": {
             "base": {
@@ -38981,7 +38993,7 @@
               "sealed_life_mana": 0,
               "blessings": 25,
               "precise_auras": 201.04,
-              "misc": 14632.620257894116,
+              "misc": 733.782235,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -38998,7 +39010,7 @@
             },
             "penetration": {
               "cold_pct": 14.5,
-              "armor_pct": 30
+              "armor_pct": 0
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -40059,21 +40071,21 @@
               ]
             },
             {
+              "text": "+22% additional damage for recently summoned Minions",
+              "count": 1,
+              "sources": [
+                "pactspirit:Whisperwind Leaves"
+              ]
+            },
+            {
               "text": "+22% chance for Minions to deal Double Damage while having at least 4 stack(s) of Focus Blessing",
               "count": 1,
               "sources": [
                 "gear:belt:Winter of Origin"
               ]
-            },
-            {
-              "text": "+30% Physique for Minions",
-              "count": 1,
-              "sources": [
-                "gear:helmet:Machine Lord"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (60% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (56% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1jut38w",
@@ -40095,13 +40107,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 1299196091.0626066,
+            "dps": 50934062.623357676,
             "deteriorationDps": 0,
             "cycleTime": 1.1703746262781023,
-            "modeled": 77,
+            "modeled": 72,
             "ignored": 105,
-            "unmodeled": 51,
-            "coverage": 0.6015625,
+            "unmodeled": 56,
+            "coverage": 0.5625,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -41262,10 +41274,10 @@
           },
           "coverage": {
             "observed": 233,
-            "classified": 77,
+            "classified": 72,
             "ignored": 105,
-            "unsupported": 51,
-            "classificationRate": 0.6015625
+            "unsupported": 56,
+            "classificationRate": 0.5625
           },
           "snapshot": {
             "base": {
@@ -41311,7 +41323,7 @@
               "sealed_life_mana": 0,
               "blessings": 25,
               "precise_auras": 201.04,
-              "misc": 14787.338556985182,
+              "misc": 733.782235,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -41328,7 +41340,7 @@
             },
             "penetration": {
               "cold_pct": 14.5,
-              "armor_pct": 30
+              "armor_pct": 0
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -42404,21 +42416,21 @@
               ]
             },
             {
+              "text": "+22% additional damage for recently summoned Minions",
+              "count": 1,
+              "sources": [
+                "pactspirit:Whisperwind Leaves"
+              ]
+            },
+            {
               "text": "+22% chance for Minions to deal Double Damage while having at least 4 stack(s) of Focus Blessing",
               "count": 1,
               "sources": [
                 "gear:belt:Winter of Origin"
               ]
-            },
-            {
-              "text": "+25% Physique for Minions",
-              "count": 1,
-              "sources": [
-                "gear:helmet:Machine Lord"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (60% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (56% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_ey66ck",
@@ -42440,13 +42452,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 179369554.9638476,
+            "dps": 7032056.367857522,
             "deteriorationDps": 0,
             "cycleTime": 1.3810420590081605,
-            "modeled": 57,
+            "modeled": 52,
             "ignored": 93,
-            "unmodeled": 40,
-            "coverage": 0.5876288659793815,
+            "unmodeled": 45,
+            "coverage": 0.5360824742268041,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -43409,10 +43421,10 @@
           },
           "coverage": {
             "observed": 190,
-            "classified": 57,
+            "classified": 52,
             "ignored": 93,
-            "unsupported": 40,
-            "classificationRate": 0.5876288659793815
+            "unsupported": 45,
+            "classificationRate": 0.5360824742268041
           },
           "snapshot": {
             "base": {
@@ -43458,7 +43470,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 11351.798889988604,
+              "misc": 541.37095,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -43475,7 +43487,7 @@
             },
             "penetration": {
               "cold_pct": 0,
-              "armor_pct": 30,
+              "armor_pct": 0,
               "typed": {
                 "fire": 6
               }
@@ -44417,6 +44429,13 @@
               ]
             },
             {
+              "text": "+22% additional damage for recently summoned Minions",
+              "count": 1,
+              "sources": [
+                "pactspirit:Whisperwind Leaves"
+              ]
+            },
+            {
               "text": "+22% chance for Minions to deal Double Damage while having at least 4 stack(s) of Focus Blessing",
               "count": 1,
               "sources": [
@@ -44431,35 +44450,28 @@
               ]
             },
             {
-              "text": "+50 Critical Strike Rating for recently summoned Minions",
+              "text": "+30% additional damage for Minions when having at least 71 Command",
               "count": 1,
               "sources": [
-                "pactspirit:Whisperwind Leaves"
+                "gear:necklace:Iron Nest"
               ]
             },
             {
-              "text": "+50% additional Summon Skill Cast Speed",
+              "text": "+30% additional Spell Damage for Minions when wielding a Wand or Tin Staff",
               "count": 1,
               "sources": [
-                "tree:god_of_machines:Orders"
+                "tree:god_of_machines:Isomorphic Arms"
               ]
             },
             {
-              "text": "42% additional damage applied to Life",
+              "text": "+30% Armor DMG Mitigation Penetration for Minions",
               "count": 1,
               "sources": [
-                "gear:mainHand:Sierra Reverberation Maul"
-              ]
-            },
-            {
-              "text": "Converts 100% of Mana Cost to Life Cost",
-              "count": 1,
-              "sources": [
-                "tree:warrior:Arcane"
+                "gear:boots:Mind Infusion"
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (59% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (54% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1vc9x0c",
@@ -44481,13 +44493,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 278233877.350251,
+            "dps": 15582803.012225408,
             "deteriorationDps": 0,
             "cycleTime": 0.9363893677243612,
-            "modeled": 60,
+            "modeled": 56,
             "ignored": 93,
-            "unmodeled": 41,
-            "coverage": 0.594059405940594,
+            "unmodeled": 45,
+            "coverage": 0.5544554455445545,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -45381,10 +45393,10 @@
           },
           "coverage": {
             "observed": 194,
-            "classified": 60,
+            "classified": 56,
             "ignored": 93,
-            "unsupported": 41,
-            "classificationRate": 0.594059405940594
+            "unsupported": 45,
+            "classificationRate": 0.5544554455445545
           },
           "snapshot": {
             "base": {
@@ -45430,7 +45442,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 16012.99054629207,
+              "misc": 802.4262610000001,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -46385,6 +46397,13 @@
               ]
             },
             {
+              "text": "+22% additional damage for recently summoned Minions",
+              "count": 1,
+              "sources": [
+                "pactspirit:Whisperwind Leaves"
+              ]
+            },
+            {
               "text": "+22% chance for Minions to deal Double Damage while having at least 4 stack(s) of Focus Blessing",
               "count": 1,
               "sources": [
@@ -46399,35 +46418,28 @@
               ]
             },
             {
+              "text": "+30% additional damage for Minions when having at least 71 Command",
+              "count": 1,
+              "sources": [
+                "gear:necklace:Iron Nest"
+              ]
+            },
+            {
+              "text": "+30% additional Spell Damage for Minions when wielding a Wand or Tin Staff",
+              "count": 1,
+              "sources": [
+                "tree:god_of_machines:Isomorphic Arms"
+              ]
+            },
+            {
               "text": "+50 Critical Strike Rating for recently summoned Minions",
               "count": 1,
               "sources": [
                 "pactspirit:Whisperwind Leaves"
               ]
-            },
-            {
-              "text": "+50% additional Summon Skill Cast Speed",
-              "count": 1,
-              "sources": [
-                "tree:god_of_machines:Orders"
-              ]
-            },
-            {
-              "text": "42% additional damage applied to Life",
-              "count": 1,
-              "sources": [
-                "gear:mainHand:Sierra Reverberation Maul"
-              ]
-            },
-            {
-              "text": "Adds 10 - 10 Base Ignite Damage",
-              "count": 1,
-              "sources": [
-                "tree:warlord:Micro Talent"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (59% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (55% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1isvuaw",
@@ -46449,13 +46461,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "a7fc5c40-39d0-5ad9-825d-382eca25d7ba",
             "skillId": "297473e3-c5f1-5a8c-87f6-569027a25b92",
-            "dps": 296757075.842362,
+            "dps": 16620215.695424875,
             "deteriorationDps": 0,
             "cycleTime": 0.9363893677243612,
-            "modeled": 60,
+            "modeled": 56,
             "ignored": 94,
-            "unmodeled": 42,
-            "coverage": 0.5882352941176471,
+            "unmodeled": 46,
+            "coverage": 0.5490196078431373,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -47349,10 +47361,10 @@
           },
           "coverage": {
             "observed": 196,
-            "classified": 60,
+            "classified": 56,
             "ignored": 94,
-            "unsupported": 42,
-            "classificationRate": 0.5882352941176471
+            "unsupported": 46,
+            "classificationRate": 0.5490196078431373
           },
           "snapshot": {
             "base": {
@@ -47398,7 +47410,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 16012.99054629207,
+              "misc": 802.4262610000001,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -48369,6 +48381,13 @@
               ]
             },
             {
+              "text": "+22% additional damage for recently summoned Minions",
+              "count": 1,
+              "sources": [
+                "pactspirit:Whisperwind Leaves"
+              ]
+            },
+            {
               "text": "+22% chance for Minions to deal Double Damage while having at least 4 stack(s) of Focus Blessing",
               "count": 1,
               "sources": [
@@ -48383,21 +48402,14 @@
               ]
             },
             {
-              "text": "+50 Critical Strike Rating for recently summoned Minions",
+              "text": "+30% additional damage for Minions when having at least 71 Command",
               "count": 1,
               "sources": [
-                "pactspirit:Whisperwind Leaves"
-              ]
-            },
-            {
-              "text": "+50% additional Summon Skill Cast Speed",
-              "count": 1,
-              "sources": [
-                "tree:god_of_machines:Orders"
+                "gear:necklace:Iron Nest"
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (59% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (55% affix coverage). Absolute map DPS is not claimed."
         }
       ]
     },
@@ -48427,13 +48439,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 2279103.332348629,
+            "dps": 1583147.774320219,
             "deteriorationDps": 0,
             "cycleTime": 1.0912698412698414,
-            "modeled": 69,
+            "modeled": 67,
             "ignored": 73,
-            "unmodeled": 55,
-            "coverage": 0.5564516129032258,
+            "unmodeled": 57,
+            "coverage": 0.5403225806451613,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -54385,10 +54397,10 @@
           },
           "coverage": {
             "observed": 197,
-            "classified": 69,
+            "classified": 67,
             "ignored": 73,
-            "unsupported": 55,
-            "classificationRate": 0.5564516129032258
+            "unsupported": 57,
+            "classificationRate": 0.5403225806451613
           },
           "snapshot": {
             "base": {
@@ -54436,7 +54448,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1017.1474523528044,
+              "misc": 759.3441941175421,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -54448,7 +54460,7 @@
             },
             "crit": {
               "chance_pct": 15.25,
-              "damage_pct": 526,
+              "damage_pct": 426,
               "crit_dmg_taken_pct": 10
             },
             "penetration": {
@@ -55365,6 +55377,13 @@
               ]
             },
             {
+              "text": "+196% Critical Strike Rating and 100% Critical Strike Damage for Minions when casting an Empower Skill. Lasts for 6 s",
+              "count": 1,
+              "sources": [
+                "gear:ring1:Horn Ring"
+              ]
+            },
+            {
               "text": "+2 Spirit Magus Skill Level",
               "count": 1,
               "sources": [
@@ -55379,28 +55398,21 @@
               ]
             },
             {
+              "text": "+30% additional Spell Damage for Minions when wielding a Wand or Tin Staff",
+              "count": 1,
+              "sources": [
+                "tree:god_of_machines:Isomorphic Arms"
+              ]
+            },
+            {
               "text": "+6% chance for Spirit Magi to use an Enhanced Skill",
               "count": 1,
               "sources": [
                 "tree:god_of_machines:Medium Talent"
               ]
-            },
-            {
-              "text": "+60 initial Growth for Spirit Magi",
-              "count": 1,
-              "sources": [
-                "pactspirit:Sprite of Silent Vale"
-              ]
-            },
-            {
-              "text": "+8% Spell Block Chance",
-              "count": 1,
-              "sources": [
-                "memory:slot75:Progress"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (56% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (54% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1ot9ooe",
@@ -55422,13 +55434,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 8064551.20483939,
+            "dps": 5560795.012912233,
             "deteriorationDps": 0,
             "cycleTime": 0.8175399479747305,
-            "modeled": 78,
+            "modeled": 76,
             "ignored": 97,
-            "unmodeled": 59,
-            "coverage": 0.5693430656934306,
+            "unmodeled": 61,
+            "coverage": 0.5547445255474452,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -61980,10 +61992,10 @@
           },
           "coverage": {
             "observed": 234,
-            "classified": 78,
+            "classified": 76,
             "ignored": 97,
-            "unsupported": 59,
-            "classificationRate": 0.5693430656934306
+            "unsupported": 61,
+            "classificationRate": 0.5547445255474452
           },
           "snapshot": {
             "base": {
@@ -62032,7 +62044,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1028.3189268763329,
+              "misc": 767.9376360587178,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -62044,7 +62056,7 @@
             },
             "crit": {
               "chance_pct": 15.25,
-              "damage_pct": 460,
+              "damage_pct": 360,
               "crit_dmg_taken_pct": 10
             },
             "penetration": {
@@ -63068,6 +63080,13 @@
               ]
             },
             {
+              "text": "+196% Critical Strike Rating and 100% Critical Strike Damage for Minions when casting an Empower Skill. Lasts for 6 s",
+              "count": 1,
+              "sources": [
+                "gear:ring1:Horn Ring"
+              ]
+            },
+            {
               "text": "+20% Bond Gaining Speed",
               "count": 1,
               "sources": [
@@ -63089,28 +63108,21 @@
               ]
             },
             {
+              "text": "+30% additional Spell Damage for Minions when wielding a Wand or Tin Staff",
+              "count": 1,
+              "sources": [
+                "tree:god_of_machines:Isomorphic Arms"
+              ]
+            },
+            {
               "text": "+5% Spell Critical Strike Damage per stack of Focus Blessing owned",
               "count": 1,
               "sources": [
                 "slate:Pedigree of Gods:Legendary Medium Talent"
               ]
-            },
-            {
-              "text": "+6% chance for Spirit Magi to use an Enhanced Skill",
-              "count": 1,
-              "sources": [
-                "tree:god_of_machines:Medium Talent"
-              ]
-            },
-            {
-              "text": "+60 initial Growth for Spirit Magi",
-              "count": 1,
-              "sources": [
-                "pactspirit:Sprite of Silent Vale"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (57% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (55% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_tktxea",
@@ -63132,13 +63144,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 6154115.209533929,
+            "dps": 4243481.415993457,
             "deteriorationDps": 0,
             "cycleTime": 0.8175399479747305,
-            "modeled": 73,
+            "modeled": 71,
             "ignored": 105,
-            "unmodeled": 65,
-            "coverage": 0.5289855072463768,
+            "unmodeled": 67,
+            "coverage": 0.5144927536231884,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -69946,10 +69958,10 @@
           },
           "coverage": {
             "observed": 243,
-            "classified": 73,
+            "classified": 71,
             "ignored": 105,
-            "unsupported": 65,
-            "classificationRate": 0.5289855072463768
+            "unsupported": 67,
+            "classificationRate": 0.5144927536231884
           },
           "snapshot": {
             "base": {
@@ -69998,7 +70010,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 872.6887300658044,
+              "misc": 648.2221000506186,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -70010,7 +70022,7 @@
             },
             "crit": {
               "chance_pct": 15.25,
-              "damage_pct": 460,
+              "damage_pct": 360,
               "crit_dmg_taken_pct": 10
             },
             "penetration": {
@@ -71079,14 +71091,14 @@
               ]
             },
             {
-              "text": "+20% Bond Gaining Speed",
+              "text": "+196% Critical Strike Rating and 100% Critical Strike Damage for Minions when casting an Empower Skill. Lasts for 6 s",
               "count": 1,
               "sources": [
-                "slate:rare:Medium Talent"
+                "gear:ring1:Horn Ring"
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (53% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (51% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1uwz7u3",
@@ -71108,13 +71120,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 8369596.684966142,
+            "dps": 5771134.725751099,
             "deteriorationDps": 0,
             "cycleTime": 0.8175399479747305,
-            "modeled": 75,
+            "modeled": 73,
             "ignored": 100,
-            "unmodeled": 72,
-            "coverage": 0.5102040816326531,
+            "unmodeled": 74,
+            "coverage": 0.4965986394557823,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -77807,10 +77819,10 @@
           },
           "coverage": {
             "observed": 247,
-            "classified": 75,
+            "classified": 73,
             "ignored": 100,
-            "unsupported": 72,
-            "classificationRate": 0.5102040816326531
+            "unsupported": 74,
+            "classificationRate": 0.4965986394557823
           },
           "snapshot": {
             "base": {
@@ -77859,7 +77871,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1222.8566728894934,
+              "misc": 917.5820560688411,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -77871,7 +77883,7 @@
             },
             "crit": {
               "chance_pct": 15.25,
-              "damage_pct": 460,
+              "damage_pct": 360,
               "crit_dmg_taken_pct": 10
             },
             "penetration": {
@@ -78976,7 +78988,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (51% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_pyjaoz",
@@ -78998,13 +79010,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 26820953.355641134,
+            "dps": 12780576.820251053,
             "deteriorationDps": 0,
             "cycleTime": 0.8517228029423152,
-            "modeled": 73,
+            "modeled": 70,
             "ignored": 104,
-            "unmodeled": 74,
-            "coverage": 0.4965986394557823,
+            "unmodeled": 77,
+            "coverage": 0.47619047619047616,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -85768,10 +85780,10 @@
           },
           "coverage": {
             "observed": 251,
-            "classified": 73,
+            "classified": 70,
             "ignored": 104,
-            "unsupported": 74,
-            "classificationRate": 0.4965986394557823
+            "unsupported": 77,
+            "classificationRate": 0.47619047619047616
           },
           "snapshot": {
             "base": {
@@ -85817,7 +85829,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1859.6710095123988,
+              "misc": 1407.4392380864606,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -85835,7 +85847,7 @@
             },
             "penetration": {
               "cold_pct": 26,
-              "armor_pct": 43
+              "armor_pct": 0
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -86881,6 +86893,14 @@
               ]
             },
             {
+              "text": "+30% Armor DMG Mitigation Penetration for Minions",
+              "count": 2,
+              "sources": [
+                "gear:boots:Mind Infusion",
+                "gear:ring1:Essence Spirit Ring"
+              ]
+            },
+            {
               "text": "+6% Minion Life Regeneration Speed",
               "count": 2,
               "sources": [
@@ -86933,16 +86953,9 @@
               "sources": [
                 "gear:belt:Fearless Waistguard"
               ]
-            },
-            {
-              "text": "+1 Max Charges",
-              "count": 1,
-              "sources": [
-                "tree:lich:Legendary Medium Talent"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (48% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_luqu22",
@@ -86964,13 +86977,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 39673288.09411989,
+            "dps": 17408200.12905657,
             "deteriorationDps": 0,
             "cycleTime": 0.6964229186451409,
-            "modeled": 84,
+            "modeled": 79,
             "ignored": 106,
-            "unmodeled": 73,
-            "coverage": 0.535031847133758,
+            "unmodeled": 78,
+            "coverage": 0.5031847133757962,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -93560,10 +93573,10 @@
           },
           "coverage": {
             "observed": 263,
-            "classified": 84,
+            "classified": 79,
             "ignored": 106,
-            "unsupported": 73,
-            "classificationRate": 0.535031847133758
+            "unsupported": 78,
+            "classificationRate": 0.5031847133757962
           },
           "snapshot": {
             "base": {
@@ -93609,7 +93622,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1794.2698714390538,
+              "misc": 1274.6515757903153,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -93627,7 +93640,7 @@
             },
             "penetration": {
               "cold_pct": 26,
-              "armor_pct": 59
+              "armor_pct": 8
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -94651,6 +94664,15 @@
               ]
             },
             {
+              "text": "+30% Armor DMG Mitigation Penetration for Minions",
+              "count": 3,
+              "sources": [
+                "gear:boots:Mind Infusion",
+                "gear:ring1:Essence Spirit Ring",
+                "slate:Fallen Starlight:Legendary Medium Talent"
+              ]
+            },
+            {
               "text": "+33 initial Growth for Spirit Magi",
               "count": 3,
               "sources": [
@@ -94756,16 +94778,9 @@
               "sources": [
                 "gear:belt:Fearless Waistguard"
               ]
-            },
-            {
-              "text": "+1 Max Charges",
-              "count": 1,
-              "sources": [
-                "tree:lich:Legendary Medium Talent"
-              ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (54% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_hlzlr6",
@@ -94787,13 +94802,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 23379002.304763902,
+            "dps": 14308585.529346477,
             "deteriorationDps": 0,
             "cycleTime": 0.7189542483660132,
-            "modeled": 81,
+            "modeled": 78,
             "ignored": 109,
-            "unmodeled": 78,
-            "coverage": 0.5094339622641509,
+            "unmodeled": 81,
+            "coverage": 0.49056603773584906,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -101242,10 +101257,10 @@
           },
           "coverage": {
             "observed": 268,
-            "classified": 81,
+            "classified": 78,
             "ignored": 109,
-            "unsupported": 78,
-            "classificationRate": 0.5094339622641509
+            "unsupported": 81,
+            "classificationRate": 0.49056603773584906
           },
           "snapshot": {
             "base": {
@@ -101292,7 +101307,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 1794.2698714390538,
+              "misc": 1274.6515757903153,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -101310,7 +101325,7 @@
             },
             "penetration": {
               "cold_pct": 26,
-              "armor_pct": 13
+              "armor_pct": 0
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -102452,7 +102467,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (51% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (49% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1wjgn0i",
@@ -102474,13 +102489,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 31809860.664960265,
+            "dps": 19468500.2408521,
             "deteriorationDps": 0,
             "cycleTime": 0.7189542483660132,
-            "modeled": 78,
+            "modeled": 75,
             "ignored": 120,
-            "unmodeled": 79,
-            "coverage": 0.4968152866242038,
+            "unmodeled": 82,
+            "coverage": 0.47770700636942676,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -108623,10 +108638,10 @@
           },
           "coverage": {
             "observed": 277,
-            "classified": 78,
+            "classified": 75,
             "ignored": 120,
-            "unsupported": 79,
-            "classificationRate": 0.4968152866242038
+            "unsupported": 82,
+            "classificationRate": 0.47770700636942676
           },
           "snapshot": {
             "base": {
@@ -108673,7 +108688,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 2400.436230299552,
+              "misc": 1714.5400800432164,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -108691,7 +108706,7 @@
             },
             "penetration": {
               "cold_pct": 26,
-              "armor_pct": 13
+              "armor_pct": 0
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -109845,7 +109860,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (50% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (48% affix coverage). Absolute map DPS is not claimed."
         },
         {
           "id": "tli_dump_loadout_1h1w98a",
@@ -109867,13 +109882,13 @@
             "scenarioFingerprint": "dummy-shared-cycle-dps-v1",
             "actorId": "d397380a-d947-5f11-b25e-381cf6311f04",
             "skillId": "iris-spirit-magus",
-            "dps": 48651599.17136082,
+            "dps": 27850084.55741498,
             "deteriorationDps": 0,
             "cycleTime": 0.7024265644955301,
-            "modeled": 76,
+            "modeled": 72,
             "ignored": 122,
-            "unmodeled": 84,
-            "coverage": 0.475,
+            "unmodeled": 88,
+            "coverage": 0.45,
             "confidence": "experimental"
           },
           "partialMetrics": [],
@@ -116604,10 +116619,10 @@
           },
           "coverage": {
             "observed": 282,
-            "classified": 76,
+            "classified": 72,
             "ignored": 122,
-            "unsupported": 84,
-            "classificationRate": 0.475
+            "unsupported": 88,
+            "classificationRate": 0.45
           },
           "snapshot": {
             "base": {
@@ -116653,7 +116668,7 @@
               "sealed_life_mana": 0,
               "blessings": 0,
               "precise_auras": 201.04,
-              "misc": 2500.179256328983,
+              "misc": 1749.9240561263712,
               "skill_levels": 21
             },
             "enemy_taken": {
@@ -116671,7 +116686,7 @@
             },
             "penetration": {
               "cold_pct": 29,
-              "armor_pct": 17
+              "armor_pct": 0
             },
             "enemy": {
               "cold_res_pct": 30,
@@ -117819,7 +117834,7 @@
               ]
             }
           ],
-          "sourceNote": "Dummy DPS from the shared cycleDps formula (48% affix coverage). Absolute map DPS is not claimed."
+          "sourceNote": "Dummy DPS from the shared cycleDps formula (45% affix coverage). Absolute map DPS is not claimed."
         }
       ]
     }

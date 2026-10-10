@@ -35,7 +35,9 @@ function snapshotCmd(args: string[]): void {
   const CALC_LOADOUT = "150b";
   const buildJson = loadJson(build);
   const calcIdx = buildJson.loadouts.loadouts.findIndex((l: any) => l.name?.trim() === CALC_LOADOUT);
-  const [calcSnap] = parseBuild(buildJson, calcIdx >= 0 ? calcIdx : loadout);
+  // only the Rehan export (it has the 150b setup) may rewrite the page's calc defaults
+  if (calcIdx < 0) return;
+  const [calcSnap] = parseBuild(buildJson, calcIdx);
   const pageOut = seasonPath(fromRoot("packages/page/src/data/snapshot.json"), activeSeason());
   fs.writeFileSync(pageOut, asciiJson(calcSnap, 1), "utf-8");
   console.log(`snapshot (${CALC_LOADOUT}) -> ${pageOut}`);

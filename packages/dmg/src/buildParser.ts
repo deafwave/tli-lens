@@ -406,7 +406,8 @@ export const PATTERNS: [string, string][] = [
   [`^(-\\d+(?:\\.\\d+)?)% additional damage$`, "additional.misc"],
   // minion damage is not player hit damage; must precede the catch-all below
   [`\\+${NUM}% additional Minion`, "ignore"],
-  [`\\+${NUM}% additional .*[Dd]amage`, "additional.misc"],
+  // mechanics.md "in Proximity" row: not this build — falls through to the explicit ignore
+  [`\\+${NUM}% additional .*[Dd]amage(?!.*in Proximity)`, "additional.misc"],
   [`\\+${NUM}% (?:increased )?Physical Damage`, "increased.physical"],
   [`\\+${NUM}% (?:increased )?Attack Damage`, "increased.attack"],
   [`\\+${NUM}% (?:increased )?Melee Damage`, "increased.melee"],
@@ -479,11 +480,16 @@ export const PATTERNS: [string, string][] = [
 ];
 const COMPILED: [RegExp, string][] = PATTERNS.map(([p, path]) => [new RegExp(p, "i"), path]);
 
+// Minion-only lines never feed the player hit: they stay unmatched rather than landing in
+// a player bucket. "+N% Minion Damage" is not caught: it is the tag-gated increased.minion key.
+const MINION_ONLY = /\bfor Minions\b|^Minions\b|additional [\w ]*Minion/i;
+
 export function classify(text: string): [string | null, number | null] {
   for (const [rx, path] of COMPILED) {
     const m = rx.exec(text);
     if (m) {
       if (path === "ignore") return ["ignore", null];
+      if (MINION_ONLY.test(text)) return [null, null];
       const groups = m.slice(1).filter(g => g !== undefined);
       return [path, groups.length ? parseFloat(groups[0]) : 0.0];
     }
@@ -754,7 +760,10 @@ export function parseBuild(buildOrPath: string | object, loadoutIndex?: number |
     ? JSON.parse(fs.readFileSync(buildOrPath, "utf-8"))
     : buildOrPath;
   for (const line of extractLines(build, loadoutIndex)) {
-    const [path, value] = classify(line.text);
+    const [path, parsed] = classify(line.text);
+    // mechanics.md#per-stack: per-stack lines pay their full stack count
+    const stacks = /for (?:every|each)[^\n]*?Stacks up to (\d+) time/i.exec(line.text);
+    const value = parsed === null ? null : parsed * (stacks ? parseInt(stacks[1], 10) : 1);
     if (path === null) {
       report.unmatched.push(line);
     } else if (path === "ignore") {

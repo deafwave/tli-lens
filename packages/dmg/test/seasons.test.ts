@@ -64,14 +64,14 @@ describe("Rehan model per season", () => {
     const [snap] = parseBuild(BUILD);
     expect(snap.additional.ice_bond).toBe(28);
     expect(snap.additional.combo_enhancement).toBeCloseTo(18.2 + 62 + 61, 1);
-    expect(Math.round(cycleDps(snap).dps)).toBe(1_841_090_783_563);
+    expect(Math.round(cycleDps(snap).dps)).toBe(1_600_948_507_446);
   });
   test("SS14 gives the nerfed reference", () => {
     setActiveSeason("ss14");
     const [snap] = parseBuild(BUILD);
     expect(snap.additional.ice_bond).toBe(24);
     expect(snap.additional.combo_enhancement).toBeCloseTo(15.2 + 62 + 61, 1);
-    expect(Math.round(cycleDps(snap).dps)).toBe(1_490_459_105_411);
+    expect(Math.round(cycleDps(snap).dps)).toBe(1_296_051_396_009);
   });
   test("Steamroll (tower Lv25): SS13 +43% / -15% AS, SS14 +39.7% / -20% AS", () => {
     const [s13] = parseBuild(BUILD, undefined, "ss13");

@@ -53,16 +53,26 @@ function applySupports(root: HTMLElement, s: Snapshot, sups: SupportGem[]): void
   if (!lvlInp) return;
   const lvl = parseFloat(lvlInp.value) || 20;
   let prod = 1, as = 0, fmin = 0, fmax = 0;
+  const typedProd: Record<string, number> = {};
   for (const inp of root.querySelectorAll<HTMLInputElement>("input[data-sup-line]:checked")) {
     const [gi, li] = inp.dataset.supLine!.split(":").map(Number);
     if (!root.querySelector<HTMLInputElement>(`input[data-sup="${gi}"]`)!.checked) continue;
     const l = sups[gi].lines[li];
     const v = lineValue(l, lvl);
-    if (l.kind === "additional") prod *= 1 + v / 100;
+    // typed lines ("additional Elemental Damage") gate by conversion history when the
+    // build converts (mechanics.md#support-additional-sum), so they get a typed bucket
+    const type = /additional (Elemental|Fire|Cold|Lightning|Erosion|Physical) Damage/i
+      .exec(l.text)?.[1].toLowerCase();
+    if (l.kind === "additional" && type && s.conversion) {
+      typedProd[type] = (typedProd[type] ?? 1) * (1 + v / 100);
+    } else if (l.kind === "additional") prod *= 1 + v / 100;
     else if (l.kind === "attack_speed") as += v;
     else if (l.kind === "added_flat") { fmin += v; fmax += supportValueAt(l.anchors2!, lvl); }
   }
   s.additional.supports = (prod - 1) * 100;
+  for (const [type, typed] of Object.entries(typedProd)) {
+    ((s.additional_typed ??= {})[type] ??= {}).supports = (typed - 1) * 100;
+  }
   s.rotation.attack_speed_inc_pct += as;
   s.base.flat_added_cold_min += fmin;
   s.base.flat_added_cold_max += fmax;

@@ -864,7 +864,7 @@ describe("Bing1 pactspirits — Kitty Express + Benign Bug L6 + kismets", () => 
      RS off:             13,170 M  <- the hit-side anchor H is fit to (H = geometry
                                       fold-in: FC proj size, 263% skill area, arrow
                                       pair; SP slowing measured saturated = no-op)
-     Saintess off:      /1.574 measured vs /1.5765 model — EXACT (nodes at face +
+     Saintess off:      /1.574 measured vs /1.5753 model — EXACT (nodes at face +
                         pen 10 + Repentance 1.04^6; validates env+pen+stack template)
      Timid off:         /1.365 measured vs /1.390 model (taken lines apply ONCE)
      Kaleido-60 off:    /1.735 measured vs /1.60 encoded (full-value continuous
@@ -890,19 +890,19 @@ describe("Bing real build — real_buld_3 (frozen-aura calibration 2026-07-20)",
     expect(cycleDps(rsOff()).dps / 1e9).toBeCloseTo(13.17, 1);
   });
 
-  test("full state: model 596.2B, det share 88.8% (measured 557.75B — +6.9% hot, strict 5-tick; mechanics.md#real-build)", () => {
+  test("full state: model 595.0B, det share 88.8% (measured 557.75B — +6.7% hot, strict 5-tick; mechanics.md#real-build)", () => {
     const r = cycleDps(snap());
-    expect(r.dps / 1e9).toBeCloseTo(596.2, 0);
-    expect(r.deterioration_dps / r.dps).toBeCloseTo(0.8881, 3);
+    expect(r.dps / 1e9).toBeCloseTo(595.0, 0);
+    expect(r.deterioration_dps / r.dps).toBeCloseTo(0.8879, 3);
   });
 
-  test("Saintess lever is exact: env + pen 10 + Repentance 1.04^6 = /1.5765 (measured /1.574)", () => {
+  test("Saintess lever is exact: env + pen 10 + Repentance 1.04^6 = /1.5753 (measured /1.574)", () => {
     const s = snap(), sa = snap();
     sa.increased.erosion -= 112;
     sa.increased.global -= 6;
     sa.penetration.erosion_pct = 0;
     delete sa.additional_typed!.erosion.repentance;
-    expect(cycleDps(s).dps / cycleDps(sa).dps).toBeCloseTo(1.5765, 3);
+    expect(cycleDps(s).dps / cycleDps(sa).dps).toBeCloseTo(1.5753, 3);
   });
 
   test("Timid lever: taken applies once everywhere = /1.390 (measured /1.365)", () => {

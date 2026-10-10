@@ -3,6 +3,7 @@
 #   game.ps1 key   <K> [K...]                           posted key presses (ESC B SPACE R E Q F A-Z 0-9 F1-F10)
 #   game.ps1 click <x> <y>                              left click (cursor flick, restored)
 #   game.ps1 hover <x> <y> <out.png> [x y w h] [scale]  hold the cursor there, screenshot the tooltip, restore
+#   game.ps1 aimkey <x> <y> <KEY>                       press KEY with the cursor at x,y (aimed skills: Blink)
 #   game.ps1 wheel <x> <y> <notches>                    mouse wheel, negative = down (cursor flick)
 #   game.ps1 measure <out.png> [secs=32] [KEY every-s]  Recount on the dummy, wait (posting KEY on a timer), shoot panel
 #   game.ps1 burst <out.png> <frames> <ms> <x y w h> [cols=6] [scale=0.5]   timestamped contact sheet
@@ -66,6 +67,7 @@ switch ($cmd) {
     Save (Grab) $rest[0] $c[0] $c[1] $c[2] $c[3] $sc }
   'key' { foreach ($k in $rest) { Key $k; Start-Sleep -Milliseconds 400 } }
   'click' { Click $rest[0] $rest[1]; Start-Sleep -Milliseconds 500 }
+  'aimkey' { Flick $rest[0] $rest[1] { param($lp) Key $rest[2] } 150; Start-Sleep -Milliseconds 300 }
   'hover' { $c = Crop $rest 3; $sc = if ($rest.Count -ge 8) { [double]$rest[7] } else { 0.5 }
     $script:shot = $null; Flick $rest[0] $rest[1] { param($lp) Start-Sleep -Milliseconds 600; $script:shot = Grab } 0
     Save $script:shot $rest[2] $c[0] $c[1] $c[2] $c[3] $sc }
@@ -82,7 +84,10 @@ switch ($cmd) {
     Save (Grab) "$pre-0.png" 0 140 680 300 1 | Out-Null
     $sw = [Diagnostics.Stopwatch]::StartNew(); $next = $every
     while ($sw.Elapsed.TotalSeconds -lt $secs) {
-      if ($k -and $sw.Elapsed.TotalSeconds -ge $next) { Key $k; $next += $every }
+      # Blink aims at the real cursor: aim into the trees left of the hideout dummy spot (blocked, so the
+      # character barely moves); override with TLI_AIM="x,y"
+      if ($k -and $sw.Elapsed.TotalSeconds -ge $next) { $aim = if ($env:TLI_AIM) { $env:TLI_AIM -split "," } else { 800, 800 }
+        Flick ([int]$aim[0]) ([int]$aim[1]) { param($lp) Key $k } 150; $next += $every }
       Start-Sleep -Milliseconds 200 }
     Save (Grab) "$pre-1.png" 0 140 680 300 1 | Out-Null
     "measured $secs s -> $pre-0.png, $pre-1.png" }

@@ -46,6 +46,7 @@ Where things live (`poorchlight/tli_dump/diagnostics/`):
 | `shot <out.png> [x y w h] [scale]` | screenshot (default whole client at 0.5); `Read` the png. Crop + scale 0.6–1 to read numbers |
 | `key F2` / `key ESC SPACE` | posted key presses (VK codes: A–Z, 0–9, F1–F10, ESC, SPACE, TAB, ENTER) |
 | `click x y` · `hover x y <out.png> [crop] [scale]` · `wheel x y -6` | cursor flick (game must be in front) |
+| `aimkey x y KEY` | press KEY with the cursor at x,y (Blink). At the hideout dummy spot aim **into the trees on the left (800,800)** — Blink is blocked there so the character stays in range; `measure` uses that aim (`TLI_AIM=x,y` overrides) |
 | `measure <prefix> [secs] [KEY every-s]` | needs the dummy count **running**; shoots the panel at start/end (`<prefix>-0/-1.png`); interval DPS = (avg₁·t₁ − avg₀·t₀)/(t₁ − t₀) — no clicks |
 | `burst <out.png> <frames> <ms> <x y w h> [cols] [scale]` | timestamped contact sheet — throws (crop `1640 480 160 180`), buff uptime (`400 20 420 60`), dummy debuffs/stacks (`1540 130 180 55`) |
 
@@ -74,6 +75,9 @@ Checked 2026-10-10 on DeafwaveB (`data/bing1/scraped/my-build-2026-10-10.json`):
 
 The dummy panel's **Info** tab (click 450,174) is the same sheet **captured in combat** (DPS 46M vs 18M at rest):
 its Damage section (269,269) shows live buffs (Kaleidoscope turns, Bull's Rage) — sample it, values change by the second.
+
+Floating damage numbers over the dummy (crop `1950 380 700 450`, burst 150ms): yellow 6–24B, purple 4–58B at
+this build. Their semantics (which is crit / True-damage Deterioration, whether numbers merge) are not established yet.
 
 ## DPS readings
 

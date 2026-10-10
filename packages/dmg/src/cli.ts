@@ -94,6 +94,35 @@ async function progressionCmd(): Promise<void> {
   console.log(`progression: ${rows.length} slot ladders injected`);
 }
 
+async function bingCmd(args: string[]): Promise<void> {
+  const { BING_ZERO, REAL_BUILD_SOURCES, compose } = await import("./bingLedger.js");
+  const { UPGRADES, RISKY_UPGRADES } = await import("./bingUpgrades.js");
+  const { walk } = await import("./bingProgression.js");
+  const season = activeSeason();
+  const pool = args.includes("--risky") ? [...UPGRADES, ...RISKY_UPGRADES] : UPGRADES;
+  const fmt = (d: number) => d >= 1e12 ? `${(d / 1e12).toFixed(2)}T` : d >= 1e9 ? `${(d / 1e9).toFixed(2)}B`
+    : d >= 1e6 ? `${(d / 1e6).toFixed(2)}M` : d >= 1e3 ? `${(d / 1e3).toFixed(1)}k` : d.toFixed(0);
+  const dpsOf = (set: typeof REAL_BUILD_SOURCES) => cycleDps(applySeason(compose(BING_ZERO, set), season)).dps;
+  const print = (steps: ReturnType<typeof walk>) => steps.forEach((s, i) => console.log(
+    `${String(i + 1).padStart(3)} ${`×${s.gain.toFixed(3)}`.padStart(8)} ${fmt(s.dps).padStart(9)}  ${s.labels.join(" + ")}`
+    + (s.removed.length ? `  (drops ${s.removed.join(", ")})` : "")));
+  const sub = args[0];
+  if (sub === "path") {
+    console.log(`zero (bare rig): ${fmt(dpsOf([]))}  [${season}]`);
+    print(walk(BING_ZERO, [], REAL_BUILD_SOURCES, season));
+  } else if (sub === "climb") {
+    console.log(`real build: ${fmt(dpsOf(REAL_BUILD_SOURCES))}  [${season}]`);
+    print(walk(BING_ZERO, REAL_BUILD_SOURCES, pool, season, { untilNoGain: true }));
+  } else if (sub === "prices") {
+    const base = dpsOf(REAL_BUILD_SOURCES);
+    const rows = pool.map(u => ({ u, g: dpsOf([...REAL_BUILD_SOURCES.filter(s => !u.replaces?.includes(s.id)), u]) / base }));
+    for (const { u, g } of rows.sort((a, b) => b.g - a.g))
+      console.log(`${`×${g.toFixed(3)}`.padStart(8)}  ${u.label}${u.note ? `  — ${u.note}` : ""}`);
+  } else {
+    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices) [--risky]`);
+  }
+}
+
 // --season ss13|ss14 (default ss14) applies to every subcommand
 const argv = process.argv.slice(2);
 const seasonAt = argv.indexOf("--season");
@@ -104,9 +133,10 @@ try {
   else if (cmd === "rank") await rankCmd(rest);
   else if (cmd === "catalog") await catalogCmd();
   else if (cmd === "progression") await progressionCmd();
+  else if (cmd === "bing") await bingCmd(rest);
   else if (cmd === "pagedata") (await import("./pagedata.js")).writePagedata();
   else {
-    console.error("usage: cli.ts <snapshot|rank|catalog|progression|pagedata> [args] [--season ss13|ss14]");
+    console.error("usage: cli.ts <snapshot|rank|catalog|progression|bing|pagedata> [args] [--season ss13|ss14]");
     process.exit(2);
   }
 } catch (e) {

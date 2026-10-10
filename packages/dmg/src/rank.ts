@@ -3,7 +3,7 @@
 import { cycleDps, type Snapshot } from "./damageModel.js";
 
 /** Same curve as buildParser.skillLevelAdditionalPct — inlined to keep rank browser-importable. */
-function skillLevelAdditionalPct(levels: number): number {
+export function skillLevelAdditionalPct(levels: number): number {
   return (1.10 ** Math.min(levels, 10) * 1.08 ** Math.max(levels - 10, 0) - 1) * 100;
 }
 

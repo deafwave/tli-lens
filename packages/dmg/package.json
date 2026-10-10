@@ -23,6 +23,7 @@
     "catalog": "tsx src/cli.ts catalog",
     "progression": "tsx src/cli.ts progression",
     "pagedata": "tsx src/cli.ts pagedata",
+    "bing": "tsx src/cli.ts bing",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

@@ -21,11 +21,16 @@ describe("Bing importer", () => {
     expect(r.snapshot.additional.strength).toBeCloseTo(169.5, 6);   // sheet Str 339
   });
 
-  test("July import sits below the hand snapshot by exactly its unexplained residuals (×1.20–1.26)", () => {
-    const imp = cycleDps(applySeason(july().snapshot, "ss13")).dps;
+  test("July import vs the hand snapshot: its residuals (×1.20–1.26) times the dummy-loop corrections", () => {
+    // mechanics.md#bing-dummy-loop: no Blink cast at the dummy (Blade-dancer ×1.45, Repentance ×1.265 off),
+    // Firepower Coverage throws at the weapon's 1.5 APS (×1.5 on the throw rate, slightly fewer Obliterate procs)
+    const r = july();
+    expect(r.sources.filter(s => s.requires?.some(q => q === "mobility_cast" || q === "blessing")).length).toBe(2);
+    expect(r.snapshot.rotation.throw_rate_base).toBe(1.5);
+    const imp = cycleDps(applySeason(r.snapshot, "ss13")).dps;
     const hand = cycleDps(applySeason(load("data/bing1/real_buld_3_snapshot.json"), "ss13")).dps;
-    expect(hand / imp).toBeGreaterThan(1.20);
-    expect(hand / imp).toBeLessThan(1.26);
+    expect(hand / imp).toBeGreaterThan(1.45);
+    expect(hand / imp).toBeLessThan(1.55);
   });
 
   test("scraped 40T build: talents rebuilt from native records, traits from memories, only listed unknowns", () => {
@@ -79,7 +84,7 @@ describe("Bing importer", () => {
     expect(snap.rotation.demolisher_every_n).toBe(1);
     expect(snap.rotation.demolisher_resto_pct).toBeUndefined();
     expect(snap.additional.tenacity).toBeCloseTo((1.08 ** 6 - 1) * 100, 6);   // 4 base + 2 max stacks
-    expect(snap.additional.bulls_rage).toBe(25.5);                              // L17
+    expect(snap.additional.bulls_rage).toBeCloseTo(0.62 * 25.5, 9);           // L17, 62% uptime
     expect(r.sources.find(s => /Entangled Pain/.test(s.label))?.provides).toContain("curse");
     expect(r.lines.filter(l => l.kind === "unknown").map(l => l.text).sort()).toEqual([
       "+1 Max Charges", "+30% Bond Gaining Speed", "Converts 50% of Lightning Damage to Fire Damage", "Unable to trigger Empower Skills"]);

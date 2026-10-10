@@ -367,6 +367,7 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
     if (aux.tenacity_attack) s.increased.attack = (s.increased.attack ?? 0) + aux.tenacity_attack;
     if (aux.tenacity_more) s.additional.tenacity = ((1 + pct("tenacity_more")) ** (4 + (aux.tenacity_stacks ?? 0)) - 1) * 100;
   }
+  if (aux.throw_at_weapon_aps) s.rotation.throw_rate_base = s.base.weapon_attack_speed;
   const str = Math.round((aux.str_flat ?? 0) * (1 + pct("str_pct")));   // sheet shows integer Str (339)
   if (str) s.additional.strength = str / 2;
   let as = (1 + pct("as_inc")) * (1 + pct("as_local"));

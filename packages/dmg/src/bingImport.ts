@@ -54,7 +54,10 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
   if ((m = text.match(/^\+?(\d+)% additional Attack Damage after standing still/i)))
     return { why: "stationary attack (-20% additional AS)", edits: [["add", `additional.standing_${m[1]}`, +m[1]], ["add", "aux.as_more_standing", -20]] };
   if ((m = text.match(/^\+(\d+)% additional damage for \d+ s after using Mobility Skills$/i)))
-    return { why: "after Mobility (Blink keeps it up)", edits: [["add", `additional.after_mobility_${m[1]}`, +m[1]]] };
+    return { why: "after Mobility — live only while a Mobility Skill is cast (mechanics.md#bing-dummy-loop)", requires: ["mobility_cast"],
+             edits: [["add", `additional.after_mobility_${m[1]}`, +m[1]]] };
+  if ((m = text.match(/^\+(\d+)% chance to gain \d+ stack\(s\) of Tenacity Blessing when hitting an enemy$/i)))
+    return { why: "Tenacity Blessing on hit (a Blessing: feeds Repentance)", provides: ["blessing"], edits: [["add", "aux.tenacity_gain", +m[1]]] };
   if ((m = text.match(/^Deals up to \+(\d+)% additional Attack Damage to enemies in proximity/i)))
     return { why: "Well Matched — Solar Ring places the boss in proximity", requires: ["solar_ring"],
              edits: [["add", `additional.well_matched_${m[1]}`, +m[1]]] };

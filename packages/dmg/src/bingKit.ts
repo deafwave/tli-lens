@@ -63,7 +63,8 @@ const TRAITS: Record<string, (lv: number) => Edit[]> = {
     calibrated encodings (Saintess +112 Erosion / +10 pen / +6 damage, Kitty +48 Attack / +88 crit / +16 AS). */
 const PACTS: Record<string, (lv: number) => Edit[] | null> = {
   "Iron Lion": () => [["add", "rotation.proj_added", 1]],
-  "Portrait of a Fallen Saintess": lv => lv >= 4 ? [["add", "additional_typed.erosion.repentance", (1.04 ** 6 - 1) * 100]] : null,
+  // Repentance (+4% additional Erosion per stack, 6 at L4) is its own source: stacks come from gaining a Blessing
+  "Portrait of a Fallen Saintess": lv => lv >= 4 ? [] : null,
   // tlidb: L5 +16% additional damage vs Cursed, +4% additional damage
   "Poisoned Omen": lv => lv >= 5 ? [["add", "additional.poisoned_omen", 4]] : null,
   "Kitty Express": lv => lv >= 6 ? [] : null,
@@ -146,7 +147,8 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
           { provides: ["curse"] });
     } else if (name === "Bull's Rage") {
       // tlidb L20: Euphoria +27% additional Melee Skill Damage (L1 17.5) for 6s / 10s CD — uptime assumed full
-      add("skill:Bull's Rage", `L${sk.level} Euphoria`, [["add", "additional.bulls_rage", aura(17.5, 27)(sk.level ?? 20)]]);
+      // ×0.62 uptime: icon present 37/60 samples over 30s at the dummy (DeafwaveB 2026-10-10, mechanics.md#bing-dummy-loop)
+      add("skill:Bull's Rage", `L${sk.level} Euphoria (62% uptime)`, [["add", "additional.bulls_rage", 0.62 * aura(17.5, 27)(sk.level ?? 20)]]);
     } else if (SENTRIES.has(name) && supNames.includes("Activation Medium: Motionless")) {
       add(`skill:${name}`, "Sentry + Activation Medium: Motionless → charge per Sentry use (#real-build)",
           [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1]],
@@ -174,7 +176,9 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
     traitLevels[trait] = lv;
     if (trait === "Firepower Coverage") {
       // the reference rig's geometry fold-in (FC +50% projectile size, its skill area, #real-build)
-      add("trait", `Firepower Coverage L${lv}`, [["mul", "rotation.hits_per_bomb", 1.6528676812873455 / 0.8353 / 1.3286]],
+      // FC's auto-thrower throws at the weapon's attack speed (frame count, mechanics.md#bing-dummy-loop)
+      add("trait", `Firepower Coverage L${lv}`, [["mul", "rotation.hits_per_bomb", 1.6528676812873455 / 0.8353 / 1.3286],
+                                                 ["set", "aux.throw_at_weapon_aps", 1]],
           { provides: ["firepower_coverage"] });
     } else if (TRAITS[trait]) add("trait", `${trait} L${lv}`, TRAITS[trait](lv));
     else if (trait === "Blast Nova") { if (lv > 1) add("trait", `Blast Nova L${lv}`, [["add", "additional.blast_nova", 5 * (lv - 1)]]); }
@@ -190,6 +194,9 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
     const occupied = new Set(kismets.filter(k => k.pactspritIndex === i).map(k => String(k.nodeId).split("_").at(-1)!));
     const nodes = pactNodeEdits(pactNodes(p.guid), (p.allocatedNodes ?? []).map(String), occupied);
     add("pactspirit", `${p.guid} L${p.level}`, [...edits, ...nodes]);
+    if (p.guid === "Portrait of a Fallen Saintess" && p.level >= 4)
+      add("pactspirit", "Saintess Repentance ×6 (gains a stack per Blessing gained)",
+          [["add", "additional_typed.erosion.repentance", (1.04 ** 6 - 1) * 100]], { requires: ["blessing"] });
     if (p.guid === "Poisoned Omen" && p.level >= 5)
       add("pactspirit", "Poisoned Omen: +16% additional damage vs Cursed", [["add", "additional.omen_cursed", 16]], { requires: ["curse"] });
     if (p.guid === "Kitty Express" && names.size && traitLevels["Firepower Coverage"])

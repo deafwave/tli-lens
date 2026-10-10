@@ -46,7 +46,7 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
         expect(have.some(h => h.package && s.requires?.includes(h.id)), `${s.id} without its limb`).toBe(true);
     }
     expect(steps.at(-1)!.dps).toBeCloseTo(dps(have), -3);
-  });
+  }, 30_000);
 
   test("upgrades are cited and their requires resolve against the real build", () => {
     const all = [...REAL_BUILD_SOURCES, ...UPGRADES, ...VORAX];

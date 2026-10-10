@@ -6,7 +6,7 @@
    traits and pactspirits come from tables in bingKit.ts. */
 import fs from "node:fs";
 import { fromRoot } from "./py.js";
-import { extractLines, type Line } from "./buildParser.js";
+import { extractLines, _load, type Line } from "./buildParser.js";
 import { affixEdits } from "./bingAffixMap.js";
 import { BING_ZERO, compose, effective, type Edit, type Source } from "./bingLedger.js";
 import { kitSources, type Kit } from "./bingKit.js";
@@ -142,39 +142,68 @@ export function fillTreesFromNative(payload: any, native: any[], loadoutIndex = 
   return out;
 }
 
-/** Native talent node id <tree><row:2><col:2>00 → grid position. */
-const nodePos = (id: string) => ({ tree: Math.floor(+id / 1e6), row: Math.floor(+id / 1e4) % 100, col: Math.floor(+id / 100) % 100 });
+/** Native talent node id <tree><column:2><row:2>00 → grid position. Columns are the point
+    thresholds 0/3/…/18 (1–7), rows 1–5 (user screenshot of an Onslaughter panel, 2026-10-09). */
+const nodePos = (id: string) => ({ tree: Math.floor(+id / 1e6), col: Math.floor(+id / 1e4) % 100, row: Math.floor(+id / 100) % 100 });
+const inRect = (id: string, center: string, w: number, h: number) => {
+  const p = nodePos(id), c = nodePos(center);
+  return p.tree === c.tree && Math.abs(p.col - c.col) <= (w - 1) / 2 && Math.abs(p.row - c.row) <= (h - 1) / 2;
+};
 
 export interface NativePrisms {
   items: { configBaseId: string; itemId: string; affixes: Record<string, { id: string; args: number[] }[]> }[];
   placements: { itemId: string; tree: number; center: string }[];
 }
 
-/** Ethereal prism area effects ("All Medium Talent within the area also gain: …") as one line per
-    allocated node of that type inside the prism's rectangle (#bing-import). Talent points a prism adds
-    ("can be allocated … 1 additional time") are already in the native GeniusList totals. */
-export function nativePrismLines(native: any[], prisms: NativePrisms): { source: string; slot: string; text: string }[] {
+/** Inverse Image fixed affixes: "±X% all reflected <type> Talent Effects" (in-game tooltip order Micro, Medium, Legendary). */
+const INVERSE_TYPE: Record<string, string> = { "1224626031": "micro", "1224626011": "medium", "1224626051": "legendary" };
+const INVERSE_IMAGE = "360701";
+
+/** Ethereal prism effects as importable lines (#bing-import):
+    - area affixes "All <type> Talent within the area also gain: X" → one line per allocated node of that
+      type in the prism's rectangle (extra talent points a prism grants are already in GeniusList);
+    - the Inverse Image reflects every talent in its 3×3 area through the tree's center
+      ((col,row) → (8 − col, 6 − row)); each reflected copy keeps its source's points and deals the
+      source's effect × (1 + its type's reflected-effect roll). The copies replace the nodes they land on. */
+export function nativePrismLines(native: any[], prisms: NativePrisms): { source: string; slot: string; text: string; points?: number }[] {
   const byGame = new Map<string, any>();
   for (const e of catalogById().values()) if (e.gameId) byGame.set(`${e.domain}:${e.gameId}`, e);
   const allocated = new Map<string, number>();
   for (const rec of native) for (const [k, pts] of Object.entries<number>(rec.GeniusList ?? {})) if (pts > 0) allocated.set(k.replace(/\D/g, ""), pts);
-  const out: { source: string; slot: string; text: string }[] = [];
+  const treeText = _load("SS12.5-talent-tree-en.json");
+  const nodeLines = (id: string): string[] => {
+    const e = byGame.get(`talent-tree:${id}`);
+    const node = treeText[`talent-tree/${e?.metadata?.treeId}/i18n/en`]?.tree?.nodes?.[e?.id];
+    return String(node?.description ?? "").split("<br>").map(l => l.trim()).filter(Boolean);
+  };
+  const typeOf = (id: string) => String(byGame.get(`talent-tree:${id}`)?.metadata?.talentNodeType ?? "");
+  const out: { source: string; slot: string; text: string; points?: number }[] = [];
   for (const pl of prisms.placements) {
     const item = prisms.items.find(i => i.itemId === pl.itemId);
+    if (item?.configBaseId === INVERSE_IMAGE) {
+      const fixed = item.affixes.FixedBaseAffix ?? [];
+      const mods: Record<string, number> = {};
+      fixed.forEach((a, i) => { mods[INVERSE_TYPE[a.id] ?? ["micro", "medium", "legendary"][i]] = a.args[0] ?? 0; });
+      for (const [id, pts] of allocated) {
+        if (!inRect(id, pl.center, 3, 3)) continue;
+        const type = ["micro", "medium", "legendary"].find(t => typeOf(id).startsWith(t));
+        const k = 1 + (mods[type ?? ""] ?? -100) / 100;
+        if (k <= 0) continue;
+        for (const line of nodeLines(id)) out.push({ source: `inverse:${pl.tree}:${id}`, slot: "tree", text: line, points: pts * k });
+      }
+      continue;
+    }
     const texts = Object.values(item?.affixes ?? {}).flat()
       .map(a => byGame.get(`ethereal-prism:${a.id}`)?.label as string | undefined).filter((t): t is string => !!t);
     const size = texts.map(t => t.match(/expands to (\d+)x(\d+)/)).find(Boolean);
     const [w, h] = size ? [+size[1], +size[2]] : [1, 1];
-    const c = nodePos(pl.center);
     for (const t of texts) {
       const m = t.match(/^All (Micro|Medium|Legendary Medium) Talent within the area also gain: (.+)$/s);
       if (!m) continue;
       const type = m[1].toLowerCase().replace("legendary medium", "legendary");
       for (const id of allocated.keys()) {
-        const p = nodePos(id), node = byGame.get(`talent-tree:${id}`);
-        if (p.tree !== c.tree || Math.abs(p.row - c.row) > (h - 1) / 2 || Math.abs(p.col - c.col) > (w - 1) / 2) continue;
-        if (!String(node?.metadata?.talentNodeType ?? "").startsWith(type)) continue;
-        for (const line of m[2].split("\n")) out.push({ source: `prism:${pl.tree}:${id}`, slot: "prism", text: line.trim().replace(/^(\d)/, "+$1") });
+        if (!inRect(id, pl.center, w, h) || !typeOf(id).startsWith(type)) continue;
+        for (const line of m[2].split(/\n/)) out.push({ source: `prism:${pl.tree}:${id}`, slot: "prism", text: line.trim().replace(/^(\d)/, "+$1") });
       }
     }
   }

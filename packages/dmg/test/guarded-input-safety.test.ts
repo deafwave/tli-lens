@@ -109,5 +109,5 @@ describe("guarded compiler input safety", () => {
       }
     }
     expect(failures).toEqual([]);
-  });
+  }, 60_000);  // exhaustive mutation sweep: ~3s alone, past the 5s default under parallel load
 });

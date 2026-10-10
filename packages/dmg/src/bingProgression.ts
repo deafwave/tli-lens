@@ -26,8 +26,9 @@ function capacityKeys(slot: string): string[] {
   const keys = [slot, ...parts.slice(0, -1).map((_, i) => `${parts.slice(0, i + 1).join(".")}.*`)];
   return keys.filter(k => k in SLOT_CAPACITY);
 }
-const inKey = (slot: string | undefined, key: string) =>
-  !!slot && (key.endsWith(".*") ? slot.startsWith(key.slice(0, -1)) : slot === key);
+/** Every capacity key a source counts against. */
+export const keysOf = (s: Source): string[] =>
+  [...(s.slot ? capacityKeys(s.slot) : []), ...(s.caps ?? []).filter(k => k in SLOT_CAPACITY)];
 
 export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Season,
                      opts: { untilNoGain?: boolean; pairs?: boolean } = {}): PathStep[] {
@@ -54,9 +55,9 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
     /** Ways to make room for `c`: the items it replaces, plus one occupant of each full pool. */
     const roomFor = (c: Source): Source[][] => {
       let options: Source[][] = [have.filter(s => c.replaces?.includes(s.id))];
-      for (const key of c.slot ? capacityKeys(c.slot) : []) {
+      for (const key of keysOf(c)) {
         options = options.flatMap(removed => {
-          const occupants = have.filter(s => inKey(s.slot, key) && !removed.includes(s));
+          const occupants = have.filter(s => keysOf(s).includes(key) && !removed.includes(s));
           return occupants.length < SLOT_CAPACITY[key] ? [removed] : occupants.map(o => [...removed, o]);
         });
       }
@@ -75,8 +76,8 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       const PAIR_POOL = 12;
       const strong = [...single.entries()].sort((a, b) => b[1] - a[1]).slice(0, PAIR_POOL).map(e => e[0]);
       const pairable = [...new Set([...strong, ...left.filter(s => !ready(s) && !s.package)])];
-      const free = (s: Source) => !s.replaces?.length && !(s.slot && capacityKeys(s.slot).some(k =>
-        have.filter(h => inKey(h.slot, k)).length + 2 > SLOT_CAPACITY[k]));
+      const free = (s: Source) => !s.replaces?.length && !keysOf(s).some(k =>
+        have.filter(h => keysOf(h).includes(k)).length + 2 > SLOT_CAPACITY[k]);
       for (let i = 0; i < pairable.length; i++) for (let j = i + 1; j < pairable.length; j++) {
         const [a, b] = [pairable[i], pairable[j]];
         if (free(a) && free(b) && ready(a, b) && ready(b, a)) consider([a, b], []);

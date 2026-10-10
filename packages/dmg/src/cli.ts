@@ -96,7 +96,8 @@ async function progressionCmd(): Promise<void> {
 
 async function bingCmd(args: string[]): Promise<void> {
   const { BING_ZERO, REAL_BUILD_SOURCES, compose, effective } = await import("./bingLedger.js");
-  const { UPGRADES, RISKY_UPGRADES, VORAX } = await import("./bingUpgrades.js");
+  const { upgrades } = await import("./bingUpgrades.js");
+  const { UPGRADES, RISKY_UPGRADES, VORAX } = upgrades(args.includes("--perfect") ? "t0+" : "t1");
   const { walk } = await import("./bingProgression.js");
   const season = activeSeason();
   const pool = [...UPGRADES, ...(args.includes("--no-vorax") ? [] : VORAX),
@@ -128,7 +129,7 @@ async function bingCmd(args: string[]): Promise<void> {
     for (const { u, g } of rows.sort((a, b) => b.g - a.g))
       console.log(`${`×${g.toFixed(3)}`.padStart(8)}  ${u.label}${u.note ? `  — ${u.note}` : ""}`);
   } else {
-    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices) [--risky] [--no-vorax]`);
+    throw new Error(`bing: unknown subcommand '${sub}' (path|climb|prices) [--risky] [--no-vorax] [--perfect]`);
   }
 }
 

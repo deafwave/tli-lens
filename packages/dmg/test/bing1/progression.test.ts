@@ -3,7 +3,7 @@ import { cycleDps } from "../../src/damageModel.js";
 import { applySeason } from "../../src/seasons.js";
 import { BING_ZERO, REAL_BUILD_SOURCES, SLOT_CAPACITY, compose, type Source } from "../../src/bingLedger.js";
 import { UPGRADES, VORAX } from "../../src/bingUpgrades.js";
-import { walk } from "../../src/bingProgression.js";
+import { keysOf, walk } from "../../src/bingProgression.js";
 
 const dps = (set: Source[]) => cycleDps(applySeason(compose(BING_ZERO, set), "ss14")).dps;
 
@@ -32,15 +32,13 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
     const pool = [...UPGRADES, ...VORAX];
     const steps = walk(BING_ZERO, REAL_BUILD_SOURCES, pool, "ss14", { untilNoGain: true });
     expect(steps.length).toBeGreaterThan(0);
-    const inKey = (slot: string | undefined, key: string) =>
-      !!slot && (key.endsWith(".*") ? slot.startsWith(key.slice(0, -1)) : slot === key);
     let have = [...REAL_BUILD_SOURCES];
     for (const step of steps) {
       expect(step.gain).toBeGreaterThan(1);
       have = [...have.filter(s => !step.removed.includes(s.id)),
               ...step.ids.map(id => pool.find(u => u.id === id)!)];
       for (const [key, cap] of Object.entries(SLOT_CAPACITY))
-        expect(have.filter(s => inKey(s.slot, key)).length, key).toBeLessThanOrEqual(cap);
+        expect(have.filter(s => keysOf(s).includes(key)).length, key).toBeLessThanOrEqual(cap);
       for (const id of step.ids)
         for (const r of pool.find(u => u.id === id)!.replaces ?? [])
           expect(have.some(s => s.id === r), `${id} keeps ${r}`).toBe(false);

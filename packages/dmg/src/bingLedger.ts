@@ -28,10 +28,13 @@ export type SourceGroup =
 /** Affix lines per craft pool (SS13 gear: 3 prefixes + 3 suffixes; one corrosion implicit; one base). */
 export const SLOT_CAPACITY: Record<string, number> = {
   "mainHand.prefix": 3, "mainHand.suffix": 3, "mainHand.corrosion": 1, "mainHand.base": 1,
+  // at most 2 Ultimate-grade craft lines per item (user 2026-10-09; grades: data/craft_pools.json)
+  "mainHand.ultimate": 2,
   "hoa.support": 5,
   // Vorax gear: 6 affix lines (3 prefixes, 3 suffixes), of which up to 2 may be legendary grafts
   ...Object.fromEntries(["head", "neck", "hands", "legs", "waist", "digits1", "digits2"].flatMap(l => [
-    [`vorax.${l}.*`, 6], [`vorax.${l}.prefix`, 3], [`vorax.${l}.suffix`, 3], [`vorax.${l}.graft`, 2]])),
+    [`vorax.${l}.*`, 6], [`vorax.${l}.prefix`, 3], [`vorax.${l}.suffix`, 3], [`vorax.${l}.graft`, 2],
+    [`vorax.${l}.ultimate`, 2]])),
 };
 
 /** HoA levels the real build already has above 20 (Lich legendary medium +1 to All Skills). */
@@ -49,6 +52,8 @@ export interface Source {
   provides?: string[];
   /** craft pool this line occupies (capacity in SLOT_CAPACITY) */
   slot?: string;
+  /** further capacity keys it counts against (an item's Ultimate-grade lines) */
+  caps?: string[];
   /** source ids this one removes when taken (a corroded roll replacing the normal item) */
   replaces?: string[];
   /** a base taken together with its best lines (sources that require it), e.g. a Vorax piece */

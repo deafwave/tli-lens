@@ -6,10 +6,14 @@
 import { additionalBonusPct, type Snapshot } from "@rehan/dmg/damageModel";
 import snapshot14 from "./data/snapshot.json";
 import snapshot13 from "./data/snapshot.ss13.json";  // SS13-temp
-import { bySeason } from "./season";
+import { SEASONS } from "@rehan/dmg/seasons";
+import { bySeason, PAGE_SEASON } from "./season";
 import { esc } from "./ui";
 
 const SNAP = bySeason(snapshot14, snapshot13) as unknown as Snapshot;
+// season-dependent figures come from the season tables / snapshot, never typed in
+const SEASON = SEASONS[PAGE_SEASON];
+const pct = (v: number) => `${Math.round(v * 10) / 10}%`;
 
 type Use = "used" | "gap" | "na";
 interface Pool { game: string; use: Use; note: string; feeds: string }
@@ -44,9 +48,9 @@ const GROUPS: PoolGroup[] = [
       { game:"Focus Blessing", use:"used", feeds:"additional.blessings",
         note:"additional damage per stack, gained on Frostbitten hit." },
       { game:"Ice Bond (Euphoria)", use:"used", feeds:"additional.ice_bond",
-        note:"+24% additional Cold Damage vs Frostbitten enemies (L20; SS14 nerf from 28%, 33% before 2026-07)." },
+        note:`+${pct(SEASON.ice_bond)} additional Cold Damage vs Frostbitten enemies (L20; SS13 28%, SS14 24%, 33% before 2026-07).` },
       { game:"Steamroll", use:"used", feeds:"additional.steamroll",
-        note:"+43% additional Melee Damage at Lv25 — the mainhand tower support." },
+        note:`+${pct(SNAP.additional.steamroll ?? 0)} additional Melee Damage at Lv25 — the mainhand tower support.` },
       { game:"Willpower", use:"used", feeds:"additional.willpower",
         note:"+6% additional per stack ×6 (multiplies) — granted by the Still Attack activation medium." },
       { game:"Pure Heart", use:"used", feeds:"additional.pure_heart",
@@ -56,7 +60,7 @@ const GROUPS: PoolGroup[] = [
       { game:"Spectral Slash: Legion", use:"used", feeds:"additional.legion_prism",
         note:"+20% base additional damage (the rolled malus can go negative at higher tiers)." },
       { game:"Fury's Onslaught (Rehan trait)", use:"used", feeds:"additional.misc",
-        note:"+68% additional damage while Seething Spirit is up (tier 5, SS14)." },
+        note:`+${pct(SEASON.fury)} additional damage while Seething Spirit is up (tier 5, ${PAGE_SEASON.toUpperCase()}).` },
       { game:"Rage Infusion (Rehan trait)", use:"used", feeds:"additional.misc",
         note:"+5% additional damage per 25 Rage gained recently, up to +40% at 8 stacks." },
       { game:"Seething Silhouette / Berserk", use:"used", feeds:"additional.misc",

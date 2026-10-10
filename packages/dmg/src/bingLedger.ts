@@ -57,6 +57,12 @@ export interface Source {
   replaces?: string[];
   /** a base taken together with its best lines (sources that require it), e.g. a Vorax piece */
   package?: boolean;
+  /** affix family on one item: taking a source replaces any present one of the same family */
+  family?: string;
+  /** price of taking it, in Flame Elementium (undefined = not priced) */
+  cost?: number;
+  /** character / item level it needs */
+  level?: number;
   note?: string;
 }
 

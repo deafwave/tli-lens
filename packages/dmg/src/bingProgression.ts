@@ -30,12 +30,22 @@ function capacityKeys(slot: string): string[] {
 export const keysOf = (s: Source): string[] =>
   [...(s.slot ? capacityKeys(s.slot) : []), ...(s.caps ?? []).filter(k => k in SLOT_CAPACITY)];
 
+export interface WalkOptions {
+  untilNoGain?: boolean;
+  pairs?: boolean;
+  /** only sources with `level` ≤ this */
+  maxLevel?: number;
+  /** order by log-DPS gained per FE (free moves first); unpriced sources are skipped */
+  byCost?: boolean;
+}
+
 export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Season,
-                     opts: { untilNoGain?: boolean; pairs?: boolean } = {}): PathStep[] {
+                     opts: WalkOptions = {}): PathStep[] {
   const dpsOf = (set: Source[]) => cycleDps(applySeason(compose(zero, effective(set)), season)).dps;
   const pairs = opts.pairs ?? true;
   let have = [...start];
-  let left = pool.filter(s => !have.includes(s));
+  let left = pool.filter(s => !have.includes(s) && (s.level ?? 0) <= (opts.maxLevel ?? Infinity)
+    && (!opts.byCost || s.cost !== undefined || s.package));
   let prev = dpsOf(have);
   const out: PathStep[] = [];
 
@@ -46,15 +56,18 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
     let best: Move | null = null;
     const consider = (add: Source[], remove: Source[], count = add.length): number => {
       const d = dpsOf([...have.filter(s => !remove.includes(s)), ...add]);
-      // per-source geometric gain, so a pair must beat two singles to be taken together
-      const score = (d / prev) ** (1 / count);
+      const cost = add.reduce((c, s) => c + (s.cost ?? 0), 0);
+      // per-source geometric gain, so a pair must beat two singles to be taken together;
+      // by cost: free moves first (by gain), then log-gain per FE
+      const score = !opts.byCost ? (d / prev) ** (1 / count)
+        : d <= prev ? -Infinity : cost > 0 ? Math.log(d / prev) / cost : 1e9 + Math.log(d / prev);
       if (!best || score > best.score + 1e-12) best = { add, remove, dps: d, score };
       return d;
     };
 
     /** Ways to make room for `c`: the items it replaces, plus one occupant of each full pool. */
     const roomFor = (c: Source): Source[][] => {
-      let options: Source[][] = [have.filter(s => c.replaces?.includes(s.id))];
+      let options: Source[][] = [have.filter(s => c.replaces?.includes(s.id) || (!!c.family && s.family === c.family))];
       for (const key of keysOf(c)) {
         options = options.flatMap(removed => {
           const occupants = have.filter(s => keysOf(s).includes(key) && !removed.includes(s));
@@ -76,7 +89,7 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       const PAIR_POOL = 12;
       const strong = [...single.entries()].sort((a, b) => b[1] - a[1]).slice(0, PAIR_POOL).map(e => e[0]);
       const pairable = [...new Set([...strong, ...left.filter(s => !ready(s) && !s.package)])];
-      const free = (s: Source) => !s.replaces?.length && !keysOf(s).some(k =>
+      const free = (s: Source) => !s.replaces?.length && !s.family && !keysOf(s).some(k =>
         have.filter(h => keysOf(h).includes(k)).length + 2 > SLOT_CAPACITY[k]);
       for (let i = 0; i < pairable.length; i++) for (let j = i + 1; j < pairable.length; j++) {
         const [a, b] = [pairable[i], pairable[j]];
@@ -88,7 +101,7 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
       const removed = have.filter(s => p.replaces?.includes(s.id));
       const base = [...have.filter(s => !removed.includes(s)), p];
       const lines = left.filter(s => s.requires?.includes(p.id));
-      const inner = walk(zero, base, lines, season, { untilNoGain: true, pairs: false });
+      const inner = walk(zero, base, lines, season, { ...opts, untilNoGain: true, pairs: false });
       const added = inner.flatMap(st => st.ids).map(id => lines.find(l => l.id === id)!);
       const dropped = new Set(inner.flatMap(st => st.removed));
       const kept = added.filter(l => !dropped.has(l.id));

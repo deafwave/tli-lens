@@ -56,6 +56,12 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
   if ((m = text.match(/^\+(\d+)% additional damage for \d+ s after using Mobility Skills$/i)))
     return { why: "after Mobility — live only while a Mobility Skill is cast (mechanics.md#bing-dummy-loop)", requires: ["mobility_cast"],
              edits: [["add", `additional.after_mobility_${m[1]}`, +m[1]]] };
+  // mechanics.md#bing-mark — on-hit Mark: "additionally increasing its Critical Strike Damage taken" (+10%, as
+  // Fixate's base Mark); the dummy stayed Marked 97% of samples at 16% chance on hit
+  if (/^\+\d+% chance to Mark the target on hit$/i.test(text))
+    return { why: "Mark on hit (+10% crit damage taken)", edits: [["add", "aux.mark_pct", 10]] };
+  // the auto-casts that fire Empower skills (Activation Medium) stop: importBing drops those kit sources
+  if (/^Unable to trigger Empower Skills$/i.test(text)) return { why: "Empower skills are not auto-triggered", edits: [] };
   if ((m = text.match(/^\+(\d+)% chance to gain \d+ stack\(s\) of Tenacity Blessing when hitting an enemy$/i)))
     return { why: "Tenacity Blessing on hit (a Blessing: feeds Repentance)", provides: ["blessing"], edits: [["add", "aux.tenacity_gain", +m[1]]] };
   if ((m = text.match(/^Deals up to \+(\d+)% additional Attack Damage to enemies in proximity/i)))
@@ -164,6 +170,8 @@ export interface NativePrisms {
 /** Inverse Image fixed affixes: "±X% all reflected <type> Talent Effects" (in-game tooltip order Micro, Medium, Legendary). */
 const INVERSE_TYPE: Record<string, string> = { "1224626031": "micro", "1224626011": "medium", "1224626051": "legendary" };
 const INVERSE_IMAGE = "360701";
+/** Empower-tagged skills the kit models as auto-cast (tlidb tags). */
+const EMPOWER_SKILLS = ["Bull's Rage", "Ice Bond"];
 
 /** Ethereal prism effects as importable lines (#bing-import):
     - area affixes "All <type> Talent within the area also gain: X" → a talent line on each allocated node of
@@ -259,7 +267,10 @@ export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]
     .map(p => [p.name as string, Object.fromEntries(Object.entries<any>(p.nodes ?? {})
       .map(([n, node]) => [n, String(node.description)]))]));
   const kit = kitSources(lo, raw, lines, supportBonus, name => pactBoards.get(name));
-  sources.push(...kit.sources);
+  // mechanics.md#bing-mark — "Unable to trigger Empower Skills" (Tyrant's Smoldering Hold): Bull's Rage vanished at
+  // the dummy (0% uptime) while the curse Timid kept firing
+  const noEmpower = extracted.some(l => /^Unable to trigger Empower Skills$/i.test(l.text));
+  sources.push(...kit.sources.filter(s => !(noEmpower && EMPOWER_SKILLS.some(n => s.label.startsWith(`skill:${n}:`)))));
   for (const l of [...extracted, ...memoryLines, ...kit.extraLines, ...prismLines] as Line[]) {
     const s = structural(l.text, l.slot);
     if (s) { add(l.source, l.text, scale(s.edits, l.slot === "tree" ? l.points ?? 1 : 1), s.provides, s.requires); lines.push({ source: l.source, text: l.text, kind: "structural", why: s.why }); continue; }

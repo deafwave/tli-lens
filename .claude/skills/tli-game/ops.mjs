@@ -6,6 +6,7 @@
      node ops.mjs unequip <skill> [<support>]             remove a support (or the whole skill) from its slot
      node ops.mjs restore                                 put back the last unequipped item (same copy, verified by item id)
      node ops.mjs install <skill> [<support>] [--slot N --socket S]   install by name from the picker (typed search)
+     node ops.mjs equip <bag item name>                   equip a gear-page bag item (right-click); gear-restore undoes the last swap
      node ops.mjs close                                   ESC until no Skill panel
    Names match case-insensitively by substring. Restoring = install the same name back into the same place. */
 import { execFileSync } from "node:child_process";
@@ -132,6 +133,32 @@ if (cmd === "state") {
   }
   close();
   console.log(`installed ${got} in slot ${slot} socket ${socket}`);
+} else if (cmd === "equip" || cmd === "gear-restore") {
+  // right-click a gear-page bag item: the game equips it and drops the old piece into the same bag cell
+  const GLOG = path.resolve(here, "../../../../scratch/gear-swaps.json");
+  const swaps = fs.existsSync(GLOG) ? JSON.parse(fs.readFileSync(GLOG, "utf8")) : [];
+  const rec = cmd === "gear-restore" ? swaps.at(-1) : null;
+  if (cmd === "gear-restore" && !rec) die("no gear swap to restore");
+  let u = ui();
+  const item = rec ? u.gear.bag.find(b => b.instanceId === rec.removed) : u.gear.bag.find(b => b.page === 100 && (has(b.uniqueName, names[0]) || has(b.baseName, names[0])));
+  if (!item) die(`no gear-page bag item matching "${rec ? rec.removedName : names[0]}"`);
+  if (item.page !== 100) die(`${item.uniqueName ?? item.baseName} is on bag page ${item.page}, not the gear page`);
+  const before = Object.fromEntries(Object.entries(u.gear.equipped).map(([k, v]) => [k, v.instanceId]));
+  waitFront();
+  if (!u.inventory.open) { game("key", "B"); for (let i = 0; i < 16 && !u.inventory.open; i++) { sleep(250); u = ui(); } }
+  if (!u.inventory.open) die("inventory did not open");
+  if (u.inventory.selectedPage !== 100) die(`bag shows page ${u.inventory.selectedPage}; select the gear tab (100) first`);
+  game("rclick", 2556 + (item.slot % 9) * 100, 996 + Math.floor(item.slot / 9) * 140); sleep(1000);
+  u = ui();
+  const changed = Object.entries(u.gear.equipped).filter(([k, v]) => before[k] !== v.instanceId);
+  if (changed.length !== 1 || changed[0][1].instanceId !== item.instanceId) die(`unexpected gear change: ${JSON.stringify(changed.map(([k, v]) => [k, v.uniqueName ?? v.baseName]))}`);
+  const [slot] = changed[0];
+  const out = u.gear.bag.find(b => b.instanceId === before[slot]);
+  game("click", 3354, 56); sleep(600);   // bag X (ESC would also close the dummy panel)
+  if (rec) fs.writeFileSync(GLOG, JSON.stringify(swaps.slice(0, -1), null, 1));
+  else fs.writeFileSync(GLOG, JSON.stringify([...swaps, { slot, equipped: item.instanceId, equippedName: item.uniqueName ?? item.baseName,
+    removed: before[slot], removedName: out?.uniqueName ?? out?.baseName }], null, 1));
+  console.log(`${slot}: ${out?.uniqueName ?? out?.baseName} -> ${item.uniqueName ?? item.baseName}${rec ? " (restored)" : "  (undo: node ops.mjs gear-restore)"}`);
 } else {
   die("usage: ops.mjs state | aura <name> on|off | unequip <skill> [<support>] | install <skill> [<support>] --slot N [--socket S] | close");
 }

@@ -68,6 +68,8 @@ switch ($cmd) {
   'key' { foreach ($k in $rest) { Key $k; Start-Sleep -Milliseconds 400 } }
   'type' { Activate; foreach ($c in ($rest -join ' ').ToCharArray()) { [TG]::PostMessage($h, 0x102, [IntPtr][int]$c, [IntPtr]1) | Out-Null; Start-Sleep -Milliseconds 40 } }
   'click' { Click $rest[0] $rest[1]; Start-Sleep -Milliseconds 500 }
+  'rclick' { Flick $rest[0] $rest[1] { param($lp) [TG]::PostMessage($h, 0x204, [IntPtr]2, $lp) | Out-Null
+      Start-Sleep -Milliseconds 100; [TG]::PostMessage($h, 0x205, [IntPtr]0, $lp) | Out-Null }; Start-Sleep -Milliseconds 500 }
   'aimkey' { Flick $rest[0] $rest[1] { param($lp) Key $rest[2] } 150; Start-Sleep -Milliseconds 300 }
   'hover' { $c = Crop $rest 3; $sc = if ($rest.Count -ge 8) { [double]$rest[7] } else { 0.5 }
     $script:shot = $null; Flick $rest[0] $rest[1] { param($lp) Start-Sleep -Milliseconds 600; $script:shot = Grab } 0

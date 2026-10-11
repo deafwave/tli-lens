@@ -76,16 +76,17 @@ describe("Bing importer", () => {
     expect(sum(july(), /^pactspirit: Iron Lion/, "aux.knockback")).toBe(48);
     expect(sum(july(), /^pactspirit: Iron Lion/, "increased.global")).toBe(6);
   });
-  test("1T dummy build: Ice Bond is a Sentry charge engine; Entangled Pain, Bull's Rage and Tenacity import", () => {
+  test("1T dummy build: Tyrant's 'Unable to trigger Empower Skills' stops the auto-cast Ice Bond engine and Bull's Rage", () => {
+    // mechanics.md#bing-mark — measured on DeafwaveB: Bull's Rage 0% uptime with Tyrant's equipped
     const r = pro1t();
     const snap: any = compose(BING_ZERO, effective(r.sources));
-    expect(snap.rotation.demolisher_every_n).toBe(1);
-    expect(snap.rotation.demolisher_resto_pct).toBeUndefined();
+    expect(r.sources.some(s => /^skill:(Ice Bond|Bull's Rage):/.test(s.label))).toBe(false);
+    expect(snap.rotation.demolisher_every_n).toBeUndefined();          // no Sentry charges → restoration rhythm
     expect(snap.additional.tenacity).toBeCloseTo((1.08 ** 6 - 1) * 100, 6);   // 4 base + 2 max stacks
-    expect(snap.additional.bulls_rage).toBeCloseTo(0.75 * 25.5, 9);           // L17, 75% uptime
+    expect(snap.crit.crit_dmg_taken_pct).toBe(10);                     // Mark on hit
     expect(r.sources.find(s => /Entangled Pain/.test(s.label))?.provides).toContain("curse");
     expect(r.lines.filter(l => l.kind === "unknown").map(l => l.text).sort()).toEqual([
-      "+1 Max Charges", "+30% Bond Gaining Speed", "Converts 50% of Lightning Damage to Fire Damage", "Unable to trigger Empower Skills"]);
+      "+1 Max Charges", "+30% Bond Gaining Speed", "Converts 50% of Lightning Damage to Fire Damage"]);
   }, 30_000);
   test("Haze prism: 4x3 area and base affix import (catalog GUIDs shared by two game ids); sheet crit damage 324", () => {
     const r = mine();

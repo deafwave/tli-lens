@@ -31,7 +31,8 @@ const HOA_SUPPORTS: Record<string, Effect> = {
   // bing1 QR ladder: L16 +23%, L20 +25% additional; its restoration is in rotation
   "Quick Return": lv => [["add", "additional.quick_return", lin(15.5, 25.5, 35.5)(lv)]],
   // mechanics.md#bing-per-hit — Upheaval off: explosions ÷1.321 (its rolled explosion line), pummel ÷0.994: the
-  // "+20% additional damage for the supported skill" shows on no hit type. Explosions are priced per hit only
+  // "+20% additional damage for the supported skill" shows on no hit type (one build; SS13 text unread), dropped for
+  // every build. Explosions are priced per hit only
   // (bombHitTypes) until R2 counts them
   "Hammer of Ash: Upheaval (Magnificent)": (_lv, x) => [["add", "rotation.explosion_hit_pct", x.roll?.[0] ?? 32]],
 };

@@ -288,6 +288,7 @@ const FACTOR_SPECS: Record<BingFactorId, FactorSpec> = {
     scope: "hit components of the supported Hammer of Ash skill",
     condition: null,
   },
+  // R1 measured this +20% absent on every hit type (one build, mechanics.md#bing-per-hit); logic unchanged here
   "upheaval-additional-damage": {
     factorId: "upheaval-additional-damage",
     label: "Upheaval additional damage",

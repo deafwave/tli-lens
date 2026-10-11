@@ -712,10 +712,13 @@ describe("Bing1 Obliterate chain — Ruinous Star + Deterioration", () => {
     expect(cycleDps(s3).dps / cycleDps(s).dps).toBeCloseTo(1.4247, 3);
   });
 
-  // R8 pin (mechanics.md#bing-per-hit, OPEN for R3): the R1 per-hit read makes "+X% Deterioration Damage" the tick's
-  // own pool (×1.24 here; was the increased-sum ×1.51/1.27 = ×1.189, model ×1.1493 / 16,199). Measured span ratio
-  // ×1.1530 (14,451.5 / 12,533.5); model now ×1.1896 (+3.2%). Flip to the measured ratio once the chain's H fold-in
-  // (the July rig's fitted hits) is replaced by counted hits (R2).
+  // R8 pin (mechanics.md#bing-per-hit, OPEN — its own R3 item): the R1 per-hit read makes "+X% Deterioration Damage"
+  // the tick's own pool (×1.24 here; was the increased-sum ×1.51/1.27 = ×1.189, model ×1.1493 / 16,199). Measured
+  // span ratio ×1.1530 (14,451.5 / 12,533.5); model now ×1.1896 (+3.2%). This direct A/B of the +24% line favours
+  // ×1.19 on ticks — it conflicts with the own-pool rule unless the rig's tick share is ~0.64, not 0.79. Not H: detDps
+  // scales with hitDps, liveStacks ignores hits_per_bomb, H is RS-off-anchored. Candidates: the unencoded July lunar
+  // affix (bingLedger.ts memory_progress), enhancedShare / OBLITERATE_TIMER_SCALE. Flip to the measured ratio once
+  // resolved.
   test("s4 +24% Deterioration Damage: the tick's own pool ×1.24 (span 14,451.5; measured ×1.153 vs model ×1.190, OPEN)", () => {
     const s = rs();
     s.increased.global = 27;
@@ -740,7 +743,8 @@ describe("Bing1 Obliterate chain — Ruinous Star + Deterioration", () => {
     s.deterioration!.additional_damage_pct = 8;
     s.deterioration!.duration_inc_pct = 35;
     s.deterioration!.damage_inc_pct = 24;
-    // R8 pin: was 19,034 before the R1 tick rule (mechanics.md#bing-per-hit); measured span 17,602.5
+    // R8 pin: was 19,034 before the R1 tick rule (mechanics.md#bing-per-hit); measured span 17,602.5. Same open
+    // item as s4 (the July chain's tick share vs the own-pool rule), not R2's counts
     expect(cycleDps(s).dps).toBeCloseTo(19701, -1);
   });
 
@@ -895,8 +899,9 @@ describe("Bing real build — real_buld_3 (frozen-aura calibration 2026-07-20)",
     expect(cycleDps(rsOff()).dps / 1e9).toBeCloseTo(13.17, 1);
   });
 
-  // R8 pin (mechanics.md#bing-per-hit, OPEN for R3): the R1 tick rule (own Deterioration pool) moved 595.0B / 88.8%
-  // to 672.9B / 90.1% on this hand ledger, whose H fold-in was fit under the old rule. Measured 557.75B.
+  // R8 pin (mechanics.md#bing-per-hit, OPEN — the s4 item for R3): the R1 tick rule (own Deterioration pool) moved
+  // 595.0B / 88.8% to 672.9B / 90.1% on this hand ledger. Measured 557.75B. The tick share does not depend on H
+  // (RS-off-anchored), so R2's counts will not flip this; see s4 (July lunar affix unencoded, enhancedShare).
   test("full state: model 672.9B, det share 90.1% (measured 557.75B — +20.6% hot, OPEN; mechanics.md#real-build)", () => {
     const r = cycleDps(snap());
     expect(r.dps / 1e9).toBeCloseTo(672.9, 0);

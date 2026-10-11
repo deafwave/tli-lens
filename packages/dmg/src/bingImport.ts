@@ -129,8 +129,9 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
     return { why: "Ranger knockback → damage", edits: [["add", "aux.knockback_conv", +m[1]]] };
   if ((m = text.match(/^\+(\d+)% additional damage taken by enemies in proximity to Sentries$/i)))
     // mechanics.md#bing-per-hit — Flame Core off left every hit type unchanged (explosions ÷1.002): the dummy is not
-    // in the Sentry's proximity at the measuring spot
-    return { why: "Formation Breaker taken near Sentries: not at the dummy (measured ×1.00 per hit)", edits: [],
+    // in the Sentry's proximity at the measuring spot. Measured on one build, one dummy spot, player at range under
+    // Firepower Coverage — zeroed for every build; a build whose Sentry sits at the boss may differ
+    return { why: "Formation Breaker taken near Sentries: not at the dummy (measured ×1.00 per hit, one build / spot)", edits: [],
              requires: ["sentry"] };
   return null;
 }

@@ -254,7 +254,14 @@ function teachingLoadout(
       name: gearName,
       rarity: "Teaching example",
       category: "formula",
+      icon: null,
       lines: [supportName],
+      mods: [{
+        family: "unknown",
+        text: supportName,
+        tier: null,
+        variant: null,
+      }],
     }],
     skills: [{
       slot: "active:0",

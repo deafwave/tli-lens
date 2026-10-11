@@ -55,6 +55,12 @@ describe("gear icon URLs", () => {
         category: "boots",
         icon: "/images/legendaries/boots/int_boots/Icon_Equip_Shoes_Epic_407_128.webp",
         lines: ["+180 gear Energy Shield"],
+        mods: [{
+          family: "legendary",
+          text: "+180 gear Energy Shield",
+          tier: null,
+          variant: "normal",
+        }],
       },
       {
         slot: "unmapped:jewel:0",
@@ -63,6 +69,7 @@ describe("gear icon URLs", () => {
         category: "jewel",
         icon: null,
         lines: [],
+        mods: [],
       },
     ]);
     expect(board).toHaveLength(10);
@@ -85,5 +92,26 @@ describe("gear icon plumbing through import", () => {
     expect(tlidbIconUrl(boots?.icon)).toBe(
       `${TLIDB_ICON_BASE}/Icon_Equip_Shoes_Epic_407_112.webp`,
     );
+  });
+
+  it("keeps tier and corrosion on structured gear mods", () => {
+    const raw = JSON.parse(
+      fs.readFileSync(path.join(fromRoot("data"), "builds", "bing_china.json"), "utf8"),
+    );
+    const build = importBuild(raw, emptyCatalog);
+    const corroded = build.loadouts
+      .flatMap((row) => row.gear)
+      .find((item) => item.mods.some((mod) => mod.variant === "corroded"));
+    expect(corroded).toBeTruthy();
+    expect(corroded?.mods.some((mod) => mod.variant === "corroded")).toBe(true);
+    expect(
+      corroded?.mods.some((mod) =>
+        mod.family === "legendary" || mod.family === "random"),
+    ).toBe(true);
+
+    const maul = build.loadouts[0]?.gear.find((row) => row.slot === "mainHand");
+    const prefix = maul?.mods.find((mod) => mod.family === "prefix");
+    expect(prefix?.tier).toBe("2");
+    expect(prefix?.text.length).toBeGreaterThan(0);
   });
 });

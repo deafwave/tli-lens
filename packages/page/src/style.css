@@ -6532,22 +6532,90 @@ input:focus-visible,
 
 .gear-tip-lines {
   display: grid;
-  gap: 4px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: 220px;
-  overflow: auto;
 }
 
-.gear-tip-lines li {
-  color: var(--prose);
-  font-size: var(--text-label);
-  line-height: 1.35;
-  padding: 0;
+.gear-tip-mod {
+  --mod: var(--prose);
+  display: grid;
+  gap: 4px;
+  padding: 0 0 0 8px;
   border: 0;
+  border-left: 2px solid color-mix(in srgb, var(--mod) 75%, transparent);
   background: transparent;
   border-radius: 0;
+}
+
+.gear-tip-mod.family-legendary { --mod: #ff9a45; }
+.gear-tip-mod.family-random { --mod: #f0d35a; }
+.gear-tip-mod.family-prefix { --mod: #6ea8ff; }
+.gear-tip-mod.family-suffix { --mod: #8eebb1; }
+.gear-tip-mod.family-implicit { --mod: #c8cfd4; }
+.gear-tip-mod.family-corrosion { --mod: #d28bff; }
+.gear-tip-mod.family-base { --mod: #b0b9b5; }
+.gear-tip-mod.family-sweetdream { --mod: #7eead4; }
+.gear-tip-mod.family-vorax { --mod: #bfa6ff; }
+.gear-tip-mod.family-beltblend { --mod: #c9a86a; }
+.gear-tip-mod.family-towersequence,
+.gear-tip-mod.family-tower { --mod: #93b0ff; }
+.gear-tip-mod.family-unknown { --mod: var(--prose); }
+
+.gear-tip-mod.is-corroded {
+  --mod: #e28bff;
+}
+
+.gear-mod-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.gear-mod-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mod) 45%, var(--line));
+  background: color-mix(in srgb, var(--mod) 14%, transparent);
+  color: color-mix(in srgb, var(--mod) 88%, white);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+.gear-mod-tier {
+  --mod: #9aa3a8;
+  font-family: "DM Mono", ui-monospace, monospace;
+}
+
+.gear-mod-tier.tier-1 { --mod: #f0d35a; }
+.gear-mod-tier.tier-2 { --mod: #c9a86a; }
+.gear-mod-tier.tier-3 { --mod: #9aa3a8; }
+.gear-mod-tier.tier-4,
+.gear-mod-tier.tier-5,
+.gear-mod-tier.tier-6,
+.gear-mod-tier.tier-7,
+.gear-mod-tier.tier-8 { --mod: #7a848c; }
+
+.gear-mod-corroded {
+  --mod: #e28bff;
+}
+
+.gear-mod-text {
+  color: color-mix(in srgb, var(--mod) 55%, var(--prose));
+  font-size: var(--text-label);
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.gear-tip-head.is-corroded strong {
+  text-shadow: 0 0 12px color-mix(in srgb, #e28bff 40%, transparent);
 }
 
 .gear-tip-empty-lines {

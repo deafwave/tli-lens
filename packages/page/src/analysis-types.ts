@@ -4,6 +4,15 @@ import type { PlayerDefenseDisplayEvidenceResult } from "./player-defense-eviden
 import type { BingFactorLedgerLoadoutDisplayResult } from "./bing-factor-evidence";
 import type { ObservedDamageMeasurement } from "./observed-measurement";
 
+/** One equipped-item affix for tooltips (tier / corrosion chrome). */
+export interface GearModLine {
+  family: string;
+  text: string;
+  tier: string | number | null;
+  /** `normal` | `corroded` | null when the source did not say. */
+  variant: string | null;
+}
+
 export interface GearRow {
   slot: string;
   name: string;
@@ -11,7 +20,10 @@ export interface GearRow {
   category: string | null;
   /** Planner-relative icon path (e.g. `/images/legendaries/.../Icon_….webp`). */
   icon: string | null;
+  /** Plain affix text (defense scan + diffs). */
   lines: string[];
+  /** Structured affixes for rarity/tier/corrosion tooltip rendering. */
+  mods: GearModLine[];
   fingerprint?: string;
 }
 

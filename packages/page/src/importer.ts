@@ -161,18 +161,28 @@ function catalogName(identity: NormalizedIdentity, catalog: ImportCatalog) {
 }
 
 function gearRows(loadout: NormalizedLoadout): GearRow[] {
-  return loadout.gear.map((item) => ({
-    slot: item.slot,
-    name: item.name,
-    rarity: item.rarity,
-    category: item.category ?? item.subtype ?? item.itemKind,
-    icon: item.icon,
-    lines: [
-      ...item.modifiers.map(formatModifierEvidence),
+  return loadout.gear.map((item) => {
+    const mods = item.modifiers.map((mod) => ({
+      family: mod.family,
+      text: formatModifierEvidence(mod),
+      tier: mod.tier,
+      variant: mod.variant,
+    }));
+    const lines = [
+      ...mods.map((mod) => mod.text),
       ...item.diagnostics.map((value) => `Capture note: ${value}`),
-    ].slice(0, 12),
-    fingerprint: item.fingerprint,
-  }));
+    ].slice(0, 16);
+    return {
+      slot: item.slot,
+      name: item.name,
+      rarity: item.rarity,
+      category: item.category ?? item.subtype ?? item.itemKind,
+      icon: item.icon,
+      lines,
+      mods: mods.slice(0, 16),
+      fingerprint: item.fingerprint,
+    };
+  });
 }
 
 function skillRows(loadout: NormalizedLoadout, catalog: ImportCatalog): SkillRow[] {

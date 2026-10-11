@@ -35,6 +35,7 @@ import type {
   AnalyzedBuild,
   AnalyzedLoadout,
   DemoData,
+  GearModLine,
   GearRow,
   ImportCatalog,
   SkillRow,
@@ -616,7 +617,71 @@ function emptyGearRow(slot: string): GearRow {
     category: null,
     icon: null,
     lines: [],
+    mods: [],
   };
+}
+
+const GEAR_FAMILY_LABEL: Record<string, string> = {
+  legendary: "Legendary",
+  random: "Random",
+  prefix: "Prefix",
+  suffix: "Suffix",
+  implicit: "Implicit",
+  corrosion: "Corrosion",
+  base: "Base",
+  sweetDream: "Sweet Dream",
+  vorax: "Vorax",
+  beltBlend: "Belt blend",
+  towerSequence: "Tower",
+};
+
+function gearFamilyLabel(family: string): string {
+  return GEAR_FAMILY_LABEL[family]
+    ?? family.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+}
+
+function gearFamilyClass(family: string): string {
+  const key = family.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  return key || "unknown";
+}
+
+/** T1–Tn chip; hide non-positive / empty tiers (e.g. corrosion tier 0). */
+function gearTierLabel(tier: string | number | null | undefined): string | null {
+  if (tier === null || tier === undefined || tier === "") return null;
+  const n = Number(tier);
+  if (Number.isFinite(n) && n <= 0) return null;
+  return `T${tier}`;
+}
+
+function isCorrodedMod(mod: GearModLine): boolean {
+  const variant = (mod.variant ?? "").toLowerCase();
+  if (variant === "corroded" || variant === "corrosion") return true;
+  return mod.family === "corrosion";
+}
+
+function gearModsForTip(row: GearRow): GearModLine[] {
+  const plain = (text: string): GearModLine => ({ family: "unknown", text, tier: null, variant: null });
+  // Older demo fixtures only carried plain lines; capture notes live only in lines.
+  if (!row.mods?.length) return (row.lines ?? []).map(plain);
+  return [
+    ...row.mods,
+    ...(row.lines ?? []).filter((text) => text.startsWith("Capture note: ")).map(plain),
+  ];
+}
+
+function renderGearModLine(mod: GearModLine): string {
+  const family = gearFamilyClass(mod.family);
+  const corroded = isCorrodedMod(mod);
+  const tier = gearTierLabel(mod.tier);
+  const chips = [
+    `<span class="gear-mod-chip gear-mod-family">${esc(gearFamilyLabel(mod.family))}</span>`,
+    tier ? `<span class="gear-mod-chip gear-mod-tier tier-${escAttr(String(tier).replace(/^T/i, ""))}">${esc(tier)}</span>` : "",
+    corroded ? `<span class="gear-mod-chip gear-mod-corroded">Corroded</span>` : "",
+  ].filter(Boolean).join("");
+  return `<li class="gear-tip-mod family-${escAttr(family)}${corroded ? " is-corroded" : ""}">
+    <span class="gear-mod-meta">${chips}</span>
+    <span class="gear-mod-text">${esc(mod.text)}</span>
+  </li>`;
 }
 
 function renderGearTooltip(cell: GearBoardCell): string {
@@ -630,15 +695,17 @@ function renderGearTooltip(cell: GearBoardCell): string {
     </div>`;
   }
   const tone = gearRarityTone(row.rarity);
-  const meta = [row.rarity, row.category, cell.label]
-    .filter((value): value is string => Boolean(value && String(value).trim()))
-    .join(" · ");
-  const lines = row.lines.length
-    ? `<ul class="gear-tip-lines">${row.lines.map((line) =>
-      `<li>${esc(line)}</li>`).join("")}</ul>`
+  const mods = gearModsForTip(row);
+  const corrodedItem = mods.some(isCorrodedMod);
+  const metaBits = [row.rarity, row.category, cell.label]
+    .filter((value): value is string => Boolean(value && String(value).trim()));
+  if (corrodedItem) metaBits.push("Corroded");
+  const meta = metaBits.join(" · ");
+  const lines = mods.length
+    ? `<ul class="gear-tip-lines">${mods.map(renderGearModLine).join("")}</ul>`
     : `<p class="gear-tip-empty-lines">No affix lines imported for this item.</p>`;
   return `<div class="gear-tooltip" role="tooltip">
-    <div class="gear-tip-head rarity-${tone}">
+    <div class="gear-tip-head rarity-${tone}${corrodedItem ? " is-corroded" : ""}">
       <strong>${esc(row.name)}</strong>
       <span>${esc(meta)}</span>
     </div>

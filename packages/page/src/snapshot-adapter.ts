@@ -43,6 +43,8 @@ export interface NormalizedModifier {
   id: string | null;
   text: string | null;
   tier: string | number | null;
+  /** Legendary/random roll state: `normal`, `corroded`, etc. */
+  variant: string | null;
   rolls: NormalizedRoll[];
   fingerprint: string;
 }
@@ -557,13 +559,15 @@ function modifier(
         (entry): entry is NormalizedRoll => Boolean(entry),
       ) : []);
   const tier = scalarText(source.tier ?? source.Tier) ?? finiteInteger(source.tier ?? source.Tier);
-  const semantic = { family, id, text, tier, rolls: observedRolls };
+  const variant = nonEmptyString(source.variant);
+  const semantic = { family, id, text, tier, variant, rolls: observedRolls };
   return {
     key: `${family}:${id ?? index}`,
     family,
     id,
     text,
     tier,
+    variant,
     rolls: observedRolls,
     fingerprint: structuralFingerprint(semantic),
   };
@@ -580,6 +584,7 @@ function compendiumModifiers(itemValue: unknown): NormalizedModifier[] {
     if (value !== null && value !== undefined) result.push(modifier(family, value, 0));
   };
   addArray("legendary", item.legendaryMods);
+  addArray("random", item.randomAffixSlots);
   addArray("implicit", objectValue(item.baseItem).implicits);
   addArray("prefix", item.prefixes);
   addArray("suffix", item.suffixes);

@@ -414,11 +414,18 @@ export function hitDamage(s: Snapshot, turn?: Turn): { nonCrit: number; crit: nu
     the pummel of a Demolisher-empowered bomb (+empower_hit_pct additional Hit, +empower_area_pct additional Area)
     and each of its explosions (+explosion_hit_pct additional; a later Shotgun hit, × (1 − shotgun_falloff_pct)). */
 export function bombHitTypes(s: Snapshot, turn?: Turn) {
-  const r = s.rotation, pummel = hitDamage(s, turn);
-  const scale = (h: { nonCrit: number; crit: number }, k: number) => ({ nonCrit: h.nonCrit * k, crit: h.crit * k });
-  const pummelEmpowered = scale(pummel, (1 + (r.empower_hit_pct ?? 0) / 100) * (1 + (r.empower_area_pct ?? 0) / 100));
-  const explosion = scale(pummelEmpowered, (1 + (r.explosion_hit_pct ?? 0) / 100) * (1 - (r.shotgun_falloff_pct ?? 0) / 100));
-  return { pummel, pummelEmpowered, explosion };
+  const pummel = hitDamage(s, turn), k = empowerFactors(s.rotation);
+  const scale = (h: { nonCrit: number; crit: number }, f: number) => ({ nonCrit: h.nonCrit * f, crit: h.crit * f });
+  return { pummel, pummelEmpowered: scale(pummel, k.pummel), explosion: scale(pummel, k.explosion) };
+}
+
+/** mechanics.md#bing-per-hit / #bing-hit-counts — an empowered pummel and each explosion ÷ the un-empowered pummel:
+    +empower_hit_pct additional Hit, +empower_area_pct additional Area, each "+X% additional damage when Demolisher
+    Charge is consumed" line (rotation.empower_more_*); explosions add +explosion_hit_pct and are later Shotgun hits. */
+function empowerFactors(r: Record<string, number>): { pummel: number; explosion: number } {
+  let pummel = (1 + (r.empower_hit_pct ?? 0) / 100) * (1 + (r.empower_area_pct ?? 0) / 100);
+  for (const [k, v] of Object.entries(r)) if (k.startsWith("empower_more_")) pummel *= 1 + v / 100;
+  return { pummel, explosion: pummel * (1 + (r.explosion_hit_pct ?? 0) / 100) * (1 - (r.shotgun_falloff_pct ?? 0) / 100) };
 }
 
 /** mechanics.md#bing-per-hit — first Deterioration tick ÷ the hit that inflicted it: "True Damage equal to 60% of the
@@ -452,7 +459,10 @@ export function deteriorationTickSum(d: Record<string, number>): number {
 function liveStacks(s: Snapshot, d: Record<string, number>, enhancedPerSec: number): number | undefined {
   const r = s.rotation;
   if (r.bombs_per_throw === undefined) return undefined;
-  const perThrow = r.bombs_per_throw * ((r.proj_base ?? 0) + (r.proj_added ?? 0) + 1);
+  // mechanics.md#bing-hit-counts — counted: an empowered bomb lands 1 + Q hits, an un-empowered one its pummel
+  const c = r.counted_hits ? bombCounts(s) : undefined;
+  const perThrow = c ? c.bombsPerThrow * (c.empoweredShare * (c.explosionsPerEmpoweredBomb + 1) + 1 - c.empoweredShare)
+    : r.bombs_per_throw * ((r.proj_base ?? 0) + (r.proj_added ?? 0) + 1);
   return enhancedPerSec * perThrow * Math.min(d.chance_pct, 100) / 100
        * d.duration_s * (1 + (d.duration_inc_pct ?? 0) / 100);
 }
@@ -552,53 +562,86 @@ export interface RotationResult {
   starter_damage: number; finisher_damage: number;
 }
 
-/** mechanics.md#bing-bombs — Hammer of Ash as a bomb (Bing / Blast Nova): each throw
-    lobs bombs that detonate into HoA projectiles. Base throw rate (throw_rate_base,
-    1/s) scales only by +% attack speed; hits_per_bomb folds the NORMAL-throw radial
-    spread + shotgun falloff on a single target. Demolisher Charge is structural: one
-    throw in demolisher_every_n consumes a charge and is empowered ×demolisher_empower_mult
-    (+215% additional hit + explosion overlap), the charge consumed AT the throw so
-    n = interval ceil'd to the throw grid. */
+/** mechanics.md#bing-hit-counts — Blast Nova's throw rate (1/s × the attack-speed bonuses compose derives) and the
+    Demolisher rhythm: the charge (HoA "once every 3 s", ÷ restoration speed) is consumed by the next throw, so one throw
+    in n = ceil(interval × throw rate) is empowered; demolisher_every_n overrides (a Sentry charge engine: 1). Counted
+    builds throw on whole logic frames (period = round(30 / rate) frames, Task 0). */
+function throwRateOf(r: Record<string, number>): number {
+  const rate = (r.throw_rate_base ?? 1) * (1 + (r.attack_speed_inc_pct ?? 0) / 100);
+  return r.counted_hits ? 30 / Math.round(30 / rate) : rate;
+}
+function demolisherN(r: Record<string, number>, throwRate: number): number {
+  return r.demolisher_resto_pct !== undefined
+    ? Math.ceil((3 / (1 + r.demolisher_resto_pct / 100)) * throwRate)
+    : (r.demolisher_every_n ?? 3);
+}
+
+/** mechanics.md#bing-hit-counts — Bull's Rage (Activation Medium: Demolisher) is cast at the first Demolisher Charge
+    gain after its cooldown: every 0.25 s with a Sentry charge engine (Formation Breaker's interval), else every n
+    throws. Uptime = duration / that period; without the trigger, duration / cooldown. */
+export const SENTRY_CHARGE_INTERVAL_S = 0.25;
+function bullsRageUptime(r: Record<string, number>): number | undefined {
+  if (r.bulls_rage_cd_s === undefined) return undefined;
+  const cd = r.bulls_rage_cd_s / (1 + (r.cdr_inc_pct ?? 0) / 100);
+  const rate = throwRateOf(r);
+  const gain = !r.bulls_rage_on_charge ? 0
+    : r.demolisher_every_n === 1 && r.demolisher_resto_pct === undefined ? SENTRY_CHARGE_INTERVAL_S
+    : demolisherN(r, rate) / rate;
+  return Math.min(1, r.bulls_rage_s / (gain ? Math.ceil(cd / gain - 1e-9) * gain : cd));
+}
+
+/** mechanics.md#bing-hit-counts — the counts cycleDps prices per throw, each a text or a per-hit read. */
+export function bombCounts(s: Snapshot) {
+  const r = s.rotation, throwRate = throwRateOf(r), d = s.deterioration;
+  const ticks = d && d.tick_interval_s
+    ? Math.ceil(d.duration_s * (1 + (d.duration_inc_pct ?? 0) / 100) / d.tick_interval_s - 1e-9) - 1 : 0;
+  return {
+    throwRate,
+    bombsPerThrow: r.bombs_per_throw,
+    empoweredShare: 1 / demolisherN(r, throwRate),
+    // HoA: "When the skill consumes Demolisher Charge, Embers cause explosion on hit" — one per Ember Projectile
+    explosionsPerEmpoweredBomb: (r.proj_base ?? 0) + (r.proj_added ?? 0),
+    ticksPerHit: d ? ticks * Math.min(d.chance_pct, 100) / 100 : 0,
+    bullsRageUptime: bullsRageUptime(r),
+  };
+}
+
+/** mechanics.md#bing-bombs / #bing-hit-counts — Hammer of Ash as a bomb (Bing / Blast Nova). Counted builds
+    (rotation.counted_hits, Firepower Coverage — the regime read per hit): each throw lobs bombs_per_throw bombs; an
+    empowered bomb lands its pummel and one explosion per Ember, an un-empowered bomb the pummel alone (bombHitTypes
+    prices each). Manual-throw rigs keep the July fold: hits_per_bomb effective hits × the projectile scale, one throw
+    in n empowered ×demolisher_empower_mult. */
 export function bombRotation(s: Snapshot): RotationResult {
   const r = s.rotation;
   const skillType = s.skill_type ?? "bomb";
-  const throwRate = (r.throw_rate_base ?? 1) * (1 + (r.attack_speed_inc_pct ?? 0) / 100);
+  const throwRate = throwRateOf(r);
   const bombsPerSec = throwRate * r.bombs_per_throw;
-  // mechanics.md#multi-proj — single-target hits scale linearly with projectile quantity
-  const projScale = r.proj_base ? (r.proj_base + (r.proj_added ?? 0)) / r.proj_base : 1;
-  // mechanics.md#bing-hit-channels — a bomb's hits are Ember projectiles (projectile-typed, scale
-  // with projectile quantity) plus a non-projectile share q (the pummel/area hit) that projectile
-  // modifiers and quantity do not touch
-  const q = r.non_projectile_share ?? 0;
-  const nonProj: Snapshot = { ...s, tags: skillTagsOf(s).filter(t => !t.includes("projectile")) };
-  // mechanics.md#bing-proj-speed — Ember hits per bomb scale with projectile speed^k (faster Embers reach and
-  // re-hit the target more): increased Projectile Speed sums, Slow Projectile multiplies
-  const speed = (1 + (r.proj_speed_inc_pct ?? 0) / 100) * (1 + (r.proj_speed_more_pct ?? 0) / 100);
-  const speedHits = speed ** (r.proj_speed_hit_exp ?? 0);
-  const projHit = expectedHit(s) * projScale * speedHits;
-  const channelMix = q ? ((1 - q) * projHit + q * expectedHit(nonProj)) / projHit : 1;
-  const perBomb = (r.hits_per_bomb ?? 1) * projHit * channelMix;
-  const demoM = r.demolisher_empower_mult ?? 1;
-  const demoN = r.demolisher_resto_pct !== undefined
-    ? Math.ceil((3 / (1 + r.demolisher_resto_pct / 100)) * throwRate)
-    : (r.demolisher_every_n ?? 3);
-  const hitDps = bombsPerSec * perBomb * ((demoN - 1 + demoM) / demoN);
   const hitChild = hitByTypeNode(s, s.base.skill_weapon_pct / 100);
   const perHit = perHitNode(s, hitChild);
-  const rotationNode: TNode = { label: `rotation (${skillType})`, value: 0, op: "product", children: [perHit],
-    chips: [
-      { kind: "rotation", label: "throw rate", op: "×", factor: throwRate },
-      { kind: "rotation", label: "bombs / throw", op: "×", factor: r.bombs_per_throw },
-      { kind: "rotation", label: "hits / bomb", op: "×", factor: r.hits_per_bomb ?? 1 },
-      { kind: "rotation", label: "projectile scale", op: "×", factor: projScale },
-      ...(speedHits !== 1 ? [{ kind: "rotation" as const, label: `projectile speed ×${speed.toFixed(3)} → hits`, op: "×" as const, factor: speedHits }] : []),
-      ...(q ? [{ kind: "rotation" as const, label: `hit channels (${Math.round(100 * q)}% non-projectile)`, op: "×" as const, factor: channelMix }] : []),
-      { kind: "rotation", label: `demolisher share (n=${demoN}, ×${demoM})`, op: "×", factor: (demoN - 1 + demoM) / demoN },
-    ] };
+  const node = (chips: Chip[]): TNode => ({ label: `rotation (${skillType})`, value: 0, op: "product", children: [perHit], chips: [
+    { kind: "rotation", label: "throw rate", op: "×", factor: throwRate },
+    { kind: "rotation", label: "bombs / throw", op: "×", factor: r.bombs_per_throw }, ...chips] });
   // Obliterate enhances the THROW (one Main-Skill use) — every bomb of an enhanced
   // throw inflicts, so the enhanced-share is per throw, not per bomb → uses = 1.
-  return { hitDps, cycleTime: 1 / throwRate, uses: 1, perHit, rotationNode,
-           starter_damage: 0, finisher_damage: 0 };
+  const done = (hitDps: number, rotationNode: TNode): RotationResult =>
+    ({ hitDps, cycleTime: 1 / throwRate, uses: 1, perHit, rotationNode, starter_damage: 0, finisher_damage: 0 });
+  if (r.counted_hits) {
+    const c = bombCounts(s), k = empowerFactors(r), e = c.empoweredShare;
+    // pummel-equivalent hits per bomb: crit and the Kaleidoscope turns average inside expectedHit (the perHit node)
+    const perBomb = e * (k.pummel + c.explosionsPerEmpoweredBomb * k.explosion) + (1 - e);
+    return done(bombsPerSec * expectedHit(s) * perBomb, node([
+      { kind: "rotation", label: `hits / bomb (pummel-equivalent: ${(100 * e).toFixed(0)}% empowered, pummel ×${k.pummel.toFixed(2)} + ${c.explosionsPerEmpoweredBomb} explosions ×${k.explosion.toFixed(3)})`, op: "×", factor: perBomb }]));
+  }
+  // mechanics.md#multi-proj — single-target hits scale linearly with projectile quantity
+  const projScale = r.proj_base ? (r.proj_base + (r.proj_added ?? 0)) / r.proj_base : 1;
+  const demoM = r.demolisher_empower_mult ?? 1;
+  const demoN = demolisherN(r, throwRate);
+  const hitDps = bombsPerSec * (r.hits_per_bomb ?? 1) * expectedHit(s) * projScale * ((demoN - 1 + demoM) / demoN);
+  return done(hitDps, node([
+    { kind: "rotation", label: "hits / bomb", op: "×", factor: r.hits_per_bomb ?? 1 },
+    { kind: "rotation", label: "projectile scale", op: "×", factor: projScale },
+    { kind: "rotation", label: `demolisher share (n=${demoN}, ×${demoM})`, op: "×", factor: (demoN - 1 + demoM) / demoN },
+  ]));
 }
 
 /** mechanics.md#mark — Hammer of Ash / Spectral Slash as a combo (Rehan): N starters
@@ -650,12 +693,11 @@ export function comboRotation(s: Snapshot): RotationResult {
 /** Boss single-target DPS: pick the rotation strategy by shape (bomb iff
     rotation.bombs_per_throw is set, else the combo cycle), then layer the shared
     Deterioration DoT identically on top of whichever rotation ran. */
-/** mechanics.md#bing-obliterate — fitted, not a timer property: it caps enhanced throws at the model's weapon-APS
-    throw rate so weapon-local attack speed stops adding Deterioration, as the measured throw law does (every measured
-    state throws slower than the stated 0.5s timer). Goes when the law lands. */
-export const OBLITERATE_TIMER_SCALE = 0.70;
-
 export function cycleDps(s: Snapshot) {
+  // mechanics.md#bing-hit-counts — Bull's Rage is composed at full value; its uptime follows the charge cadence
+  const uptime = s.rotation.bombs_per_throw !== undefined ? bullsRageUptime(s.rotation) : undefined;
+  if (uptime !== undefined && s.additional.bulls_rage)
+    s = { ...s, additional: { ...s.additional, bulls_rage: s.additional.bulls_rage * uptime } };
   const rot = s.rotation.bombs_per_throw !== undefined ? bombRotation(s) : comboRotation(s);
   const { hitDps, cycleTime, uses, perHit, rotationNode, starter_damage, finisher_damage } = rot;
 
@@ -671,7 +713,8 @@ export function cycleDps(s: Snapshot) {
   // base tick %); a parsed build that only accumulated the modifier mods (Deterioration
   // Damage/Chance/Duration) has no base ⇒ inert, like Passivation on a zero-erosion build
   if (d && d.chance_pct > 0 && d.hit_damage_pct > 0) {
-    const enhancedShare = Math.min(1, cycleTime / (d.obliterate_interval_s * OBLITERATE_TIMER_SCALE) / uses);
+    // Ruinous Star: "Every 0.5 s, your next non-Channeled Main Skill is enhanced by Obliterate" (#bing-hit-counts)
+    const enhancedShare = Math.min(1, cycleTime / d.obliterate_interval_s / uses);
     // mechanics.md#bing-per-hit — each tick is 60% of the hit dealt × the Deterioration increases (their own pool)
     // × each additional line: deteriorationTickFactor (measured 1.446 per tick, R1)
     const tickFactor = deteriorationTickFactor(s);

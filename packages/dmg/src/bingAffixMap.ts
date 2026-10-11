@@ -84,9 +84,12 @@ const RULES: Rule[] = [
     [["add", `additional_typed.${ADDITIONAL_TYPED[m[2].toLowerCase()]}.${k}`, +m[1]]]],
   [r(`\\+${N}% additional damage for Main-Hand Weapons`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
   [r(`\\+${N}% additional Base Damage for Two-Handed Weapons`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
-  // only empowered (charge-consuming) throws get it: it scales the empower factor M (mechanics.md#bing-bombs)
-  [r(`\\+${N}% additional (?:skill )?damage when Demolisher Charge is consumed\\.?`), m =>
-    [["mul", "rotation.demolisher_empower_mult", 1 + +m[1] / 100]]],
+  // only empowered (charge-consuming) hits get it: the empowered hit types (counted path, #bing-hit-counts) and M
+  // (manual-throw July fold, #bing-bombs)
+  [r(`\\+${N}% additional (?:skill )?damage when Demolisher Charge is consumed\\.?`), (m, k) =>
+    [["mul", "rotation.demolisher_empower_mult", 1 + +m[1] / 100], ["add", `rotation.empower_more_${k}`, +m[1]]]],
+  // Bull's Rage's cooldown, hence its uptime (mechanics.md#bing-hit-counts)
+  [r(`\\+${N}% Cooldown Recovery Speed`), m => [["add", "rotation.cdr_inc_pct", +m[1]]]],
   [r(`\\+?${N}% additional Attack Damage after standing still for ${N}s\\. -${N}% additional Attack Speed`),
     (m, k) => [["add", `additional.${k}`, +m[1]], ["add", `aux.as_more_${k}`, -m[3]]]],
   [r(`${N}% additional damage applied to Life`), (m, k) => [["add", `additional.${k}_to_life`, +m[1]]]],

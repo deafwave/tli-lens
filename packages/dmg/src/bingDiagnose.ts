@@ -28,7 +28,7 @@ export const UNVERIFIED: Assumption[] = [
     drop: /Malleable/ },
   { id: "entangled", what: "Entangled Pain curse (+39% additional DoT taken) at full uptime (5s / 8s CD)",
     drop: /Entangled Pain/ },
-  { id: "bulls-rage", what: "Bull's Rage Euphoria (+27% additional Melee) at full uptime (6s / 10s CD)",
+  { id: "bulls-rage", what: "Bull's Rage Euphoria (+27% additional Melee) at its charge-cadence uptime (#bing-hit-counts, one build)",
     drop: /Bull's Rage/ },
   { id: "proximity", what: "Solar Ring makes every proximity line live under Firepower Coverage",
     tweak: s => { for (const k of Object.keys(s.enemy_taken)) if (/proximity|solar/.test(k)) delete s.enemy_taken[k]; } },

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { describe, expect, test } from "vitest";
-import { bombHitTypes, cycleDps, deteriorationTickFactor, hitDamage } from "../../src/damageModel.js";
+import { bombCounts, bombHitTypes, cycleDps, deteriorationTickFactor, hitDamage } from "../../src/damageModel.js";
 import { fromRoot } from "../../src/py.js";
 import { applySeason } from "../../src/seasons.js";
 import { importBing } from "../../src/bingImport.js";
@@ -12,6 +12,30 @@ const july = () => importBing(load("data/bing1/real_buld_3.json"));
 const pro1t = () => { const d = load("data/bing1/scraped/pro-1t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 const mine = () => { const d = load("data/bing1/scraped/my-build-2026-10-10.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
 const hanshan = () => { const d = load("data/bing1/scraped/hanshan-40t.json"); return importBing(d.compendium, 0, d.nativeTalents, d.nativePrisms); };
+/** Gear-swap variants of the 2026-10-10 build (the bag items used in game): a crafted main hand, Tyrant's gloves. */
+const myBuild = load("data/bing1/scraped/my-build-2026-10-10.json");
+const weapon = (phys: number, mods: [string, number][]) => {
+  const c = structuredClone(myBuild.compendium), lo = c.loadouts.loadouts[0];
+  const mh = lo.gear.inventory.find((x: any) => x.id === lo.gear.equipped.mainHand);
+  Object.assign(mh, { towerSequence: null, suffixes: [], corrosionImplicit: null,
+    prefixes: mods.map(([t, v]) => ({ modifierDescription: t, rolledValues: [{ value: v }] })) });
+  mh.baseItem = { ...mh.baseItem, implicits: [`${phys} - ${phys} Physical Damage`, "500 Critical Strike Rating", "1.5 Attack Speed"]
+    .map(description => ({ description, values: [] })) };
+  return c;
+};
+const tyrants = () => {
+  const pro = load("data/bing1/scraped/pro-1t.json");
+  const c = structuredClone(myBuild.compendium), lo = c.loadouts.loadouts[0], pl = pro.compendium.loadouts.loadouts[0];
+  const g = pl.gear.inventory.find((x: any) => x.id === pl.gear.equipped.gloves);
+  lo.gear.inventory = lo.gear.inventory.filter((x: any) => x.id !== lo.gear.equipped.gloves).concat(g);
+  lo.gear.equipped.gloves = g.id;
+  return c;
+};
+/** A season-applied snapshot of a planner payload (default: today's build), optionally with sources dropped. */
+const snapOf = (c: any = myBuild.compendium, drop?: RegExp) => {
+  const r = importBing(c, 0, myBuild.nativeTalents, myBuild.nativePrisms);
+  return applySeason(compose(BING_ZERO, effective(r.sources.filter(x => !drop?.test(x.label)))), "ss13");
+};
 
 describe("Bing importer", () => {
   test("July export: every line classified; crit chance matches the in-game sheet (65.05%)", () => {
@@ -24,12 +48,14 @@ describe("Bing importer", () => {
   test("model matches the in-game dummy (game-time DPS): today's build exactly, the July export within its missing prism data", () => {
     // mechanics.md#bing-hit-channels — DeafwaveB 2026-10-10, 4 game-time baselines 462.4/472.4/464.6/469.7B
     const dps = (r: ReturnType<typeof importBing>) => cycleDps(applySeason(r.snapshot, "ss13")).dps / 1e9;
-    // R8 pins (mechanics.md#bing-per-hit, OPEN for R3): the R1 per-hit fixes moved both off their fitted counts
-    // (hits_per_bomb / FC_AUTO_HITS / q / M were fit to the old per-hit values). Measured 467.3B (today's build,
-    // was model 467.6B) and 557.75B (July span; the export lacks native prism placements; was model 531.0B).
-    // Flip back to the 0.98-1.02 / 0.94-1.02 checks once R2's counted hits replace the fits.
-    expect(dps(mine())).toBeCloseTo(486.0, 0);    // measured 467.3B (+4.0%)
-    expect(dps(july())).toBeCloseTo(511.3, 0);    // measured 557.75B (-8.3%)
+    // mechanics.md#bing-hit-counts — R2 prices the counted hits (throw law, bombs, empowered share, pummel +
+    // explosions) instead of the fitted counts. Measured 458.5B: the 18 base-state windows of the R1 session (r1-hits,
+    // r1-cast and every r1-*-a2 window, 547.7 game-s, `combat.mjs --hits`, 2026-10-11; ../scratch/r2/meanhit.py)
+    expect(Math.abs(dps(mine()) / 458.5 - 1)).toBeLessThan(0.02);
+    // R8 pins (OPEN for R3): measured 467.3B (2026-10-10, 4 windows; was within 2% under the fitted counts) and
+    // 557.75B (July span; the export lacks native prism placements; −8.3% after R1, −16.0% now)
+    expect(dps(mine())).toBeCloseTo(452.2, 0);    // measured 467.3B (−3.2%)
+    expect(dps(july())).toBeCloseTo(468.4, 0);    // measured 557.75B (−16.0%)
   }, 30_000);
 
   test("scraped 40T build: talents rebuilt from native records, traits from memories, only listed unknowns", () => {
@@ -106,25 +132,27 @@ describe("Bing importer", () => {
     const base = dps();
     const cases: [RegExp, number, ((s: any) => void)?][] = [
       [/skill:Timid/, 1.414], [/Elemental Fusion/, 1.192], [/Passivation/, 1.622], [/Steamroll/, 1.405],
-      [/Precise Projectiles/, 1.320], [/Precise: Cruelty/, 1.507], [/Slow Projectile/, 1.202],
+      [/Precise: Cruelty/, 1.507],
+      // mechanics.md#bing-hit-counts — Upheaval's explosion line prices the 7 explosions per bomb
+      [/Upheaval/, 1.217],
     ];
     for (const [drop, meas, tweak] of cases) expect(base / dps(drop, tweak) / meas, String(drop)).toBeCloseTo(1, 1.4);
-    // R8 pins (mechanics.md#bing-per-hit, OPEN for R3). Upheaval: measured ÷1.217 (2026-10-10); its explosion line now
-    // prices only the explosion hits (bombHitTypes), which cycleDps does not count yet (R2) → model ÷1.000.
-    // Flame Core off (no Sentry → no Formation Breaker charges; Bull's Rage uptime 75% → 58%): measured ÷4.09
-    // (2026-10-10); per hit Flame Core changes nothing (the Sentry-proximity +30% is not at the dummy, r1-fc-off), so
-    // the A/B is cadence: un-empowered bombs land only the pummel (R2 / Task 7). Flip both into `cases` once R2 lands.
-    expect(base / dps(/Upheaval/)).toBeCloseTo(1.000, 2);   // measured ÷1.217
-    expect(base / dps(/skill:Flame Core/, s => { s.additional.bulls_rage *= 0.58 / 0.75; })).toBeCloseTo(3.222, 2);   // measured ÷4.09
+    // R8 pins (mechanics.md#bing-hit-counts, OPEN for R3). Precise Projectiles off measured ÷1.320 and Slow Projectile
+    // off ÷1.202 (2026-10-10, total DPS): the per-hit read (R1) puts both on every hit (÷1.406/1.411, ÷1.328/1.310)
+    // and the counts do not move (r1-pp-off, r1-slowproj-off: 7.0 explosions per bomb, 22-frame throws), so the
+    // counted model reads the per-hit ratios. Flame Core off measured ÷4.09 (2026-10-10; the R1 bracket read ÷4.53):
+    // one throw in 5 empowered and Bull's Rage at 0.545 uptime, both measured, give ÷4.318.
+    expect(base / dps(/Precise Projectiles/)).toBeCloseTo(1.410, 2);   // measured ÷1.320 (+6.8%)
+    expect(base / dps(/Slow Projectile/)).toBeCloseTo(1.305, 2);       // measured ÷1.202 (+8.6%)
+    expect(base / dps(/skill:Flame Core/)).toBeCloseTo(4.318, 2);      // measured ÷4.09 (+5.6%)
   }, 30_000);
   // mechanics.md#bing-per-hit — R1 per-hit read (2026-10-11, `combat.mjs --hits`, labels r1-*; predictions logged
-  // first as r1-hits / r1-<state>). Values at the top level: Bull's Rage on (the kit's 75% uptime undone) and the
+  // first as r1-hits / r1-<state>). Values at the top level: Bull's Rage on and the
   // Kaleidoscope erosion turn. Model first (label r1-hits): Ember channel 0.532 / 1.724B, non-projectile 0.337 / 1.093B,
   // tick 0.921 × hit — no per-type split, no empower or shotgun per hit.
   const perHitSnap = (drop?: RegExp) => {
-    const s: any = applySeason(compose(BING_ZERO, effective(mine().sources.filter(x => !drop || !drop.test(x.label)))), "ss13");
-    if (s.additional.bulls_rage) s.additional.bulls_rage /= 0.75;
-    return s;
+    // Bull's Rage is composed at its full value; cycleDps prices its uptime (mechanics.md#bing-hit-counts)
+    return applySeason(compose(BING_ZERO, effective(mine().sources.filter(x => !drop || !drop.test(x.label)))), "ss13") as any;
   };
   const within = (model: number, meas: number, what: string) => expect(Math.abs(model / meas - 1), `${what}: model ${model.toFixed(4)} vs measured ${meas}`).toBeLessThan(0.03);
   test("per-hit damage per hit type matches the read within 3% (non-crit, crit, crit share, tick)", () => {
@@ -160,6 +188,47 @@ describe("Bing importer", () => {
       within(t0.explosion.nonCrit / t.explosion.nonCrit, explosion, `${label} explosion`);
     }
   }, 60_000);
+  test("hit counts per throw match the per-hit read (throws, bombs, empowered share, explosions, ticks, Bull's Rage)", () => {
+    // mechanics.md#bing-hit-counts — counted from `combat.mjs --hits` CSVs (../scratch/r2/count.py, fcoff.py over the
+    // r1-* windows, 2026-10-11) and the `tli_dump --cast-watch` Bull's Rage timeline; texts give every count
+    const base = bombCounts(snapOf()), fcOff = bombCounts(snapOf(myBuild.compendium, /skill:Flame Core/));
+    // pummel groups 22 frames apart in every window (1.342–1.386 throws/s): 30/22
+    within(base.throwRate, 30 / 22, "throws/s");
+    // 3,282 bombs in 1,307 throws (Blast Barrage L2: 25% chance of +2 bombs)
+    within(base.bombsPerThrow, 2.511, "bombs per throw");
+    // no un-empowered bomb in 20 base windows; Flame Core off: 17 empowered throws in 85, every 5th (r1-fc-off, -2)
+    expect(base.empoweredShare).toBe(1);
+    within(fcOff.empoweredShare, 17 / 85, "Flame Core off empowered share");
+    // 23,037 explosions / 3,285 empowered pummels; Precise Projectiles off 7.00 / 6.87 / 7.26 / 7.00, Slow Projectile
+    // off 7.00 / 7.14: projectile speed does not move the count
+    within(base.explosionsPerEmpoweredBomb, 7.013, "explosions per empowered bomb");
+    for (const drop of [/Precise Projectiles/, /Slow Projectile/])
+      expect(bombCounts(snapOf(myBuild.compendium, drop)).explosionsPerEmpoweredBomb, String(drop)).toBe(base.explosionsPerEmpoweredBomb);
+    // 103,616 Deterioration ticks / 26,496 hits (4 ticks per stack × chance)
+    within(base.ticksPerHit, 3.911, "ticks per hit");
+    // Bull's Rage: buff 6.0 s every 7.82 s at base (230–241 frames), every 11.0 s with Flame Core off (329–330)
+    within(base.bullsRageUptime!, 6 / 7.82, "Bull's Rage uptime");
+    within(fcOff.bullsRageUptime!, 180 / 330, "Bull's Rage uptime, Flame Core off");
+  }, 60_000);
+  test("Blast Nova throw rate: 1/s × attack-speed bonuses, measured per state within 3%", () => {
+    // mechanics.md#bing-bombs — game-time burst period (throw-period.mjs, ../scratch/watch/tr-*.csv) is half a throw
+    // (2 bombs land apart): base 11 frames = 30/22 throws/s. Steamroll's skill-scoped AS, the weapon's base APS and
+    // weapon-local AS (gear AS, Death's Touch "Main-Hand Weapon Attack Speed") do not move it.
+    const rate = (c: any, drop?: RegExp) => 1 / cycleDps(snapOf(c, drop)).cycle_time;
+    const cases: [string, number, number][] = [
+      // measured ×1.000 (2026-10-11, label tr-base, 10 windows); predicted a 2.284 / b 1.379 / c 1.436 first
+      ["base", rate(myBuild.compendium), 30 / 22],
+      // measured ×1.000 (2026-10-11, label tr-steamroll-off); predicted ×1.000 a, ×1.104 b, ×1.000 c first
+      ["steamroll-off", rate(myBuild.compendium, /Steamroll/), 30 / 22],
+      // measured ×0.917 (2026-10-11, label tr-tyrants); predicted ×0.811 a, ×0.804 b, ×0.877 c first
+      ["tyrants", rate(tyrants()), 30 / 24],
+      // measured ×1.222 (2026-10-11, label tr-sword-gearas18); predicted ×1.447 a, ×1.250 b, ×1.447 c first
+      ["sword +18% gear AS", rate(weapon(220, [["+#% gear Attack Speed", 18]])), 30 / 18],
+      // measured ×1.222 (2026-10-11, label tr-claymore-blank); predicted ×1.250 a/b/c first
+      ["blank claymore", rate(weapon(190, [])), 30 / 18],
+    ];
+    for (const [name, model, meas] of cases) expect(Math.abs(model / meas - 1), name).toBeLessThan(0.03);
+  }, 60_000);
   const ablate = () => {
     const r = mine();
     const dps = (drop?: RegExp) => cycleDps(applySeason(compose(BING_ZERO, effective(r.sources.filter(x => !drop || !drop.test(x.label)))), "ss13") as any).dps;
@@ -168,49 +237,33 @@ describe("Bing importer", () => {
   // Held-out A/Bs (2026-10-11, mechanics.md#bing-proj-speed). Each case pins TODAY'S MODEL prediction (predicted
   // first) with the MEASURED value beside it; flip to the measured value once the model is fixed. None of these
   // refits q = 0.31 / k = 0.28: both-off is inconsistent with the single-source A/Bs, so it barely tests them.
-  test("held-out Precise + Slow Projectile off together: model pinned, measured ÷1.864 not reached (OPEN)", () => {
+  test("held-out Precise + Slow Projectile off together: measured ÷1.864 within 5%", () => {
     // measured ÷1.864 (2026-10-11, label proj-both-off; 8 A windows mean 457.4B, 4 B windows 245.4B, A scatter 402–531B,
     // bracket means); predicted ÷1.600 first (law patch ÷1.600). Singles ÷1.320 × ÷1.202 = 1.587.
     const { base, dps } = ablate();
-    // pin moved 1.600 → 1.609 by the R1 per-hit fixes (mechanics.md#bing-per-hit)
-    expect(base / dps(/Precise Projectiles|Slow Projectile/)).toBeCloseTo(1.609, 2);   // flip to 1.864 once fixed
+    expect(base / dps(/Precise Projectiles|Slow Projectile/) / 1.864).toBeCloseTo(1, 1);   // ±5%
   }, 30_000);
-  test("same-session singles: model pinned, measured Precise ÷1.245 / Slow ÷1.324 (OPEN, scatter ±12%)", () => {
+  test("same-session singles: measured Slow ÷1.324 within 5%; Precise ÷1.245 pinned (OPEN, scatter ±12%)", () => {
     // measured ÷1.245 and ÷1.324 (2026-10-11, labels proj-pp-off-r, proj-sp-off-r; one A-B-A-B-A chain, bracket
     // means; all-A means ÷1.267 / ÷1.306); predicted ÷1.320 / ÷1.204 first (law patch the same). The existing
     // 2026-10-10 cases (÷1.320, ÷1.202) above are unchanged.
     const { base, dps } = ablate();
-    expect(base / dps(/Precise Projectiles/)).toBeCloseTo(1.328, 2);   // flip to 1.245 once fixed (pin 1.320 → 1.328, R1)
-    expect(base / dps(/Slow Projectile/)).toBeCloseTo(1.204, 2);       // flip to 1.324 once fixed
+    expect(base / dps(/Slow Projectile/) / 1.324).toBeCloseTo(1, 1);       // ±5%
+    // R8 pin (OPEN for R3): the per-hit read gives ÷1.41 on every hit with unchanged counts (see the ablations above)
+    expect(base / dps(/Precise Projectiles/)).toBeCloseTo(1.410, 2);   // measured ÷1.245 (+13.3%)
   }, 30_000);
   test("gear swaps match the 2026-10-10 game-time A/Bs within 5% (absolute DPS)", () => {
     // mechanics.md#bing-obliterate — weapons span 1.7–3.1 attacks/s, so these pin the Obliterate cap and the
     // eroded/un-eroded hit split; Tyrant's pins Mark + the Empower block
-    const d = load("data/bing1/scraped/my-build-2026-10-10.json"), pro = load("data/bing1/scraped/pro-1t.json");
-    const weapon = (phys: number, mods: [string, number][]) => {
-      const c = structuredClone(d.compendium), lo = c.loadouts.loadouts[0];
-      const mh = lo.gear.inventory.find((x: any) => x.id === lo.gear.equipped.mainHand);
-      Object.assign(mh, { towerSequence: null, suffixes: [], corrosionImplicit: null,
-        prefixes: mods.map(([t, v]) => ({ modifierDescription: t, rolledValues: [{ value: v }] })) });
-      mh.baseItem = { ...mh.baseItem, implicits: [`${phys} - ${phys} Physical Damage`, "500 Critical Strike Rating", "1.5 Attack Speed"]
-        .map(description => ({ description, values: [] })) };
-      return c;
-    };
-    const tyrants = () => {
-      const c = structuredClone(d.compendium), lo = c.loadouts.loadouts[0], pl = pro.compendium.loadouts.loadouts[0];
-      const g = pl.gear.inventory.find((x: any) => x.id === pl.gear.equipped.gloves);
-      lo.gear.inventory = lo.gear.inventory.filter((x: any) => x.id !== lo.gear.equipped.gloves).concat(g);
-      lo.gear.equipped.gloves = g.id;
-      return c;
-    };
+    const d = myBuild;
     const dps = (c: any) => cycleDps(applySeason(importBing(c, 0, d.nativeTalents, d.nativePrisms).snapshot, "ss13")).dps / 1e9;
     const cases: [any, number][] = [
-      [weapon(190, []), 80.7], [weapon(190, [["+#% Gear Physical Damage", 25]]), 102.7], [tyrants(), 221.4]];
+      [weapon(175, []), 72.3], [weapon(220, [["+#% gear Attack Speed", 18]]), 82.6], [tyrants(), 221.4]];
     for (const [c, meas] of cases) expect(Math.abs(dps(c) / meas - 1)).toBeLessThan(0.05);
-    // R8 pins (mechanics.md#bing-per-hit, OPEN for R3): measured 72.3B blank mallet, 82.6B sword (2026-10-10); the R1
-    // per-hit fixes put them at +7.4% / +6.6% (the baseline moved +4.0%). Flip back into `cases` once R2 lands.
-    expect(dps(weapon(175, []))).toBeCloseTo(77.7, 0);                                   // measured 72.3B
-    expect(dps(weapon(220, [["+#% gear Attack Speed", 18]]))).toBeCloseTo(88.0, 0);      // measured 82.6B
+    // R8 pins (OPEN for R3 / Task 11, handoff §3 #1): the blank Black Pass Claymore reads +11.6% over the blank Mallet
+    // for +15 base phys (measured 80.7 vs 72.3B); the counted model gives +4.3% (R1's fitted counts read +0.4 / −1.4%)
+    expect(dps(weapon(190, []))).toBeCloseTo(74.3, 0);                                    // measured 80.7B (−7.9%)
+    expect(dps(weapon(190, [["+#% Gear Physical Damage", 25]]))).toBeCloseTo(92.9, 0);    // measured 102.7B (−9.5%)
 
     // mechanics.md#bing-obliterate — 2026-10-11 A-B-A (labels obl-* + obl2-*): DPS ratio = mean of the bracket ratios
     // (±5%); Deterioration stacks ÷ the maul's (27 windows, 41.9) read the enhanced-throw rate (±10%)
@@ -227,10 +280,13 @@ describe("Bing importer", () => {
       expect(Math.abs(base.dps / r.dps / meas - 1), name).toBeLessThan(0.05);
       if (stacks) expect(Math.abs(r.deterioration_stacks! / base.deterioration_stacks! / stacks - 1), name).toBeLessThan(0.10);
     }
-    // measured ÷2.080 (2026-10-11, label obl-tyrants/obl2-tyrants, 3 brackets); predicted ÷2.095 first. Stacks ×0.927
-    // vs the model's ×0.811 are left out: the weapon-APS throw rate (#bing-bombs, measured ×0.917), not Obliterate.
-    // R8 pin (mechanics.md#bing-per-hit, OPEN for R3): Tyrant's blocks Bull's Rage, now worth ×1.366 per hit (L21 +
-    // Well-Fought Battle, measured ×1.367), so the model reads ÷2.251. Flip back to ±5% of 2.080 once R2 lands.
-    expect(base.dps / run(tyrants()).dps).toBeCloseTo(2.251, 2);   // measured ÷2.080
+    // measured ÷2.080, stacks ×0.927 (2026-10-11, label obl-tyrants/obl2-tyrants, 3 brackets; 6 windows, 38.87
+    // stacks); predicted ÷2.095 first. The stacks were left out under the weapon-APS throw rate (model ×0.811): the
+    // throw law (#bing-hit-counts) puts them back
+    const t = run(tyrants());
+    expect(Math.abs(base.dps / t.dps / 2.080 - 1), "tyrants").toBeLessThan(0.05);
+    expect(Math.abs(t.deterioration_stacks! / base.deterioration_stacks! / 0.927 - 1), "tyrants stacks").toBeLessThan(0.10);
+    // absolute live stacks at the maul: 41.93 over 27 windows (Task 2) — inflictions per throw × the stack lifetime
+    expect(Math.abs(base.deterioration_stacks! / 41.93 - 1), "maul stacks").toBeLessThan(0.10);
   }, 60_000);
 });

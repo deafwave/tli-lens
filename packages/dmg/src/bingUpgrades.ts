@@ -60,7 +60,7 @@ export function upgrades(tier: Tier = "t0") {
     w("w_main_levels", "Weapon corrosion implicit: +2 Main Skill Level", "corrosion", [["add", "aux.skill_level", 2]],
       { cite: `${HAMMER} corrosionImplicits T0 (+1–2 Main Skill Level)` }),
     w("w_demolisher_base", "Weapon base affix: +32% additional skill damage when Demolisher Charge is consumed", "base",
-      [["mul", "rotation.demolisher_empower_mult", 1.32]],
+      [["mul", "rotation.demolisher_empower_mult", 1.32], ["add", "rotation.empower_more_w_demolisher_base", 32]],
       { cite: `${HAMMER} baseAffixes T1 (28–32%)`, note: "scales empowered throws (every throw at n=1)" }),
 
     // ---- corroded legendaries (delta over the equipped roll) ----

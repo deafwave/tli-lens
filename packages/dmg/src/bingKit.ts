@@ -3,7 +3,7 @@
    traits (levels from memories), pactspirits and kismets. Values: tlidb level tables
    (scratch levels research, linear between Lv1/21/41 breakpoints) and the calibrated
    reference ledger (#real-build). Anything without a table is reported, not guessed. */
-import { FC_AUTO_HITS, type Edit, type Source } from "./bingLedger.js";
+import type { Edit, Source } from "./bingLedger.js";
 import type { ImportedLine } from "./bingImport.js";
 import { affixEdits } from "./bingAffixMap.js";
 
@@ -64,7 +64,8 @@ const TRAITS: Record<string, (lv: number) => Edit[]> = {
     pactspirits). Board nodes come from the catalog via pactNodeEdits — a full board reproduces the
     calibrated encodings (Saintess +112 Erosion / +10 pen / +6 damage, Kitty +48 Attack / +88 crit / +16 AS). */
 const PACTS: Record<string, (lv: number) => Edit[] | null> = {
-  "Iron Lion": () => [["add", "rotation.proj_added", 1]],
+  // tlidb Iron Lion: Sword Rain "Projectile Quantity +2" (7 explosions per empowered bomb, mechanics.md#bing-hit-counts)
+  "Iron Lion": () => [["add", "rotation.proj_added", 2]],
   // Repentance (+4% additional Erosion per stack, 6 at L4) is its own source: stacks come from gaining a Blessing
   "Portrait of a Fallen Saintess": lv => lv >= 4 ? [] : null,
   // tlidb: L5 +16% additional damage vs Cursed, +4% additional damage
@@ -158,15 +159,19 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
       add("skill:Entangled Pain", `L${(sk.level ?? 20) + skillBonus}`, [["add", "aux.det_more_entangled_pain", aura(20, 39)((sk.level ?? 20) + skillBonus)]],
           { provides: ["curse"] });
     } else if (name === "Bull's Rage") {
-      // tlidb L20: Euphoria +27% additional Melee Skill Damage (L1 17.5) for 6s / 10s CD — uptime assumed full
-      // ×0.75 uptime: buff present 75–77% of 450+ memory samples at the dummy (DeafwaveB 2026-10-10, mechanics.md#bing-dummy-loop)
+      // tlidb L20: Euphoria +27% additional Melee Skill Damage (L1 17.5), "Lasts 6 s", Cooldown 10 s
       // mechanics.md#bing-per-hit — Well-Fought Battle (SS13): "+X% Effect every time it is cast, stacking up to 3
       // times" (5.25 at Lv1, +0.25/level); on ÷ off measured ×1.367 at L21 with WFB L24 (27.5 × 1.33)
+      // mechanics.md#bing-hit-counts — AM: Demolisher "Triggers the supported skill upon gaining Demolisher Charge …
+      // +X% additional Cooldown Recovery Speed" (its roll): cycleDps prices the uptime from the charge cadence
       const wfb = sups.filter((x: any) => x.supportGuid === "Well-Fought Battle")
         .reduce((e: number, x: any) => e + 3 * lin(5.25, 10.25, 15.25)((x.level ?? 20) + supportBonus), 0);
+      const am = sups.find((x: any) => x.supportGuid === "Activation Medium: Demolisher");
       const lv = (sk.level ?? 20) + skillBonus;
-      add("skill:Bull's Rage", `L${lv} Euphoria${wfb ? ` × ${(1 + wfb / 100).toFixed(2)} (Well-Fought Battle)` : ""} (75% uptime)`,
-          [["add", "additional.bulls_rage", 0.75 * aura(17.5, 27)(lv) * (1 + wfb / 100)]]);
+      add("skill:Bull's Rage", `L${lv} Euphoria${wfb ? ` × ${(1 + wfb / 100).toFixed(2)} (Well-Fought Battle)` : ""}${am ? " (on Demolisher Charge gain)" : ""}`,
+          [["add", "additional.bulls_rage", aura(17.5, 27)(lv) * (1 + wfb / 100)], ["set", "rotation.bulls_rage_s", 6],
+           ["set", "rotation.bulls_rage_cd_s", 10 / (1 + (am?.rollValues?.[0] ?? 0) / 100)],
+           ...(am ? [["set", "rotation.bulls_rage_on_charge", 1] as Edit] : [])]);
     } else if (SENTRIES.has(name) && supNames.includes("Activation Medium: Motionless")) {
       add(`skill:${name}`, "Sentry + Activation Medium: Motionless → charge per Sentry use (#real-build)",
           [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1]],
@@ -193,11 +198,8 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
     for (const a of plus) lv += Number(a.value ?? 0);
     traitLevels[trait] = lv;
     if (trait === "Firepower Coverage") {
-      // the reference rig's geometry fold-in (FC +50% projectile size, its skill area, #real-build)
-      // FC's auto-thrower throws at the weapon's attack speed (frame count, mechanics.md#bing-dummy-loop)
-      add("trait", `Firepower Coverage L${lv}`, [["mul", "rotation.hits_per_bomb", 1.6528676812873455 / 0.8353 / 1.3286 * FC_AUTO_HITS],
-                                                 ["set", "aux.throw_at_weapon_aps", 1]],
-          { provides: ["firepower_coverage"] });
+      // the auto-throw at Blast Nova's Bomb Throwing Speed, priced by counted hits (mechanics.md#bing-hit-counts)
+      add("trait", `Firepower Coverage L${lv}`, [["set", "rotation.counted_hits", 1]], { provides: ["firepower_coverage"] });
     } else if (TRAITS[trait]) add("trait", `${trait} L${lv}`, TRAITS[trait](lv));
     else if (trait === "Blast Nova") { if (lv > 1) add("trait", `Blast Nova L${lv}`, [["add", "additional.blast_nova", 5 * (lv - 1)]]); }
     else note("trait", `${trait} L${lv}`, "unknown");

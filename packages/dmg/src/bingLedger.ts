@@ -66,10 +66,6 @@ export interface Source {
 }
 
 /** bing1 step 0: L20 HoA (369% WAD, phys→fire), base Destroyer Mallet 175, L1 Blast Nova. */
-/** Share of HoA damage dealt by Ember explosions: Upheaval off ÷1.217 = +20% × (1 + 0.32 × share)
-    (game-time A/B 2026-10-10, mechanics.md#bing-hit-channels). */
-export const EXPLOSION_SHARE = 0.044;
-
 export const BING_ZERO: Snapshot = {
   base: { weapon_phys_min: 175, weapon_phys_max: 175, gear_phys_pct: 0,
           weapon_flat_cold_min: 0, weapon_flat_cold_max: 0, weapon_attack_speed: 1.5,
@@ -83,24 +79,17 @@ export const BING_ZERO: Snapshot = {
   penetration: { cold_pct: 0, armor_pct: 0, erosion_pct: 0 },
   enemy: { cold_res_pct: 30, armor_reduction_pct: 0, erosion_res_pct: 30 },
   rotation: { bombs_per_throw: 2, throw_rate_base: 1, attack_speed_inc_pct: 0,
-              hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0, non_projectile_share: 0.31, proj_speed_hit_exp: 0.28,
+              hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0,
               demolisher_empower_mult: 3.65, demolisher_resto_pct: 0,
               // mechanics.md#bing-per-hit — HoA text: "+215% additional Hit Damage when the skill consumes Demolisher
-              // Charge"; "Shotgun Effect falloff coefficient is 70%" (hits after the pummel deal 30%). Per-hit only
-              // (bombHitTypes) until the bomb's hit counts replace hits_per_bomb / M (R2)
+              // Charge"; "Shotgun Effect falloff coefficient is 70%" (hits after the pummel deal 30%). The counted path
+              // (#bing-hit-counts) prices them; the manual-throw July fold keeps hits_per_bomb / M
               empower_hit_pct: 215, shotgun_falloff_pct: 70 },
   tags: ["melee", "attack", "area", "projectile", "ranged",
          "horizontal_projectile", "parabolic_projectile"],
 };
 
-const H_BARE = 0.8353;
-const H_REAL = 1.6528676812873455;   // RS-off-anchored fold-in (mechanics.md#real-build)
-/** Firepower Coverage auto-throw hits on top of the July fold: one constant fits the user's July
-    export and 2026-10-10 build at weapon-APS throws (1.80 → 1.649 → 1.453 as Cruelty stacks, projectile speed and the Obliterate split were modeled), and the game-time Flame Core
-    A/B (÷4.09 meas vs ÷4.14) places it in hits per bomb, not the empower multiplier
-    (mechanics.md#bing-hit-channels). */
-export const FC_AUTO_HITS = 1.453;
-const H_ARROWS = 1.3286;             // Mighty Arrow pair, bare-rig back-solve (bing1 pactspirits)
+const H_ARROWS = 1.3286;             // Mighty Arrow pair, bare-rig back-solve (bing1 pactspirits; July fold only)
 
 const det = (k: string, v: number): Edit => ["add", `deterioration.${k}`, v];
 const shadowLegendary = (n: number): Edit[] => [det("additional_damage_pct", 8 * n), det("duration_inc_pct", 5 * n)];
@@ -156,8 +145,8 @@ export const REAL_BUILD_SOURCES: Source[] = [
     edits: [["add", "additional.kaleido_2", 60], ["add", "aux.as_inc", 7]],
     cite: "mechanics.md#real-build: 60-ring A/B ÷1.735 vs ÷1.60 encoded (+8% hot, flagged)" },
   { id: "broken_sun", label: "Broken Sun Ring (Solar Ring)", group: "gear", provides: ["solar_ring"],
-    edits: [["add", "enemy_taken.solar_ring", 40], ["add", "additional.sun_area_empower", 28]],
-    cite: "mechanics.md#real-build: Solar Ring gates proximity lines at range; Broken-Sun A/B ÷2.88",
+    edits: [["add", "enemy_taken.solar_ring", 40], ["add", "rotation.empower_area_pct", 41]],
+    cite: "mechanics.md#real-build: Solar Ring gates proximity lines at range; +41% additional Area Damage on a Demolisher consume, full roll per hit (#bing-per-hit)",
     note: "Well Matched, Marksman and the Ranger proximity slate need it under Firepower Coverage" },
   { id: "formation_breaker", label: "Formation Breaker", group: "gear", provides: ["fb_charge"],
     edits: [["add", "enemy_taken.fb_sentry", 30]], requires: ["charge_engine"],
@@ -175,12 +164,12 @@ export const REAL_BUILD_SOURCES: Source[] = [
     edits: [["set", "_gem_levels.passivation", 24], ["add", "additional_typed.erosion.passivation", 64]],
     cite: "seasons.ts passivation anchors; bing1 Passivation ×1.5998", requires: ["ruinous_star"] },
   { id: "upheaval", slot: "hoa.support", label: "Upheaval (Magnificent)", group: "support",
-    edits: [["add", "additional.upheaval", 20], ["add", "additional.upheaval_explosion", 32 * EXPLOSION_SHARE]],
-    cite: "mechanics.md#real-build: main +20% face; explosion line measured ×1.178 (÷1.414 A/B)" },
+    edits: [["add", "rotation.explosion_hit_pct", 32]],
+    cite: "mechanics.md#bing-per-hit: the rolled explosion line prices the explosions; its +20% shows on no hit (R1)" },
   { id: "steamroll", slot: "hoa.support", label: "Steamroll", group: "support",
     edits: [["set", "_gem_levels.steamroll", 25], ["add", "additional.steamroll", 43],
-            ["add", "aux.as_inc", -15]],
-    cite: "seasons.ts steamroll anchors (SS13 −15% AS)" },
+            ["add", "aux.as_inc", -15], ["add", "aux.as_inc_skill", -15]],
+    cite: "seasons.ts steamroll anchors (SS13 −15% Attack Speed for the supported skill)" },
   { id: "slow_projectile", slot: "hoa.support", label: "Slow Projectile", group: "support",
     edits: [["set", "_gem_levels.slow_projectile", 25], ["add", "additional.slow_projectile", 31.5]],
     cite: "seasons.ts slow_projectile anchors; geometry saturated here (SP⇄MK ÷1.005)",
@@ -205,9 +194,8 @@ export const REAL_BUILD_SOURCES: Source[] = [
 
   // ---- hero traits ----
   { id: "firepower_coverage", label: "Firepower Coverage (L2)", group: "trait",
-    edits: [["mul", "rotation.hits_per_bomb", H_REAL / H_BARE / H_ARROWS * FC_AUTO_HITS], ["set", "aux.throw_at_weapon_aps", 1]],
-    cite: "mechanics.md#real-build H fold-in (FC +50% proj size, 263% skill area) less the arrow pair",
-    note: "carries the area/size geometry of the whole rig; FC cadence ×0.89 open (handoff §5.4)" },
+    edits: [["set", "rotation.counted_hits", 1]],
+    cite: "mechanics.md#bing-hit-counts: the auto-throw prices counted hits (read per hit under Firepower Coverage)" },
   { id: "blast_barrage", label: "Blast Barrage (L2)", group: "trait",
     edits: [["set", "rotation.bombs_per_throw", 2.5]],
     cite: "mechanics.md memory-ladder row: 2 + 25%×2 = 2.5 bombs, measured ×1.269" },
@@ -284,8 +272,8 @@ export const REAL_BUILD_SOURCES: Source[] = [
 
   // ---- pactspirits + kismets ----
   { id: "iron_lion", label: "Iron Lion (L1)", group: "pact",
-    edits: [["add", "increased.projectile", 40], ["add", "rotation.proj_added", 1]],
-    cite: "mechanics.md parser row: Iron Lion +10/+10/+20% Projectile Damage; sheet proj 6 (encoded 6/5, open)" },
+    edits: [["add", "increased.projectile", 40], ["add", "rotation.proj_added", 2]],
+    cite: "mechanics.md parser row: Iron Lion +10/+10/+20% Projectile Damage; Sword Rain \"Projectile Quantity +2\" (tlidb; #bing-hit-counts)" },
   { id: "saintess", label: "Portrait of a Fallen Saintess (L4)", group: "pact",
     edits: [["add", "increased.erosion", 112], ["add", "increased.global", 6],
             ["add", "penetration.erosion_pct", 10]],
@@ -384,12 +372,12 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   }
   // one Mark debuff: the strongest source applies (mechanics.md#bing-mark)
   if (aux.mark_pct) s.crit.crit_dmg_taken_pct = Math.max(s.crit.crit_dmg_taken_pct ?? 0, aux.mark_pct);
-  if (aux.throw_at_weapon_aps) s.rotation.throw_rate_base = s.base.weapon_attack_speed;
   const str = Math.round((aux.str_flat ?? 0) * (1 + pct("str_pct")));   // sheet shows integer Str (339)
   if (str) s.additional.strength = str / 2;
-  // Firepower Coverage's auto-throw ignores "Attack Speed for the supported skill" (Steamroll): removing it left the
-  // dummy's Deterioration stacks unchanged (mechanics.md#bing-obliterate)
-  let as = (1 + pct("as_inc") - (aux.throw_at_weapon_aps ? pct("as_inc_skill") : 0)) * (1 + pct("as_local"));
+  // Blast Nova: "Base Bomb Throwing Speed is 1 time per second. 100% of the bonus and additional bonus to Attack Speed
+  // is also applied" — throw_rate_base stays 1; the weapon's APS, weapon-local AS (as_local) and skill-scoped AS
+  // (as_inc_skill, Steamroll) don't move it (game-time throw periods per state, mechanics.md#bing-bombs)
+  let as = 1 + pct("as_inc") - pct("as_inc_skill");
   for (const k of Object.keys(aux)) if (k.startsWith("as_more")) as *= 1 + pct(k);
   // "+X% additional Deterioration Damage" sources are each their own ×(1+v) (mechanics.md:275)
   for (const k of Object.keys(aux)) if (k.startsWith("det_more") && s.deterioration) {

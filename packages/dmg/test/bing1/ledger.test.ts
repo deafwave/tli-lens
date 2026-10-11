@@ -3,28 +3,34 @@ import { describe, expect, test } from "vitest";
 import { cycleDps, type Snapshot } from "../../src/damageModel.js";
 import { fromRoot } from "../../src/py.js";
 import { applySeason } from "../../src/seasons.js";
-import { BING_ZERO, EXPLOSION_SHARE, FC_AUTO_HITS, REAL_BUILD_SOURCES, compose, effective } from "../../src/bingLedger.js";
+import { BING_ZERO, REAL_BUILD_SOURCES, compose, effective } from "../../src/bingLedger.js";
 
 /* The real-build source ledger (mechanics.md#bing-ledger): every snapshot line of
    real_buld_3 attributed to the item/tree/slate/support/pact that grants it, so the
    progression can add sources one at a time from the bare rig. */
 
-/** The July hand snapshot with the 2026-10-10 game-time recalibration applied (mechanics.md#bing-hit-channels,
-    #bing-dummy-loop): Firepower Coverage throws at weapon APS and lands FC_AUTO_HITS× the July hit fold, a quarter
-    of base hits are non-projectile, Precise Projectiles is projectile-typed, Upheaval's explosion line scales only
-    the explosion share, Cruelty's Elite-hit stacks double its aura. */
+/** The July hand snapshot with the game-time recalibration applied: Precise Projectiles is projectile-typed and
+    Cruelty's Elite-hit stacks double its aura (#bing-cruelty); R2's counted hits (mechanics.md#bing-hit-counts):
+    Firepower Coverage prices pummel + explosions instead of the July hit fold (only the arrow pair's July geometry is
+    left in hits_per_bomb), the throw law turns the sheet's attack speed (with Death's Touch +14% local and Steamroll's
+    −15% for the supported skill) into the throw rate, Iron Lion adds 2 Embers, Upheaval's explosion line and Broken
+    Sun's area line price the empowered hit types, Upheaval's +20% shows on no hit (#bing-per-hit). */
 const real = (): Snapshot => {
   const s = JSON.parse(fs.readFileSync(fromRoot("data/bing1/real_buld_3_snapshot.json"), "utf-8"));
-  s.rotation.throw_rate_base = 1.5;
-  // HoA text, per hit only (mechanics.md#bing-per-hit): +215% on a Demolisher consume, Shotgun falloff 70%
+  // HoA text, per hit (mechanics.md#bing-per-hit): +215% on a Demolisher consume, Shotgun falloff 70%
   s.rotation.empower_hit_pct = 215;
   s.rotation.shotgun_falloff_pct = 70;
-  s.rotation.hits_per_bomb *= FC_AUTO_HITS;
-  s.rotation.non_projectile_share = 0.31;
-  s.rotation.proj_speed_hit_exp = 0.28;
+  s.rotation.counted_hits = 1;
+  s.rotation.hits_per_bomb = 0.8353 * 1.3286;
+  s.rotation.attack_speed_inc_pct = (1.379 * (1.32 + 0.15) / (1.32 * 1.14) - 1) * 100;
+  s.rotation.proj_added = 2;
+  s.rotation.explosion_hit_pct = 32;
+  s.rotation.empower_area_pct = 41;
   s.rotation.proj_speed_inc_pct = 10;   // Precise Projectiles (mechanics.md#bing-proj-speed)
   s.additional.cruelty *= 2;   // Cruelty Elite-hit stacks (mechanics.md#bing-cruelty)
-  s.additional.upheaval_explosion = 32 * EXPLOSION_SHARE;
+  delete s.additional.upheaval;
+  delete s.additional.upheaval_explosion;
+  delete s.additional.sun_area_empower;
   s.additional_typed.projectile = { precise_projectiles: s.additional.precise_projectiles };
   delete s.additional.precise_projectiles;
   return s;

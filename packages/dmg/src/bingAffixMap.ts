@@ -78,7 +78,8 @@ const RULES: Rule[] = [
   [r(`\\+${N}% Damage Over Time`), m => [["add", "deterioration.damage_inc_pct", +m[1]]]],
   // ---- additional ----
   [r(`\\+${N}% additional (?:Attack )?[Dd]amage`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
-  [r(`\\+${N}% additional (Melee|Attack|Projectile|Area|Hit) Damage`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
+  [r(`\\+${N}% additional Projectile Damage`), (m, k) => [["add", `additional_typed.projectile.${k}`, +m[1]]]],
+  [r(`\\+${N}% additional (Melee|Attack|Area|Hit) Damage`), (m, k) => [["add", `additional.${k}`, +m[1]]]],
   [r(`\\+${N}% additional (Physical|Fire|Elemental|Erosion) Damage`), (m, k) =>
     [["add", `additional_typed.${ADDITIONAL_TYPED[m[2].toLowerCase()]}.${k}`, +m[1]]]],
   [r(`\\+${N}% additional damage for Main-Hand Weapons`), (m, k) => [["add", `additional.${k}`, +m[1]]]],

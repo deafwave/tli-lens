@@ -318,13 +318,19 @@ function critMultiplierFor(s: Snapshot, types: Set<DamageType>): number {
   return 1 + chance * (critHit - 1);
 }
 
+// a typed-additional bucket keyed by a skill tag ("projectile") gates on the hit's skill tags,
+// otherwise on the portion's damage-type history
+function typedApplies(s: Snapshot, tag: string, types: Set<DamageType>): boolean {
+  return SKILL_TAGS.has(tag) ? skillTagApplies(s, tag) : tagApplies(tag, types);
+}
+
 function pathEnvelope(s: Snapshot, types: Set<DamageType>): number {
   let inc = 0;
   for (const [k, v] of Object.entries(s.increased))
     if ((!TYPE_TAGS.has(k) || tagApplies(k, types)) && skillTagApplies(s, k)) inc += v;
   let m = (1 + inc / 100) * additionalMultiplier(s);
   for (const [tag, bucket] of Object.entries(s.additional_typed ?? {}))
-    if (tagApplies(tag, types))
+    if (typedApplies(s, tag, types))
       for (const v of Object.values(bucket)) m *= 1 + v / 100;
   for (const v of Object.values(s.enemy_taken)) m *= 1 + v / 100;
   return m * paralysisTaken(s);
@@ -341,7 +347,7 @@ function pathEnvelopeChips(s: Snapshot, types: Set<DamageType>): Chip[] {
   for (const [k, v] of Object.entries(s.additional))
     if (v) out.push({ kind: "additional", label: `additional · ${k}`, op: "×", factor: 1 + v / 100 });
   for (const [tag, bucket] of Object.entries(s.additional_typed ?? {}))
-    if (tagApplies(tag, types))
+    if (typedApplies(s, tag, types))
       for (const [k, v] of Object.entries(bucket))
         if (v) out.push({ kind: "additional", label: `additional · ${tag} · ${k}`, op: "×",
                           factor: 1 + v / 100 });
@@ -509,7 +515,14 @@ export function bombRotation(s: Snapshot): RotationResult {
   const bombsPerSec = throwRate * r.bombs_per_throw;
   // mechanics.md#multi-proj — single-target hits scale linearly with projectile quantity
   const projScale = r.proj_base ? (r.proj_base + (r.proj_added ?? 0)) / r.proj_base : 1;
-  const perBomb = expectedHit(s) * (r.hits_per_bomb ?? 1) * projScale;
+  // mechanics.md#bing-hit-channels — a bomb's hits are Ember projectiles (projectile-typed, scale
+  // with projectile quantity) plus a non-projectile share q (the pummel/area hit) that projectile
+  // modifiers and quantity do not touch
+  const q = r.non_projectile_share ?? 0;
+  const nonProj: Snapshot = { ...s, tags: skillTagsOf(s).filter(t => !t.includes("projectile")) };
+  const projHit = expectedHit(s) * projScale;
+  const channelMix = q ? ((1 - q) * projHit + q * expectedHit(nonProj)) / projHit : 1;
+  const perBomb = (r.hits_per_bomb ?? 1) * projHit * channelMix;
   const demoM = r.demolisher_empower_mult ?? 1;
   const demoN = r.demolisher_resto_pct !== undefined
     ? Math.ceil((3 / (1 + r.demolisher_resto_pct / 100)) * throwRate)
@@ -523,6 +536,7 @@ export function bombRotation(s: Snapshot): RotationResult {
       { kind: "rotation", label: "bombs / throw", op: "×", factor: r.bombs_per_throw },
       { kind: "rotation", label: "hits / bomb", op: "×", factor: r.hits_per_bomb ?? 1 },
       { kind: "rotation", label: "projectile scale", op: "×", factor: projScale },
+      ...(q ? [{ kind: "rotation" as const, label: `hit channels (${Math.round(100 * q)}% non-projectile)`, op: "×" as const, factor: channelMix }] : []),
       { kind: "rotation", label: `demolisher share (n=${demoN}, ×${demoM})`, op: "×", factor: (demoN - 1 + demoM) / demoN },
     ] };
   // Obliterate enhances the THROW (one Main-Skill use) — every bomb of an enhanced

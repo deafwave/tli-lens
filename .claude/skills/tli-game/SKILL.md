@@ -86,11 +86,21 @@ this build. Their semantics (which is crit / True-damage Deterioration, whether 
 Timid, Frostbitten). Appends to `scratch/measurements.jsonl`. Needs the dummy count running (Recount once). Use
 **≥180s windows** — 60s windows swing ±10% (Kaleidoscope 8s rotation, bomb RNG). Never move between A and B.
 
-**Toggling skills for A/Bs** (F2 Skill panel; slots on the left at x=120: SPACE 400, R 484, mouse 568, E 652, Q 736;
-centre skill 1720,720; popup unequip button 2245,970; confirm 1860,936; picker inventory row 1 y=516, Install
-1454,623). Gate every step with `&&` and **screenshot the popup title before unequip** — a refused click leaves the
-panel on Hammer of Ash, and the next click would unequip it. Unequip keeps the supports socketed; reinstall from the
-picker's Inventory (not Shop). DPS reads low for ~1–2 min after a reinstall, then recovers.
+**A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli_dump --ui-json`: open views, Skill-panel
+selection, the 9-slot loadout with item ids, aura activation, sealed life/mana):
+
+```bash
+O="node .claude/skills/tli-game/ops.mjs"; C="node .claude/skills/tli-game/combat.mjs"
+$O state                                   # loadout + open views
+$O unequip "Hammer of Ash" Passivation      # support (or: $O unequip "Flame Core" for a whole skill)
+sleep 45; $C 150 --label passivation-off    # settle, then ≥120 game-s
+$O restore                                  # puts back the SAME item (item id checked), closes the panel
+$O aura "Precise Projectiles" off|on        # Activate/Deactivate (note: Seal Conversion auras also unseal Life)
+```
+
+Every step aborts on an unexpected state (wrong slot selected, wrong socket, any other loadout change). Clicks need
+Torchlight in front; `ops` waits (TLI_WAIT_S, default 30 min) instead of failing, and posts keys in the background.
+The dummy's frame counter stops while the Skill panel is open — always end with the panel closed (`$O close`).
 
 ## DPS readings
 

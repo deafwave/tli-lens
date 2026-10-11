@@ -54,8 +54,10 @@ export function walk(zero: Snapshot, start: Source[], pool: Source[], season: Se
   const keys = (s: Source) => keysOf(s, cap);
   let spent = 0;
   let have = [...start];
+  // a requirement nothing can provide (a dummy-loop condition such as mobility_cast) never applies
+  const providable = new Set([...start, ...pool].flatMap(s => [s.id, ...(s.provides ?? [])]));
   let left = pool.filter(s => !have.includes(s) && (s.level ?? 0) <= (opts.maxLevel ?? Infinity)
-    && (!opts.byCost || s.cost !== undefined || s.package));
+    && (!opts.byCost || s.cost !== undefined || s.package) && !s.requires?.some(r => !providable.has(r)));
   let prev = dpsOf(have);
   const out: PathStep[] = [];
 

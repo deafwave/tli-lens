@@ -69,6 +69,10 @@ export interface Source {
 }
 
 /** bing1 step 0: L20 HoA (369% WAD, phys→fire), base Destroyer Mallet 175, L1 Blast Nova. */
+/** Share of HoA damage dealt by Ember explosions: Upheaval off ÷1.217 = +20% × (1 + 0.32 × share)
+    (game-time A/B 2026-10-10, mechanics.md#bing-hit-channels). */
+export const EXPLOSION_SHARE = 0.044;
+
 export const BING_ZERO: Snapshot = {
   base: { weapon_phys_min: 175, weapon_phys_max: 175, gear_phys_pct: 0,
           weapon_flat_cold_min: 0, weapon_flat_cold_max: 0, weapon_attack_speed: 1.5,
@@ -82,7 +86,7 @@ export const BING_ZERO: Snapshot = {
   penetration: { cold_pct: 0, armor_pct: 0, erosion_pct: 0 },
   enemy: { cold_res_pct: 30, armor_reduction_pct: 0, erosion_res_pct: 30 },
   rotation: { bombs_per_throw: 2, throw_rate_base: 1, attack_speed_inc_pct: 0,
-              hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0,
+              hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0, non_projectile_share: 0.25,
               demolisher_empower_mult: 3.65, demolisher_resto_pct: 0 },
   tags: ["melee", "attack", "area", "projectile", "ranged",
          "horizontal_projectile", "parabolic_projectile"],
@@ -90,6 +94,11 @@ export const BING_ZERO: Snapshot = {
 
 const H_BARE = 0.8353;
 const H_REAL = 1.6528676812873455;   // RS-off-anchored fold-in (mechanics.md#real-build)
+/** Firepower Coverage auto-throw hits on top of the July fold: one constant fits the user's July
+    export (×1.856) and 2026-10-10 build (×1.857) at weapon-APS throws, and the game-time Flame Core
+    A/B (÷4.09 meas vs ÷4.14) places it in hits per bomb, not the empower multiplier
+    (mechanics.md#bing-hit-channels). */
+export const FC_AUTO_HITS = 1.80;
 const H_ARROWS = 1.3286;             // Mighty Arrow pair, bare-rig back-solve (bing1 pactspirits)
 
 const det = (k: string, v: number): Edit => ["add", `deterioration.${k}`, v];
@@ -137,8 +146,8 @@ export const REAL_BUILD_SOURCES: Source[] = [
             ["set", "deterioration.max_stacks", 99]],
     cite: "mechanics.md Obliterate + #deterioration (strict 0.325s grid, 40%/6 ramp roll, 99-stack cap), #real-build" },
   { id: "blade_dancer", label: "Blade-dancer's Steps", group: "gear",
-    edits: [["add", "additional.blade_dancer", 45]],
-    cite: `${RB} boots: +45% additional damage 5s after a Mobility Skill (Blink)` },
+    edits: [["add", "additional.blade_dancer", 45]], requires: ["mobility_cast"],
+    cite: `${RB} boots: +45% additional damage 5s after a Mobility Skill — off at the no-input dummy (mechanics.md#bing-dummy-loop)` },
   { id: "kaleido_48", label: "Kaleidoscope (48 ring)", group: "gear",
     edits: [["add", "additional.kaleido_1", 48], ["add", "aux.as_inc", 7]],
     cite: "mechanics.md#real-build: rings deliver full value continuously (48-ring A/B ÷1.478)" },
@@ -165,7 +174,7 @@ export const REAL_BUILD_SOURCES: Source[] = [
     edits: [["set", "_gem_levels.passivation", 24], ["add", "additional_typed.erosion.passivation", 64]],
     cite: "seasons.ts passivation anchors; bing1 Passivation ×1.5998", requires: ["ruinous_star"] },
   { id: "upheaval", slot: "hoa.support", label: "Upheaval (Magnificent)", group: "support",
-    edits: [["add", "additional.upheaval", 20], ["add", "additional.upheaval_explosion", 17.8]],
+    edits: [["add", "additional.upheaval", 20], ["add", "additional.upheaval_explosion", 32 * EXPLOSION_SHARE]],
     cite: "mechanics.md#real-build: main +20% face; explosion line measured ×1.178 (÷1.414 A/B)" },
   { id: "steamroll", slot: "hoa.support", label: "Steamroll", group: "support",
     edits: [["set", "_gem_levels.steamroll", 25], ["add", "additional.steamroll", 43],
@@ -178,7 +187,7 @@ export const REAL_BUILD_SOURCES: Source[] = [
 
   // ---- auras / curse ----
   { id: "precise_projectiles", label: "Precise: Precise Projectiles", group: "aura",
-    edits: [["add", "additional.precise_projectiles", 40]], cite: "mechanics.md#real-build (4 auras)" },
+    edits: [["add", "additional_typed.projectile.precise_projectiles", 40]], cite: "mechanics.md#real-build (4 auras)" },
   { id: "cruelty", label: "Precise: Cruelty", group: "aura",
     edits: [["add", "additional.cruelty", 23.2]], cite: "mechanics.md#real-build (4 auras)" },
   { id: "weapon_amp", label: "Precise: Weapon Amplification", group: "aura",
@@ -192,7 +201,7 @@ export const REAL_BUILD_SOURCES: Source[] = [
 
   // ---- hero traits ----
   { id: "firepower_coverage", label: "Firepower Coverage (L2)", group: "trait",
-    edits: [["mul", "rotation.hits_per_bomb", H_REAL / H_BARE / H_ARROWS]],
+    edits: [["mul", "rotation.hits_per_bomb", H_REAL / H_BARE / H_ARROWS * FC_AUTO_HITS], ["set", "aux.throw_at_weapon_aps", 1]],
     cite: "mechanics.md#real-build H fold-in (FC +50% proj size, 263% skill area) less the arrow pair",
     note: "carries the area/size geometry of the whole rig; FC cadence ×0.89 open (handoff §5.4)" },
   { id: "blast_barrage", label: "Blast Barrage (L2)", group: "trait",
@@ -275,10 +284,12 @@ export const REAL_BUILD_SOURCES: Source[] = [
     cite: "mechanics.md parser row: Iron Lion +10/+10/+20% Projectile Damage; sheet proj 6 (encoded 6/5, open)" },
   { id: "saintess", label: "Portrait of a Fallen Saintess (L4)", group: "pact",
     edits: [["add", "increased.erosion", 112], ["add", "increased.global", 6],
-            ["add", "penetration.erosion_pct", 10],
-            ["add", "additional_typed.erosion.repentance", (1.04 ** 6 - 1) * 100]],
+            ["add", "penetration.erosion_pct", 10]],
     cite: "bing1 real-build Saintess lever ÷1.5765 (meas ÷1.574): env + pen 10 + Repentance 1.04⁶",
     requires: ["ruinous_star"] },
+  { id: "saintess_repentance", label: "Saintess Repentance ×6", group: "pact",
+    edits: [["add", "additional_typed.erosion.repentance", (1.04 ** 6 - 1) * 100]], requires: ["blessing"],
+    cite: "a stack per Blessing gained — none at the no-input dummy (mechanics.md#bing-dummy-loop)" },
   { id: "kitty", label: "Kitty Express (L6, kismet-reduced)", group: "pact",
     edits: [["add", "increased.attack", 24], ["add", "increased.global", 6],
             ["add", "aux.crit_rating_pct", 88], ["add", "aux.as_inc", 12]],

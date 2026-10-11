@@ -3,14 +3,28 @@ import { describe, expect, test } from "vitest";
 import { cycleDps, type Snapshot } from "../../src/damageModel.js";
 import { fromRoot } from "../../src/py.js";
 import { applySeason } from "../../src/seasons.js";
-import { BING_ZERO, REAL_BUILD_SOURCES, compose, effective } from "../../src/bingLedger.js";
+import { BING_ZERO, EXPLOSION_SHARE, FC_AUTO_HITS, REAL_BUILD_SOURCES, compose, effective } from "../../src/bingLedger.js";
 
 /* The real-build source ledger (mechanics.md#bing-ledger): every snapshot line of
    real_buld_3 attributed to the item/tree/slate/support/pact that grants it, so the
    progression can add sources one at a time from the bare rig. */
 
-const real = (): Snapshot =>
-  JSON.parse(fs.readFileSync(fromRoot("data/bing1/real_buld_3_snapshot.json"), "utf-8"));
+/** The July hand snapshot with the 2026-10-10 game-time recalibration applied (mechanics.md#bing-hit-channels,
+    #bing-dummy-loop): Firepower Coverage throws at weapon APS and lands FC_AUTO_HITS× the July hit fold, a quarter
+    of base hits are non-projectile, Precise Projectiles is projectile-typed, Upheaval's explosion line scales only
+    the explosion share. */
+const real = (): Snapshot => {
+  const s = JSON.parse(fs.readFileSync(fromRoot("data/bing1/real_buld_3_snapshot.json"), "utf-8"));
+  s.rotation.throw_rate_base = 1.5;
+  s.rotation.hits_per_bomb *= FC_AUTO_HITS;
+  s.rotation.non_projectile_share = 0.25;
+  s.additional.upheaval_explosion = 32 * EXPLOSION_SHARE;
+  s.additional_typed.projectile = { precise_projectiles: s.additional.precise_projectiles };
+  delete s.additional.precise_projectiles;
+  return s;
+};
+/** Conditions the no-input dummy loop never meets (mechanics.md#bing-dummy-loop). */
+const DUMMY_UNMET = new Set(["mobility_cast", "blessing"]);
 
 /** Numeric leaves keyed by path, zeros dropped (absent ≡ 0 for every bucket). */
 function leaves(o: any, p = "", out: Record<string, number> = {}): Record<string, number> {
@@ -51,9 +65,10 @@ describe("Bing real-build source ledger", () => {
     const provided = new Set([...ids, ...REAL_BUILD_SOURCES.flatMap(s => s.provides ?? [])]);
     for (const s of REAL_BUILD_SOURCES) {
       expect(s.cite, s.id).toMatch(/\S/);
-      for (const r of s.requires ?? []) expect(provided.has(r), `${s.id} requires ${r}`).toBe(true);
+      for (const r of s.requires ?? []) if (!DUMMY_UNMET.has(r)) expect(provided.has(r), `${s.id} requires ${r}`).toBe(true);
     }
-    expect(effective(REAL_BUILD_SOURCES)).toHaveLength(REAL_BUILD_SOURCES.length);
+    expect(effective(REAL_BUILD_SOURCES).map(s => s.id).sort())
+      .toEqual(REAL_BUILD_SOURCES.filter(s => !s.requires?.some(r => DUMMY_UNMET.has(r))).map(s => s.id).sort());
   });
 
   test("dropping Broken Sun drops every Solar-Ring proximity line with it", () => {

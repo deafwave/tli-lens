@@ -21,17 +21,15 @@ describe("Bing importer", () => {
     expect(r.snapshot.additional.strength).toBeCloseTo(169.5, 6);   // sheet Str 339
   });
 
-  test("July import vs the hand snapshot: its residuals (×1.20–1.26) times the dummy-loop corrections", () => {
-    // mechanics.md#bing-dummy-loop: no Blink cast at the dummy (Blade-dancer ×1.45, Repentance ×1.265 off),
-    // Firepower Coverage throws at the weapon's 1.5 APS (×1.5 on the throw rate, slightly fewer Obliterate procs)
-    const r = july();
-    expect(r.sources.filter(s => s.requires?.some(q => q === "mobility_cast" || q === "blessing")).length).toBe(2);
-    expect(r.snapshot.rotation.throw_rate_base).toBe(1.5);
-    const imp = cycleDps(applySeason(r.snapshot, "ss13")).dps;
-    const hand = cycleDps(applySeason(load("data/bing1/real_buld_3_snapshot.json"), "ss13")).dps;
-    expect(hand / imp).toBeGreaterThan(1.45);
-    expect(hand / imp).toBeLessThan(1.55);
-  });
+  test("model matches the in-game dummy (game-time DPS): today's build exactly, the July export within its missing prism data", () => {
+    // mechanics.md#bing-hit-channels — DeafwaveB 2026-10-10, 4 game-time baselines 462.4/472.4/464.6/469.7B
+    const dps = (r: ReturnType<typeof importBing>) => cycleDps(applySeason(r.snapshot, "ss13")).dps / 1e9;
+    expect(dps(mine()) / 467.3).toBeGreaterThan(0.98);
+    expect(dps(mine()) / 467.3).toBeLessThan(1.02);
+    // July 557.75B span; the planner export lacks native prism placements (Haze +36 crit damage, +12% base)
+    expect(dps(july()) / 557.75).toBeGreaterThan(0.94);
+    expect(dps(july()) / 557.75).toBeLessThan(1.02);
+  }, 30_000);
 
   test("scraped 40T build: talents rebuilt from native records, traits from memories, only listed unknowns", () => {
     const r = hanshan();
@@ -84,7 +82,7 @@ describe("Bing importer", () => {
     expect(snap.rotation.demolisher_every_n).toBe(1);
     expect(snap.rotation.demolisher_resto_pct).toBeUndefined();
     expect(snap.additional.tenacity).toBeCloseTo((1.08 ** 6 - 1) * 100, 6);   // 4 base + 2 max stacks
-    expect(snap.additional.bulls_rage).toBeCloseTo(0.62 * 25.5, 9);           // L17, 62% uptime
+    expect(snap.additional.bulls_rage).toBeCloseTo(0.75 * 25.5, 9);           // L17, 75% uptime
     expect(r.sources.find(s => /Entangled Pain/.test(s.label))?.provides).toContain("curse");
     expect(r.lines.filter(l => l.kind === "unknown").map(l => l.text).sort()).toEqual([
       "+1 Max Charges", "+30% Bond Gaining Speed", "Converts 50% of Lightning Damage to Fire Damage", "Unable to trigger Empower Skills"]);
@@ -94,5 +92,22 @@ describe("Bing importer", () => {
     expect(compose(BING_ZERO, effective(r.sources)).crit.damage_pct).toBe(324);   // in-game sheet 2026-10-10
     expect(r.sources.some(s => /prism:51:base: \+12% additional Base Damage for Two-Handed Weapons/.test(s.label))).toBe(true);
     expect(r.lines.filter(l => l.kind === "unknown")).toEqual([]);
+  }, 30_000);
+  test("model ablations match the 2026-10-10 game-time A/Bs within 2%", () => {
+    // mechanics.md#bing-game-time / #bing-hit-channels — measured ratio = baseline / state-off
+    const r = mine();
+    const dps = (drop?: RegExp, tweak?: (s: any) => void) => {
+      const s: any = applySeason(compose(BING_ZERO, effective(r.sources.filter(x => !drop || !drop.test(x.label)))), "ss13");
+      tweak?.(s);
+      return cycleDps(s).dps;
+    };
+    const base = dps();
+    const cases: [RegExp, number, ((s: any) => void)?][] = [
+      [/skill:Timid/, 1.414], [/Elemental Fusion/, 1.192], [/Passivation/, 1.622], [/Steamroll/, 1.405],
+      [/Upheaval/, 1.217], [/Precise Projectiles/, 1.320],
+      // Flame Core off: no Sentry → no Formation Breaker charges, no Sentry-proximity taken; Bull's Rage uptime 75% → 58%
+      [/skill:Flame Core/, 4.09, s => { s.additional.bulls_rage *= 0.58 / 0.75; }],
+    ];
+    for (const [drop, meas, tweak] of cases) expect(base / dps(drop, tweak) / meas, String(drop)).toBeCloseTo(1, 1.4);
   }, 30_000);
 });

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { cycleDps } from "../../src/damageModel.js";
 import { applySeason } from "../../src/seasons.js";
-import { BING_ZERO, REAL_BUILD_SOURCES, SLOT_CAPACITY, compose, type Source } from "../../src/bingLedger.js";
+import { BING_ZERO, REAL_BUILD_SOURCES, SLOT_CAPACITY, compose, effective, type Source } from "../../src/bingLedger.js";
 import { UPGRADES, VORAX } from "../../src/bingUpgrades.js";
 import { keysOf, walk } from "../../src/bingProgression.js";
 
@@ -11,10 +11,10 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
   let buildUp: ReturnType<typeof walk> | undefined;
   const buildUpSteps = () => (buildUp ??= walk(BING_ZERO, [], REAL_BUILD_SOURCES, "ss14"));
 
-  test("build-up from zero takes every source and lands on the real build", () => {
+  test("build-up from zero takes every live source (dummy-loop conditions drop Blink/Blessing buffs) and lands on the real build", () => {
     const steps = buildUpSteps();
-    expect(steps.flatMap(s => s.ids).sort()).toEqual(REAL_BUILD_SOURCES.map(s => s.id).sort());
-    expect(steps.at(-1)!.dps).toBeCloseTo(dps(REAL_BUILD_SOURCES), -3);
+    expect(steps.flatMap(s => s.ids).sort()).toEqual(effective(REAL_BUILD_SOURCES).map(s => s.id).sort());
+    expect(steps.at(-1)!.dps).toBeCloseTo(dps(effective(REAL_BUILD_SOURCES)), -3);
   }, 30_000);
 
   test("build-up never takes a source before what it requires", () => {

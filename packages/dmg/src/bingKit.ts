@@ -3,7 +3,7 @@
    traits (levels from memories), pactspirits and kismets. Values: tlidb level tables
    (scratch levels research, linear between Lv1/21/41 breakpoints) and the calibrated
    reference ledger (#real-build). Anything without a table is reported, not guessed. */
-import type { Edit, Source } from "./bingLedger.js";
+import { EXPLOSION_SHARE, FC_AUTO_HITS, type Edit, type Source } from "./bingLedger.js";
 import type { ImportedLine } from "./bingImport.js";
 import { affixEdits } from "./bingAffixMap.js";
 
@@ -30,17 +30,17 @@ const HOA_SUPPORTS: Record<string, Effect> = {
   "Weakness Infiltration": lv => [["add", "additional.weakness_infiltration", lin(12.5, 22.5, 26.5)(lv)]],
   // bing1 QR ladder: L16 +23%, L20 +25% additional; its restoration is in rotation
   "Quick Return": lv => [["add", "additional.quick_return", lin(15.5, 25.5, 35.5)(lv)]],
-  // magnificent: +20% fixed; the explosion line delivers ×1.178 at roll 32 (#real-build) → scaled by roll
+  // magnificent: +20% fixed; the explosion line scales only the explosion share (mechanics.md#bing-hit-channels)
   "Hammer of Ash: Upheaval (Magnificent)": (_lv, x) => [["add", "additional.upheaval", 20],
-    ["add", "additional.upheaval_explosion", 17.8 * (x.roll?.[0] ?? 32) / 32]],
+    ["add", "additional.upheaval_explosion", (x.roll?.[0] ?? 32) * EXPLOSION_SHARE]],
 };
 
 const SEASONED = new Set(["Elemental Fusion", "Passivation", "Steamroll", "Slow Projectile"]);
 
 /** Aura passives: [path, value(level)] at the aura's own level. */
 const AURAS: Record<string, [string, (lv: number) => number]> = {
-  "Precise: Precise Projectiles": ["additional.precise_projectiles", aura(21, 40)],
-  "Precise Projectiles": ["additional.precise_projectiles", aura(16, 35)],
+  "Precise: Precise Projectiles": ["additional_typed.projectile.precise_projectiles", aura(21, 40)],
+  "Precise Projectiles": ["additional_typed.projectile.precise_projectiles", aura(16, 35)],
   "Precise: Cruelty": ["additional.cruelty", aura(12.5, 22)],
   "Cruelty": ["additional.cruelty", aura(9.5, 19)],
   "Precise: Weapon Amplification": ["additional_typed.physical.weapon_amp", aura(21, 40)],
@@ -147,8 +147,8 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
           { provides: ["curse"] });
     } else if (name === "Bull's Rage") {
       // tlidb L20: Euphoria +27% additional Melee Skill Damage (L1 17.5) for 6s / 10s CD — uptime assumed full
-      // ×0.62 uptime: icon present 37/60 samples over 30s at the dummy (DeafwaveB 2026-10-10, mechanics.md#bing-dummy-loop)
-      add("skill:Bull's Rage", `L${sk.level} Euphoria (62% uptime)`, [["add", "additional.bulls_rage", 0.62 * aura(17.5, 27)(sk.level ?? 20)]]);
+      // ×0.75 uptime: buff present 75–77% of 450+ memory samples at the dummy (DeafwaveB 2026-10-10, mechanics.md#bing-dummy-loop)
+      add("skill:Bull's Rage", `L${sk.level} Euphoria (75% uptime)`, [["add", "additional.bulls_rage", 0.75 * aura(17.5, 27)(sk.level ?? 20)]]);
     } else if (SENTRIES.has(name) && supNames.includes("Activation Medium: Motionless")) {
       add(`skill:${name}`, "Sentry + Activation Medium: Motionless → charge per Sentry use (#real-build)",
           [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1]],
@@ -177,7 +177,7 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
     if (trait === "Firepower Coverage") {
       // the reference rig's geometry fold-in (FC +50% projectile size, its skill area, #real-build)
       // FC's auto-thrower throws at the weapon's attack speed (frame count, mechanics.md#bing-dummy-loop)
-      add("trait", `Firepower Coverage L${lv}`, [["mul", "rotation.hits_per_bomb", 1.6528676812873455 / 0.8353 / 1.3286],
+      add("trait", `Firepower Coverage L${lv}`, [["mul", "rotation.hits_per_bomb", 1.6528676812873455 / 0.8353 / 1.3286 * FC_AUTO_HITS],
                                                  ["set", "aux.throw_at_weapon_aps", 1]],
           { provides: ["firepower_coverage"] });
     } else if (TRAITS[trait]) add("trait", `${trait} L${lv}`, TRAITS[trait](lv));

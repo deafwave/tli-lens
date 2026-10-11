@@ -46,7 +46,7 @@ const GEM_PRICES: Record<string, string> = {
 };
 /** Plain auras (L20 at the build's 1.0525 aura effect) that their Precise versions replace. */
 const PLAIN_AURAS: [string, string, string, number, string][] = [
-  ["plain_precise_projectiles", "Precise Projectiles", "additional.precise_projectiles", 35, "precise_projectiles"],
+  ["plain_precise_projectiles", "Precise Projectiles", "additional_typed.projectile.precise_projectiles", 35, "precise_projectiles"],
   ["plain_cruelty", "Cruelty", "additional.cruelty", 19 * 1.0525, "cruelty"],
   ["plain_weapon_amp", "Weapon Amplification", "additional_typed.physical.weapon_amp", 35 * 1.0525, "weapon_amp"],
   ["plain_erosion_amp", "Erosion Amplification", "additional_typed.erosion.erosion_amp", 35 * 1.0525, "erosion_amp"],

@@ -77,7 +77,8 @@ The dummy panel's **Info** tab (click 450,174) is the same sheet **captured in c
 its Damage section (269,269) shows live buffs (Kaleidoscope turns, Bull's Rage) — sample it, values change by the second.
 
 Floating damage numbers over the dummy (crop `1950 380 700 450`, burst 150ms): yellow 6–24B, purple 4–58B at
-this build. Their semantics (which is crit / True-damage Deterioration, whether numbers merge) are not established yet.
+this build. They merge: with the game's "draw each hit" setting off, each logic frame's hits become one number per
+category (Deterioration ticks have their own HP-removal style). Count hits with `combat.mjs --hits`, not screenshots.
 
 ## Memory combat reads (preferred)
 
@@ -87,6 +88,13 @@ this build. Their semantics (which is crit / True-damage Deterioration, whether 
 count running: 0 game-s from `combat.mjs 5` means it is stopped — with the dummy panel open, `game.ps1 click 310 545`
 (its Recount button, client pixels; game in front) restarts it in place. **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
 Kaleidoscope's 8s rotation) — the full protocol is the `bing-ab-test` skill. Never move between A and B.
+
+`--hits` adds `tli_dump --hit-watch` over the same window: one row per hit the dummy takes
+(`../scratch/watch/<label>-hits.csv`: frame, kind, crit, damage, source, hit_id, skill, flags, index; layout in
+poorchlight `docs/MEMORY_LAYOUT.md` "Per-hit damage events"). Kind 4 = Deterioration ticks; kind 0 with flags 16 = the
+main hit (one per bomb) and flags 40 = a 7-hit Ember volley (index 9..15). The row gets `hits`, `hitsPerS`, `hitTypes`
+and `hitSumRatio` (Σ hits ÷ the dummy total over the same frames; flagged unless within 0.5% — it reads 1.00000).
+The dummy must be the targeted health bar (hit it once).
 
 **A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli_dump --ui-json`: open views, Skill-panel
 selection, the 9-slot loadout with item ids, aura activation, sealed life/mana):

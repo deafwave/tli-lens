@@ -119,6 +119,16 @@ describe("averageHit", () => {
     expect(h.dps - h.deterioration_dps).toBeCloseTo(2 * (b.dps - b.deterioration_dps), 4);  // hit doubles
   });
 
+  test("live Deterioration stacks = enhanced throws/s × bombs × (projectiles + 1) × chance × duration (mechanics.md#bing-obliterate)", () => {
+    const s = bombify(baseOnly());
+    s.deterioration = { chance_pct: 150, hit_damage_pct: 60, duration_s: 1, duration_inc_pct: 50, tick_interval_s: 0.3,
+                        ramp_pct: 0, ramp_max_ticks: 0, obliterate_interval_s: 0.5, max_stacks: 99 };
+    // 1 throw/s, every throw enhanced, 2 bombs × (1 projectile + the explosion), chance capped at 100%, 1.5s
+    expect(cycleDps(s).deterioration_stacks).toBeCloseTo(2 * 2 * 1.5, 9);
+    s.deterioration.duration_s = 30;   // 180 live: the dummy shows at most max_stacks
+    expect(cycleDps(s).deterioration_stacks).toBe(99);
+  });
+
   test("additional layers each multiply (mechanics.md#additional)", () => {
     const s = baseOnly();
     s.additional.strength = 20;

@@ -397,13 +397,12 @@ export function deteriorationTickSum(d: Record<string, number>): number {
     independently": with more live stacks than `max_stacks`, only that many deal damage.
     Live = inflictions/s × duration; a bomb throw inflicts bombs × (projectiles + the
     explosion) stacks (60fps frame count, 2 bombs ⇒ 13–16). Bomb rotation only. */
-function stackCapFactor(s: Snapshot, d: Record<string, number>, enhancedPerSec: number): number {
+function liveStacks(s: Snapshot, d: Record<string, number>, enhancedPerSec: number): number | undefined {
   const r = s.rotation;
-  if (!d.max_stacks || r.bombs_per_throw === undefined) return 1;
+  if (r.bombs_per_throw === undefined) return undefined;
   const perThrow = r.bombs_per_throw * ((r.proj_base ?? 0) + (r.proj_added ?? 0) + 1);
-  const live = enhancedPerSec * perThrow * Math.min(d.chance_pct, 100) / 100
-             * d.duration_s * (1 + (d.duration_inc_pct ?? 0) / 100);
-  return live > d.max_stacks ? d.max_stacks / live : 1;
+  return enhancedPerSec * perThrow * Math.min(d.chance_pct, 100) / 100
+       * d.duration_s * (1 + (d.duration_inc_pct ?? 0) / 100);
 }
 
 /* ── Explain-layer trace builders (mechanics.md#skill-type) ───────────────────
@@ -599,8 +598,9 @@ export function comboRotation(s: Snapshot): RotationResult {
 /** Boss single-target DPS: pick the rotation strategy by shape (bomb iff
     rotation.bombs_per_throw is set, else the combo cycle), then layer the shared
     Deterioration DoT identically on top of whichever rotation ran. */
-/** mechanics.md#bing-obliterate — Ruinous Star's "every X s" enhances more uses than X implies: fitted across 15
-    game-time A/Bs (weapons at 1.7–3.1 attacks/s; Deterioration stacks plateau near 2.5–2.9 uses/s). Cause unknown. */
+/** mechanics.md#bing-obliterate — fitted, not a timer property: it caps enhanced throws at the model's weapon-APS
+    throw rate so weapon-local attack speed stops adding Deterioration, as the measured throw law does (every measured
+    state throws slower than the stated 0.5s timer). Goes when the law lands. */
 export const OBLITERATE_TIMER_SCALE = 0.70;
 
 export function cycleDps(s: Snapshot) {
@@ -613,6 +613,7 @@ export function cycleDps(s: Snapshot) {
   let detDps = 0;
   let obliterateMix = 1;
   let dotNode: TNode | undefined;
+  let stacks: number | undefined;
   const d = s.deterioration;
   // mechanics.md#deterioration — the DoT needs an Obliterate base (hit_damage_pct, the
   // base tick %); a parsed build that only accumulated the modifier mods (Deterioration
@@ -635,7 +636,9 @@ export function cycleDps(s: Snapshot) {
            * deteriorationTickSum(d)
            * ratio
            * (1 + (d.additional_damage_pct ?? 0) / 100);
-    const cap = stackCapFactor(s, d, uses / cycleTime * enhancedShare);
+    const live = liveStacks(s, d, uses / cycleTime * enhancedShare);
+    const cap = d.max_stacks && live && live > d.max_stacks ? d.max_stacks / live : 1;
+    stacks = live === undefined ? undefined : Math.min(live, d.max_stacks || Infinity);
     detDps *= cap;
     // mechanics.md#bing-obliterate — Obliterate's 100% → Erosion conversion applies to the enhanced uses only;
     // the rest hit with their own (un-obliterated) conversions
@@ -662,6 +665,6 @@ export function cycleDps(s: Snapshot) {
     children: dotNode ? [rotationNode, dotNode] : [rotationNode] };
   setValues(root);
   const trace: Breakdown = { total: root.value, root, layers: { rotation: rotationNode, perHit, dot: dotNode } };
-  return { dps: hitDps * obliterateMix + detDps, deterioration_dps: detDps,
+  return { dps: hitDps * obliterateMix + detDps, deterioration_dps: detDps, deterioration_stacks: stacks,
            finisher_damage, starter_damage, cycle_time: cycleTime, trace };
 }

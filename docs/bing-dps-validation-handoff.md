@@ -66,7 +66,7 @@ These constants make the one build fit; each could be wrong for every other buil
 | constant | value | where | what it absorbs | task |
 |---|---|---|---|---|
 | throw-rate law | weapon base APS (1.5) × sheet attack speed (`aux.throw_at_weapon_aps`) | `bingLedger.ts:386-397`, `bingKit.ts:187` | a 0.48s wall-clock screenshot count; Blast Nova's text says base 1/s × attack-speed bonuses — may underlie every row below | Task 0 |
-| `OBLITERATE_TIMER_SCALE` | 0.70 | `damageModel.ts` | stated 0.5s behaves like 0.35s | Task 2 |
+| `OBLITERATE_TIMER_SCALE` | 0.70 | `damageModel.ts` | not a timer effect: cancels the weapon-local AS the weapon-APS throw rule counts (Deterioration stacks track the measured throw rate; under the law every throw is enhanced, so the scale goes with it) | Task 2 (explained), Task 0 (removal) |
 | `FC_AUTO_HITS` | 1.453 | `bingLedger.ts` | hits per bomb under Firepower Coverage vs the July fold | Task 3 |
 | `non_projectile_share` q | 0.31 | `BING_ZERO.rotation` | share of hits not projectile-typed | Task 4 |
 | `proj_speed_hit_exp` k | 0.28 | `BING_ZERO.rotation` | Ember hits vs projectile speed | Tasks 4, 5 |

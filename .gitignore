@@ -3,10 +3,10 @@ dist/
 .vercel/
 __pycache__/
 .pytest_cache/
-.claude
+**/.claude/*
 docs/superpowers
 
 # Include skills
-!.claude/skills/
+!/.claude/skills/
 Torchlight Sanity Retention.xlsx
 .env*

@@ -136,5 +136,24 @@ describe("Bing importer", () => {
       [weapon(175, []), 72.3], [weapon(190, []), 80.7], [weapon(190, [["+#% Gear Physical Damage", 25]]), 102.7],
       [weapon(220, [["+#% gear Attack Speed", 18]]), 82.6], [tyrants(), 221.4]];
     for (const [c, meas] of cases) expect(Math.abs(dps(c) / meas - 1)).toBeLessThan(0.05);
+
+    // mechanics.md#bing-obliterate — 2026-10-11 A-B-A (labels obl-* + obl2-*): DPS ratio = mean of the bracket ratios
+    // (±5%); Deterioration stacks ÷ the maul's (27 windows, 41.9) read the enhanced-throw rate (±10%)
+    const run = (c: any) => cycleDps(applySeason(importBing(c, 0, d.nativeTalents, d.nativePrisms).snapshot, "ss13"));
+    const base = run(d.compendium);
+    const rates: [string, any, number, number?][] = [
+      // measured ÷6.093, stacks ×1.245 (2026-10-11, label obl-mallet/obl2-mallet, 4 brackets); predicted ÷6.193, ×1.250 first
+      ["blank mallet", weapon(175, []), 6.093, 1.245],
+      // measured ÷5.364, stacks ×1.258 (2026-10-11, label obl-sword/obl2-sword, 2 brackets); predicted ÷5.450, ×1.250 first
+      ["sword +18% gear AS", weapon(220, [["+#% gear Attack Speed", 18]]), 5.364, 1.258],
+      // measured ÷2.080 (2026-10-11, label obl-tyrants/obl2-tyrants, 3 brackets); predicted ÷2.095 first. Stacks ×0.927
+      // vs the model's ×0.811 are left out: the weapon-APS throw rate (#bing-bombs, measured ×0.917), not Obliterate
+      ["tyrants", tyrants(), 2.080],
+    ];
+    for (const [name, c, meas, stacks] of rates) {
+      const r = run(c);
+      expect(Math.abs(base.dps / r.dps / meas - 1), name).toBeLessThan(0.05);
+      if (stacks) expect(Math.abs(r.deterioration_stacks! / base.deterioration_stacks! / stacks - 1), name).toBeLessThan(0.10);
+    }
   }, 60_000);
 });

@@ -39,8 +39,16 @@ Run from the repo root; `O="node .claude/skills/tli-game/ops.mjs"; C="node .clau
    - restore: `$O restore` / `$O aura … on` / `$O gear-restore`, then `sleep 10`
    - A: `$C $W --label <label>-a2 --buffs`, twice
 
-   Windows are **30 game-seconds** (the user's choice; about ±5% per window from Kaleidoscope's 8s rotation). Use
-   `dps` — game time — never `wallDps`. Ratio = mean of the four A windows ÷ mean of the two B windows.
+   Windows are **30 game-seconds** (the user's choice). Use `dps` — game time — never `wallDps`. Ratio = mean of the
+   four A windows ÷ mean of the two B windows.
+
+   **Prefer per-hit A/Bs (2026-10-11).** Single total-DPS windows scatter ±10–12% (Kaleidoscope turns, Bull's Rage,
+   random 2- vs 4-bomb throws), so a total ratio below ~÷1.3 is unreliable. Add `--hits` and compare each hit type's
+   **top level** (hits within 8% of the type's max, crit and non-crit separately; `../scratch/r1/top.py`) — brackets
+   agree within 0.5%. `--hits` slows the sim to ~0.9×; DPS per game-second is unaffected. The dummy count stops on its
+   own: `game.ps1 click 310 545` (Recount). Check every `ops` exit code — a `| tail` once hid a timeout and base
+   windows were logged as B. Before `$O install`, confirm the gem is in the bag (`tli_dump --ui-json`): the picker
+   installs its first search result, even a different gem.
 5. **Void a state and re-run it** when: `gameS` < 28; an always-on buff (the four Precise auras, Feline Stimulant,
    Attack Aggression, `target:Timid`) is below 100% in `uptime`; the A₁ and A₂ means differ by more than 3% (moved,
    drift, or the game's snapshot bug — absurd numbers after many swaps mean the user logs out and back in);

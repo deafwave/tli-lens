@@ -1,8 +1,9 @@
-# Bing / Hammer of Ash — DPS model handoff and execution plan (2026-10-10)
+# Bing / Hammer of Ash — DPS model handoff and execution plan (2026-10-10, updated 2026-10-11 at pause)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
-> superpowers:executing-plans to run §8 task by task. Steps use checkbox (`- [ ]`) syntax. Read §1–§7 once;
-> each task card in §8 is self-contained for its implementer (`task-brief` extracts it).
+> superpowers:executing-plans to run §8 task by task. Steps use checkbox (`- [ ]`) syntax. **Read §0 first**
+> (status at pause, run order, user grants), then §1–§7 once; each task card in §8 is self-contained for its
+> implementer (`task-brief` extracts it). The rebuild cards P1/P2/R1/R2/R3 are in §8.R.
 
 **Goal:** a DPS model trustworthy enough to drive a combinatorial optimizer — which gear upgrades to buy/craft,
 which slates and pedigrees to chase, which talents to change — from a level-60 start to tens of trillions.
@@ -15,6 +16,9 @@ extends `bingProgression.ts` once the model and coverage hold.
 **Tech stack:** TypeScript + vitest (`packages/dmg`), Node tools in `.claude/skills/` (`tli-game`, `bing-ab-test`),
 the Rust memory reader `../poorchlight/tli_dump` (elevated shell), the running Torchlight: Infinite client.
 
+**Add-on:** `docs/external-sources-handoff.md`, tasks E1–E8: leads from third-party planners and 91tob, some
+folded into Tasks 3, 6, 7, 8, 12 and 25 here. Read it before starting those tasks.
+
 **Spec:** this document §1–§3 (state, fitted constants, discrepancies), `docs/mechanics.md` (the mechanics truth) and
 the invariants in `CLAUDE.md`.
 
@@ -26,71 +30,172 @@ Game control: `.claude/skills/tli-game` (read its SKILL.md first; Torchlight's P
 
 ---
 
+## 0. Status at pause (2026-10-11) — read this first
+
+**Paused by the user** (the game is in use by another agent; "I don't know when I'll next resume"). Resume rules:
+
+- **Game testing is paused** until the user says resume. Before any GAME task: ask, then run the §7 preflight.
+- **Run order changed** (user decision 2026-10-11): the per-constant tasks were replaced by a **first-principles
+  rebuild** — the model is built from the game texts and the damage formula; every non-text quantity is measured
+  **directly** with the per-hit read, never back-solved from total DPS. Cards P1, P2, R1, R2, R3 are in §8.R.
+  P1, R1, R2 are done. **Next: R3** (GAME — needs resume) **or the OFFLINE tasks 5, 12, 13, 18, 20, 22** (runnable
+  any time without the game).
+- **User grants (2026-10-11):** agents may take off gear, unspec pactspirits, move slates, swap Hero Traits (swap
+  back) and relog; reverse-engineering new poorchlight reads is approved (commit locally, **never push poorchlight**).
+  **Not allowed:** switching to Rehan or any other character — **Task 25 is removed; focus purely on Bing1 until it
+  is perfect.** Purchases (Trade House) stay the user's.
+- **Second calibration build (Task 9):** re-spec DeafwaveB into a materially different loadout, measure, restore
+  exactly (the user chose this over another character).
+- **Pro-build play style (Task 10, user):** a skill or Hero Trait with an automation/activation (auto-cast) support
+  or an automated trait is not pressed; one without is pressed by hand.
+- **91tob** (`docs/91tob.md`) is a hint source only — the user does not trust it. A read-only cross-check
+  (`.superpowers/sdd/bing-dps-validation-handoff/91tob-crosscheck.md`, local, git-ignored) listed candidates; R1
+  confirmed two (Demolisher +215% applies to hits only; Shotgun falloff leaves explosions at 30%) and refuted two
+  (monster armor at the dummy; a crit-only layer). Its Bing hero texts do not match the live EN game — never import
+  them. The external-sources add-on (`docs/external-sources-handoff.md`) is another session's work.
+- **Pushes:** nothing in this run has been pushed. `rehan_guide` main is ahead of `torchlight/main`; Task 26 does
+  `git fetch torchlight && git rebase torchlight/main && git push torchlight main`. poorchlight `a6ef905`
+  (`--hit-watch`) is local only.
+- **SDD workspace** (git-ignored): `.superpowers/sdd/bing-dps-validation-handoff/` — `progress.md` (ledger with every
+  ruling), `task-*-report.md`, `rebuild-tasks.md`, review packages. Raw data: `../scratch/predictions.jsonl`,
+  `measurements.jsonl`, `watch/*.csv`, `r1/`, `r2/` (analysis scripts `top.py`, `an8.py`, `cases.mts`, `decomp.mts`).
+
+**Run log (2026-10-10 → 11), subagent-driven on `main`, every task reviewed:**
+
+| task | outcome | commits |
+|---|---|---|
+| 0 throw-rate law | law measured (5 states ±2.2%); model switch blocked then → landed in R2 | `661df70`, `efe83bf` |
+| 1 spot / proximity | **deferred** — no position read existed (now approved → P2) | — |
+| 2 Obliterate timer | `OBLITERATE_TIMER_SCALE` shown to be a throw-rate stand-in; stacks follow the law → removed in R2 | `e0f8397`, `607c3bf` |
+| 3 FC hits per throw | per-frame totals can't count hits → per-hit read built (P1); `FC_AUTO_HITS` removed in R2 | `9adcd64` |
+| 4 projectile held-out A/B | both-off ÷1.864 inconsistent with the 10-10 singles; same-session singles re-measured; q/k removed in R2 | `1ca9e7a`, `af586f8`, `961fcae` |
+| P1 per-hit read | `tli_dump --hit-watch` + `combat.mjs --hits`; Σ per-hit = dummy total to 1e-10 | poorchlight `a6ef905`; `57f6f6f` |
+| R1 per-hit damage | every hit type ±3%, ten per-hit A/Bs ±3% | `02ed2b4`, `a86ad10` |
+| R2 counted hits | throw law in; five §2 constants + Bull's Rage uptimes removed | `a54afe2`, `fee0edd`, `b0ae837` |
+
+`pnpm test`: **626 green** at `b0ae837` (45 files; the count includes another session's untracked `clientDps` test).
+
+**Tooling learned this run:**
+- The dummy count stops on its own → click **Recount**: `game.ps1 click 310 545` (doesn't move the character).
+- `combat.mjs` keeps every run's CSV at `../scratch/watch/<label>.csv`; `--hits` adds `<label>-hits.csv` (one row per
+  hit: frame, damage, kind, crit, skill, flags, volley index; kind 4 = Deterioration tick, flags 16 = empowered
+  pummel, 15 = un-empowered pummel, 40 = explosion) and `hits`, `hitsPerS`, `hitTypes`, `hitSumRatio` to the
+  measurement row. `--hits` runs two busy readers → sim speed drops to ~0.9×: use it for hit-structure reads (DPS
+  per game-second is unaffected). The dummy must be the targeted health bar. The read's addresses break on a game
+  patch.
+- **Single 30s total-DPS windows scatter ±10–12%** (Kaleidoscope 8s turns, Bull's Rage, random 2- vs 4-bomb throws).
+  Total-DPS A/Bs below ~÷1.3 are unreliable; **per-hit ratios at the top level are the instrument** (within 0.5%
+  between brackets). Top level = hits within 8% of the hit type's max (Bull's Rage on, Kaleidoscope phys/erosion
+  turn), crit and non-crit separately (`../scratch/r1/top.py`).
+- `ops.mjs install` searches the picker by name: a gem you don't own (Multiple Projectiles) made the first result
+  (Slow Projectile) get re-inserted before the name check aborted. Check ownership (`tli_dump --ui-json` → bag)
+  before `install`. (Not yet fixed in `ops.mjs`.)
+- `ops.mjs` waits for Torchlight to be the foreground window; with Discord in front it times out (the user must bring
+  the game forward). A `| tail` pipe once masked an `ops` timeout and a chain measured base windows as an A/B — check
+  exit codes.
+- Subagents could not write `.md` report files into the SDD workspace (harness block) — have them write `.txt` or
+  return the report in the reply.
+- Python text-mode writes on Windows produced CRLF (`1ca9e7a`) — write with `newline=''`.
+
+---
+
 ## 1. Where things stand
 
-**Calibrated against the user's build** (`data/bing1/scraped/my-build-2026-10-10.json`, lv85 training dummy,
-no input, standing still): model **467.3B** vs measured **~457–472B** (game-time). 15 in-game A/Bs reproduce within
-±4.4% (rms 2.25%) — `packages/dmg/test/bing1/import.test.ts`:
+**Model structure (Firepower Coverage builds, `rotation.counted_hits`; `docs/mechanics.md#bing-per-hit`,
+`#bing-hit-counts`)** — every term is a text or a direct per-hit / cast read:
+- **Throw rate** = 1/s × (1 + Σ increased AS) × Π(1 + additional AS); weapon base APS, weapon-local "+X% gear Attack
+  Speed" and skill-scoped AS (Steamroll) are excluded (Blast Nova text; Task 0). Period = round(30/rate) logic
+  frames. User's build: 30/22 = **1.364 throws/s** (measured 1.342–1.386).
+- **Bombs per throw** 2.5 (Blast Barrage "25% chance to +2"; measured 2.511).
+- **Empowered bomb** = 1 **pummel** + (10–11 frames later) **Q = 7 explosions** in one frame (Q = Ember quantity
+  1 + 2 HoA + 2 Blast Nova + 2 Iron Lion; measured 7.013 per bomb — that Q follows projectile quantity is *inferred*:
+  no Multiple Projectiles gem to test). **Un-empowered bomb** = pummel only. Embers never hit as their own rows.
+- **Empowered share**: HoA "gains Demolisher Charge once every 3 s" → n = ceil(3 × rate); Formation Breaker
+  ("Interval 0.25s") with a Sentry → n = 1 (every bomb empowered at base). Flame Core off → every 5th throw (17 of
+  85 measured).
+- **Per hit**: Demolisher +215% additional **hit** damage on empowered hits only; Broken Sun +41% area on empowered
+  hits; Shotgun falloff → explosions deal 30%; Upheaval's rolled +32% explosion line. Crit is rolled **once per
+  bomb** (0.5705 model / 0.559 measured; ×3.24).
+- **Deterioration**: one tick per stack every 9.75 frames, 4 ticks per stack (chance 0.98); tick k = 0.6 × (1 + Σ
+  "+X% Deterioration Damage") × Π(more) × its own hit × (1 + 0.3(k−1)) = **1.446 × hit** on this build. The
+  Deterioration lines are the tick's **own pool** (refutes the July "joins the hit's increased sum" rule — but see
+  §3 #6). Ticks are ~89% of damage.
+- **Obliterate**: every throw enhanced (period ≥ 0.6s > the stated 0.5s timer).
+- **Bull's Rage**: 6s duration, 10s cooldown ÷ recovery (AM: Demolisher +18%, memory +10% now mapped) → 7.70s, cast
+  at the next charge gain → uptime 0.774 base / 0.545 Flame Core off (cast-watch 0.767 / 0.545). Well-Fought Battle
+  ×1.33 (11% × 3 stacks at L24). Blocked by "Unable to trigger Empower Skills" (Tyrant's).
+- **Kaleidoscope**: rings turn in lockstep; Erosion/Physical turns reach the whole Obliterated hit, the Elemental
+  turn only the fire-history half (×1.314 high ÷ elemental).
+- **Skill levels**: "+1 to All Skills' Levels" raises auras, curses, Bull's Rage (auras read L21 per hit); HoA L21
+  ×1.10 is *inferred* (tooltip "Level 20+1, 369%").
+- Manual-throw rigs (the July bare rig, `blast-nova.test.ts`) keep the July fold (`hits_per_bomb` 0.8353,
+  `demolisher_empower_mult` 3.65) — they were never read per hit.
 
-| A/B (state off / swapped) | measured | model |
-|---|---|---|
-| Timid, Elemental Fusion, Passivation, Steamroll, Upheaval, Precise Projectiles, Precise: Cruelty, Slow Projectile | ÷1.19 … ÷1.62 | within 2% |
-| Flame Core off (no Sentry → no Formation Breaker charges) | ÷4.12 | ÷4.14 |
-| Tyrant's Smoldering Hold for Death's Touch | 221.4B | 223.0B |
-| Boots of Devastation for Blade-dancer's | 676.9B | 654.2B (−3.4%, Hasten unmodeled) |
-| blank Destroyer Mallet / blank Black Pass Claymore / Claymore +25% gear phys / Sword +18% gear AS | 72.3 / 80.7 / 102.7 / 82.6B | +4.4 / −2.4 / −4.2 / +3.8% |
+**Measured cases** (`packages/dmg/test/bing1/import.test.ts`, `blast-nova.test.ts`; model at `b0ae837`):
 
-**Mechanics established** (each has a `docs/mechanics.md` row — read `#bing-dummy-loop`, `#bing-game-time`,
-`#bing-hit-channels`, `#bing-proj-speed`, `#bing-cruelty`, `#bing-mark`, `#bing-obliterate`, `#bing-prism-import`,
-`#bing-sentry-curse`, `#tenacity`):
-- Dummy DPS is per **game second** (30 logic frames); the client slows when laggy; damage is batched per frame.
-- Obliterate converts phys/ele → erosion **only on enhanced uses**; un-enhanced throws hit as fire and inflict no
-  Deterioration. Deterioration inherits hit-taken multipliers (Timid A/B).
-- Firepower Coverage auto-throws at character attack speed, but **not** "Attack Speed for the supported skill" (Steamroll).
-  **Suspect** — Blast Nova's own text sets the throw rate (Task 0).
-- "Unable to trigger Empower Skills" stops Activation Medium from firing Empower skills (Bull's Rage 0% uptime).
-- Mark on hit (+10% crit damage taken, 97% uptime); Cruelty's Elite-hit stacks double it at the dummy; Tenacity/Sacrifice;
-  Ice Bond is a Sentry; Entangled Pain is a DoT-only curse; prism base affixes and 4×3 areas now import.
-- Main-hand adds from other gear ("Adds X Physical Damage to the Main-Hand Weapon") are multiplied by the weapon's
-  +% Gear Physical (×1.273 measured vs ×1.25 model).
-
-**Done since the last handoff:** the poorchlight combat/UI reader (`--combat-json`, `--combat-watch`, `--cast-watch`,
-`--ui-json`) is committed and pushed (poorchlight `6b09a3d`). `pnpm test`: 609 green at `8110a14`.
-
----
-
-## 2. What is fitted, not understood (the main risk)
-
-These constants make the one build fit; each could be wrong for every other build. Replace each with mechanics.
-
-| constant | value | where | what it absorbs | task |
+| case | measured | model | Δ | status |
 |---|---|---|---|---|
-| throw-rate law | weapon base APS (1.5) × sheet attack speed (`aux.throw_at_weapon_aps`) | `bingLedger.ts:386-397`, `bingKit.ts:187` | a 0.48s wall-clock screenshot count; Blast Nova's text says base 1/s × attack-speed bonuses — may underlie every row below | Task 0 |
-| `OBLITERATE_TIMER_SCALE` | 0.70 | `damageModel.ts` | not a timer effect: cancels the weapon-local AS the weapon-APS throw rule counts (Deterioration stacks track the measured throw rate; under the law every throw is enhanced, so the scale goes with it) | Task 2 (explained), Task 0 (removal) |
-| `FC_AUTO_HITS` | 1.453 | `bingLedger.ts` | hits per bomb under Firepower Coverage vs the July fold | Task 3 |
-| `non_projectile_share` q | 0.31 | `BING_ZERO.rotation` | share of hits not projectile-typed | Task 4 |
-| `proj_speed_hit_exp` k | 0.28 | `BING_ZERO.rotation` | Ember hits vs projectile speed | Tasks 4, 5 |
-| `EXPLOSION_SHARE` | 0.044 | `bingLedger.ts` | Upheaval explosion line's scope | Task 6 |
-| Bull's Rage uptime | 0.75 / 0.58 without FC | `bingKit.ts` | Activation Medium: Demolisher cadence | Task 7 |
-| `demolisher_empower_mult` M | 3.65 (×boots/sun) | July calibration | empowered vs normal throw | Task 8 |
+| per hit, top level non-crit: empowered pummel / explosion / un-empowered pummel | 1.964 / 0.780 / 0.4445B | 1.937 / 0.767 / 0.4361B | −1.4 / −1.7 / −1.9% | ±3% |
+| per-hit A/Bs: Upheaval, PP, FC, Steamroll, Slow Proj, Fusion, Passivation, Weapon Amp, Erosion Amp, Cruelty; r2 SP off, both off | — | — | worst −1.7% | ±3% |
+| baseline, R1 session's 18 base windows | 458.5B | 452.2B | −1.4% | ±2% (a post-hoc re-read of pre-R2 windows) |
+| baseline 2026-10-10 | 467.3B | 452.2B | −3.2% | R8-pinned |
+| Timid / Fusion / Passivation / Steamroll / Cruelty off | ÷1.414 / 1.192 / 1.622 / 1.405 / 1.507 | ÷1.400 / 1.208 / 1.640 / 1.425 / 1.4995 | ≤1.4% | ±2% |
+| Upheaval off | ÷1.217 | ÷1.2168 | 0.0% | ±2% (flipped back) |
+| held-out PP + SP off | ÷1.864 | ÷1.840 | −1.3% | ±5% (flipped back) |
+| same-session SP off | ÷1.324 | ÷1.305 | −1.4% | ±5% |
+| blank Mallet / Sword +18% gear AS | 72.3 / 82.6B | 71.3 / 80.4B | −1.4 / −2.6% | ±5% |
+| Tyrant's Smoldering Hold | 221.4B (÷2.080) | 225.6B (÷2.005) | +1.9 / −3.6% | ±5% |
+| Deterioration stacks maul / Mallet / Sword / Tyrant's | 41.93 / ×1.245 / ×1.258 / ×0.927 | 42.2 / ×1.222 / ×1.222 / ×0.917 | ≤2.8% | ±10% |
+| **open — R8-pinned (model value asserted, MEASURED beside it)** | | | | |
+| PP off 10-10 / same-session; SP off 10-10 (total DPS) | ÷1.320 / ÷1.245; ÷1.202 | ÷1.410; ÷1.305 | +6.8…+13% | §3 #1 |
+| Flame Core off | ÷4.09 | ÷4.318 | +5.6% | §3 #2 |
+| blank Black Pass Claymore / Claymore +25% gear phys | 80.7 / 102.7B | 74.3 / 92.9B | −7.9 / −9.5% | §3 #3 |
+| July export (older state, no prism placements) | 557.75B | 468.4B | −16% | §3 #5 |
+| July chain s4 / s5 / full state | ×1.153 / 17,602.5 / 557.75B | ×1.190 / 19,701 / 672.9B | | §3 #6 |
+| r2 SP off / both off (total DPS, void windows: baselines 10.5% apart) | ÷1.351 / ÷1.821 | ÷1.305 / ÷1.840 | | informational pin |
+| Boots of Devastation (Hasten) | 676.9B | not a test yet | | Task 12 |
 
-`pnpm bing diagnose <build> --season ss13` also lists **unverified assumptions** (DPS ÷ under the conservative
-reading). On the user's build only two bite: `proximity` ÷1.61 (Task 1) and `bulls-rage` ÷1.20 (Task 7). The rest
-(skill levels ÷2.36, tick grid ÷1.30, lucky, corruption, low-life, profane…) bite only Pro builds — Tasks 10, 15.
+Unmeasured Pro builds: pro-1t (1T stated) model **142.6B**; the 40T build model **228T** — both far off (Task 10).
 
 ---
 
-## 3. Open discrepancies
+## 2. What is still fitted or assumed (the main risk)
 
-| # | discrepancy | task |
-|---|---|---|
-| 1 | **Blank Mallet vs blank Claymore**: 72.3 vs 80.7B measured (+11.6%) for +15 base phys; model says +4%. Repeated twice | Task 11 |
-| 2 | **Hasten** (Boots of Devastation "Has Hasten"): value unknown (needs ~+3.5% attack speed to fit) | Task 12 |
-| 3 | **One-handed weapons untested**: Hollow Rift Axe, 2× Sierra Forge Light Hammer in the bag (gear tab). Every "when holding a Two-Handed Weapon" line is assumed true — the importer strips the clause | Tasks 13, 14 |
-| 4 | **Pro builds far off**: 「寒山寺宾一5000火 1w亿」 (1T dummy; model 119.5B) and 「寒山寺40万亿」 (40T, probably Ordrak; model 222T). After the Empower rule the 1T build loses its Ice Bond engine — ask how it's played | Task 10 |
-| 5 | **Position matters** (proximity lines via Solar Ring): baselines moved 480 → 433B between spots | Task 1 |
-| 6 | `+X% Projectile Speed` / `Skill Area` lines are geometry no-ops; skill-level scaling past 21 unverified (40T relies on it ÷2.36) | Tasks 5, 15 |
-| 7 | General (non-Bing) Torchlight math (Rehan / Spectral Slash, `buildParser.ts`) not revalidated | Task 25 |
+**Removed in R2** (replacement measured and tested): the weapon-APS throw rule (`aux.throw_at_weapon_aps`),
+`FC_AUTO_HITS`, the H fold-in (`H_REAL`, `H_BARE`), `non_projectile_share` q, `proj_speed_hit_exp` k,
+`EXPLOSION_SHARE`, `OBLITERATE_TIMER_SCALE`, Bull's Rage uptime 0.75 / 0.58, and M on the counted path.
+
+| still fitted / assumed | value | where | why it stays | task |
+|---|---|---|---|---|
+| July manual-throw fold | `hits_per_bomb` 0.8353, M 3.65, `H_ARROWS`, unquantized throw rate | `BING_ZERO`, `bingLedger.ts` | manual throws were never read per hit; only the July rig uses them | Task 8 (re-scoped), Task 3 Step 4 |
+| `resid_attack_speed` | — | hand ledger | unattributed sheet attack speed the law still counts | R3 |
+| Q = Ember quantity → explosions | 7 | `bombCounts` | inferred; the count-only A/B needs a Multiple Projectiles gem (not owned) or an Iron Lion spirit swap (pact board not readable) | R3 / Task 4 |
+| HoA L21 ×1.10 | — | `#skill-levels` | inferred from the tooltip; levels > 21 unverified (40T ÷2.36) | Task 15 |
+| Upheaval "+20% additional damage" dropped | — | `bingKit.ts` | measured absent on one build; SS13 text unread (tlidb 404) | R3 |
+| Formation Breaker Sentry-proximity +30% taken zeroed | — | `bingImport.ts` | measured off at one spot, player at range under FC; a Sentry at the boss may differ | P2 / R3 |
+| proximity lines live (Solar Ring) | ÷1.61 if wrong | `bingDiagnose.ts` UNVERIFIED | no position read yet | P2 |
+
+`pnpm bing diagnose <build> --season ss13` still lists the Pro-only UNVERIFIED assumptions (skill levels, tick grid,
+lucky, corruption, low-life, profane…) — Tasks 10, 15.
+
+---
+
+## 3. Open discrepancies (the R3 list)
+
+| # | discrepancy | evidence so far | task |
+|---|---|---|---|
+| 1 | **PP off / SP off total-DPS ratios** (÷1.320, ÷1.245, ÷1.202) vs the model's ÷1.41 / ÷1.31 | per-hit reads give ÷1.406–1.411 / ÷1.310–1.328 on every hit in two sessions with counts unchanged; the R1 session's own PP-off total read ÷1.57 — the total windows look like noise, not a mechanic | R3 |
+| 2 | **Flame Core off** ÷4.09 vs ÷4.318 | e = 1/5 and uptime 0.545 measured; the R1 bracket read ÷4.53; FC-off windows swing 89.6–118B | R3 |
+| 3 | **Blank Mallet vs blank Claymore**: +11.6% measured for +15 base phys; model +4.3% (R1's fit had hidden it) | — | Task 11 |
+| 4 | **10-10 baseline** 467.3 vs 452.2B | the R1 session's 18 windows read 458.5B (−1.4%); decomposition: pummel 3.828 vs 3.815B, explosion 1.523 vs 1.511B, pummels/s 3.438 vs 3.409, explosions/s 24.09 vs 23.86, tick÷hit 8.196 vs 8.217 — all within 1.3% | R3 |
+| 5 | **July export −16%** | older game state; the export lacks prism placements | R3 |
+| 6 | **July chain s4 tick-share conflict**: the direct A/B of the +24% Deterioration line (×1.153) favours ticks ×1.19 (old rule) over own-pool ×1.24 unless the July rig's tick share is ~0.64, not 0.79 | not H, not R2 (`detDps` scales with `hitDps`); candidates: the unencoded July lunar affix, `enhancedShare` | R3 |
+| 7 | **Both-off crit share** 0.58–0.59 vs 0.51–0.52 at base / SP off (~4σ, ~1,500 hits) → mean per-hit ratio ÷1.74–1.77 vs top-level ÷1.85 | r2 per-hit CSVs | R3 |
+| 8 | **Hasten** (Boots of Devastation): 676.9 vs 654.2B in the old model; value unknown | — | Task 12 |
+| 9 | **One-handed weapons untested**; every "when holding a Two-Handed Weapon" line assumed true | — | Tasks 13, 14 |
+| 10 | **Pro builds far off** (pro-1t 142.6B vs 1T; 40T 228T) | play style answered (§0) | Task 10 |
+| 11 | **Position**: the proximity lines and the Sentry line depend on the spot | baselines 480 → 433B between spots (10-10); the per-hit read can now separate them | P2 |
+| 12 | Dead knobs after R2: `proj_speed_inc_pct` / `proj_speed_more_pct` written but unread (`seasons.ts:109`, `bingKit.ts:142`, `bingLedger.ts:180`); Mighty Arrow kismet `hits_per_bomb` ×1.3286 inert on counted builds; "folded into hits_per_bomb" reasons stale (`bingAffixMap.ts:135`, `bingImport.ts:117`) | R2 review | R3 / Task 5 |
 
 ---
 
@@ -121,7 +226,7 @@ Every task's requirements include these.
 - Commit on `main` in `rehan_guide` (user 2026-10-10: "make sure everything is on MAIN"). Before every push:
   `git fetch torchlight && git rebase torchlight/main` — another agent pushes too. poorchlight changes: commit, and
   push only after the user says so.
-- `pnpm test` stays green (609 at `8110a14`). **Never loosen an existing tolerance or delete a measured case** to make
+- `pnpm test` stays green (626 at `b0ae837`). **Never loosen an existing tolerance or delete a measured case** to make
   a change pass — a change that breaks a measured A/B is a failed change.
 - `CLAUDE.md` invariants: the `docs/mechanics.md` row lands before the code; failing test first; after any model or
   parser change `pnpm test && pnpm page`, then refresh the page prose numbers. Stale prose is a bug.
@@ -130,9 +235,18 @@ Every task's requirements include these.
 - Game-time DPS only (`combat.mjs` field `dps`, never `wallDps`). 30-second windows, A-B-A bracketing.
 - Every in-game number compared to the model lands in a test, with a comment
   `// measured ÷X (YYYY-MM-DD, label <label>); predicted ÷Y first`.
+- **Ruling R8 (2026-10-11):** a measured case the model misses by more than its tolerance and that no
+  text/measurement can fix yet is not refit and not loosened — the test pins today's model value with MEASURED beside
+  it and a "flip to measured once fixed" comment, and the case is named in §3. A pin flips back to asserting the
+  measured value at its **original** tolerance as soon as the model hits it.
+- **No new fitted constants** (rebuild rule): every count, share, uptime or multiplier is a quoted game text or a
+  direct per-hit / cast-watch measurement — never back-solved from total DPS. A §2 constant is removed only when its
+  measured replacement is in and tested.
+- Per-hit reads (`combat.mjs --hits`) are the primary instrument for A/Bs; total-DPS windows are secondary (§0).
 - The user may be using the PC: never set `TLI_FORCE_FLICK`; `ops` waits for Torchlight to come to front.
-- **Needs-user steps never stall the run.** Purchases (Trade House), logging out/in, Hero Trait changes, other
-  characters and approving poorchlight reverse-engineering are the user's. The controller defers that task, records the
+- **Needs-user steps never stall the run.** Purchases (Trade House) and other characters are the user's (Rehan is
+  off-limits — §0); gear/pactspirit/slate changes, Hero Trait swaps, relogs and poorchlight reverse-engineering are
+  granted (2026-10-11). The controller defers that task, records the
   ask under `## Waiting on the user` in the SDD ledger, and runs the next runnable task; it asks the user once, in one
   batch, when only blocked tasks remain.
 
@@ -145,7 +259,9 @@ The five failure modes most likely to ship past the tests; the task reviewer che
 1. **Prediction written after the measurement** (a post-hoc fit reported as a confirmation). Every `measurements.jsonl`
    label the task cites has a `predictions.jsonl` row with the same label and an earlier `at`.
 2. **The character moved between A and B** (proximity lines are worth ÷1.61 on this build). The A-B-A baselines agree
-   within 3% and, once Task 1 lands, the logged positions match.
+   within 3% and, once P2 lands, the logged positions match. (Total-DPS baselines often miss 3% from noise alone —
+   §0; a per-hit A/B is judged on the per-hit top levels, which agree within 0.5% between brackets. Windows that fail
+   the rule become informational pins, never measured cases.)
 3. **Game state left changed** — an item not restored, an aura left off (Life unsealed), the Skill panel open (dummy
    clock paused). `ops.mjs state` before and after the task is identical (item ids included).
 4. **A refit that fixes one A/B by breaking another** — every case in `import.test.ts` keeps its tolerance; the diff
@@ -162,37 +278,46 @@ elevated shell; one at a time. **OFFLINE** tasks need only the repo. Game prefli
 GAME task): `tasklist | grep -i torchlight` shows the client, `node .claude/skills/tli-game/ops.mjs state` succeeds,
 and `node .claude/skills/tli-game/combat.mjs 5` prints a non-null `dps`. Preflight fails → run the next OFFLINE task.
 
-**Run order** (suggested; respect `Depends on`; needs-user tasks defer per §5):
+**Run order** (revised 2026-10-11; respect `Depends on`; needs-user tasks defer per §5). Status: ✅ done, ⏸ deferred,
+➡ superseded by the rebuild, ✖ removed.
 
-| task | lane | needs user | depends on | model |
-|---|---|---|---|---|
-| 0 Bomb throw-rate law | GAME | — | — | most capable |
-| 1 Measuring spot and proximity | GAME | maybe (poorchlight RE) | — | standard |
-| 2 Obliterate timer rule | GAME | — | 0, 1 | most capable |
-| 3 Firepower Coverage hits per throw | GAME | maybe (trait swap, RE) | 0, 1 | most capable |
-| 4 Projectile channel held-out A/B | GAME | — | 0, 1 | standard |
-| 5 Gear projectile speed lines | OFFLINE | — | — | cheap |
-| 6 Upheaval explosion share | GAME | yes (2nd Upheaval) | 1 | standard |
-| 7 Cooldown-skill uptime from mechanics | OFFLINE → GAME | — | — | standard |
-| 8 Demolisher empower multiplier | GAME | maybe (resto item) | 0, 1, 7 | standard |
-| 9 Second calibration build | GAME | yes | 1 | standard |
-| 10 Third calibration build (Pro) | GAME | yes | 9 | standard |
-| 11 Mallet vs Claymore | OFFLINE → GAME | maybe (relog) | 0, 1 | standard |
-| 12 Hasten | OFFLINE | — | — | standard |
-| 13 Weapon-handedness requirements | OFFLINE | — | — | standard |
-| 14 One-handed weapon A/Bs | GAME | — | 0, 1, 13 | standard |
-| 15 HoA levels above 21 | OFFLINE | optional | — | standard |
-| 16 Scrape ≥10 more Pro Builds | GAME | — | — | standard |
-| 17 Scraped-build unknowns → 0 | OFFLINE | — | 7, 16 | standard |
-| 18 Library unknowns: irrelevant batch | OFFLINE | — | — | cheap |
-| 19 Library unknowns: damage-shaped | OFFLINE | — | 12, 18 | standard |
-| 20 Catalog coverage test | OFFLINE | — | — | standard |
-| 21 Catalog unknowns → 0 | OFFLINE | — | 20 | standard |
-| 22 Talent tree graph | OFFLINE | — | — | standard |
-| 23 Joint optimizer | OFFLINE | — | 17, 19, 21, 22 | most capable |
-| 24 Validate optimizer picks in game | GAME | yes (purchases) | 23 | standard |
-| 25 Rehan model revalidation | GAME | yes (Rehan character) | — | standard |
-| 26 Close-out | OFFLINE | — | all | cheap |
+| task | lane | status | needs user | depends on | model |
+|---|---|---|---|---|---|
+| 0 Bomb throw-rate law | GAME | ✅ law measured; in the model via R2 | — | — | most capable |
+| 1 Measuring spot and proximity | GAME | ⏸ → P2 | — | P1 | standard |
+| 2 Obliterate timer rule | GAME | ✅ (constant removed in R2) | — | 0 | most capable |
+| 3 Firepower Coverage hits per throw | GAME | ✅ FC path via P1/R2; Step 4 (manual-throw fold, FC off trait) open | — | R2 | most capable |
+| 4 Projectile channel held-out A/B | GAME | ✅ (q/k removed in R2); count-only A/B open (no Multiple Projectiles gem) | purchase or spirit swap | — | standard |
+| **P1** per-hit read | GAME | ✅ | — | — | most capable |
+| **R1** per-hit damage | GAME | ✅ | — | P1 | most capable |
+| **R2** counted hits | GAME | ✅ | — | P1, R1 | most capable |
+| **R3** total DPS compare + A/B audit | GAME + OFFLINE | **next** (needs resume) | — | R2 | most capable |
+| **P2** position read (+ Task 1) | GAME | todo | — | P1 | most capable |
+| 5 Gear projectile speed lines | OFFLINE | todo — re-scope: counts don't follow speed (R2), so speed lines are geometry no-ops again; clean the dead knobs (§3 #12) | — | — | cheap |
+| 6 Upheaval explosion share | GAME | ➡ `EXPLOSION_SHARE` removed; Upheaval flipped to ÷1.2168 | — | — | — |
+| 7 Cooldown-skill uptime from mechanics | OFFLINE → GAME | ➡ Bull's Rage done in R2; remaining: Timid / Entangled Pain / Fixate uptimes, `+1 Max Charges` | — | — | standard |
+| 8 Demolisher empower multiplier | GAME | ➡ counted path uses texts; M survives only in the July manual fold | — | 3 Step 4 | standard |
+| 9 Second calibration build | GAME | todo — re-spec DeafwaveB (§0) | — | R3 | standard |
+| 10 Third calibration build (Pro) | GAME | todo — play style answered (§0) | — | 9 | standard |
+| 11 Mallet vs Claymore | OFFLINE → GAME | todo (§3 #3) | — | R3 | standard |
+| 12 Hasten | OFFLINE | todo | — | — | standard |
+| 13 Weapon-handedness requirements | OFFLINE | todo | — | — | standard |
+| 14 One-handed weapon A/Bs | GAME | todo | — | 13 | standard |
+| 15 HoA levels above 21 | OFFLINE | todo | optional | — | standard |
+| 16 Scrape ≥10 more Pro Builds | GAME | todo | — | — | standard |
+| 17 Scraped-build unknowns → 0 | OFFLINE | todo | — | 7, 16 | standard |
+| 18 Library unknowns: irrelevant batch | OFFLINE | todo | — | — | cheap |
+| 19 Library unknowns: damage-shaped | OFFLINE | todo | — | 12, 18 | standard |
+| 20 Catalog coverage test | OFFLINE | todo | — | — | standard |
+| 21 Catalog unknowns → 0 | OFFLINE | todo | — | 20 | standard |
+| 22 Talent tree graph | OFFLINE | todo | — | — | standard |
+| 23 Joint optimizer | OFFLINE | todo | — | 17, 19, 21, 22 | most capable |
+| 24 Validate optimizer picks in game | GAME | todo | yes (purchases) | 23 | standard |
+| 25 Rehan model revalidation | — | ✖ removed by the user (Bing1 only) | — | — | — |
+| 26 Close-out | OFFLINE | todo | — | all | cheap |
+
+Suggested next: R3 when the game is free; meanwhile OFFLINE 12 → 13 → 18 → 5 → 20 → 22 (each touches
+`bingAffixMap.ts` or the snapshot — run them one at a time).
 
 **Dispatch additions** (on top of the SDD implementer template): name the card's **Skills** as "invoke these skills
 first"; for a GAME task add "you hold the game for this task: you are the only process driving it; end with
@@ -208,7 +333,79 @@ any user asks.
 
 ## 8. Tasks
 
+### 8.R Rebuild cards (user decision 2026-10-11)
+
+The model is built from the game texts and the damage formula. Each non-text quantity (geometry, cadence, hidden
+behaviour) is **measured once, directly**, never back-solved from total DPS. Total DPS is compared last; a mismatch
+means a missing or wrong mechanic, found and named, not tuned. §5 binds every card (R8 pins, no new fitted constants).
+
+### Task P1: poorchlight per-hit damage read
+
+> ✅ **Done (2026-10-11).** `tli_dump --hit-watch <secs>` (poorchlight `a6ef905`, local) and `combat.mjs --hits`
+> (`57f6f6f`). Σ per-hit = the dummy total to 1e-10 in every window; ~3,700–4,100 hits per 30s. Layout documented
+> in poorchlight `docs/MEMORY_LAYOUT.md` ("Per-hit damage events"); fields named from observation: skill id, flags,
+> volley index, kind 4 = Deterioration. Caveats: addresses break on a game patch; a frame can be lost if two hurt
+> messages land within 1 ms (the ratio check flags it); the dummy must be the targeted bar. Deferred minors:
+> `combat.mjs:108-109` throws before appending the row on a hit-watch error; empty-stdout JSON guard;
+> `combat.rs:398` owner read aborts the walk (use `.ok()` + continue).
+
+### Task P2: poorchlight player/dummy position read (resumes Task 1)
+
+**Lane:** GAME (memory RE, approved) · **Skills:** tli-game, bing-ab-test · **Depends on:** P1
+
+- [ ] Find the player's (and the dummy's) world position; add it to `--combat-json`; document in `MEMORY_LAYOUT.md`;
+  commit in poorchlight (no push).
+- [ ] Run Task 1 Steps 2a–5 (`pos` / `dummyDist` in the `combat.mjs` row, the 0.5-unit abort rule in bing-ab-test,
+  the proximity A/B). With the per-hit read, split the proximity lines (Solar Ring) from the Sentry-proximity line
+  (§2) by hit type and spot.
+
+**Done when:** Task 1's "Done when" holds and the Sentry-line zeroing is either confirmed at a second spot or
+replaced by a distance rule.
+
+### Task R1: per-hit damage from the sheet
+
+> ✅ **Done (2026-10-11).** Every hit type (empowered pummel, explosion, un-empowered pummel, Deterioration tick) and
+> crit share/multiplier within 3%; ten per-hit A/Bs within 3%. Mechanics found (`#bing-per-hit`): Deterioration tick
+> = 0.6 × own pool × hit (was ×1.57 low); Demolisher +215% on hits only; Shotgun 30%; Broken Sun +41% area on
+> empowered hits; Upheaval's "+20% additional" absent (one build); Formation Breaker Sentry-proximity line off at
+> the dummy (one spot); Kaleidoscope turns; skill levels (HoA L21 inferred); Well-Fought Battle ×1.33. Commits
+> `02ed2b4`, `a86ad10`.
+
+### Task R2: hits per second from the texts (throw law in, fitted constants out)
+
+> ✅ **Done (2026-10-11).** Counted model (`#bing-hit-counts`, `bombCounts`): throw law, 2.5 bombs/throw, empowered
+> bomb = pummel + Q explosions, un-empowered = pummel, n = ceil(3 × rate) / Formation Breaker n = 1, Bull's Rage
+> uptime from cooldown + charge cadence, live stacks from counted inflictions. Removed: weapon-APS throw rule,
+> `FC_AUTO_HITS`, H fold-in, q, k, `EXPLOSION_SHARE`, `OBLITERATE_TIMER_SCALE`, Bull's Rage 0.75/0.58, M on the
+> counted path. Seven cases R8-pinned → R3. Commits `a54afe2`, `fee0edd`, `b0ae837` (review fix: the Solar Ring
+> graft carries Solar Ring only; void-window total A/Bs became informational pins).
+
+### Task R3: total DPS compare and A/B audit
+
+**Lane:** OFFLINE + GAME (re-measures; needs resume) · **Skills:** bing-dps-model, bing-ab-test, tli-game,
+tlidb-lookup · **Depends on:** R2 · **Model:** most capable
+
+- [ ] Work §3 #1–#7 and #12 in order of impact. For each: predict, then measure **per hit** (`combat.mjs --hits`) in
+  the same session as its baseline, A-B-A; name the hit type / mechanic that differs; mechanics row → failing test →
+  fix from a text or a direct measurement. A total-DPS window pair that fails the 3% bracketing rule is void.
+  - #1 PP/SP off totals: re-measure per hit + total in one session; if per-hit ÷1.41/÷1.31 holds and totals still
+    differ, look for a count change (hits/s per type) the earlier windows missed — else retire the 10-10 total ratios
+    as noise (keep them in the test as void with the reason).
+  - #2 Flame Core off: per-hit counts of empowered vs un-empowered throws and Bull's Rage uptime in the same windows.
+  - #4 baseline: more base windows in one session; the decomposition is already within 1.3% per term.
+  - #6 July s4 tick share: decide between the own-pool rule and the old rule with a direct A/B of a "+X%
+    Deterioration Damage" source on the current build (per-hit tick ÷ hit ratio).
+  - #7 both-off crit share: re-measure; if real, find the crit mechanic (texts).
+  - #12 dead knobs: remove, fix the stale reasons.
+- [ ] `resid_attack_speed`: attribute it (sheet vs sources) or name it.
+- [ ] Update `docs/mechanics.md`, this document §0–§3, `pnpm test && pnpm page`, page prose.
+
+**Done when:** every measured case passes its original tolerance or is a pinned, named open discrepancy, and no
+fitted constant is left that a measurement could replace.
+
 ### Task 0: Bomb throw-rate law (Blast Nova)
+
+> ✅ **Done (2026-10-11).** Law measured: 1/s × (1+Σinc AS) × Π additional AS, weapon base APS, weapon-local and skill-scoped AS excluded — 5 states within 2.2% (`#bing-bombs`). Blocked from the model at the time (Flame Core off, Tyrant's); landed in R2 with the counted hits. Commits `661df70`, `efe83bf`.
 
 **Lane:** GAME (passive reads + bag swaps) · **Needs user:** — · **Depends on:** —
 **Skills:** bing-ab-test, bing-dps-model, tli-game, tlidb-lookup
@@ -259,6 +456,8 @@ and the weapon-swap gaps (§3.1) may all be absorbing this — so it runs first.
 
 ### Task 1: Measuring spot and proximity
 
+> ⏸ **Deferred → P2.** No existing poorchlight read has player/dummy position (Step 2b). The RE is now approved; P2 builds the read and then runs Steps 2a–5. Reference screenshots: `../scratch/spot-ref.png`, `spot-canonical.png`.
+
 **Lane:** GAME · **Needs user:** only if the position needs new poorchlight reverse-engineering · **Depends on:** —
 **Skills:** tli-game, bing-ab-test
 **Files:** Modify `.claude/skills/tli-game/combat.mjs` (log position), `.claude/skills/bing-ab-test/SKILL.md` (position
@@ -288,6 +487,8 @@ Firepower Coverage) is worth ÷1.61 on this build. Every later A/B inherits the 
 **Done when:** `combat.mjs` logs position (or the ask is recorded) and the proximity A/B is a test case (or reported).
 
 ### Task 2: Obliterate timer rule (replace `OBLITERATE_TIMER_SCALE`)
+
+> ✅ **Done.** Deterioration stacks follow the measured throw rate at three weapons (Mallet ×1.245, Sword ×1.258, Tyrant's ×0.927); under the law every throw is enhanced, so `OBLITERATE_TIMER_SCALE` was a throw-rate stand-in — removed in R2. `cycleDps` returns live stacks. Commits `e0f8397`, `607c3bf`.
 
 **Lane:** GAME · **Needs user:** — · **Depends on:** Tasks 0, 1
 **Skills:** bing-dps-model, bing-ab-test, tli-game
@@ -324,6 +525,8 @@ versions of the enhanced-share formula (two stale); leave one.
 
 ### Task 3: Firepower Coverage hits per throw (replace `FC_AUTO_HITS`)
 
+> ✅ **Done for Firepower Coverage builds** (via P1 → R2: `FC_AUTO_HITS` replaced by counted pummel + explosions). Open: Step 4 (manual-throw fold with Firepower Coverage off — a trait swap is now granted) to replace the July fold's `hits_per_bomb` / M. Commit `9adcd64`.
+
 **Lane:** GAME · **Needs user:** a Hero Trait swap (Firepower Coverage off, F4) for Step 4; approval if poorchlight
 needs a new read · **Depends on:** Tasks 0, 1
 **Skills:** bing-dps-model, bing-ab-test, tli-game
@@ -349,6 +552,8 @@ needs a new read · **Depends on:** Tasks 0, 1
 
 ### Task 4: Projectile channel held-out A/B (q = 0.31, k = 0.28)
 
+> ✅ **Done** (q/k removed in R2: both hit types are projectile-typed; counts don't follow projectile speed). The both-off ÷1.864 now matches (÷1.840). Open: the count-only A/B (Iron Lion's +2 is the spirit's own effect — spirit swap only, pact board not readable; no Multiple Projectiles gem owned). Commits `1ca9e7a`, `af586f8`, `961fcae`.
+
 **Lane:** GAME · **Needs user:** — · **Depends on:** Tasks 0, 1
 **Skills:** bing-ab-test, tli-game, bing-dps-model
 **Files:** Test: `packages/dmg/test/bing1/import.test.ts` ("model ablations match") · Modify (only on refit):
@@ -368,6 +573,8 @@ independent A/B is the first real test of them.
 **Done when:** the held-out case is in the test and the rows state what q and k rest on.
 
 ### Task 5: Gear "+X% Projectile Speed" lines feed projectile speed
+
+> **Re-scope (2026-10-11):** R2 measured that hit counts do not change with projectile speed, so the Step 2 test below is obsolete; instead keep speed lines as geometry no-ops with a reason citing R2's count reads, and remove the dead knobs (`proj_speed_inc_pct` / `proj_speed_more_pct`, §3 #12).
 
 **Lane:** OFFLINE · **Needs user:** — · **Depends on:** —
 **Skills:** bing-dps-model
@@ -396,6 +603,8 @@ test("projectile speed lines feed the Ember hit count", () => {
 
 ### Task 6: Upheaval explosion share (replace `EXPLOSION_SHARE`)
 
+> ➡ **Superseded by R2** — `EXPLOSION_SHARE` is gone; explosions are counted and Upheaval's rolled +32% applies to them (Upheaval off ÷1.2168 vs ÷1.217 measured). Only reopen if a second Upheaval roll disagrees.
+
 **Lane:** GAME · **Needs user:** yes — a second Upheaval support with a different explosion roll or tier in the bag ·
 **Depends on:** Task 1
 **Skills:** bing-ab-test, tli-game
@@ -416,6 +625,8 @@ explosion line's scope from the flat +20%.
 **Done when:** the share rests on two A/Bs (or the second gem is recorded as Waiting on the user).
 
 ### Task 7: Cooldown-skill uptime from mechanics (Bull's Rage first)
+
+> ➡ **Bull's Rage done in R2** (6s / 10s cooldown ÷ recovery, cast on charge gain; 0.774 / 0.545 measured 0.767 / 0.545; Cooldown Recovery lines mapped to `rotation.cdr_inc_pct`). Remaining: Timid, Entangled Pain, Fixate uptimes; `+1 Max Charges` (Task 17).
 
 **Lane:** OFFLINE, GAME only if the logged data is insufficient · **Needs user:** — · **Depends on:** —
 **Skills:** bing-dps-model, tlidb-lookup, bing-ab-test (only for Step 5)
@@ -453,6 +664,8 @@ the tweak.
 
 ### Task 8: Demolisher empower multiplier (M = 3.65)
 
+> ➡ **Counted path done in R2** (HoA +215% additional hit damage × Broken Sun area × "…Demolisher consumed" lines, all from texts; R1 measured empowered ÷ un-empowered pummel 4.42 vs 4.44). M = 3.65 survives only in the July manual-throw fold — do this only together with Task 3 Step 4.
+
 **Lane:** GAME · **Needs user:** maybe — a Demolisher Charge restoration-speed source if the build has none to
 toggle · **Depends on:** Tasks 0, 1, 7
 **Skills:** bing-ab-test, tli-game, bing-dps-model
@@ -472,6 +685,8 @@ restoration-speed A/B moves the empowered share and isolates M.
 **Done when:** M rests on a restoration-speed A/B.
 
 ### Task 9: Second calibration build
+
+> **User (2026-10-11):** re-spec DeafwaveB into a materially different loadout (gear/supports/slates/traits are granted), measure, then restore exactly. Prefer per-hit A/Bs (§0). Run after R3.
 
 **Lane:** GAME · **Needs user:** yes — a loadout materially different from DeafwaveB's (weapon, supports or traits)
 set up at the lv85 dummy: the July gear if kept, or another character · **Depends on:** Task 1
@@ -493,6 +708,8 @@ set up at the lv85 dummy: the July gear if kept, or another character · **Depen
 
 ### Task 10: Third calibration build (a Pro Build)
 
+> **User (2026-10-11) play style:** a skill or Hero Trait with an automation/activation support or an automated trait is not pressed; one without is pressed by hand. pro-1t now models 142.6B (1T stated), 40T 228T.
+
 **Lane:** GAME · **Needs user:** yes — how 「寒山寺宾一5000火 1w亿」 is played (manual Ice Bond? positioning?),
 and a Pro Build re-created on a character · **Depends on:** Task 9
 **Skills:** tli-game, bing-ab-test, bing-dps-model
@@ -506,6 +723,8 @@ and a Pro Build re-created on a character · **Depends on:** Task 9
 **Done when:** the Pro build's baseline and A/Bs are test cases, and the assumptions it settled are out of `UNVERIFIED`.
 
 ### Task 11: Blank Mallet vs blank Claymore (+11.6% measured, +4% model)
+
+> **Note (2026-10-11):** under the counted model the gap is +11.6% measured vs +4.3% model (R1's fit had hidden it); the throw law no longer uses weapon base APS, so Step 0 is done — start at Step 1.
 
 **Lane:** OFFLINE, then GAME · **Needs user:** maybe — log out/in with each weapon equipped (snapshot bug) ·
 **Depends on:** Tasks 0, 1
@@ -793,6 +1012,8 @@ irrelevant before the optimizer can price it.
 
 ### Task 25: Rehan / Spectral Slash model revalidation
 
+> ✖ **Removed by the user (2026-10-11):** no switching to Rehan; focus purely on Bing1 until it is perfect.
+
 **Lane:** GAME · **Needs user:** yes — the Rehan character at the dummy · **Depends on:** — · priority: low
 **Skills:** tli-game, bing-ab-test (protocol only; `predict.ts` is Bing-only — use `pnpm rank` ablations for
 predictions)
@@ -813,6 +1034,9 @@ predictions)
   `docs/mechanics.md` rows that quote superseded numbers (found 2026-10-10: `#bing-sentry-curse` says the Empower block
   is unmodeled and quotes 23.5B → 151.9B; `#bing-import` says the 40T build reads 130T — `diagnose` now says 222.40T;
   `#bing-dummy-loop` says Blink is castable but its confidence column says uncastable).
+  Also (2026-10-11): fold the deferred minors from the SDD ledger (`progress.md` "minor (deferred)" lines) — e.g.
+  `#bing-bombs` still carries the superseded "throw_rate_base follows weapon APS … confirmed 2026-07-20" claim;
+  `ops.mjs install` ownership check; `combat.mjs --hits` error handling (log `hitsError` instead of throwing).
 - [ ] **Step 2:** rewrite §1–§3 from the tests: constants replaced leave §2, discrepancies closed leave §3, new
   baselines in §1; list every task still waiting on the user.
 - [ ] **Step 3:** `git fetch torchlight && git rebase torchlight/main && git push torchlight main`.

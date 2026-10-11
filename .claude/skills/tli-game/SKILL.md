@@ -84,7 +84,8 @@ this build. Their semantics (which is crit / True-damage Deterioration, whether 
 `node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` reads `tli_dump --combat-watch`: DPS =
 Δ dummy total damage / Δ **game time** (logic frames / 30 — never `wallDps`), buff uptime %, dummy debuffs with stacks
 (Deterioration, Timid, Frostbitten). Appends to `../scratch/measurements.jsonl` (outside the repo). Needs the dummy
-count running (Recount once). **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
+count running: 0 game-s from `combat.mjs 5` means it is stopped — with the dummy panel open, `game.ps1 click 310 545`
+(its Recount button, client pixels; game in front) restarts it in place. **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
 Kaleidoscope's 8s rotation) — the full protocol is the `bing-ab-test` skill. Never move between A and B.
 
 **A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli_dump --ui-json`: open views, Skill-panel

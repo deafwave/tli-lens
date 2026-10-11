@@ -11,7 +11,8 @@ parses the planner export and computes every % figure on the web page — nothin
 | `packages/page` | Vite page: Bundles & Linear Upgrades / Slate Mods / Memory Mods tabs. `src/data/*.json` is **generated** by `pnpm page` — never hand-edit |
 | `data/` | `Rehan.json` (planner export), `snapshot.json` (parsed build, hand-editable knobs like boss res), `manual_overrides.json` (cited constants), `craft_pools.json` (ember pools, regen via `.claude/skills/tlidb-lookup/extract_craft_pools.py`), `gear-en.json` (tlicompendium affix tiers), `bing1/` (Bing calibration exports + `real_buld_3_snapshot.json`, the hand-encoded real-build snapshot — see mechanics.md#real-build) |
 | `docs/mechanics.md` | **The mechanics truth.** Every modifier classified with bucket, citation, confidence — plus the "Assumptions & open interpretations" section. Code comments anchor to it (`mechanics.md#...`) |
-| `.claude/skills/` | `tli-build/cache` (tlicompendium data bundles), `tlidb-lookup` (tlidb.com fetcher), `mod-catalog` (catalog scoring rules + regen loop) |
+| `.claude/skills/` | `tli-build/cache` (tlicompendium data bundles), `tlidb-lookup` (tlidb.com fetcher), `mod-catalog` (catalog scoring rules + regen loop), `tli-game` (drive/read the running client), `bing-dps-model` + `bing-ab-test` (Bing model changes, in-game A/Bs) |
+| Bing / Hammer of Ash | `packages/dmg/src/bing*.ts` (importer → ledger → `cycleDps`), `pnpm bing diagnose`; the plan and open work: `docs/bing-dps-validation-handoff.md` |
 | `scripts/` | `update_skills.ts` (`pnpm skills [support\|active\|passive\|medium\|magnificent\|noble\|module]`) — regenerates `packages/page/src/data/<category>.json` from tlidb's newest season blocks (`--tags`/`--all`/`--check`; keeps `extra_gems`, dedupes by name) |
 
 ## Commands

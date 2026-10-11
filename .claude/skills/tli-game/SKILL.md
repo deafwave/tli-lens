@@ -81,10 +81,11 @@ this build. Their semantics (which is crit / True-damage Deterioration, whether 
 
 ## Memory combat reads (preferred)
 
-`node .claude/skills/tli-game/combat.mjs [secs=60] [--label x]` polls `tli_dump --combat-json` (~1.1s/read): DPS =
-Δ dummy total damage / Δ wall clock (exact, no screenshots), buff uptime %, dummy debuffs with stacks (Deterioration,
-Timid, Frostbitten). Appends to `scratch/measurements.jsonl`. Needs the dummy count running (Recount once). Use
-**≥180s windows** — 60s windows swing ±10% (Kaleidoscope 8s rotation, bomb RNG). Never move between A and B.
+`node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` reads `tli_dump --combat-watch`: DPS =
+Δ dummy total damage / Δ **game time** (logic frames / 30 — never `wallDps`), buff uptime %, dummy debuffs with stacks
+(Deterioration, Timid, Frostbitten). Appends to `../scratch/measurements.jsonl` (outside the repo). Needs the dummy
+count running (Recount once). **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
+Kaleidoscope's 8s rotation) — the full protocol is the `bing-ab-test` skill. Never move between A and B.
 
 **A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli_dump --ui-json`: open views, Skill-panel
 selection, the 9-slot loadout with item ids, aura activation, sealed life/mana):
@@ -116,6 +117,6 @@ span runs per state in one session (mechanics.md#real-build). Measured 2026-10-1
 span over 31s for the build above; self-measured with no input 498.3B (50s) and 492.8B (32s).
 
 Observed 2026-10-10 (no input, standing at the dummy): **auto-throws every ~0.48s = sheet APS 1.97 × Aggression
-1.05** (burst count); **Bull's Rage up ~62%** (37/60 samples over 30s); no Blink is cast unless pressed (it IS castable: 10.6 mana — an earlier "uncastable" note was an input bug), so
+1.05** (burst count on the wall clock, before the game-time correction — superseded: handoff Task 0); **Bull's Rage up ~62%** (37/60 samples over 30s); no Blink is cast unless pressed (it IS castable: 10.6 mana — an earlier "uncastable" note was an input bug), so
 with no input Blade-dancer's after-Mobility +45% and Saintess Repentance (needs a Blessing) are off;
 Feline Stimulant 5 stacks, Attack Aggression and the four aura buffs are always up.

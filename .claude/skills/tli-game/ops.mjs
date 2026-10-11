@@ -1,7 +1,7 @@
 /* One-call Skill-panel operations, verified step by step from memory (tli_dump --ui-json). Elevated shell,
    Torchlight in front (clicks need the real cursor). Never screenshots; aborts on the first unexpected state.
    usage:
-     node ops.mjs state                                   loadout + open views (memory)
+     node ops.mjs state                                   loadout, open views, equipped gear with item ids (memory)
      node ops.mjs aura <aura name> on|off                 Activate/Deactivate an aura (passive slot)
      node ops.mjs unequip <skill> [<support>]             remove a support (or the whole skill) from its slot
      node ops.mjs restore                                 put back the last unequipped item (same copy, verified by item id)
@@ -78,6 +78,7 @@ if (cmd === "state") {
   console.log(`views: ${u.views.map(v => v.page).join(", ")}  | skill panel ${u.skillPanel.open ? "OPEN" : "closed"}`);
   console.log(summary(u));
   console.log(`life sealed ${u.life.sealed}/${u.life.max}, mana sealed ${u.mana.sealed}/${u.mana.max}`);
+  console.log(`gear: ${Object.entries(u.gear.equipped).map(([k, v]) => `${k}=${v.uniqueName ?? v.baseName}#${v.instanceId}`).join(", ")}`);
 } else if (cmd === "close") {
   close(); console.log("closed");
 } else if (cmd === "aura") {

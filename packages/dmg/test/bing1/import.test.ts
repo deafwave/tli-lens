@@ -50,7 +50,9 @@ describe("Bing importer", () => {
     const dps = (r: ReturnType<typeof importBing>) => cycleDps(applySeason(r.snapshot, "ss13")).dps / 1e9;
     // mechanics.md#bing-hit-counts — R2 prices the counted hits (throw law, bombs, empowered share, pummel +
     // explosions) instead of the fitted counts. Measured 458.5B: the 18 base-state windows of the R1 session (r1-hits,
-    // r1-cast and every r1-*-a2 window, 547.7 game-s, `combat.mjs --hits`, 2026-10-11; ../scratch/r2/meanhit.py)
+    // r1-cast and every r1-*-a2 window, 547.7 game-s, `combat.mjs --hits`, 2026-10-11; ../scratch/r2/meanhit.py). These
+    // windows predate the R2 model and its prediction: a re-read of older data, not a confirmation — the original
+    // 467.3B case below still misses (−3.2%)
     expect(Math.abs(dps(mine()) / 458.5 - 1)).toBeLessThan(0.02);
     // R8 pins (OPEN for R3): measured 467.3B (2026-10-10, 4 windows; was within 2% under the fitted counts) and
     // 557.75B (July span; the export lacks native prism placements; −8.3% after R1, −16.0% now)
@@ -251,13 +253,13 @@ describe("Bing importer", () => {
     const { base, dps } = ablate();
     expect(base / dps(/Precise Projectiles|Slow Projectile/) / 1.864).toBeCloseTo(1, 1);   // ±5%
   }, 30_000);
-  test("R2 total DPS: Slow Projectile off ÷1.351, both off ÷1.821 within 5%", () => {
-    // measured ÷1.351 / ÷1.821 (2026-10-11, labels r2-sp-off / r2-both-off, 2 B windows each, A = r2-both-off-a1 433.5B
-    // and -a2 479.2B — 10.5% apart, the usual ±10% window scatter; the per-hit ratios above are the tight read);
-    // predicted ÷1.305 / ÷1.840 first
+  test("R2 total DPS, informational: model pinned; measured Slow ÷1.351 / both ÷1.821 VOID (A-B-A rule)", () => {
+    // labels r2-sp-off / r2-both-off (2026-10-11), predicted ÷1.305 / ÷1.840 first. The total-DPS ratios are void under
+    // bing-ab-test §5: A₁ (r2-both-off-a1, 433.5B) and A₂ (-a2, 479.2B) are 10.5% apart (rule ≤3%), r2-sp-off had no
+    // adjacent baseline (~20 min after A₁) and its windows ran 28.3–28.5 game-s. The per-hit r2 cases above are the read.
     const { base, dps } = ablate();
-    expect(base / dps(/Slow Projectile/) / 1.351).toBeCloseTo(1, 1);                          // ±5%
-    expect(base / dps(/Precise Projectiles|Slow Projectile/) / 1.821).toBeCloseTo(1, 1);      // ±5%
+    expect(base / dps(/Slow Projectile/)).toBeCloseTo(1.305, 2);                          // measured ÷1.351 (void)
+    expect(base / dps(/Precise Projectiles|Slow Projectile/)).toBeCloseTo(1.840, 2);      // measured ÷1.821 (void)
   }, 30_000);
   test("same-session singles: measured Slow ÷1.324 within 5%; Precise ÷1.245 pinned (OPEN, scatter ±12%)", () => {
     // measured ÷1.245 and ÷1.324 (2026-10-11, labels proj-pp-off-r, proj-sp-off-r; one A-B-A-B-A chain, bracket

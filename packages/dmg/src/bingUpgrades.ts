@@ -144,9 +144,11 @@ export function upgrades(tier: Tier = "t0") {
   } satisfies Record<string, Line>;
 
   const G: Record<string, [string, string, Source["edits"], Partial<Source>]> = {
-    solar: ["graft_solar", "graft: Broken Sun's Solar Ring", [["add", "enemy_taken.solar_ring", 40],
-      ["add", "additional.sun_area_empower", 28]], { provides: ["solar_ring"], replaces: ["broken_sun"],
-      cite: GRAFT("Broken Sun Ring"), note: "moves Solar Ring off the necklace, freeing it" }],
+    // only Solar Ring grafts: Broken Sun's "+X% additional Area Damage … when Demolisher Charge is consumed" is a random
+    // affix (34–45), not a legendary mod (catalog legendaryMods: Max Life, Elemental Resistance, Solar Ring)
+    solar: ["graft_solar", "graft: Broken Sun's Solar Ring", [["add", "enemy_taken.solar_ring", 40]],
+      { provides: ["solar_ring"], replaces: ["broken_sun"],
+      cite: GRAFT("Broken Sun Ring"), note: "moves Solar Ring off the necklace, freeing it (the necklace's area line goes with it)" }],
     foolsAdds: ["graft_fools_adds", "graft: Fool's Crown adds 108–138 Physical to the Main-Hand Weapon",
       [["add", "base.weapon_phys_min", 108], ["add", "base.weapon_phys_max", 138]], { cite: GRAFT("Fool's Crown") }],
     bladeDancer: ["graft_blade_dancer", "graft: Blade-dancer's +45% additional after Mobility",

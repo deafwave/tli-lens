@@ -717,7 +717,8 @@ describe("Bing1 Obliterate chain — Ruinous Star + Deterioration", () => {
   // span ratio ×1.1530 (14,451.5 / 12,533.5); model now ×1.1896 (+3.2%). This direct A/B of the +24% line favours
   // ×1.19 on ticks — it conflicts with the own-pool rule unless the rig's tick share is ~0.64, not 0.79. Not H: detDps
   // scales with hitDps, liveStacks ignores hits_per_bomb, H is RS-off-anchored. Candidates: the unencoded July lunar
-  // affix (bingLedger.ts memory_progress), enhancedShare / OBLITERATE_TIMER_SCALE. Flip to the measured ratio once
+  // affix (bingLedger.ts memory_progress), enhancedShare (OBLITERATE_TIMER_SCALE is gone since R2; the share is 1 on this
+  // 1-throw/s rig either way). Flip to the measured ratio once
   // resolved.
   test("s4 +24% Deterioration Damage: the tick's own pool ×1.24 (span 14,451.5; measured ×1.153 vs model ×1.190, OPEN)", () => {
     const s = rs();

@@ -48,6 +48,21 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
     expect(steps.at(-1)!.dps).toBeCloseTo(dps(have), -3);
   }, 30_000);
 
+  test("a Solar Ring graft encodes Solar Ring as Broken Sun does, without the necklace's random area line", () => {
+    // mechanics.md#bing-hit-counts — Broken Sun: Solar Ring +40% taken; its "+41% additional Area Damage … when
+    // Demolisher Charge is consumed" is a random affix (empowered hits only), which a graft does not carry
+    const dps = (set: Source[]) => cycleDps(applySeason(compose(BING_ZERO, effective(set)), "ss13")).dps;
+    const sun = REAL_BUILD_SOURCES.find(s => s.id === "broken_sun")!;
+    const rest = REAL_BUILD_SOURCES.filter(s => s !== sun);
+    const sunNoArea = { ...sun, edits: sun.edits.filter(e => e[1] !== "rotation.empower_area_pct") };
+    const grafts = VORAX.filter(s => s.id.endsWith("graft_solar"));
+    expect(grafts.length).toBeGreaterThan(0);
+    for (const g of grafts) {
+      expect(g.edits.some(e => /sun_area_empower|empower_area/.test(String(e[1]))), g.id).toBe(false);
+      const limb = VORAX.find(s => s.id === g.requires![0])!;   // the Vorax piece (no edits of its own)
+      expect(dps([...rest, limb, g]) / dps([...rest, sunNoArea]), g.id).toBeCloseTo(1, 9);
+    }
+  });
   test("upgrades are cited and their requires resolve against the real build", () => {
     const all = [...REAL_BUILD_SOURCES, ...UPGRADES, ...VORAX];
     const ids = new Set([...all.map(s => s.id), ...all.flatMap(s => s.provides ?? [])]);

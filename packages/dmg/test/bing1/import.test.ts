@@ -111,6 +111,17 @@ describe("Bing importer", () => {
     ];
     for (const [drop, meas, tweak] of cases) expect(base / dps(drop, tweak) / meas, String(drop)).toBeCloseTo(1, 1.4);
   }, 30_000);
+  // measured ÷1.864 (2026-10-10, label proj-both-off; 8 A windows mean 457.4B, 4 B windows 245.4B — A windows scatter
+  // 402–531B, bracket means used); predicted ÷1.600 first (law patch: ÷1.600). Precise Projectiles + Slow Projectile
+  // off together — the held-out test of q = 0.31 / k = 0.28 (fitted to the two single-source A/Bs, ÷1.320 × ÷1.202 = 1.587).
+  // OPEN (mechanics.md#bing-proj-speed): the model is 14% low and no (q, k) fits all three — the best joint fit leaves
+  // ±5–6% on each A/B and breaks the two single-source cases above (2%). test.fails pins the gap; when the structure is
+  // fixed the case flips red — promote it to the ablation list then.
+  test.fails("held-out: Precise Projectiles + Slow Projectile off together within 5% (OPEN, model 14% low)", () => {
+    const r = mine();
+    const dps = (drop?: RegExp) => cycleDps(applySeason(compose(BING_ZERO, effective(r.sources.filter(x => !drop || !drop.test(x.label)))), "ss13") as any).dps;
+    expect(dps() / dps(/Precise Projectiles|Slow Projectile/) / 1.864).toBeCloseTo(1, 1);   // ±5%
+  }, 30_000);
   test("gear swaps match the 2026-10-10 game-time A/Bs within 5% (absolute DPS)", () => {
     // mechanics.md#bing-obliterate — weapons span 1.7–3.1 attacks/s, so these pin the Obliterate cap and the
     // eroded/un-eroded hit split; Tyrant's pins Mark + the Empower block

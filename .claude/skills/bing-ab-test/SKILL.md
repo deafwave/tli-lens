@@ -61,7 +61,7 @@ Run from the repo root; `O="node .claude/skills/tli-game/ops.mjs"; C="node .clau
 | model sources behind a stat | `cd packages/dmg && npx tsx ../../.claude/skills/tli-game/sources.ts <build.json> "<path regex>"` |
 | prediction | `predict.ts <build.json> --label x --drop "re"` (from `packages/dmg`) |
 | one window | `$C 30 --label x --buffs` → `../scratch/measurements.jsonl` (`dps`, `gameS`, `speed`, `uptime`, `stacks`) |
-| burst / throw frequency | copy `../poorchlight/tli_dump/diagnostics/_last_combat_watch.csv` per label, then `node .claude/skills/bing-ab-test/throw-period.mjs <csv>…` (compare states by ratio: 2 bombs per throw) |
+| burst / throw frequency | `combat.mjs` keeps each run's capture as `../scratch/watch/<label>.csv` (`<label>-2.csv`, …); `node .claude/skills/bing-ab-test/throw-period.mjs <csv>…` (compare states by ratio: 2 bombs per throw) |
 | loadout / swaps | `$O state`, `$O unequip/restore/aura/equip/gear-restore/close` (tli-game) |
 | a one-off model script | write it to `../scratch/<name>.ts` and run `npx tsx` on it — on Windows a multi-line `npx tsx -e` is cut at the first newline |
 

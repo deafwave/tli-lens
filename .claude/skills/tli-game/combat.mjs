@@ -4,7 +4,7 @@
    simulates slower than real time when its frame rate drops (0.7–0.9× seen), so wall-clock DPS reads low and
    drifts; never compare wall-clock numbers to the model. --buffs adds a buff/debuff uptime pass (one
    --combat-json read per ~1.1s for the same duration, run afterwards).
-   Appends one JSON line per run to scratch/measurements.jsonl. */
+   Appends one JSON line per run to scratch/measurements.jsonl and keeps the per-frame CSV in scratch/watch/. */
 import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -35,7 +35,14 @@ if (args.includes("--buffs")) {
   }
 }
 await done;
-const rows = fs.readFileSync(path.join(poor, "tli_dump/diagnostics/_last_combat_watch.csv"), "utf8").trim().split(/\r?\n/).slice(1)
+const csv = path.join(poor, "tli_dump/diagnostics/_last_combat_watch.csv");
+// keep each run's per-frame capture for throw-period.mjs: ../scratch/watch/<label>.csv (then <label>-2.csv, …)
+const watchDir = path.resolve(here, "../../../../scratch/watch");
+fs.mkdirSync(watchDir, { recursive: true });
+let kept = path.join(watchDir, `${label || "unlabeled"}.csv`);
+for (let i = 2; fs.existsSync(kept); i++) kept = path.join(watchDir, `${label || "unlabeled"}-${i}.csv`);
+fs.copyFileSync(csv, kept);
+const rows = fs.readFileSync(csv, "utf8").trim().split(/\r?\n/).slice(1)
   .map(l => l.split(",").map(Number)).map(([t, dmg, dur, frame]) => ({ t, dmg, dur, frame }));
 const [a, b] = [rows[0], rows.at(-1)];
 const gameS = (b.frame - a.frame) / 30, wallS = (b.t - a.t) / 1000;

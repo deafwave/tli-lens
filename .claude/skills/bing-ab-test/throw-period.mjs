@@ -2,8 +2,8 @@
    Per-logic-frame damage with the Deterioration tick phase (the global 10-frame clock) zeroed, then a periodogram
    over 6–60 frames. Each throw lobs 2 bombs, so the top peak may be the bomb rate (2× throws): compare states by
    ratio, never one state's peak against a model throw rate.
-   usage: node throw-period.mjs <combat_watch.csv>... (combat.mjs overwrites
-          ../poorchlight/tli_dump/diagnostics/_last_combat_watch.csv on every run — copy it per label first) */
+   usage: node throw-period.mjs ../scratch/watch/<label>*.csv... (combat.mjs keeps each run there; the
+          shared ../poorchlight/tli_dump/diagnostics/_last_combat_watch.csv is overwritten every run) */
 import fs from "node:fs";
 
 for (const file of process.argv.slice(2)) {

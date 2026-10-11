@@ -19,7 +19,7 @@ type Effect = (lv: number, x: { roll?: number[]; tier?: number }) => Edit[];
 const HOA_SUPPORTS: Record<string, Effect> = {
   "Elemental Fusion": lv => [["set", "_gem_levels.fusion", lv], ["add", "additional_typed.elemental.fusion", 0]],
   "Passivation": lv => [["set", "_gem_levels.passivation", lv], ["add", "additional_typed.erosion.passivation", 0]],
-  "Steamroll": lv => [["set", "_gem_levels.steamroll", lv], ["add", "additional.steamroll", 0], ["add", "aux.as_inc", -15]],
+  "Steamroll": lv => [["set", "_gem_levels.steamroll", lv], ["add", "additional.steamroll", 0], ["add", "aux.as_inc", -15], ["add", "aux.as_inc_skill", -15]],
   "Slow Projectile": lv => [["set", "_gem_levels.slow_projectile", lv], ["add", "additional.slow_projectile", 0]],
   "Melee Knockback": lv => [["add", "additional.melee_knockback", lin(15.5, 25.5, 35.5)(lv)],
                             ["add", "aux.knockback", lin(40, 60, 80)(lv)]],

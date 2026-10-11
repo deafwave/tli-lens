@@ -140,7 +140,9 @@ if (cmd === "state") {
   const rec = cmd === "gear-restore" ? swaps.at(-1) : null;
   if (cmd === "gear-restore" && !rec) die("no gear swap to restore");
   let u = ui();
-  const item = rec ? u.gear.bag.find(b => b.instanceId === rec.removed) : u.gear.bag.find(b => b.page === 100 && (has(b.uniqueName, names[0]) || has(b.baseName, names[0])));
+  const bagslot = flag("--bagslot") !== undefined ? Number(flag("--bagslot")) : null;
+  const item = rec ? u.gear.bag.find(b => b.instanceId === rec.removed)
+    : u.gear.bag.find(b => b.page === 100 && (bagslot === null || b.slot === bagslot) && (has(b.uniqueName, names[0]) || has(b.baseName, names[0])));
   if (!item) die(`no gear-page bag item matching "${rec ? rec.removedName : names[0]}"`);
   if (item.page !== 100) die(`${item.uniqueName ?? item.baseName} is on bag page ${item.page}, not the gear page`);
   const before = Object.fromEntries(Object.entries(u.gear.equipped).map(([k, v]) => [k, v.instanceId]));
@@ -148,7 +150,13 @@ if (cmd === "state") {
   if (!u.inventory.open) { game("key", "B"); for (let i = 0; i < 16 && !u.inventory.open; i++) { sleep(250); u = ui(); } }
   if (!u.inventory.open) die("inventory did not open");
   if (u.inventory.selectedPage !== 100) die(`bag shows page ${u.inventory.selectedPage}; select the gear tab (100) first`);
-  game("rclick", 2556 + (item.slot % 9) * 100, 996 + Math.floor(item.slot / 9) * 140); sleep(1000);
+  // the grid shows 3 rows starting at scrollOffset/cellHeight; wheel it until the target row is visible
+  const visRow = () => Math.floor(item.slot / 9) - Math.round(u.inventory.grid.scrollOffset / u.inventory.grid.cellHeight);
+  for (let i = 0; i < 12 && (visRow() < 0 || visRow() > 2); i++) {
+    game("wheel", 3000, 1136, visRow() < 0 ? 1 : -1); sleep(400); u = ui();
+  }
+  if (visRow() < 0 || visRow() > 2) die(`could not scroll slot ${item.slot} into view`);
+  game("rclick", 2556 + (item.slot % 9) * 100, 996 + visRow() * 140); sleep(1000);
   u = ui();
   const changed = Object.entries(u.gear.equipped).filter(([k, v]) => before[k] !== v.instanceId);
   if (changed.length !== 1 || changed[0][1].instanceId !== item.instanceId) die(`unexpected gear change: ${JSON.stringify(changed.map(([k, v]) => [k, v.uniqueName ?? v.baseName]))}`);

@@ -19,7 +19,7 @@ import { skillLevelAdditionalPct } from "./rank.js";
 export type Edit =
   | ["add" | "set" | "mul", string, number]
   | ["del", string]
-  | ["conv", DamageType, DamageType, number];
+  | ["conv", DamageType, DamageType, number, "obliterate"?];
 
 export type SourceGroup =
   | "gear" | "support" | "aura" | "trait" | "tree" | "slate" | "memory" | "pact" | "kismet"
@@ -95,10 +95,10 @@ export const BING_ZERO: Snapshot = {
 const H_BARE = 0.8353;
 const H_REAL = 1.6528676812873455;   // RS-off-anchored fold-in (mechanics.md#real-build)
 /** Firepower Coverage auto-throw hits on top of the July fold: one constant fits the user's July
-    export and 2026-10-10 build at weapon-APS throws (1.80 before Cruelty's Elite stacks and projectile speed were modeled), and the game-time Flame Core
+    export and 2026-10-10 build at weapon-APS throws (1.80 → 1.649 → 1.453 as Cruelty stacks, projectile speed and the Obliterate split were modeled), and the game-time Flame Core
     A/B (÷4.09 meas vs ÷4.14) places it in hits per bomb, not the empower multiplier
     (mechanics.md#bing-hit-channels). */
-export const FC_AUTO_HITS = 1.649;
+export const FC_AUTO_HITS = 1.453;
 const H_ARROWS = 1.3286;             // Mighty Arrow pair, bare-rig back-solve (bing1 pactspirits)
 
 const det = (k: string, v: number): Edit => ["add", `deterioration.${k}`, v];
@@ -138,8 +138,8 @@ export const REAL_BUILD_SOURCES: Source[] = [
             ["add", "additional.base_2h_gloves", 85], ["add", "aux.as_local", 14]],
     cite: `${RB} gloves: +85% additional 2H base, +14% MH AS, adds 58–71; weapon crit rating fixed 500` },
   { id: "ruinous_star", label: "Ruinous Star (Obliterate)", group: "gear",
-    edits: [["conv", "physical", "erosion", 100], ["conv", "fire", "erosion", 100],
-            ["conv", "cold", "erosion", 100],
+    edits: [["conv", "physical", "erosion", 100, "obliterate"], ["conv", "fire", "erosion", 100, "obliterate"],
+            ["conv", "cold", "erosion", 100, "obliterate"],
             det("hit_damage_pct", 60), ["set", "deterioration.duration_s", 1], det("duration_inc_pct", 30),
             ["set", "deterioration.tick_interval_s", 0.325], ["set", "deterioration.ramp_pct", 40],
             ["set", "deterioration.ramp_max_ticks", 6], ["set", "deterioration.obliterate_interval_s", 0.5],
@@ -350,7 +350,7 @@ export function effective(sources: Source[]): Source[] {
 export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   const s: any = structuredClone(zero);
   for (const src of sources) for (const e of src.edits) {
-    if (e[0] === "conv") s.conversion = [...(s.conversion ?? []), { from: e[1], to: e[2], pct: e[3] }];
+    if (e[0] === "conv") s.conversion = [...(s.conversion ?? []), { from: e[1], to: e[2], pct: e[3], ...(e[4] ? { obliterate: true } : {}) }];
     else if (e[0] === "del") setPath(s, e[1], () => undefined);
     else if (e[0] === "set") setPath(s, e[1], () => e[2]);
     else if (e[0] === "add") setPath(s, e[1], v => (v ?? 0) + e[2]);
@@ -386,7 +386,9 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   if (aux.throw_at_weapon_aps) s.rotation.throw_rate_base = s.base.weapon_attack_speed;
   const str = Math.round((aux.str_flat ?? 0) * (1 + pct("str_pct")));   // sheet shows integer Str (339)
   if (str) s.additional.strength = str / 2;
-  let as = (1 + pct("as_inc")) * (1 + pct("as_local"));
+  // Firepower Coverage's auto-throw ignores "Attack Speed for the supported skill" (Steamroll): removing it left the
+  // dummy's Deterioration stacks unchanged (mechanics.md#bing-obliterate)
+  let as = (1 + pct("as_inc") - (aux.throw_at_weapon_aps ? pct("as_inc_skill") : 0)) * (1 + pct("as_local"));
   for (const k of Object.keys(aux)) if (k.startsWith("as_more")) as *= 1 + pct(k);
   // "+X% additional Deterioration Damage" sources are each their own ×(1+v) (mechanics.md:275)
   for (const k of Object.keys(aux)) if (k.startsWith("det_more") && s.deterioration) {

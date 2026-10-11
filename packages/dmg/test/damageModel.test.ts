@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { averageHit, critMultiplier, mitigationMultiplier, expectedHit, cycleDps,
-         deteriorationTickSum, type Snapshot } from "../src/damageModel.js";
+         deteriorationTickSum, OBLITERATE_TIMER_SCALE, type Snapshot } from "../src/damageModel.js";
 import { snap, baseOnly } from "./helpers.js";
 
 describe("averageHit", () => {
@@ -449,7 +449,7 @@ describe("deterioration", () => {
   test("obliterate cadence gates the enhanced-use fraction", () => {
     const s = rotationSnap();
     s.deterioration = det();
-    s.deterioration.obliterate_interval_s = 2;   // 4s cycle -> 2 of 3 uses enhanced
+    s.deterioration.obliterate_interval_s = 2 / OBLITERATE_TIMER_SCALE;   // effective 2s: 4s cycle -> 2 of 3 uses enhanced
     expect(cycleDps(s).deterioration_dps).toBeCloseTo(145.0 * 0.6 * 3.9 * (2 / 3), 6);
   });
 

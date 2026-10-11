@@ -19,7 +19,7 @@ export interface Snapshot {
   // conversion HISTORY; `additional_typed` buckets are grouped under the same tags.
   // Without `conversion`, legacy behavior: every increased key sums (except erosion,
   // which scopes to the erosion portion) and only untyped `additional` exists.
-  conversion?: Array<{ from: DamageType; to: DamageType; pct: number }>;
+  conversion?: Array<{ from: DamageType; to: DamageType; pct: number; obliterate?: boolean }>;
   additional_typed?: Record<string, Record<string, number>>;
   enemy_taken: Record<string, number>;
   // mechanics.md Paralysis row — taken multiplier DERIVED from the build's inflict
@@ -599,6 +599,10 @@ export function comboRotation(s: Snapshot): RotationResult {
 /** Boss single-target DPS: pick the rotation strategy by shape (bomb iff
     rotation.bombs_per_throw is set, else the combo cycle), then layer the shared
     Deterioration DoT identically on top of whichever rotation ran. */
+/** mechanics.md#bing-obliterate — Ruinous Star's "every X s" enhances more uses than X implies: fitted across 15
+    game-time A/Bs (weapons at 1.7–3.1 attacks/s; Deterioration stacks plateau near 2.5–2.9 uses/s). Cause unknown. */
+export const OBLITERATE_TIMER_SCALE = 0.70;
+
 export function cycleDps(s: Snapshot) {
   const rot = s.rotation.bombs_per_throw !== undefined ? bombRotation(s) : comboRotation(s);
   const { hitDps, cycleTime, uses, perHit, rotationNode, starter_damage, finisher_damage } = rot;
@@ -607,13 +611,14 @@ export function cycleDps(s: Snapshot) {
   // Obliterate-enhanced (100% phys+ele → Erosion) and can inflict Deterioration;
   // each stack ticks True Damage worth hit_damage_pct% of the erosion hit dealt
   let detDps = 0;
+  let obliterateMix = 1;
   let dotNode: TNode | undefined;
   const d = s.deterioration;
   // mechanics.md#deterioration — the DoT needs an Obliterate base (hit_damage_pct, the
   // base tick %); a parsed build that only accumulated the modifier mods (Deterioration
   // Damage/Chance/Duration) has no base ⇒ inert, like Passivation on a zero-erosion build
   if (d && d.chance_pct > 0 && d.hit_damage_pct > 0) {
-    const enhancedShare = Math.min(1, cycleTime / d.obliterate_interval_s / uses);
+    const enhancedShare = Math.min(1, cycleTime / (d.obliterate_interval_s * OBLITERATE_TIMER_SCALE) / uses);
     // "+X% Deterioration Damage" is a non-additional (increased) line: it joins the
     // increased SUM for the deterioration envelope — ticks ×(incSum+X)/incSum, since
     // the feeding hit already carries ×incSum (mechanics.md#deterioration)
@@ -632,6 +637,13 @@ export function cycleDps(s: Snapshot) {
            * (1 + (d.additional_damage_pct ?? 0) / 100);
     const cap = stackCapFactor(s, d, uses / cycleTime * enhancedShare);
     detDps *= cap;
+    // mechanics.md#bing-obliterate — Obliterate's 100% → Erosion conversion applies to the enhanced uses only;
+    // the rest hit with their own (un-obliterated) conversions
+    if (enhancedShare < 1 && s.conversion?.some(c => c.obliterate)) {
+      const plain = { ...s, conversion: s.conversion.filter(c => !c.obliterate) };
+      const plainHit = (s.rotation.bombs_per_throw !== undefined ? bombRotation(plain) : comboRotation(plain)).hitDps;
+      obliterateMix = enhancedShare + (1 - enhancedShare) * plainHit / hitDps;
+    }
     // child is the hit-DPS node (shared): removing a per-hit chip correctly drops the DoT too
     dotNode = { label: "Deterioration", value: 0, op: "product", children: [rotationNode], chips: [
       { kind: "dot", label: "enhanced share", op: "×", factor: enhancedShare },
@@ -641,13 +653,15 @@ export function cycleDps(s: Snapshot) {
       ...(ratio !== 1 ? [{ kind: "dot" as const, label: "increased ratio", op: "×" as const, factor: ratio }] : []),
       ...(d.additional_damage_pct ? [{ kind: "dot" as const, label: "additional", op: "×" as const, factor: 1 + d.additional_damage_pct / 100 }] : []),
       ...(cap !== 1 ? [{ kind: "dot" as const, label: `${d.max_stacks}-stack cap`, op: "×" as const, factor: cap }] : []),
+      ...(obliterateMix !== 1 ? [{ kind: "dot" as const, label: "Deterioration feeds on enhanced hits only", op: "×" as const, factor: 1 / obliterateMix }] : []),
     ] };
+    if (obliterateMix !== 1) rotationNode.chips.push({ kind: "rotation", label: `Obliterate on ${(100 * enhancedShare).toFixed(0)}% of uses (rest un-eroded)`, op: "×", factor: obliterateMix });
   }
 
   const root: TNode = { label: "DPS", value: 0, op: "sum", chips: [],
     children: dotNode ? [rotationNode, dotNode] : [rotationNode] };
   setValues(root);
   const trace: Breakdown = { total: root.value, root, layers: { rotation: rotationNode, perHit, dot: dotNode } };
-  return { dps: hitDps + detDps, deterioration_dps: detDps,
+  return { dps: hitDps * obliterateMix + detDps, deterioration_dps: detDps,
            finisher_damage, starter_damage, cycle_time: cycleTime, trace };
 }

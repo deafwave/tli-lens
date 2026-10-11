@@ -111,4 +111,30 @@ describe("Bing importer", () => {
     ];
     for (const [drop, meas, tweak] of cases) expect(base / dps(drop, tweak) / meas, String(drop)).toBeCloseTo(1, 1.4);
   }, 30_000);
+  test("gear swaps match the 2026-10-10 game-time A/Bs within 5% (absolute DPS)", () => {
+    // mechanics.md#bing-obliterate — weapons span 1.7–3.1 attacks/s, so these pin the Obliterate cap and the
+    // eroded/un-eroded hit split; Tyrant's pins Mark + the Empower block
+    const d = load("data/bing1/scraped/my-build-2026-10-10.json"), pro = load("data/bing1/scraped/pro-1t.json");
+    const weapon = (phys: number, mods: [string, number][]) => {
+      const c = structuredClone(d.compendium), lo = c.loadouts.loadouts[0];
+      const mh = lo.gear.inventory.find((x: any) => x.id === lo.gear.equipped.mainHand);
+      Object.assign(mh, { towerSequence: null, suffixes: [], corrosionImplicit: null,
+        prefixes: mods.map(([t, v]) => ({ modifierDescription: t, rolledValues: [{ value: v }] })) });
+      mh.baseItem = { ...mh.baseItem, implicits: [`${phys} - ${phys} Physical Damage`, "500 Critical Strike Rating", "1.5 Attack Speed"]
+        .map(description => ({ description, values: [] })) };
+      return c;
+    };
+    const tyrants = () => {
+      const c = structuredClone(d.compendium), lo = c.loadouts.loadouts[0], pl = pro.compendium.loadouts.loadouts[0];
+      const g = pl.gear.inventory.find((x: any) => x.id === pl.gear.equipped.gloves);
+      lo.gear.inventory = lo.gear.inventory.filter((x: any) => x.id !== lo.gear.equipped.gloves).concat(g);
+      lo.gear.equipped.gloves = g.id;
+      return c;
+    };
+    const dps = (c: any) => cycleDps(applySeason(importBing(c, 0, d.nativeTalents, d.nativePrisms).snapshot, "ss13")).dps / 1e9;
+    const cases: [any, number][] = [
+      [weapon(175, []), 72.3], [weapon(190, []), 80.7], [weapon(190, [["+#% Gear Physical Damage", 25]]), 102.7],
+      [weapon(220, [["+#% gear Attack Speed", 18]]), 82.6], [tyrants(), 221.4]];
+    for (const [c, meas] of cases) expect(Math.abs(dps(c) / meas - 1)).toBeLessThan(0.05);
+  }, 60_000);
 });

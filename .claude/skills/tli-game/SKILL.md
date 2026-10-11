@@ -93,7 +93,8 @@ selection, the 9-slot loadout with item ids, aura activation, sealed life/mana):
 O="node .claude/skills/tli-game/ops.mjs"; C="node .claude/skills/tli-game/combat.mjs"
 $O state                                   # loadout + open views
 $O unequip "Hammer of Ash" Passivation      # support (or: $O unequip "Flame Core" for a whole skill)
-sleep 45; $C 150 --label passivation-off    # settle, then ≥120 game-s
+$O equip "Black Pass Claymore" --bagslot 15   # gear-tab bag item (right-click); $O gear-restore undoes it
+sleep 10; $C 30 --label passivation-off --buffs   # 30 game-s is enough to iterate (±~5%: Kaleidoscope 8s rotation)
 $O restore                                  # puts back the SAME item (item id checked), closes the panel
 $O aura "Precise Projectiles" off|on        # Activate/Deactivate (note: Seal Conversion auras also unseal Life)
 ```
@@ -101,6 +102,11 @@ $O aura "Precise Projectiles" off|on        # Activate/Deactivate (note: Seal Co
 Every step aborts on an unexpected state (wrong slot selected, wrong socket, any other loadout change). Clicks need
 Torchlight in front; `ops` waits (TLI_WAIT_S, default 30 min) instead of failing, and posts keys in the background.
 The dummy's frame counter stops while the Skill panel is open — always end with the panel closed (`$O close`).
+
+Bag clicks: the gear grid shows 3 rows at (2556 + col·100, 996 + visibleRow·140); `ops` derives the visible row from
+`inventory.grid.scrollOffset / cellHeight` and wheels the grid as needed. Close the bag with its X (3354,56) — ESC
+closes every panel including the dummy's (its counter keeps running; restart it from Sidney if the user wants it shown).
+Other panels can cover the bag (e.g. Talent) — `views` lists them; a click that changes nothing aborts the op.
 
 ## DPS readings
 

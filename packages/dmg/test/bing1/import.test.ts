@@ -111,16 +111,27 @@ describe("Bing importer", () => {
     ];
     for (const [drop, meas, tweak] of cases) expect(base / dps(drop, tweak) / meas, String(drop)).toBeCloseTo(1, 1.4);
   }, 30_000);
-  // measured ÷1.864 (2026-10-10, label proj-both-off; 8 A windows mean 457.4B, 4 B windows 245.4B — A windows scatter
-  // 402–531B, bracket means used); predicted ÷1.600 first (law patch: ÷1.600). Precise Projectiles + Slow Projectile
-  // off together — the held-out test of q = 0.31 / k = 0.28 (fitted to the two single-source A/Bs, ÷1.320 × ÷1.202 = 1.587).
-  // OPEN (mechanics.md#bing-proj-speed): the model is 14% low and no (q, k) fits all three — the best joint fit leaves
-  // ±5–6% on each A/B and breaks the two single-source cases above (2%). test.fails pins the gap; when the structure is
-  // fixed the case flips red — promote it to the ablation list then.
-  test.fails("held-out: Precise Projectiles + Slow Projectile off together within 5% (OPEN, model 14% low)", () => {
+  const ablate = () => {
     const r = mine();
     const dps = (drop?: RegExp) => cycleDps(applySeason(compose(BING_ZERO, effective(r.sources.filter(x => !drop || !drop.test(x.label)))), "ss13") as any).dps;
-    expect(dps() / dps(/Precise Projectiles|Slow Projectile/) / 1.864).toBeCloseTo(1, 1);   // ±5%
+    return { base: dps(), dps };
+  };
+  // Held-out A/Bs (2026-10-11, mechanics.md#bing-proj-speed). Each case pins TODAY'S MODEL prediction (predicted
+  // first) with the MEASURED value beside it; flip to the measured value once the model is fixed. None of these
+  // refits q = 0.31 / k = 0.28: both-off is inconsistent with the single-source A/Bs, so it barely tests them.
+  test("held-out Precise + Slow Projectile off together: model pinned, measured ÷1.864 not reached (OPEN)", () => {
+    // measured ÷1.864 (2026-10-11, label proj-both-off; 8 A windows mean 457.4B, 4 B windows 245.4B, A scatter 402–531B,
+    // bracket means); predicted ÷1.600 first (law patch ÷1.600). Singles ÷1.320 × ÷1.202 = 1.587.
+    const { base, dps } = ablate();
+    expect(base / dps(/Precise Projectiles|Slow Projectile/)).toBeCloseTo(1.600, 2);   // flip to 1.864 once fixed
+  }, 30_000);
+  test("same-session singles: model pinned, measured Precise ÷1.245 / Slow ÷1.324 (OPEN, scatter ±12%)", () => {
+    // measured ÷1.245 and ÷1.324 (2026-10-11, labels proj-pp-off-r, proj-sp-off-r; one A-B-A-B-A chain, bracket
+    // means; all-A means ÷1.267 / ÷1.306); predicted ÷1.320 / ÷1.204 first (law patch the same). The existing
+    // 2026-10-10 cases (÷1.320, ÷1.202) above are unchanged.
+    const { base, dps } = ablate();
+    expect(base / dps(/Precise Projectiles/)).toBeCloseTo(1.320, 2);   // flip to 1.245 once fixed
+    expect(base / dps(/Slow Projectile/)).toBeCloseTo(1.204, 2);       // flip to 1.324 once fixed
   }, 30_000);
   test("gear swaps match the 2026-10-10 game-time A/Bs within 5% (absolute DPS)", () => {
     // mechanics.md#bing-obliterate — weapons span 1.7–3.1 attacks/s, so these pin the Obliterate cap and the

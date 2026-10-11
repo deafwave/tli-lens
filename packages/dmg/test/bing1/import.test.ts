@@ -181,6 +181,8 @@ describe("Bing importer", () => {
       ["r1-slowproj-off", /Slow Projectile/, 1.328, 1.310], ["r1-fusion-off", /Elemental Fusion/, 1.170, 1.192],
       ["r1-passivation-off", /Passivation/, 1.664, 1.653], ["r1-weaponamp-off", /Weapon Amplification/, 1.445, 1.456],
       ["r1-erosionamp-off", /Erosion Amplification/, 1.461, 1.457], ["r1-cruelty-off", /Precise: Cruelty/, 1.495, 1.509],
+      // R2 (2026-10-11, labels r2-sp-off / r2-both-off, A = r2-both-off-a1/-a2; predicted ÷1.305 / ÷1.840 first)
+      ["r2-sp-off", /Slow Projectile/, 1.313, 1.3135], ["r2-both-off", /Precise Projectiles|Slow Projectile/, 1.853, 1.847],
     ];
     for (const [label, drop, pummel, explosion] of cases) {
       const t = bombHitTypes(perHitSnap(drop), "erosion");
@@ -204,6 +206,12 @@ describe("Bing importer", () => {
     within(base.explosionsPerEmpoweredBomb, 7.013, "explosions per empowered bomb");
     for (const drop of [/Precise Projectiles/, /Slow Projectile/])
       expect(bombCounts(snapOf(myBuild.compendium, drop)).explosionsPerEmpoweredBomb, String(drop)).toBe(base.explosionsPerEmpoweredBomb);
+    // R2 (2026-10-11; predicted 7 explosions and 30/22 throws first, labels r2-sp-off / r2-both-off): Slow Projectile
+    // off 1,372 explosions / 194 empowered pummels, both off 1,484 / 207, throws 1.352–1.380/s
+    const both = bombCounts(snapOf(myBuild.compendium, /Precise Projectiles|Slow Projectile/));
+    within(bombCounts(snapOf(myBuild.compendium, /Slow Projectile/)).explosionsPerEmpoweredBomb, 1372 / 194, "explosions, Slow Projectile off");
+    within(both.explosionsPerEmpoweredBomb, 1484 / 207, "explosions, both off");
+    within(both.throwRate, 30 / 22, "throws/s, both off");
     // 103,616 Deterioration ticks / 26,496 hits (4 ticks per stack × chance)
     within(base.ticksPerHit, 3.911, "ticks per hit");
     // Bull's Rage: buff 6.0 s every 7.82 s at base (230–241 frames), every 11.0 s with Flame Core off (329–330)
@@ -242,6 +250,14 @@ describe("Bing importer", () => {
     // bracket means); predicted ÷1.600 first (law patch ÷1.600). Singles ÷1.320 × ÷1.202 = 1.587.
     const { base, dps } = ablate();
     expect(base / dps(/Precise Projectiles|Slow Projectile/) / 1.864).toBeCloseTo(1, 1);   // ±5%
+  }, 30_000);
+  test("R2 total DPS: Slow Projectile off ÷1.351, both off ÷1.821 within 5%", () => {
+    // measured ÷1.351 / ÷1.821 (2026-10-11, labels r2-sp-off / r2-both-off, 2 B windows each, A = r2-both-off-a1 433.5B
+    // and -a2 479.2B — 10.5% apart, the usual ±10% window scatter; the per-hit ratios above are the tight read);
+    // predicted ÷1.305 / ÷1.840 first
+    const { base, dps } = ablate();
+    expect(base / dps(/Slow Projectile/) / 1.351).toBeCloseTo(1, 1);                          // ±5%
+    expect(base / dps(/Precise Projectiles|Slow Projectile/) / 1.821).toBeCloseTo(1, 1);      // ±5%
   }, 30_000);
   test("same-session singles: measured Slow ÷1.324 within 5%; Precise ÷1.245 pinned (OPEN, scatter ±12%)", () => {
     // measured ÷1.245 and ÷1.324 (2026-10-11, labels proj-pp-off-r, proj-sp-off-r; one A-B-A-B-A chain, bracket

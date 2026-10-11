@@ -21,6 +21,9 @@ export interface Snapshot {
   // which scopes to the erosion portion) and only untyped `additional` exists.
   conversion?: Array<{ from: DamageType; to: DamageType; pct: number; obliterate?: boolean }>;
   additional_typed?: Record<string, Record<string, number>>;
+  // mechanics.md#bing-per-hit — Kaleidoscope rings (+X% additional Erosion / Elemental / Physical by turns, in
+  // lockstep): each turn is a typed bucket for 8 s; pathEnvelope averages the three turns (conversion path only)
+  kaleidoscope?: Record<string, number>;
   enemy_taken: Record<string, number>;
   // mechanics.md Paralysis row — taken multiplier DERIVED from the build's inflict
   // chance (binary uptime): dead "+% inflicted Effect" lines stay no-ops at chance 0
@@ -333,7 +336,7 @@ function pathEnvelope(s: Snapshot, types: Set<DamageType>): number {
     if (typedApplies(s, tag, types))
       for (const v of Object.values(bucket)) m *= 1 + v / 100;
   for (const v of Object.values(s.enemy_taken)) m *= 1 + v / 100;
-  return m * paralysisTaken(s);
+  return m * paralysisTaken(s) * kaleidoscopeFactor(s, types);
 }
 
 // Explain-layer twin of pathEnvelope: one chip per factor, same gating as the math.
@@ -355,6 +358,8 @@ function pathEnvelopeChips(s: Snapshot, types: Set<DamageType>): Chip[] {
     if (v) out.push({ kind: "taken", label: `taken · ${k}`, op: "×", factor: 1 + v / 100 });
   const para = paralysisTaken(s);
   if (para !== 1) out.push({ kind: "taken", label: "paralysis", op: "×", factor: para });
+  const kal = kaleidoscopeFactor(s, types);
+  if (kal !== 1) out.push({ kind: "additional", label: "Kaleidoscope turns (average)", op: "×", factor: kal });
   return out;
 }
 
@@ -375,6 +380,53 @@ export function expectedHit(s: Snapshot, skillPct?: number): number {
   const ele = averageHit(s, skillPct) * mitigationMultiplier(s);
   const ero = erosionAvg(s, skillPct) * erosionMitigation(s);
   return (ele + ero) * critMultiplier(s) * doubleDamageMult(s);
+}
+
+/** mechanics.md#bing-per-hit — Kaleidoscope turns: +X% additional Erosion / Elemental / Physical by turns of 8 s. */
+export type Turn = "erosion" | "elemental" | "physical";
+const TURNS: Turn[] = ["erosion", "elemental", "physical"];
+function inTurn(s: Snapshot, t: Turn): Snapshot {
+  if (!s.kaleidoscope) return s;
+  const { kaleidoscope, ...rest } = s;
+  return { ...rest, additional_typed: { ...s.additional_typed, [t]: { ...s.additional_typed?.[t], ...kaleidoscope } } };
+}
+// a portion's Kaleidoscope factor averaged over the turns: a turn's rings reach it iff its type history has that type
+function kaleidoscopeFactor(s: Snapshot, types: Set<DamageType>): number {
+  if (!s.kaleidoscope) return 1;
+  let sum = 0;
+  for (const t of TURNS) {
+    let m = 1;
+    if (tagApplies(t, types)) for (const v of Object.values(s.kaleidoscope)) m *= 1 + v / 100;
+    sum += m;
+  }
+  return sum / TURNS.length;
+}
+
+/** mechanics.md#bing-per-hit — one hit's non-crit and crit damage (crit chance forced 0 / 100) on the expectedHit
+    path cycleDps prices; `turn` pins the Kaleidoscope turn (default: their time-average). */
+export function hitDamage(s: Snapshot, turn?: Turn): { nonCrit: number; crit: number } {
+  const x = turn ? inTurn(s, turn) : s;
+  const at = (c: number) => expectedHit({ ...x, crit: { ...x.crit, chance_pct: c } });
+  return { nonCrit: at(0), crit: at(100) };
+}
+
+/** mechanics.md#bing-per-hit — Hammer of Ash's hit types per bomb: the pummel (an un-empowered bomb's only hit),
+    the pummel of a Demolisher-empowered bomb (+empower_hit_pct additional Hit, +empower_area_pct additional Area)
+    and each of its explosions (+explosion_hit_pct additional; a later Shotgun hit, × (1 − shotgun_falloff_pct)). */
+export function bombHitTypes(s: Snapshot, turn?: Turn) {
+  const r = s.rotation, pummel = hitDamage(s, turn);
+  const scale = (h: { nonCrit: number; crit: number }, k: number) => ({ nonCrit: h.nonCrit * k, crit: h.crit * k });
+  const pummelEmpowered = scale(pummel, (1 + (r.empower_hit_pct ?? 0) / 100) * (1 + (r.empower_area_pct ?? 0) / 100));
+  const explosion = scale(pummelEmpowered, (1 + (r.explosion_hit_pct ?? 0) / 100) * (1 - (r.shotgun_falloff_pct ?? 0) / 100));
+  return { pummel, pummelEmpowered, explosion };
+}
+
+/** mechanics.md#bing-per-hit — first Deterioration tick ÷ the hit that inflicted it: "True Damage equal to 60% of the
+    Hit Erosion Damage dealt", × its own increased pool (Σ "+X% Deterioration Damage") × each additional line (measured
+    1.446 per tick, R1). The ramp and tick count are deteriorationTickSum. */
+export function deteriorationTickFactor(s: Snapshot): number {
+  const d = s.deterioration!;
+  return d.hit_damage_pct / 100 * (1 + (d.damage_inc_pct ?? 0) / 100) * (1 + (d.additional_damage_pct ?? 0) / 100);
 }
 
 /** mechanics.md#deterioration — total tick multiplier of ONE Deterioration stack:
@@ -620,22 +672,10 @@ export function cycleDps(s: Snapshot) {
   // Damage/Chance/Duration) has no base ⇒ inert, like Passivation on a zero-erosion build
   if (d && d.chance_pct > 0 && d.hit_damage_pct > 0) {
     const enhancedShare = Math.min(1, cycleTime / (d.obliterate_interval_s * OBLITERATE_TIMER_SCALE) / uses);
-    // "+X% Deterioration Damage" is a non-additional (increased) line: it joins the
-    // increased SUM for the deterioration envelope — ticks ×(incSum+X)/incSum, since
-    // the feeding hit already carries ×incSum (mechanics.md#deterioration)
-    // the feeding hit already carries ×incSum (its applicable increases); the DoT inherits
-    // those EXCEPT hit-only "Hit Damage" (a hit is not a DoT), and adds DoT-only damage_inc
-    let incSum = 1;
-    for (const [k, v] of Object.entries(s.increased)) if (increasedApplies(s, k)) incSum += v / 100;
-    // the feeding hit is Erosion, whose additive pool also carries increased.erosion
-    incSum += (s.increased.erosion ?? 0) / 100;
-    const dotInc = incSum - (s.increased.hit ?? 0) / 100 + (d.damage_inc_pct ?? 0) / 100;
-    const ratio = dotInc / incSum;
-    detDps = hitDps * enhancedShare * (Math.min(d.chance_pct, 100) / 100)
-           * (d.hit_damage_pct / 100)
-           * deteriorationTickSum(d)
-           * ratio
-           * (1 + (d.additional_damage_pct ?? 0) / 100);
+    // mechanics.md#bing-per-hit — each tick is 60% of the hit dealt × the Deterioration increases (their own pool)
+    // × each additional line: deteriorationTickFactor (measured 1.446 per tick, R1)
+    const tickFactor = deteriorationTickFactor(s);
+    detDps = hitDps * enhancedShare * (Math.min(d.chance_pct, 100) / 100) * tickFactor * deteriorationTickSum(d);
     const live = liveStacks(s, d, uses / cycleTime * enhancedShare);
     const cap = d.max_stacks && live && live > d.max_stacks ? d.max_stacks / live : 1;
     stacks = live === undefined ? undefined : Math.min(live, d.max_stacks || Infinity);
@@ -653,7 +693,7 @@ export function cycleDps(s: Snapshot) {
       { kind: "dot", label: `chance ${Math.min(d.chance_pct, 100)}%`, op: "×", factor: Math.min(d.chance_pct, 100) / 100 },
       { kind: "dot", label: `tick damage ${d.hit_damage_pct}%`, op: "×", factor: d.hit_damage_pct / 100 },
       { kind: "dot", label: `tick sum`, op: "×", factor: deteriorationTickSum(d) },
-      ...(ratio !== 1 ? [{ kind: "dot" as const, label: "increased ratio", op: "×" as const, factor: ratio }] : []),
+      ...(d.damage_inc_pct ? [{ kind: "dot" as const, label: `Deterioration +${d.damage_inc_pct}%`, op: "×" as const, factor: 1 + d.damage_inc_pct / 100 }] : []),
       ...(d.additional_damage_pct ? [{ kind: "dot" as const, label: "additional", op: "×" as const, factor: 1 + d.additional_damage_pct / 100 }] : []),
       ...(cap !== 1 ? [{ kind: "dot" as const, label: `${d.max_stacks}-stack cap`, op: "×" as const, factor: cap }] : []),
       ...(obliterateMix !== 1 ? [{ kind: "dot" as const, label: "Deterioration feeds on enhanced hits only", op: "×" as const, factor: 1 / obliterateMix }] : []),

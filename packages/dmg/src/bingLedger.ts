@@ -10,8 +10,8 @@
      crit chance  = 5% × (1 + Σ crit rating %)        (500 base rating; mechanics.md#real-build)
      strength     = 0.5% additional × flat × (1 + Σ %Str)
      attack speed = (1 + Σ inc) × Π(1 + more) × (1 + local MH %) − 1
-     skill levels = HoA levels above the real build's 21 (gem 20 + Lich +1), each its own
-                    ×1.10 (to L30) / ×1.08 multiplier (mechanics.md#skill-levels)
+     skill levels = HoA levels above the gem's 20 (e.g. Lich "+1 to All Skills' Levels"), each its own
+                    ×1.10 (to L30) / ×1.08 multiplier (mechanics.md#skill-levels, #bing-per-hit)
    Pure: no I/O. */
 import type { DamageType, Snapshot } from "./damageModel.js";
 import { skillLevelAdditionalPct } from "./rank.js";
@@ -35,9 +35,6 @@ export const SLOT_CAPACITY: Record<string, number> = {
   ...Object.fromEntries(["head", "neck", "hands", "legs", "waist", "digits1", "digits2"].flatMap(l => [
     [`vorax.${l}.*`, 6], [`vorax.${l}.graft`, 2], [`vorax.${l}.ultimate`, 2], [`vorax.${l}.advanced`, 2]])),
 };
-
-/** HoA levels the real build already has above 20 (Lich legendary medium +1 to All Skills). */
-export const HOA_LEVELS_ABOVE_20 = 1;
 
 export interface Source {
   id: string;
@@ -87,7 +84,11 @@ export const BING_ZERO: Snapshot = {
   enemy: { cold_res_pct: 30, armor_reduction_pct: 0, erosion_res_pct: 30 },
   rotation: { bombs_per_throw: 2, throw_rate_base: 1, attack_speed_inc_pct: 0,
               hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0, non_projectile_share: 0.31, proj_speed_hit_exp: 0.28,
-              demolisher_empower_mult: 3.65, demolisher_resto_pct: 0 },
+              demolisher_empower_mult: 3.65, demolisher_resto_pct: 0,
+              // mechanics.md#bing-per-hit — HoA text: "+215% additional Hit Damage when the skill consumes Demolisher
+              // Charge"; "Shotgun Effect falloff coefficient is 70%" (hits after the pummel deal 30%). Per-hit only
+              // (bombHitTypes) until the bomb's hit counts replace hits_per_bomb / M (R2)
+              empower_hit_pct: 215, shotgun_falloff_pct: 70 },
   tags: ["melee", "attack", "area", "projectile", "ranged",
          "horizontal_projectile", "parabolic_projectile"],
 };
@@ -399,8 +400,7 @@ export function compose(zero: Snapshot, sources: Source[]): Snapshot {
   // "+N Support Skill Level" raises every socketed seasoned gem (applySeason reads the level)
   if (aux.support_level) for (const gem of Object.keys(s._gem_levels ?? {})) s._gem_levels[gem] += aux.support_level;
   if (aux.skill_level) {
-    const band = (l: number) => 1 + skillLevelAdditionalPct(l) / 100;
-    s.additional.skill_levels = (band(HOA_LEVELS_ABOVE_20 + aux.skill_level) / band(HOA_LEVELS_ABOVE_20) - 1) * 100;
+    s.additional.skill_levels = skillLevelAdditionalPct(aux.skill_level);
   }
   return s as Snapshot;
 }

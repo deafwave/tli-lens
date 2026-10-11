@@ -104,7 +104,9 @@ describe("averageHit", () => {
     }
   });
 
-  test("increased.hit boosts the hit but NOT the deterioration DoT (hit-only)", () => {
+  // mechanics.md#bing-per-hit — a tick is 60% of the Hit Erosion Damage DEALT (tlidb Deterioration), so a hit-only
+  // increase rides into it (text; the measured build has no Hit Damage line).
+  test("increased.hit boosts the hit and the deterioration DoT alike (a tick is a share of the hit dealt)", () => {
     function detBomb(): Snapshot {
       const s = bombify(baseOnly());
       s.crit = { chance_pct: 0, damage_pct: 150 };
@@ -115,7 +117,7 @@ describe("averageHit", () => {
     const b = cycleDps(detBomb());
     const withHit = detBomb(); withHit.increased.hit = 100;
     const h = cycleDps(withHit);
-    expect(h.deterioration_dps).toBeCloseTo(b.deterioration_dps, 4);              // DoT excludes hit-only
+    expect(h.deterioration_dps).toBeCloseTo(2 * b.deterioration_dps, 4);          // the tick follows the hit dealt
     expect(h.dps - h.deterioration_dps).toBeCloseTo(2 * (b.dps - b.deterioration_dps), 4);  // hit doubles
   });
 
@@ -519,14 +521,15 @@ describe("deterioration", () => {
     expect(cycleDps(s).deterioration_dps).toBeCloseTo(145.0 * 0.6 * 3.9, 6);
   });
 
-  test("increased Deterioration Damage joins the increased SUM, not a flat ×(1+v)", () => {
+  // mechanics.md#bing-per-hit — R1 per-hit read: tick ÷ its hit = 0.6 × (1 + 0.64) × 1.4693 = 1.446 measured; the
+  // own pool, not the hit's increased sum (that reading gave 0.921 on the measured build)
+  test("increased Deterioration Damage is the tick's own pool: a flat ×(1 + Σ) on the hit dealt", () => {
     const s = rotationSnap();
     s.increased.global = 27;                      // hit envelope pool 1.27
     s.deterioration = det();
     s.deterioration.damage_inc_pct = 24;
-    // ticks scale ×(1.27+0.24)/1.27, on hits already carrying ×1.27
     expect(cycleDps(s).deterioration_dps)
-      .toBeCloseTo(145.0 * 1.27 * 0.6 * 3.9 * (1.51 / 1.27), 6);
+      .toBeCloseTo(145.0 * 1.27 * 0.6 * 3.9 * 1.24, 6);
   });
 });
 

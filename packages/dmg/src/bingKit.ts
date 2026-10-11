@@ -3,7 +3,7 @@
    traits (levels from memories), pactspirits and kismets. Values: tlidb level tables
    (scratch levels research, linear between Lv1/21/41 breakpoints) and the calibrated
    reference ledger (#real-build). Anything without a table is reported, not guessed. */
-import { EXPLOSION_SHARE, FC_AUTO_HITS, type Edit, type Source } from "./bingLedger.js";
+import { FC_AUTO_HITS, type Edit, type Source } from "./bingLedger.js";
 import type { ImportedLine } from "./bingImport.js";
 import { affixEdits } from "./bingAffixMap.js";
 
@@ -30,9 +30,10 @@ const HOA_SUPPORTS: Record<string, Effect> = {
   "Weakness Infiltration": lv => [["add", "additional.weakness_infiltration", lin(12.5, 22.5, 26.5)(lv)]],
   // bing1 QR ladder: L16 +23%, L20 +25% additional; its restoration is in rotation
   "Quick Return": lv => [["add", "additional.quick_return", lin(15.5, 25.5, 35.5)(lv)]],
-  // magnificent: +20% fixed; the explosion line scales only the explosion share (mechanics.md#bing-hit-channels)
-  "Hammer of Ash: Upheaval (Magnificent)": (_lv, x) => [["add", "additional.upheaval", 20],
-    ["add", "additional.upheaval_explosion", (x.roll?.[0] ?? 32) * EXPLOSION_SHARE]],
+  // mechanics.md#bing-per-hit — Upheaval off: explosions ÷1.321 (its rolled explosion line), pummel ÷0.994: the
+  // "+20% additional damage for the supported skill" shows on no hit type. Explosions are priced per hit only
+  // (bombHitTypes) until R2 counts them
+  "Hammer of Ash: Upheaval (Magnificent)": (_lv, x) => [["add", "rotation.explosion_hit_pct", x.roll?.[0] ?? 32]],
 };
 
 const SEASONED = new Set(["Elemental Fusion", "Passivation", "Steamroll", "Slow Projectile"]);
@@ -94,7 +95,8 @@ export interface Kit {
 }
 
 export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonus = 0,
-                           pactNodes: (name: string) => Record<string, string> | undefined = () => undefined): Kit {
+                           pactNodes: (name: string) => Record<string, string> | undefined = () => undefined,
+                           skillBonus = 0): Kit {
   const sources: Source[] = [];
   const extraLines: Kit["extraLines"] = [];
   let n = 0;
@@ -128,9 +130,11 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
       const mall = sups.filter((x: any) => x.supportGuid === "Precise: Malleable")
         .reduce((e: number, x: any) => e + 30 + 0.5 * ((x.level ?? 20) + supportBonus - 20), 0);
       const [path, f] = AURAS[name];
-      const v = f(sk.level ?? 20);
+      // "+N to All Skills' Levels" (mechanics.md#bing-per-hit: Weapon / Erosion Amplification, Cruelty, Precise
+      // Projectiles read at L21 per hit)
+      const v = f((sk.level ?? 20) + skillBonus);
       const req = name.includes("Erosion") ? { requires: ["ruinous_star"] } : {};
-      add(`skill:${name}`, `L${sk.level}${amp ? ` × ${(1 + amp / 100).toFixed(4)} (Aura Amplification)` : ""}`,
+      add(`skill:${name}`, `L${(sk.level ?? 20) + skillBonus}${amp ? ` × ${(1 + amp / 100).toFixed(4)} (Aura Amplification)` : ""}`,
           [["add", path, v * (1 + amp / 100)],
            // Precise Projectiles also grants +10% Projectile Speed (tlidb; mechanics.md#bing-proj-speed)
            ...(name.includes("Precise Projectiles") ? [["add", "rotation.proj_speed_inc_pct", 10] as Edit] : [])], req);
@@ -144,18 +148,24 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
         note(`skill:${name}`, s, /Restrain|Seal Conversion|Increased Area/.test(s) ? "irrelevant" : "unknown",
              /Restrain|Seal Conversion|Increased Area/.test(s) ? "aura upkeep / area" : undefined);
     } else if (name === "Timid") {
-      add("skill:Timid", `L${sk.level}`, [["add", "enemy_taken.timid", aura(20, 39)(sk.level ?? 20)]], { provides: ["curse"] });
+      add("skill:Timid", `L${(sk.level ?? 20) + skillBonus}`, [["add", "enemy_taken.timid", aura(20, 39)((sk.level ?? 20) + skillBonus)]], { provides: ["curse"] });
     } else if (name === "Fixate") {
       // tlidb Fixate L20: +3% additional damage per enemy affected (one boss), Mark +10% crit damage taken × 1.08 Mark Effect
       add("skill:Fixate", `L${sk.level}`, [["add", "additional.fixate", 3], ["add", "crit.crit_dmg_taken_pct", 10.8]]);
     } else if (name === "Entangled Pain") {
       // tlidb L20: Cursed enemies take +39% additional Damage Over Time (L1 20) — det ticks only; 5s / 8s CD, uptime assumed full
-      add("skill:Entangled Pain", `L${sk.level}`, [["add", "aux.det_more_entangled_pain", aura(20, 39)(sk.level ?? 20)]],
+      add("skill:Entangled Pain", `L${(sk.level ?? 20) + skillBonus}`, [["add", "aux.det_more_entangled_pain", aura(20, 39)((sk.level ?? 20) + skillBonus)]],
           { provides: ["curse"] });
     } else if (name === "Bull's Rage") {
       // tlidb L20: Euphoria +27% additional Melee Skill Damage (L1 17.5) for 6s / 10s CD — uptime assumed full
       // ×0.75 uptime: buff present 75–77% of 450+ memory samples at the dummy (DeafwaveB 2026-10-10, mechanics.md#bing-dummy-loop)
-      add("skill:Bull's Rage", `L${sk.level} Euphoria (75% uptime)`, [["add", "additional.bulls_rage", 0.75 * aura(17.5, 27)(sk.level ?? 20)]]);
+      // mechanics.md#bing-per-hit — Well-Fought Battle (SS13): "+X% Effect every time it is cast, stacking up to 3
+      // times" (5.25 at Lv1, +0.25/level); on ÷ off measured ×1.367 at L21 with WFB L24 (27.5 × 1.33)
+      const wfb = sups.filter((x: any) => x.supportGuid === "Well-Fought Battle")
+        .reduce((e: number, x: any) => e + 3 * lin(5.25, 10.25, 15.25)((x.level ?? 20) + supportBonus), 0);
+      const lv = (sk.level ?? 20) + skillBonus;
+      add("skill:Bull's Rage", `L${lv} Euphoria${wfb ? ` × ${(1 + wfb / 100).toFixed(2)} (Well-Fought Battle)` : ""} (75% uptime)`,
+          [["add", "additional.bulls_rage", 0.75 * aura(17.5, 27)(lv) * (1 + wfb / 100)]]);
     } else if (SENTRIES.has(name) && supNames.includes("Activation Medium: Motionless")) {
       add(`skill:${name}`, "Sentry + Activation Medium: Motionless → charge per Sentry use (#real-build)",
           [["del", "rotation.demolisher_resto_pct"], ["set", "rotation.demolisher_every_n", 1]],

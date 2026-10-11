@@ -13,7 +13,7 @@ export interface Assumption { id: string; what: string; drop?: RegExp; tweak?: (
 export const UNVERIFIED: Assumption[] = [
   { id: "tick-grid", what: "Deterioration ticks every 0.325s (frame-count fit) instead of the tooltip's 0.33s",
     tweak: s => { if (s.deterioration) s.deterioration.tick_interval_s = 0.33; } },
-  { id: "skill-levels", what: "every HoA level above the reference's 21 is ×1.10 (to 30) / ×1.08",
+  { id: "skill-levels", what: "every HoA level above 20 is ×1.10 (to 30) / ×1.08 (L21 inferred from the per-hit read, #bing-per-hit)",
     tweak: s => { delete s.additional.skill_levels; } },
   { id: "lucky", what: "Lucky Critical Strike: chance 1 − (1 − p)²", drop: /Lucky Critical Strike/ },
   { id: "corruption", what: "Spindle pair → Lv25 Corruption +44% Erosion taken (and a curse)", drop: /Spindle/ },

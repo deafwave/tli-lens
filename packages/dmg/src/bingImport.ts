@@ -90,8 +90,9 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
              edits: [["add", "enemy_taken.solar_ring", /Corona/i.test(text) ? 60 : 40]] };
   // Broken Sun's area line delivers 28 of a 41 roll on the reference rig (#real-build) and only on empowered throws
   if ((m = text.match(/^\+(\d+)% additional Area Damage for this skill when Demolisher Charge is consumed/i)))
-    return { why: "Broken Sun area-on-empower (calibrated 28/41 delivery)",
-             edits: [["mul", "rotation.demolisher_empower_mult", 1 + (+m[1] * 28 / 41) / 100]] };
+    return { why: "Broken Sun area-on-empower (calibrated 28/41 delivery in M; full roll per hit, #bing-per-hit)",
+             edits: [["mul", "rotation.demolisher_empower_mult", 1 + (+m[1] * 28 / 41) / 100],
+                     ["add", "rotation.empower_area_pct", +m[1]]] };
   if ((m = text.match(/^Has (\d+) point\(s\) of fixed Fervor Rating/i)))
     return { why: "Fervor: +2% crit rating per Fervor Rating (tlidb Fervor)", edits: [["set", "aux.fervor", +m[1]], ["add", "aux.crit_rating_pct", 2 * +m[1]]] };
   if ((m = text.match(/^\+(\d+)% additional damage per (\d+) Fervor Rating/i)))
@@ -119,14 +120,17 @@ function structural(text: string, slot: string): { edits: Edit[]; provides?: str
   if (/Gains Demolisher Charge when using Sentry Skills/i.test(text))
     return { why: "Formation Breaker charge line", provides: ["fb_charge"], edits: [] };
   if ((m = text.match(/Gains the following buffs by turns.*?\+(\d+)% additional Erosion Damage/is)))
-    return { why: "Kaleidoscope rings (full value, #real-build)", edits: [["add", `additional.kaleido_${m[1]}`, +m[1]]] };
+    return { why: "Kaleidoscope rings: Erosion / Elemental / Physical turns in lockstep (#bing-per-hit)",
+             edits: [["add", `kaleidoscope.kaleido_${m[1]}`, +m[1]]] };
   if (/^Lucky Critical Strike$/i.test(text)) return { why: "Lucky Critical Strike", edits: [["set", "aux.crit_lucky", 1]] };
   if ((m = text.match(/^([+-]?\d+)% Critical Strike Rating$/))) return { why: "crit rating", edits: [["add", "aux.crit_rating_pct", +m[1]]] };
   if (/Hero Trait Level/i.test(text)) return { why: "hero trait level (bingKit traits)", edits: [] };
   if ((m = text.match(/^(\d+)% of the increase\/decrease on Knockback distance is also applied to damage bonus/i)))
     return { why: "Ranger knockback → damage", edits: [["add", "aux.knockback_conv", +m[1]]] };
   if ((m = text.match(/^\+(\d+)% additional damage taken by enemies in proximity to Sentries$/i)))
-    return { why: "Formation Breaker taken near Sentries", edits: [["add", `enemy_taken.sentry_${m[1]}`, +m[1]]],
+    // mechanics.md#bing-per-hit — Flame Core off left every hit type unchanged (explosions ÷1.002): the dummy is not
+    // in the Sentry's proximity at the measuring spot
+    return { why: "Formation Breaker taken near Sentries: not at the dummy (measured ×1.00 per hit)", edits: [],
              requires: ["sentry"] };
   return null;
 }
@@ -254,9 +258,6 @@ export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]
   for (const [slot, id] of Object.entries<string>(lo.gear?.equipped ?? {}))
     for (const a of inv.get(id)?.randomAffixSlots ?? [])
       if (a?.description) memoryLines.push({ source: `gear:${slot}:random`, slot, text: a.description });
-  // the reference build's +1 level (Lich) is inside the calibrated geometry fold-in (#bing-ledger)
-  sources.push({ id: "imp_level_baseline", label: "skill-level baseline of the calibrated reference", group: "upgrade",
-                 edits: [["add", "aux.skill_level", -1]], cite: "bingLedger HOA_LEVELS_ABOVE_20" });
   const prismLines = nativeTalents && nativePrisms ? nativePrismLines(nativeTalents, nativePrisms) : [];
   // "+N Support Skill Level" also raises the table-priced supports the kit levels (seasoned gems get it in compose)
   const supportBonus = ([...extracted, ...memoryLines, ...prismLines] as Line[]).reduce((sum, l) => {
@@ -267,7 +268,12 @@ export function importBing(payload: any, loadoutIndex = 0, nativeTalents?: any[]
   const pactBoards = new Map(Object.values<any>(_load("SS12.5-pactspirit-en.json")["pactspirit/i18n/en"].pactspirits)
     .map(p => [p.name as string, Object.fromEntries(Object.entries<any>(p.nodes ?? {})
       .map(([n, node]) => [n, String(node.description)]))]));
-  const kit = kitSources(lo, raw, lines, supportBonus, name => pactBoards.get(name));
+  // "+N to All Skills' Levels" also raises the auras, curses and Bull's Rage the kit prices (#bing-per-hit: auras read L21)
+  const skillBonus = ([...extracted, ...memoryLines, ...prismLines] as Line[]).reduce((sum, l) => {
+    const m = l.text.match(/^\+(\d+) to All Skills' Levels$/i);
+    return sum + (m ? +m[1] * (l.slot === "tree" ? l.points ?? 1 : 1) : 0);
+  }, 0);
+  const kit = kitSources(lo, raw, lines, supportBonus, name => pactBoards.get(name), skillBonus);
   // mechanics.md#bing-mark — "Unable to trigger Empower Skills" (Tyrant's Smoldering Hold): Bull's Rage vanished at
   // the dummy (0% uptime) while the curse Timid kept firing
   const noEmpower = extracted.some(l => /^Unable to trigger Empower Skills$/i.test(l.text));

@@ -712,7 +712,11 @@ describe("Bing1 Obliterate chain — Ruinous Star + Deterioration", () => {
     expect(cycleDps(s3).dps / cycleDps(s).dps).toBeCloseTo(1.4247, 3);
   });
 
-  test("s4 +24% Deterioration Damage joins the increased sum: ticks ×1.51/1.27 (span 14,451.5, eff 0.892)", () => {
+  // R8 pin (mechanics.md#bing-per-hit, OPEN for R3): the R1 per-hit read makes "+X% Deterioration Damage" the tick's
+  // own pool (×1.24 here; was the increased-sum ×1.51/1.27 = ×1.189, model ×1.1493 / 16,199). Measured span ratio
+  // ×1.1530 (14,451.5 / 12,533.5); model now ×1.1896 (+3.2%). Flip to the measured ratio once the chain's H fold-in
+  // (the July rig's fitted hits) is replaced by counted hits (R2).
+  test("s4 +24% Deterioration Damage: the tick's own pool ×1.24 (span 14,451.5; measured ×1.153 vs model ×1.190, OPEN)", () => {
     const s = rs();
     s.increased.global = 27;
     s.additional.passivation = 60;
@@ -720,8 +724,8 @@ describe("Bing1 Obliterate chain — Ruinous Star + Deterioration", () => {
     s.deterioration!.duration_inc_pct = 35;
     const s4 = structuredClone(s);
     s4.deterioration!.damage_inc_pct = 24;
-    expect(cycleDps(s4).dps).toBeCloseTo(16199, -1);
-    expect(cycleDps(s4).dps / cycleDps(s).dps).toBeCloseTo(1.1493, 3);
+    expect(cycleDps(s4).dps).toBeCloseTo(16767, -1);
+    expect(cycleDps(s4).dps / cycleDps(s).dps).toBeCloseTo(1.1896, 3);   // measured ×1.1530
   });
 
   test("s5 +Elemental Fusion: redistribution's ×1.175, not ×1.35 (span 17,602.5, eff 0.925 — session ran hot)", () => {
@@ -736,7 +740,8 @@ describe("Bing1 Obliterate chain — Ruinous Star + Deterioration", () => {
     s.deterioration!.additional_damage_pct = 8;
     s.deterioration!.duration_inc_pct = 35;
     s.deterioration!.damage_inc_pct = 24;
-    expect(cycleDps(s).dps).toBeCloseTo(19034, -1);
+    // R8 pin: was 19,034 before the R1 tick rule (mechanics.md#bing-per-hit); measured span 17,602.5
+    expect(cycleDps(s).dps).toBeCloseTo(19701, -1);
   });
 
   // Discriminating reads 2026-07-20 (no det chance, n=3): RS+Fusion span 1,535 vs RS
@@ -890,19 +895,21 @@ describe("Bing real build — real_buld_3 (frozen-aura calibration 2026-07-20)",
     expect(cycleDps(rsOff()).dps / 1e9).toBeCloseTo(13.17, 1);
   });
 
-  test("full state: model 595.0B, det share 88.8% (measured 557.75B — +6.7% hot, strict 5-tick; mechanics.md#real-build)", () => {
+  // R8 pin (mechanics.md#bing-per-hit, OPEN for R3): the R1 tick rule (own Deterioration pool) moved 595.0B / 88.8%
+  // to 672.9B / 90.1% on this hand ledger, whose H fold-in was fit under the old rule. Measured 557.75B.
+  test("full state: model 672.9B, det share 90.1% (measured 557.75B — +20.6% hot, OPEN; mechanics.md#real-build)", () => {
     const r = cycleDps(snap());
-    expect(r.dps / 1e9).toBeCloseTo(595.0, 0);
-    expect(r.deterioration_dps / r.dps).toBeCloseTo(0.8879, 3);
+    expect(r.dps / 1e9).toBeCloseTo(672.9, 0);
+    expect(r.deterioration_dps / r.dps).toBeCloseTo(0.9008, 3);
   });
 
-  test("Saintess lever is exact: env + pen 10 + Repentance 1.04^6 = /1.5753 (measured /1.574)", () => {
+  test("Saintess lever: env + pen 10 + Repentance 1.04^6 = /1.5766 (measured /1.574; /1.5753 before the R1 tick rule)", () => {
     const s = snap(), sa = snap();
     sa.increased.erosion -= 112;
     sa.increased.global -= 6;
     sa.penetration.erosion_pct = 0;
     delete sa.additional_typed!.erosion.repentance;
-    expect(cycleDps(s).dps / cycleDps(sa).dps).toBeCloseTo(1.5753, 3);
+    expect(cycleDps(s).dps / cycleDps(sa).dps).toBeCloseTo(1.5766, 3);
   });
 
   test("Timid lever: taken applies once everywhere = /1.390 (measured /1.365)", () => {

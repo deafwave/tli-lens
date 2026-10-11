@@ -16,6 +16,9 @@ import { BING_ZERO, EXPLOSION_SHARE, FC_AUTO_HITS, REAL_BUILD_SOURCES, compose, 
 const real = (): Snapshot => {
   const s = JSON.parse(fs.readFileSync(fromRoot("data/bing1/real_buld_3_snapshot.json"), "utf-8"));
   s.rotation.throw_rate_base = 1.5;
+  // HoA text, per hit only (mechanics.md#bing-per-hit): +215% on a Demolisher consume, Shotgun falloff 70%
+  s.rotation.empower_hit_pct = 215;
+  s.rotation.shotgun_falloff_pct = 70;
   s.rotation.hits_per_bomb *= FC_AUTO_HITS;
   s.rotation.non_projectile_share = 0.31;
   s.rotation.proj_speed_hit_exp = 0.28;

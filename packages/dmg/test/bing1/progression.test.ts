@@ -58,11 +58,12 @@ describe("Bing progression walk (mechanics.md#bing-progression)", () => {
     }
   });
 
-  test("skill levels compose as ×1.10 per level above the build's L21", () => {
+  // the July ledger leaves the Lich +1 unmodeled (tree_lich), so its HoA sits at L20; imports count it (#bing-per-hit)
+  test("skill levels compose as ×1.10 per level above 20, ×1.08 past 30", () => {
     const lvl = (n: number): Source => ({ id: "x", label: "x", group: "upgrade", cite: "t", edits: [["add", "aux.skill_level", n]] });
     expect(dps([...REAL_BUILD_SOURCES, lvl(1)]) / dps(REAL_BUILD_SOURCES)).toBeCloseTo(1.10, 6);
-    // L21 → L31 crosses into the ×1.08 band at L31
-    expect(dps([...REAL_BUILD_SOURCES, lvl(10)]) / dps(REAL_BUILD_SOURCES)).toBeCloseTo(1.1 ** 9 * 1.08, 6);
+    // L20 → L31 crosses into the ×1.08 band at L31
+    expect(dps([...REAL_BUILD_SOURCES, lvl(11)]) / dps(REAL_BUILD_SOURCES)).toBeCloseTo(1.1 ** 10 * 1.08, 6);
   });
   test("each Vorax limb's additional line is its own multiplier, not one summed key", () => {
     const lines = VORAX.filter(s => s.id.endsWith("_main_hand"));

@@ -57,9 +57,9 @@ const summary = u => slots(u).map(s => `${s.slot}: ${s.skill?.name ?? "(empty)"}
 function openSlot(slot) {
   waitFront();
   let u = ui();
-  if (!u.skillPanel.open) { game("key", "F2"); sleep(900); u = ui(); }
+  if (!u.skillPanel.open) { game("key", "F2"); for (let i = 0; i < 16 && !u.skillPanel.open; i++) { sleep(250); u = ui(); } }
   if (!u.skillPanel.open) die("Skill panel did not open");
-  if (u.skillPanel.selectedSlot !== slot) { game("click", 120, SLOT_Y[slot]); sleep(500); u = ui(); }
+  if (u.skillPanel.selectedSlot !== slot) { game("click", 120, SLOT_Y[slot]); for (let i = 0; i < 12 && u.skillPanel.selectedSlot !== slot; i++) { sleep(250); u = ui(); } }
   if (u.skillPanel.selectedSlot !== slot) die(`slot ${slot} not selected (got ${u.skillPanel.selectedSlot})`);
   return u;
 }

@@ -28,6 +28,7 @@ export interface SeasonValues {
   fusion: Anchors;           // Elemental Fusion: +X% additional Elemental Damage
   steamroll: Anchors;        // +X% additional Melee Damage (tlidb; not in the patch notes)
   steamroll_as: number;      // Steamroll: X% Attack Speed (increased)
+  slow_projectile_speed: number;  // Slow Projectile: X% additional Projectile Speed
 }
 
 export const SEASONS: Record<Season, SeasonValues> = {
@@ -37,7 +38,7 @@ export const SEASONS: Record<Season, SeasonValues> = {
     passivation: { 1: 41, 21: 61, 41: 81 },
     slow_projectile: { 1: 19.5, 21: 29.5, 41: 39.5 },
     fusion: { 1: 25.5, 21: 35.5, 41: 45.5 },
-    steamroll: { 1: 31, 21: 41, 41: 51 }, steamroll_as: -15,
+    steamroll: { 1: 31, 21: 41, 41: 51 }, steamroll_as: -15, slow_projectile_speed: -30,
   },
   ss14: {
     seething: 34, fury: 68, ice_bond: 24,
@@ -45,7 +46,7 @@ export const SEASONS: Record<Season, SeasonValues> = {
     passivation: { 1: 31, 21: 51, 41: 61 },
     slow_projectile: { 1: 18.5, 21: 28.5, 41: 33.5 },
     fusion: { 1: 22.5, 21: 32.5, 41: 36.5 },
-    steamroll: { 1: 28.5, 21: 38.5, 41: 44.5 }, steamroll_as: -20,
+    steamroll: { 1: 28.5, 21: 38.5, 41: 44.5 }, steamroll_as: -20, slow_projectile_speed: -20,
   },
 };
 
@@ -104,5 +105,7 @@ export function applySeason<T extends Snapshot>(snap: T, season: Season): T {
     for (const k of path.slice(0, -1)) d = d[k];
     d[path[path.length - 1]] = supportValueAt(SEASONS[season][gem as keyof SeasonValues] as Anchors, lvl);
   }
+  // mechanics.md#bing-proj-speed — Slow Projectile's additional Projectile Speed is seasonal too
+  if (levels.slow_projectile !== undefined && out.rotation) out.rotation.proj_speed_more_pct = SEASONS[season].slow_projectile_speed;
   return out;
 }

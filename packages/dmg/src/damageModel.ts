@@ -520,7 +520,11 @@ export function bombRotation(s: Snapshot): RotationResult {
   // modifiers and quantity do not touch
   const q = r.non_projectile_share ?? 0;
   const nonProj: Snapshot = { ...s, tags: skillTagsOf(s).filter(t => !t.includes("projectile")) };
-  const projHit = expectedHit(s) * projScale;
+  // mechanics.md#bing-proj-speed — Ember hits per bomb scale with projectile speed^k (faster Embers reach and
+  // re-hit the target more): increased Projectile Speed sums, Slow Projectile multiplies
+  const speed = (1 + (r.proj_speed_inc_pct ?? 0) / 100) * (1 + (r.proj_speed_more_pct ?? 0) / 100);
+  const speedHits = speed ** (r.proj_speed_hit_exp ?? 0);
+  const projHit = expectedHit(s) * projScale * speedHits;
   const channelMix = q ? ((1 - q) * projHit + q * expectedHit(nonProj)) / projHit : 1;
   const perBomb = (r.hits_per_bomb ?? 1) * projHit * channelMix;
   const demoM = r.demolisher_empower_mult ?? 1;
@@ -536,6 +540,7 @@ export function bombRotation(s: Snapshot): RotationResult {
       { kind: "rotation", label: "bombs / throw", op: "×", factor: r.bombs_per_throw },
       { kind: "rotation", label: "hits / bomb", op: "×", factor: r.hits_per_bomb ?? 1 },
       { kind: "rotation", label: "projectile scale", op: "×", factor: projScale },
+      ...(speedHits !== 1 ? [{ kind: "rotation" as const, label: `projectile speed ×${speed.toFixed(3)} → hits`, op: "×" as const, factor: speedHits }] : []),
       ...(q ? [{ kind: "rotation" as const, label: `hit channels (${Math.round(100 * q)}% non-projectile)`, op: "×" as const, factor: channelMix }] : []),
       { kind: "rotation", label: `demolisher share (n=${demoN}, ×${demoM})`, op: "×", factor: (demoN - 1 + demoM) / demoN },
     ] };

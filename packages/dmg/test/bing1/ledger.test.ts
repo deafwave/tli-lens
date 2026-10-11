@@ -12,12 +12,15 @@ import { BING_ZERO, EXPLOSION_SHARE, FC_AUTO_HITS, REAL_BUILD_SOURCES, compose, 
 /** The July hand snapshot with the 2026-10-10 game-time recalibration applied (mechanics.md#bing-hit-channels,
     #bing-dummy-loop): Firepower Coverage throws at weapon APS and lands FC_AUTO_HITS× the July hit fold, a quarter
     of base hits are non-projectile, Precise Projectiles is projectile-typed, Upheaval's explosion line scales only
-    the explosion share. */
+    the explosion share, Cruelty's Elite-hit stacks double its aura. */
 const real = (): Snapshot => {
   const s = JSON.parse(fs.readFileSync(fromRoot("data/bing1/real_buld_3_snapshot.json"), "utf-8"));
   s.rotation.throw_rate_base = 1.5;
   s.rotation.hits_per_bomb *= FC_AUTO_HITS;
-  s.rotation.non_projectile_share = 0.25;
+  s.rotation.non_projectile_share = 0.31;
+  s.rotation.proj_speed_hit_exp = 0.28;
+  s.rotation.proj_speed_inc_pct = 10;   // Precise Projectiles (mechanics.md#bing-proj-speed)
+  s.additional.cruelty *= 2;   // Cruelty Elite-hit stacks (mechanics.md#bing-cruelty)
   s.additional.upheaval_explosion = 32 * EXPLOSION_SHARE;
   s.additional_typed.projectile = { precise_projectiles: s.additional.precise_projectiles };
   delete s.additional.precise_projectiles;

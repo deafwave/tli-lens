@@ -86,7 +86,7 @@ export const BING_ZERO: Snapshot = {
   penetration: { cold_pct: 0, armor_pct: 0, erosion_pct: 0 },
   enemy: { cold_res_pct: 30, armor_reduction_pct: 0, erosion_res_pct: 30 },
   rotation: { bombs_per_throw: 2, throw_rate_base: 1, attack_speed_inc_pct: 0,
-              hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0, non_projectile_share: 0.25,
+              hits_per_bomb: 0.8353, proj_base: 5, proj_added: 0, non_projectile_share: 0.31, proj_speed_hit_exp: 0.28,
               demolisher_empower_mult: 3.65, demolisher_resto_pct: 0 },
   tags: ["melee", "attack", "area", "projectile", "ranged",
          "horizontal_projectile", "parabolic_projectile"],
@@ -95,10 +95,10 @@ export const BING_ZERO: Snapshot = {
 const H_BARE = 0.8353;
 const H_REAL = 1.6528676812873455;   // RS-off-anchored fold-in (mechanics.md#real-build)
 /** Firepower Coverage auto-throw hits on top of the July fold: one constant fits the user's July
-    export (×1.856) and 2026-10-10 build (×1.857) at weapon-APS throws, and the game-time Flame Core
+    export and 2026-10-10 build at weapon-APS throws (1.80 before Cruelty's Elite stacks and projectile speed were modeled), and the game-time Flame Core
     A/B (÷4.09 meas vs ÷4.14) places it in hits per bomb, not the empower multiplier
     (mechanics.md#bing-hit-channels). */
-export const FC_AUTO_HITS = 1.80;
+export const FC_AUTO_HITS = 1.649;
 const H_ARROWS = 1.3286;             // Mighty Arrow pair, bare-rig back-solve (bing1 pactspirits)
 
 const det = (k: string, v: number): Edit => ["add", `deterioration.${k}`, v];
@@ -187,9 +187,12 @@ export const REAL_BUILD_SOURCES: Source[] = [
 
   // ---- auras / curse ----
   { id: "precise_projectiles", label: "Precise: Precise Projectiles", group: "aura",
-    edits: [["add", "additional_typed.projectile.precise_projectiles", 40]], cite: "mechanics.md#real-build (4 auras)" },
+    edits: [["add", "additional_typed.projectile.precise_projectiles", 40], ["add", "rotation.proj_speed_inc_pct", 10]],
+    cite: "mechanics.md#real-build (4 auras); +10% Projectile Speed (mechanics.md#bing-proj-speed)" },
   { id: "cruelty", label: "Precise: Cruelty", group: "aura",
     edits: [["add", "additional.cruelty", 23.2]], cite: "mechanics.md#real-build (4 auras)" },
+  { id: "cruelty_stacks", label: "Precise: Cruelty Elite-hit stacks (+100% aura effect)", group: "aura",
+    edits: [["add", "additional.cruelty", 23.2]], requires: ["cruelty"], cite: "mechanics.md#bing-cruelty" },
   { id: "weapon_amp", label: "Precise: Weapon Amplification", group: "aura",
     edits: [["add", "additional_typed.physical.weapon_amp", 36.8]], cite: "mechanics.md#real-build (physical-typed)" },
   { id: "erosion_amp", label: "Precise: Erosion Amplification", group: "aura",

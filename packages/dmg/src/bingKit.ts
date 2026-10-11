@@ -131,8 +131,15 @@ export function kitSources(lo: any, raw: any, lines: ImportedLine[], supportBonu
       const v = f(sk.level ?? 20);
       const req = name.includes("Erosion") ? { requires: ["ruinous_star"] } : {};
       add(`skill:${name}`, `L${sk.level}${amp ? ` × ${(1 + amp / 100).toFixed(4)} (Aura Amplification)` : ""}`,
-          [["add", path, v * (1 + amp / 100)]], req);
+          [["add", path, v * (1 + amp / 100)],
+           // Precise Projectiles also grants +10% Projectile Speed (tlidb; mechanics.md#bing-proj-speed)
+           ...(name.includes("Precise Projectiles") ? [["add", "rotation.proj_speed_inc_pct", 10] as Edit] : [])], req);
       if (mall) add(`skill:${name}`, `Precise: Malleable +${mall}% aura effect (Elite within 10m assumed)`, [["add", path, v * mall / 100]], req);
+      // Cruelty: "+2.5% additional Aura Effect per stack … up to 40 (Not affected by Aura Effects)", 40% chance for 5
+      // stacks on hitting an Elite — the dummy is one: full stacks double the aura (A/B ÷1.507 vs ×2 ÷1.488,
+      // mechanics.md#bing-cruelty)
+      if (name.includes("Cruelty"))
+        add(`skill:${name}`, "Elite-hit stacks ×40: +100% additional Aura Effect", [["add", path, v * (1 + amp / 100) * (1 + mall / 100)]], req);
       for (const s of supNames.filter((x: string) => x !== "Aura Amplification" && x !== "Precise: Malleable"))
         note(`skill:${name}`, s, /Restrain|Seal Conversion|Increased Area/.test(s) ? "irrelevant" : "unknown",
              /Restrain|Seal Conversion|Increased Area/.test(s) ? "aura upkeep / area" : undefined);

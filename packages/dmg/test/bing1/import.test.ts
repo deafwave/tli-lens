@@ -104,7 +104,7 @@ describe("Bing importer", () => {
     const base = dps();
     const cases: [RegExp, number, ((s: any) => void)?][] = [
       [/skill:Timid/, 1.414], [/Elemental Fusion/, 1.192], [/Passivation/, 1.622], [/Steamroll/, 1.405],
-      [/Upheaval/, 1.217], [/Precise Projectiles/, 1.320],
+      [/Upheaval/, 1.217], [/Precise Projectiles/, 1.320], [/Precise: Cruelty/, 1.507], [/Slow Projectile/, 1.202],
       // Flame Core off: no Sentry → no Formation Breaker charges, no Sentry-proximity taken; Bull's Rage uptime 75% → 58%
       [/skill:Flame Core/, 4.09, s => { s.additional.bulls_rage *= 0.58 / 0.75; }],
     ];

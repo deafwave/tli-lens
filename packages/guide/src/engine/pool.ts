@@ -13,8 +13,11 @@ export const INFO_PREFIXES = ['price:'];
 
 /** Stated fight inputs (dps-debug Carry.fight): `bombs` = bombs on the battlefield, `inputs` = other named per-cast / fight inputs */
 export interface Fight { bombs?: number; inputs?: Record<string, number> }
-/** dps-debug states bombs on the field as 10 in its own E2E1 / M7 work (HANDOFF 0.4: "a stated input, not derived") */
-export const DEFAULT_FIGHT: Fight = { bombs: 10 };
+/** bombs 10 + the dummy standing still. dps-debug states bombs on the field as 10 in its own E2E1 / M7 work (HANDOFF 0.4: "a stated input, not derived") */
+export const STILL_NOTE = 'training dummy stands still (dps-debug STILL / e2e1-lib.ts)';
+/** also stated by dps-debug: the castLogSum of the recent-movement window is 0 = STILL_NOTE */
+export const STILL_KEY = 'castLogSum id=10000000 window=4s tags=[[],[],[],[]]';
+export const DEFAULT_FIGHT: Fight = { bombs: 10, inputs: { [STILL_KEY]: 0 } };
 export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight }
 export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown> } }
 /** One worker: runs a job, rejects with the dps-debug error message when pricing throws. */
@@ -34,7 +37,7 @@ export interface EvaluatorOpts {
   pin?: string;
   /** directory of the on-disk memo (none = memory only; never written when the pin is +dirty) */
   memoDir?: string;
-  /** the scenario's stated fight inputs (default `{ bombs: 10 }`) */
+  /** the scenario's stated fight inputs (default DEFAULT_FIGHT) */
   fight?: Fight;
 }
 
@@ -120,7 +123,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
       });
 
   return {
-    pin, fight,
+    pin, fight, fightNote: STILL_NOTE,
     run: (loadout, changes, ctx) => closed ? Promise.reject(new Error('evaluator closed'))
       : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes, fight), () => price(loadout, changes, ctx)),
     close: async () => {

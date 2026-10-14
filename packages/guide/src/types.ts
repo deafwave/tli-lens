@@ -54,6 +54,7 @@ export interface Evaluator {
   run(loadout: Loadout, changes: (Change | LoadoutPatch)[], ctx: EvalCtx): Promise<Evaluated>;
   readonly pin: string;
   /** the stated fight inputs every figure is priced under (Carry.fight) */
+  readonly fightNote?: string;
   readonly fight?: { bombs?: number; inputs?: Record<string, number> };
   close(): Promise<void>;
 }

@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { mainSid } from './candidates/gems';
-import { createEvaluator } from './engine/pool';
+import { createEvaluator, DEFAULT_FIGHT } from './engine/pool';
 import { localItems, runAdvise, runIdeal, SEASON } from './modes';
 import { fetchSnapshot, snapshotBook } from './pricing';
 import { fromExport } from './start';
@@ -15,7 +15,7 @@ const positional = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.star
 const num = (name: string) => { const v = flag(name); if (v !== undefined && !Number.isFinite(Number(v))) throw new Error(`--${name} needs a number`); return v === undefined ? undefined : Number(v); };
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
 const bombs = num('bombs');
-const evaluator = () => createEvaluator({ workers: num('workers'), ...(bombs === undefined ? {} : { fight: { bombs } }), memoDir: fileURLToPath(new URL('../.cache/memo', import.meta.url)) });
+const evaluator = () => createEvaluator({ workers: num('workers'), ...(bombs === undefined ? {} : { fight: { ...DEFAULT_FIGHT, bombs } }), memoDir: fileURLToPath(new URL('../.cache/memo', import.meta.url)) });
 
 async function main() {
   if (cmd === 'ideal') {

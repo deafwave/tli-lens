@@ -633,3 +633,13 @@ a.t-branch:hover,a.t-branch:focus-visible{text-decoration:underline}
   color:var(--text);background:var(--night);border:1px solid var(--ice-line);border-radius:6px;
 }
 .calc-field input:focus{outline:none;border-color:var(--frost)}
+
+/* guide view */
+.banner,.warn{color:#c9a86a}
+.gl-head{margin:16px 0;color:var(--muted);font-size:14px}
+.gl-table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+.gl-table th,.gl-table td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--ice-line)}
+.gl-table td:nth-child(n+3){font-family:"IBM Plex Mono",monospace}
+.gl-table .respec td{color:var(--muted);font-size:12px}
+#advice textarea{width:100%;background:var(--night-2);color:var(--text);border:1px solid var(--ice-line);font-family:"IBM Plex Mono",monospace}
+#advice button{margin:8px 0;padding:6px 14px}

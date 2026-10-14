@@ -216,6 +216,10 @@ describe('fix round 1', () => {
     expect(() => fromExport(exportOf({ loadout: undefined }))).toThrow('export has no loadout');
     expect(() => fromExport(null)).toThrow(/tli-lens export/);
   });
+  it('fromExport rejects talents over the level budget (two pages read)', () => {
+    const loadout = { ...idealStart().loadout, talents: { 12010100: pointsAtLevel(60) + 1 } };
+    expect(() => fromExport(exportOf({ loadout }))).toThrow(/more than the \d+ a level-60 hero has/);
+  });
   it('an owned stack is consumed count times; the item level gates it', async () => {
     const stack = fromExport(exportOf({ items: [{ ...item('bag-1', 'bag', helmet), count: 2 }] }));
     const ctx = { prices: { season: 's', fetchedAt: 'x', price: () => null }, level: 60, notSearched: new Set<string>() };

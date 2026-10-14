@@ -56,8 +56,12 @@ describe('talent rules', () => {
   it('every tree set on disk follows the rule (<=1 god tree, <=3 professions)', () => {
     let n = 0;
     const check = (trees: number[]) => { n++; expect(trees.filter(t => t % 10 === 0).length).toBeLessThanOrEqual(1); expect(trees.filter(t => t % 10 !== 0).length).toBeLessThanOrEqual(3); };
-    for (const f of readdirSync(`${pin}/game`).filter(f => /^loadout_.*json$/.test(f)))
-      check([...tr(JSON.parse(readFileSync(`${pin}/game/${f}`, 'utf8')).talents ?? {}).keys()]);
+    // a capture holding more points than its level has read two talent pages at once (pin rungs L107-L111: 174 of 108); not one allocation
+    for (const f of readdirSync(`${pin}/game`).filter(f => /^loadout_.*json$/.test(f))) {
+      const l = JSON.parse(readFileSync(`${pin}/game/${f}`, 'utf8')), t: Record<string, number> = l.talents ?? {};
+      if (Object.values(t).reduce((a, b) => a + b, 0) > pointsAtLevel(l.hero?.level ?? 93)) continue;
+      check([...tr(t).keys()]);
+    }
     expect(n).toBeGreaterThan(100);
   });
 

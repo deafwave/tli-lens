@@ -1,28 +1,39 @@
 # TLI Lens
 
-Torchlight: Infinite build-progression guide. A generator drives the **dps-debug** calculator
+Torchlight: Infinite build-progression guide. `packages/guide` drives the **dps-debug** calculator
 (pinned checkout, read-only) over a hero state and writes `packages/page/src/data/guide.json`;
-the Vite page renders it. Nothing on the page is typed in by hand.
+the Vite page (`packages/page`) renders it. Nothing on the page is typed in by hand.
 
 ## The pin
 
-`@dps/*` resolves to `C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin/model/*`
-(tsconfig paths + vitest alias; env `DPS_DEBUG_PIN` overrides the pin root). Every output records the pin
-commit; the memo key includes it. Never edit dps-debug from here.
+`@dps/*` resolves to `<tli>/dps-debug/.worktrees/guide-pin/model/*` (branch `guide`; tsconfig paths + vitest
+alias; env `DPS_DEBUG_PIN` overrides, see `packages/guide/src/pin.ts`). Every output records the pin commit and
+the memo key includes it. Never edit dps-debug from here. Refresh: merge owner `main` into `guide`, then rerun
+dps-debug's guide gates (`GUIDE_GATES=1`, tests in `model/guide/`).
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `packages/guide` | `@tli-lens/guide`: generator (types, etor prices, craft/affix pools, search, CLI). `src/types.ts` = shared interfaces |
-| `packages/page` | `@tli-lens/page`: Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/guide.json` |
-| `data/` | `etor/` price history, `affix_library.json`, `craft_pools.json` |
-| `scripts/` | `fetch_etor_history.py` (etor history), affix-library / build-scrape helpers |
-| `.claude/skills/` | `tli-game`, `tlidb-lookup`, `tli-build` (game/data lookup + cached compendium bundles) |
+| `packages/guide/src` | `types.ts` shared interfaces, `pin`, `pricing` + `priceOf` (etor), `candidates/*` (gear gems kismets memories pacts prisms slates switch talents target traits), `craft`, `patches`, `search`, `kill`, `engine/{pool,worker,apply,memo}`, `modes` (ideal/advise), `start` (start state, export import), `cli`, `atomic` |
+| `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/guide.json` |
+| `data/`, `scripts/` | etor price history, affix library, craft pools; fetch/build helpers |
+| `.claude/skills/` | `tli-game`, `tlidb-lookup`, `tli-build` |
 
 ## Commands
 
-`pnpm guide ideal|advise|figure` (generator) · `pnpm dev` · `pnpm build` · `pnpm test`
+`pnpm guide ideal | advise <export.json> [--fe N] [--season N] | figure <loadout.json> [--skill hoa|iceShot] [--level N]`;
+shared flags `--workers --bombs --roll-budget --budget-minutes --out`. `pnpm dev` / `pnpm build` / `pnpm test`
+(guide: `tsc --noEmit && vitest run`). `GUIDE_REAL=1` also runs real-figure tests; they and the pool pause while
+the `game.busy` file exists (`DEFAULT_BUSY_FILE` in `engine/pool.ts`, env `GUIDE_BUSY_FILE`).
+
+## Policies the code applies
+
+- Fight inputs: 10 bombs, training dummy stands still. Ice Shot stated inputs (`ICE_SHOT_INPUTS`) are chosen, not measured.
+- Roll budget: dps-debug default first; only a "not affine" stop retries at 1<<20.
+- Market: `drop` costs 0 FE and is ranked; `not-on-market` and unpriced (costFE null) are listed under `unpriced`, never ranked.
+- Churn gate 5 %. Kill average = (d100 - d0) / ln(d100 / d0). Talent points below L93 are assumed (scaled), noted on the step.
+- Unported rules are skipped and named in `notSearched`, never guessed.
 
 ## Invariants
 

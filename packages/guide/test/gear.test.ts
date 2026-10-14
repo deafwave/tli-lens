@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { basesFor, gearMoves } from '../src/candidates/gear';
 import { craftOptions, type LibraryAffix } from '../src/craft';
 import { pinRoot, table } from '../src/pin';
+import { GROUND, L100, applyAll, loadout } from './apply';
 import type { GenCtx, Move, PriceBook, Skill, State } from '../src/types';
 
 const PIN = pinRoot();
@@ -84,6 +85,14 @@ describe('gearMoves', () => {
     expect(swapped(priced[0]).baseId).toBe(g.i8);
     expect(mine(gearMoves(state('hoa', 60, [CHEST]), ctx(60, {})))[0].costFE).toBeNull();
     expect(mine(gearMoves(state('hoa', level - 1, [CHEST]), ctx(level - 1, { [name]: 7 })))).toEqual([]);
+  });
+
+  it('a unique carries its base item name (the unique name stays in the label), and applies through dps-debug', () => {
+    const lang = rows('lang_en'), l = loadout(L100);
+    const ms = gearMoves(state('hoa', 100, l.gear), ctx(100)).filter(m => m.kind === 'unique');
+    expect(ms.length).toBeGreaterThan(0);
+    for (const m of ms) expect(swapped(m).baseName).toBe(lang[`item_base|name|${swapped(m).baseId}`]);
+    expect(() => applyAll(l, ms[0], GROUND.hoa)).not.toThrow();
   });
 
   it('Bing1 weapon rule: iceShot offers bow-family weapons only, hoa two-handed hammers/mauls only', () => {

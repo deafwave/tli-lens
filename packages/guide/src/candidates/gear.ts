@@ -171,7 +171,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     if (!mods.length) continue;
     const price = priceOfGold(ctx.prices, Number(gid), ctx.level).fe;
     for (const slot of here) {
-      const item: Dump = { baseId: g.i8, baseName: name, itemId: `guide-unique-${gid}`, level: ctx.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
+      const item: Dump = { baseId: g.i8, baseName: c.lang[`item_base|name|${g.i8}`], itemId: `guide-unique-${gid}`, level: ctx.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
       moves.push({ kind: 'unique', label: `Unique ${name} in ${slot}`, acquisition: true, costFE: price, minLevel: nb.level, changes: swap(slot, item) });
     }
   }

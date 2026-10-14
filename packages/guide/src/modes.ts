@@ -64,7 +64,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
   let s: State = { ...start.state, level: K.startLevel };
   const notes = [...start.notes];
   const out = (o: Partial<GuideOut>): GuideOut => ({
-    mode: 'ideal', pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote }, startNotes: notes, steps: [], notSearched: [], unpriced: [], notCalculable: [], ...o,
+    mode: 'ideal', pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote, rollBudget: ev.rollBudget }, startNotes: notes, steps: [], notSearched: [], unpriced: [], notCalculable: [], ...o,
   }) as GuideOut;
 
   const first = await ev.run(s.loadout, [], { level: s.level, skill: s.skill });
@@ -78,7 +78,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
   let f = first.figure, stopped = false;
   /** the output so far; callers pass `partialRun` until the run completes */
   const snap = (extra: Record<string, unknown>) => out({ start: first.figure, inputs, steps: [...steps], notSearched: [...notSearched], unpriced: [...unpriced], notCalculable: [...mem.notCalculable],
-    knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote, ...extra } });
+    knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote, rollBudget: ev.rollBudget, ...extra } });
   for (let level = K.startLevel; level <= K.endLevel; level += K.stageStep) {
     // stage upkeep: gems level up with the hero (to what each ladder allows)
     const skills = (s.loadout.skills as { sid: number; level: number }[]).map((g) => ({ ...g, level: Math.max(g.level, gemLevelAt(g.sid, level, GEM_LEVEL)) }));
@@ -115,7 +115,7 @@ export async function runAdvise(ev: Evaluator, state: State, k: Partial<Knobs> =
   const K = { ...DEFAULT_KNOBS, ...k };
   const books = prices ?? snapshotBook(localItems());
   const acq = [ownedGear, ...ALL.map(only(true))], recon = ALL.map(only(false));
-  const base = { mode: 'advise' as const, pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote, fe: state.fe, level: state.level, skill: state.skill } };
+  const base = { mode: 'advise' as const, pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote, rollBudget: ev.rollBudget, fe: state.fe, level: state.level, skill: state.skill } };
   const first = await ev.run(state.loadout, [], { level: state.level, skill: state.skill });
   if (first.figure.stop) {
     return { ...base, start: first.figure, inputs: first.inputs, steps: [], notSearched: [], unpriced: [],

@@ -18,8 +18,10 @@ export interface Fight { bombs?: number; inputs?: Record<string, number> }
 export const STILL_NOTE = 'training dummy stands still (dps-debug STILL / e2e1-lib.ts)';
 /** also stated by dps-debug: the castLogSum of the recent-movement window is 0 = STILL_NOTE */
 export const STILL_KEY = 'castLogSum id=10000000 window=4s tags=[[],[],[],[]]';
+/** joint-roll budget handed to dps-debug's figure entry (its `rollBudget` option) */
+export const DEFAULT_ROLL_BUDGET = 1 << 23;
 export const DEFAULT_FIGHT: Fight = { bombs: 10, inputs: { [STILL_KEY]: 0 } };
-export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight }
+export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight; rollBudget: number }
 export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown> } }
 /** One worker: runs a job, rejects with the dps-debug error message when pricing throws. */
 export interface WorkerLike {
@@ -40,6 +42,8 @@ export interface EvaluatorOpts {
   memoDir?: string;
   /** the scenario's stated fight inputs (default DEFAULT_FIGHT) */
   fight?: Fight;
+  /** dps-debug figure `rollBudget` (default DEFAULT_ROLL_BUDGET) */
+  rollBudget?: number;
   /** while this file exists no job is started (running ones finish). Default: env GUIDE_BUSY_FILE, else the owner's game-capture flag
    *  (only for real workers; stub factories skip it). null disables. */
   busyFile?: string | null;
@@ -98,7 +102,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const idle = [...workers];
   const queue: { go: () => void; fail: (e: Error) => void }[] = [];
   let closed = false;
-  const fight = o.fight ?? DEFAULT_FIGHT;
+  const fight = o.fight ?? DEFAULT_FIGHT, rollBudget = o.rollBudget ?? DEFAULT_ROLL_BUDGET;
   const memo = createMemo<Evaluated>(pin, o.memoDir);
 
   const busyFile = o.busyFile === undefined ? (process.env.GUIDE_BUSY_FILE ?? (o.factory ? null : DEFAULT_BUSY_FILE)) : o.busyFile;
@@ -140,7 +144,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
 
   /** `keep: false` marks a result that came from a worker dying twice: returned to the caller, never cached */
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
-    schedule(w => w.run({ loadout, changes, ctx, fight })).then(
+    schedule(w => w.run({ loadout, changes, ctx, fight, rollBudget })).then(
       ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped, ...(fig.inputs ? { inputs: fig.inputs } : {}),
         figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs].filter(l => !INFO.some(p => typeof p === 'string' ? l.startsWith(p) : p.test(l))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
       (e: Error) => {
@@ -149,11 +153,11 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
       });
 
   return {
-    pin, fight, fightNote: STILL_NOTE, parallelism: n,
+    pin, fight, rollBudget, fightNote: STILL_NOTE, parallelism: n,
     /** ms spent paused on the busy file (a pause in progress included) */
     pausedMs: () => pausedTotal + (paused ? Date.now() - pausedSince : 0),
     run: (loadout, changes, ctx) => closed ? Promise.reject(new Error('evaluator closed'))
-      : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes, fight), () => price(loadout, changes, ctx)),
+      : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes, fight, rollBudget), () => price(loadout, changes, ctx)),
     close: async () => {
       closed = true;
       wake?.();

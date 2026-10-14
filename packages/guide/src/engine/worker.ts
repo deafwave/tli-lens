@@ -15,12 +15,12 @@ const fig: typeof import('@dps/guide/figure') = await import(pathToFileURL(join(
 const cat = fig.openCatalog(join(root, 'catalog'));
 const session = fig.figureSession(cat);   // one per worker: related builds share compiles; bit-equal to guideFigure
 
-function price({ loadout, changes, ctx, fight }: Job): JobResult {
+function price({ loadout, changes, ctx, fight, rollBudget }: Job): JobResult {
   const { loadout: lo, dropped } = applyInOrder(loadout, changes, { isPatch, applyPatch,
     applyChanges: (l, cs) => fig.applyChanges(cat, l, cs, ctx.skill, { heroLevel: ctx.level }) });
   const base = fig.GROUNDS[ctx.skill];
   const ground = { ...base, carry: { ...base.carry, fight } };
-  const g = session.figure(lo, ctx.skill, { heroLevel: ctx.level, ground });
+  const g = session.figure(lo, ctx.skill, { heroLevel: ctx.level, ground, rollBudget });
   return { loadout: lo, dropped, fig: { life100: g.life100, life0: g.life0, left: g.left.map(x => x.name), needs: g.needs, stop: g.stop, inputs: g.inputs as never } };
 }
 

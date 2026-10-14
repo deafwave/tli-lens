@@ -33,6 +33,9 @@ the `game.busy` file exists (`DEFAULT_BUSY_FILE` in `engine/pool.ts`, env `GUIDE
 - Roll budget: dps-debug default first; only a "not affine" stop retries at 1<<20.
 - Market: `drop` costs 0 FE and is ranked; `not-on-market` and unpriced (costFE null) are listed under `unpriced`, never ranked.
 - Churn gate 5 %. Kill average = (d100 - d0) / ln(d100 / d0). Talent points below L93 are assumed (scaled), noted on the step.
+- An enabler is re-solved only when its own figure reaches `enablerFloor` (0.25) x the current kill average.
+- Ideal: the Ice Shot -> Hammer of Ash switch is planned, not searched: at the first stage start whose kill average reaches
+  `switchAt` (2e8), or after a stage with no step, on the target build's talent page once it fits the level's points.
 - Unported rules are skipped and named in `notSearched`, never guessed.
 
 ## Invariants

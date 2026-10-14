@@ -216,9 +216,10 @@ describe('fix round 1', () => {
     expect(() => fromExport(exportOf({ loadout: undefined }))).toThrow('export has no loadout');
     expect(() => fromExport(null)).toThrow(/tli-lens export/);
   });
-  it('fromExport rejects talents over the level budget (two pages read)', () => {
-    const loadout = { ...idealStart().loadout, talents: { 12010100: pointsAtLevel(60) + 1 } };
-    expect(() => fromExport(exportOf({ loadout }))).toThrow(/more than the \d+ a level-60 hero has/);
+  it('fromExport rejects talents over the full budget (two pages read), not over the scaled estimate below 93', () => {
+    const loadout = (n: number) => ({ ...idealStart().loadout, talents: { 12010100: n } });
+    expect(() => fromExport(exportOf({ loadout: loadout(pointsAtLevel(93) + 1) }))).toThrow(/more than the 108 a hero can have/);
+    expect(fromExport(exportOf({ loadout: loadout(pointsAtLevel(60) + 1) })).level).toBe(60);
   });
   it('an owned stack is consumed count times; the item level gates it', async () => {
     const stack = fromExport(exportOf({ items: [{ ...item('bag-1', 'bag', helmet), count: 2 }] }));

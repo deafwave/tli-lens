@@ -113,7 +113,7 @@ function rebased(d: Dump, nb: Row, id: string, ctx: GenCtx): { item: Dump; recra
   for (const side of ['prefix', 'suffix']) {
     const kept = (d.modifiers[side] ?? []).filter(m => {
       const o = opts.get(m.id), p = o && ctx.prices.price(o.ember, ctx.level);
-      if (!o) { dropped++; return false; }
+      if (!o || UNVERIFIED.has(o.tierAffixId)) { dropped++; return false; }
       recraft = recraft === null || p == null ? null : recraft + o.expectedEmbers * p;
       return true;
     });

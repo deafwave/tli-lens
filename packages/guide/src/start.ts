@@ -91,7 +91,8 @@ export function fromExport(json: unknown, fe?: number): State {
   const budget = fe ?? j.fe;
   if (typeof budget !== 'number' || !Number.isFinite(budget)) throw new Error('export has no fe; pass --fe N');
   const points = Object.values((j.loadout.talents ?? {}) as Record<string, number>).reduce((a, b) => a + b, 0);
-  if (points > pointsAtLevel(j.hero.level)) throw new Error(`export talents hold ${points} points, more than the ${pointsAtLevel(j.hero.level)} a level-${j.hero.level} hero has (two talent pages read); re-export`);
+  // against the observed full budget, not the scaled estimate below 93: a real low-level export may hold more than the estimate
+  if (points > pointsAtLevel(93)) throw new Error(`export talents hold ${points} points, more than the ${pointsAtLevel(93)} a hero can have (two talent pages read); re-export`);
   const loadout = j.loadout as Dict, active = (loadout?.skills as Dict[] | undefined)?.find(g => g.place?.kind === 'active' && g.place.slot === 0);
   const skill = (['iceShot', 'hoa'] as Skill[]).find(sk => mainSid(sk) === active?.sid);
   if (!skill) throw new Error(`export main skill (sid ${active?.sid}) is neither Ice Shot nor Hammer of Ash`);

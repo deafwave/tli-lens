@@ -9,6 +9,7 @@ import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
 import { slateMoves } from './candidates/slates';
 import { switchMoves } from './candidates/switch';
+import { targetMoves } from './candidates/target';
 import { talentMoves, talentPointMoves } from './candidates/talents';
 import { traitMoves } from './candidates/traits';
 import { type EtorHistory, type EtorItems, historyBook, snapshotBook } from './pricing';
@@ -29,7 +30,7 @@ export interface IdealKnobs extends Knobs {
 }
 export const DEFAULT_IDEAL: IdealKnobs = { ...DEFAULT_KNOBS, stepsPerStage: 25, startLevel: 60, endLevel: 100, stageStep: 5, talentPoints: 108 };
 
-const ALL: Generator[] = [gearMoves, gemMoves, kismetMoves, memoryMoves, pactMoves, prismMoves, slateMoves, switchMoves, talentMoves, traitMoves];
+const ALL: Generator[] = [gearMoves, gemMoves, kismetMoves, memoryMoves, pactMoves, prismMoves, slateMoves, switchMoves, talentMoves, traitMoves, targetMoves];
 const only = (acquisition: boolean) => (g: Generator): Generator => (s, c) => g(s, c).filter((m) => m.acquisition === acquisition);
 
 /** Mode 2: an owned (non-equipped) gear item is worn at 0 FE, once (the search drops it from `owned` when taken). */

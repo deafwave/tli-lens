@@ -4,26 +4,6 @@
     {
       "source": "/etor-api/:path*",
       "destination": "https://etor-beta.710421059.xyz/etor-api/:path*"
-    },
-    {
-      "source": "/rehan",
-      "destination": "/rehan.html"
-    },
-    {
-      "source": "/rehan/",
-      "destination": "/rehan.html"
-    },
-    {
-      "source": "/bing",
-      "destination": "/bing.html"
-    },
-    {
-      "source": "/bing/",
-      "destination": "/bing.html"
-    },
-    {
-      "source": "/((?!assets/).*)",
-      "destination": "/index.html"
     }
   ]
 }

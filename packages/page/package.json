@@ -1,5 +1,5 @@
 {
-  "name": "@rehan/page",
+  "name": "@tli-lens/page",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -7,9 +7,6 @@
     "dev": "vite",
     "build": "tsc && vite build && node scripts/verify-static-build.mjs",
     "preview": "vite preview"
-  },
-  "dependencies": {
-    "@rehan/dmg": "workspace:*"
   },
   "devDependencies": {
     "typescript": "~5.8.0",

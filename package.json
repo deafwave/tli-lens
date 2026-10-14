@@ -4,16 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @rehan/page dev",
-    "build": "pnpm --filter @rehan/page build",
-    "preview": "pnpm --filter @rehan/page preview",
-    "test": "pnpm --filter @rehan/dmg test",
-    "snapshot": "pnpm --filter @rehan/dmg snapshot",
-    "rank": "pnpm --filter @rehan/dmg rank sensitivity",
-    "bing": "pnpm --filter @rehan/dmg bing",
-    "page": "pnpm --filter @rehan/dmg snapshot && pnpm --filter @rehan/dmg catalog && pnpm --filter @rehan/dmg progression && pnpm --filter @rehan/dmg pagedata && pnpm --filter @rehan/dmg bing pagedata && pnpm page:ss13",
-    "page:ss13": "pnpm --filter @rehan/dmg snapshot --season ss13 && pnpm --filter @rehan/dmg catalog --season ss13 && pnpm --filter @rehan/dmg progression --season ss13",
-    "skills": "tsx scripts/update_skills.ts",
-    "demo": "tsx scripts/generate_demo_analysis.ts"
+    "dev": "pnpm --filter @tli-lens/page dev",
+    "build": "pnpm --filter @tli-lens/page build",
+    "preview": "pnpm --filter @tli-lens/page preview",
+    "test": "pnpm -r test",
+    "guide": "pnpm --filter @tli-lens/guide guide"
   }
 }

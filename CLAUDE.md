@@ -1,37 +1,32 @@
-# Rehan SS13 — Spectral Slash damage model & build guide
+# TLI Lens
 
-Torchlight: Infinite build guide for Rehan (Seething Silhouette). A TypeScript damage model
-parses the planner export and computes every % figure on the web page — nothing is eyeballed.
+Torchlight: Infinite build-progression guide. A generator drives the **dps-debug** calculator
+(pinned checkout, read-only) over a hero state and writes `packages/page/src/data/guide.json`;
+the Vite page renders it. Nothing on the page is typed in by hand.
+
+## The pin
+
+`@dps/*` resolves to `C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin/model/*`
+(tsconfig paths + vitest alias; env `DPS_DEBUG_PIN` overrides the pin root). Every output records the pin
+commit; the memo key includes it. Never edit dps-debug from here.
 
 ## Layout
 
-| Path | What it is |
+| Path | What |
 |---|---|
-| `packages/dmg/src` | `buildParser.ts` (export → snapshot, coverage-enforced), `damageModel.ts` (hit/crit/mitigation/cycle math), `catalog.ts` (slate/memory mod scoring), `progression.ts` (gear ladder + per-stat tier-step breakdowns), `pagedata.ts` (loadouts → talent-tree stages + skill bars for the page; reads the committed `SS12.5-talent-tree-master.json` from the tli-build cache), `cli.ts` |
-| `packages/page` | Vite page: Bundles & Linear Upgrades / Slate Mods / Memory Mods tabs. `src/data/*.json` is **generated** by `pnpm page` — never hand-edit |
-| `data/` | `Rehan.json` (planner export), `snapshot.json` (parsed build, hand-editable knobs like boss res), `manual_overrides.json` (cited constants), `craft_pools.json` (ember pools, regen via `.claude/skills/tlidb-lookup/extract_craft_pools.py`), `gear-en.json` (tlicompendium affix tiers), `bing1/` (Bing calibration exports + `real_buld_3_snapshot.json`, the hand-encoded real-build snapshot — see mechanics.md#real-build) |
-| `docs/mechanics.md` | **The mechanics truth.** Every modifier classified with bucket, citation, confidence — plus the "Assumptions & open interpretations" section. Code comments anchor to it (`mechanics.md#...`) |
-| `.claude/skills/` | `tli-build/cache` (tlicompendium data bundles), `tlidb-lookup` (tlidb.com fetcher), `mod-catalog` (catalog scoring rules + regen loop), `tli-game` (drive/read the running client), `bing-dps-model` + `bing-ab-test` (Bing model changes, in-game A/Bs) |
-| Bing / Hammer of Ash | `packages/dmg/src/bing*.ts` (importer → ledger → `cycleDps`), `pnpm bing diagnose`; the plan and open work: `docs/bing-dps-validation-handoff.md` |
-| `scripts/` | `update_skills.ts` (`pnpm skills [support\|active\|passive\|medium\|magnificent\|noble\|module]`) — regenerates `packages/page/src/data/<category>.json` from tlidb's newest season blocks (`--tags`/`--all`/`--check`; keeps `extra_gems`, dedupes by name) |
+| `packages/guide` | `@tli-lens/guide`: generator (types, etor prices, craft/affix pools, search, CLI). `src/types.ts` = shared interfaces |
+| `packages/page` | `@tli-lens/page`: Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/guide.json` |
+| `data/` | `etor/` price history, `affix_library.json`, `craft_pools.json` |
+| `scripts/` | `fetch_etor_history.py` (etor history), affix-library / build-scrape helpers |
+| `.claude/skills/` | `tli-game`, `tlidb-lookup`, `tli-build` (game/data lookup + cached compendium bundles) |
 
 ## Commands
 
-`pnpm test` · `pnpm snapshot` · `pnpm rank` (sensitivity table) · `pnpm page` (regen page data, both seasons) · `pnpm dev` / `pnpm build`
-
-Seasons: SS14 is the default; add `--season ss13` to `snapshot`/`rank`/`catalog`/`progression` (`pnpm rank --season ss13`). SS13 outputs are `*.ss13.json`; the page switches via `?season=ss13`. SS13 is temporary — see mechanics.md#seasons.
+`pnpm guide ideal|advise|figure` (generator) · `pnpm dev` · `pnpm build` · `pnpm test`
 
 ## Invariants
 
-1. **Every mechanic the model uses is cited in `docs/mechanics.md`** with a confidence flag
-   (confirmed / inferred / reported). A new scoring rule gets its row before the code lands.
-2. **Rankings are never hand-written into docs** — run `pnpm rank`. (`RANKINGS.md` was retired
-   because it went stale on every model pass; its caveats live in mechanics.md#assumptions.)
-3. **After any model or parser change**: `pnpm test && pnpm page`, then refresh the page's prose
-   numbers — the mini-tree notes in `packages/page/src/main.ts` — from the fresh
-   `pnpm rank` output. Stale prose is a bug.
-4. **Failing test first.** The e2e test enforces ≥90% affix-line coverage and an empty leftover
-   `_extras` — a newly parsed line needs a mapping or an explicit ignore, never silence.
-5. The parser targets the **reference loadout by name** (`PARSE_TARGET`/`REFERENCE` =
-   `more_1`), falling back to the planner's current loadout — a re-export with a scratch
-   loadout current must not silently rebase the page.
+1. dps-debug is the only calculator. No DPS math lives in this repo.
+2. Figures are never hand-written into docs or code; tests recompute them.
+3. `src/data/guide.json` is generated by `pnpm guide ideal`; never hand-edit.
+4. Failing test first. A partial figure (dropped pieces / stop) is flagged, never ranked as complete.

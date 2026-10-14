@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "types": ["node"],
     "baseUrl": ".",
-    "paths": { "@dps/*": ["../../../dps-debug/.worktrees/guide-pin/model/*"] }
+    "paths": { "@dps/*": ["../../../dps-debug/.worktrees/guide-pin/model/*", "../../../../../dps-debug/.worktrees/guide-pin/model/*"] }
   },
   "include": ["src", "test"]
 }

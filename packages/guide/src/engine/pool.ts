@@ -11,7 +11,11 @@ import { createMemo, memoKey } from './memo';
 /** dps-debug lines that are notes, not omissions (their numbers vary per build): never part of `partial` */
 export const INFO_PREFIXES = ['price:'];
 
-export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx }
+/** Stated fight inputs (dps-debug Carry.fight): `bombs` = bombs on the battlefield, `inputs` = other named per-cast / fight inputs */
+export interface Fight { bombs?: number; inputs?: Record<string, number> }
+/** dps-debug states bombs on the field as 10 in its own E2E1 / M7 work (HANDOFF 0.4: "a stated input, not derived") */
+export const DEFAULT_FIGHT: Fight = { bombs: 10 };
+export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight }
 export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown> } }
 /** One worker: runs a job, rejects with the dps-debug error message when pricing throws. */
 export interface WorkerLike {
@@ -30,6 +34,8 @@ export interface EvaluatorOpts {
   pin?: string;
   /** directory of the on-disk memo (none = memory only; never written when the pin is +dirty) */
   memoDir?: string;
+  /** the scenario's stated fight inputs (default `{ bombs: 10 }`) */
+  fight?: Fight;
 }
 
 /** HEAD sha of the pin, plus `+dirty` when its tree has changes (same rule as dps-debug's pinOf) */
@@ -80,6 +86,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const idle = [...workers];
   const queue: { go: () => void; fail: (e: Error) => void }[] = [];
   let closed = false;
+  const fight = o.fight ?? DEFAULT_FIGHT;
   const memo = createMemo<Evaluated>(pin, o.memoDir);
 
   /** runs f on an idle worker (queued when none). A dead worker is dropped and replaced; `f` is retried once on the replacement. */
@@ -104,7 +111,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
 
   /** `keep: false` marks a result that came from a worker dying twice: returned to the caller, never cached */
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
-    schedule(w => w.run({ loadout, changes, ctx })).then(
+    schedule(w => w.run({ loadout, changes, ctx, fight })).then(
       ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped, ...(fig.inputs ? { inputs: fig.inputs } : {}),
         figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs].filter(l => !INFO_PREFIXES.some(p => l.startsWith(p))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
       (e: Error) => {
@@ -113,9 +120,9 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
       });
 
   return {
-    pin,
+    pin, fight,
     run: (loadout, changes, ctx) => closed ? Promise.reject(new Error('evaluator closed'))
-      : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes), () => price(loadout, changes, ctx)),
+      : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes, fight), () => price(loadout, changes, ctx)),
     close: async () => {
       closed = true;
       for (const q of queue.splice(0)) q.fail(new Error('evaluator closed'));

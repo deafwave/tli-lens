@@ -1,4 +1,4 @@
-/** guide ideal [--out path] | advise <export.json> [--fe N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N]) */
+/** guide ideal [--out path] | advise <export.json> [--fe N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10]) */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,8 @@ const flag = (name: string) => { const i = args.indexOf(`--${name}`); return i <
 const positional = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
 const num = (name: string) => { const v = flag(name); if (v !== undefined && !Number.isFinite(Number(v))) throw new Error(`--${name} needs a number`); return v === undefined ? undefined : Number(v); };
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
-const evaluator = () => createEvaluator({ workers: num('workers'), memoDir: fileURLToPath(new URL('../.cache/memo', import.meta.url)) });
+const bombs = num('bombs');
+const evaluator = () => createEvaluator({ workers: num('workers'), ...(bombs === undefined ? {} : { fight: { bombs } }), memoDir: fileURLToPath(new URL('../.cache/memo', import.meta.url)) });
 
 async function main() {
   if (cmd === 'ideal') {

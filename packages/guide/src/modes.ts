@@ -63,7 +63,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices?: PriceBook): Promise<
   let s: State = { ...start.state, level: K.startLevel };
   const notes = [...start.notes];
   const out = (o: Partial<GuideOut>): GuideOut => ({
-    mode: 'ideal', pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K }, startNotes: notes, steps: [], notSearched: [], unpriced: [], notCalculable: [], ...o,
+    mode: 'ideal', pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fight: ev.fight }, startNotes: notes, steps: [], notSearched: [], unpriced: [], notCalculable: [], ...o,
   }) as GuideOut;
 
   const first = await ev.run(s.loadout, [], { level: s.level, skill: s.skill });
@@ -107,7 +107,7 @@ export async function runAdvise(ev: Evaluator, state: State, k: Partial<Knobs> =
   const K = { ...DEFAULT_KNOBS, ...k };
   const books = prices ?? snapshotBook(localItems());
   const acq = [ownedGear, ...ALL.map(only(true))], recon = ALL.map(only(false));
-  const base = { mode: 'advise' as const, pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fe: state.fe, level: state.level, skill: state.skill } };
+  const base = { mode: 'advise' as const, pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt }, knobs: { ...K, fight: ev.fight, fe: state.fe, level: state.level, skill: state.skill } };
   const first = await ev.run(state.loadout, [], { level: state.level, skill: state.skill });
   if (first.figure.stop) {
     return { ...base, start: first.figure, inputs: first.inputs, steps: [], notSearched: [], unpriced: [],

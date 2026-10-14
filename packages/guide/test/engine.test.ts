@@ -73,6 +73,16 @@ describe('evaluator (stub workers)', () => {
       }
     }
   });
+  it('fight inputs: workers get them (default bombs 10); evaluators with different fight never share a memo entry', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    const s = stub();
+    const mk = (fight?: { bombs?: number }) => createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir, ...(fight ? { fight } : {}) });
+    const [d, five, again] = [await mk(), await mk({ bombs: 5 }), await mk({ bombs: 5 })];
+    await d.run(lo, [], ctx); await five.run(lo, [], ctx); await again.run(lo, [], ctx);
+    expect(s.jobs.map(j => j.fight)).toEqual([{ bombs: 10 }, { bombs: 5 }]);
+    expect(d.fight).toEqual({ bombs: 10 });
+    expect(readdirSync(dir)).toHaveLength(2);
+  });
   it('a throwing job returns figure.stop with the message; the pool stays alive', async () => {
     const f = stub().factory;
     const ev = await createEvaluator({ workers: 1, pin: 'p', factory: () => {
@@ -184,7 +194,8 @@ describe('evaluator (real workers, pinned dps-debug)', () => {
     try {
       const [r, p, ice] = await Promise.all([
         ev.run(l, [], ctx), ev.run(l, [patch], ctx), ev.run(l, [], { level: 94, skill: 'iceShot' })]);
-      const ref = fx.guideFigure(fx.openCatalog(), structuredClone(l), 'hoa', { heroLevel: 100 });
+      const ground = { ...fx.GROUNDS.hoa, carry: { ...fx.GROUNDS.hoa.carry, fight: { bombs: 10 } } };
+      const ref = fx.guideFigure(fx.openCatalog(), structuredClone(l), 'hoa', { heroLevel: 100, ground });
       expect(r.figure.stop).toBeUndefined();
       expect(r.figure.life100).toBe(ref.life100);
       expect(r.figure.life0).toBe(ref.life0);
@@ -192,6 +203,21 @@ describe('evaluator (real workers, pinned dps-debug)', () => {
       expect(ev.pin).toMatch(/^[0-9a-f]{40}(\+dirty)?$/);
       expect(p.loadout).toEqual(applyPatch(l, patch));
       expect(ice.figure.stop).toMatch(/not ported/);
+    } finally { await ev.close(); }
+  }, 900_000);
+});
+
+describe('stated fight inputs (real worker)', () => {
+  it.skipIf(!!skipReal)('the L100 Phantom Delivery loadout no longer stops on the bombs input; a computed figure echoes bombs 10', async () => {
+    const dir = join(pinRoot(), 'game'), f = readdirSync(dir).filter(x => /^loadout_l100-.*\.json$/.test(x)).sort().pop()!;
+    const ev = await createEvaluator({ workers: 1 });
+    try {
+      const r = await ev.run(JSON.parse(readFileSync(join(dir, f), 'utf8')), [], { level: 93, skill: 'hoa' });
+      // it still stops further on, at dps-debug's own unported pieces (not a stated input): the bombs stop is gone
+      expect(r.figure.stop ?? '').not.toMatch(/fight input bombs/);
+      if (!r.figure.stop) expect(r.figure.life100).toBeGreaterThan(0);
+      // a stop carries no inputs echo
+      if (!r.figure.stop) expect((r as { inputs?: { carry: { fight: unknown } } }).inputs?.carry.fight).toEqual({ bombs: 10 });
     } finally { await ev.close(); }
   }, 900_000);
 });

@@ -26,12 +26,15 @@ const done = new Promise(r => watch.on("exit", r));
 let hitsOut = "";
 const hitWatch = args.includes("--hits") && spawn(exe, ["--hit-watch", String(secs)], { cwd: poor, stdio: ["ignore", "pipe", "ignore"] });
 const hitsDone = hitWatch ? new Promise(r => { hitWatch.stdout.on("data", d => { hitsOut += d; }); hitWatch.on("exit", r); }) : null;
-const up = {}, stacks = {}; let n = 0;
+const up = {}, stacks = {}, samples = []; let n = 0;
 if (args.includes("--buffs")) {
   let finished = false; done.then(() => { finished = true; });
   while (!finished) {
     const j = JSON.parse(execFileSync(exe, ["--combat-json"], { cwd: poor, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1 << 24 }).toString("utf8"));
     n++;
+    // dummy total pins the sample to a frame of the per-frame capture; remainingS dates each debuff instance
+    samples.push({ total: j.dummy?.totalDamage, buffs: (j.buffs ?? []).map(x => x.name),
+      debuffs: (j.target?.debuffs ?? []).map(({ name, remainingS, totalS, stacks }) => ({ name, remainingS, totalS, stacks })) });
     for (const x of j.buffs ?? []) up[x.name] = (up[x.name] ?? 0) + 1;
     for (const x of j.target?.debuffs ?? []) {
       up[`target:${x.name}`] = (up[`target:${x.name}`] ?? 0) + 1;
@@ -48,6 +51,7 @@ fs.mkdirSync(watchDir, { recursive: true });
 let kept = path.join(watchDir, `${label || "unlabeled"}.csv`);
 for (let i = 2; fs.existsSync(kept); i++) kept = path.join(watchDir, `${label || "unlabeled"}-${i}.csv`);
 fs.copyFileSync(csv, kept);
+if (samples.length) fs.writeFileSync(kept.replace(/\.csv$/, "-samples.jsonl"), samples.map(s => JSON.stringify(s)).join("\n") + "\n");
 const rows = fs.readFileSync(csv, "utf8").trim().split(/\r?\n/).slice(1)
   .map(l => l.split(",").map(Number)).map(([t, dmg, dur, frame]) => ({ t, dmg, dur, frame }));
 const [a, b] = [rows[0], rows.at(-1)];

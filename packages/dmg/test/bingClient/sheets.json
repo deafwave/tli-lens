@@ -1,0 +1,1145 @@
+{
+"source": "RoleAttrMgr dumps in UE_game.log (local 2026-10-11 03:32:06, 40T pro build 08:46:19)",
+"sheets": {
+"local": {
+"10300 Main-Hand Physical Attack Damage": [
+0.0,
+0.0
+],
+"160000 Trauma DPS": [
+0.0
+],
+"160001 Ignite DPS": [
+0.0
+],
+"160003 Wilt DPS": [
+0.0
+],
+"10500 Main-Hand Cold Attack Damage": [
+0.0,
+0.0
+],
+"10600 Main-Hand Fire Attack Damage": [
+1522647.6990037,
+1702782.3598234
+],
+"10700 Main-Hand Erosion Attack Damage": [
+0.0,
+0.0
+],
+"150000 Minion Attack DPS": [
+0.0
+],
+"150001 Minion Spell DPS": [
+0.0
+],
+"150002 Minion DoT DPS": [
+0.0
+],
+"140000 DoT DPS": [
+2287216.6965474
+],
+"11400 Ignite DPS": [
+0.0,
+0.0
+],
+"11600 Wilt DPS": [
+0.0,
+0.0
+],
+"160002 Wilt DPS": [
+0.0
+],
+"10100 Attack DPS": [
+7598607.107851
+],
+"12100 Cold Spell Damage": [
+0.0,
+0.0
+],
+"12300 Erosion Spell Damage": [
+0.0,
+0.0
+],
+"12000 Lightning Spell Damage": [
+0.0,
+0.0
+],
+"11900 Physical Spell Damage": [
+0.0,
+0.0
+],
+"11800 Total Spell Damage": [
+1579062.9527645,
+1765871.7395871
+],
+"10400 Main-Hand Lightning Attack Damage": [
+0.0,
+0.0
+],
+"10200 Total Main-Hand Attack Damage": [
+1522647.6990037,
+1702782.3598234
+],
+"10103 Spell DPS": [
+4941940.311868
+],
+"12200 Fire Spell Damage": [
+1579062.9527645,
+1765871.7395871
+],
+"20506 Main-Hand Attack Critical Strike Chance": [
+57.05,
+57.05
+],
+"20603 Additional Attack Critical Strike Rating Bonus": [
+0.0
+],
+"20800 Projectile Quantity Bonus": [
+6.0
+],
+"160100 Base Trauma Damage": [
+0.0
+],
+"20900 Projectile Flying Speed Modifier": [
+0.0
+],
+"160200 Base Ignite Damage": [
+0.0
+],
+"150025 Command Restoration Per Second": [
+0.0
+],
+"150031 Added Fire Damage Based on Minion Physical Damage": [
+0.0
+],
+"150033 Added Lightning Damage Based on Minion Physical Damage": [
+0.0
+],
+"150034 Added Erosion Damage Based on Minion Physical Damage": [
+0.0
+],
+"150035 Added Erosion Damage Based on Minion Lightning Damage": [
+0.0
+],
+"150036 Added Erosion Damage Based on Minion Cold Damage": [
+0.0
+],
+"150037 Added Erosion Damage Based on Minion Fire Damage": [
+0.0
+],
+"150040 Max Summonable Minions": [
+1.0
+],
+"150041 Max Summonable Minions": [
+1.0
+],
+"150044 Minion Double Damage Chance": [
+0.0
+],
+"150050 Minion Attack Speed Bonus": [
+0.0
+],
+"150051 Additional Minion Attack Speed Bonus": [
+0.0
+],
+"150052 Minion Cast Speed Bonus": [
+0.0
+],
+"150053 Additional Minion Cast Speed Bonus": [
+0.0
+],
+"160300 Base Wilt Damage": [
+0.0
+],
+"10800 Fire Penetration": [
+0.0
+],
+"150069 Minion Spell Critical Strike Rating": [
+0.0
+],
+"150070 Minion Spell Critical Strike Damage": [
+0.0
+],
+"150077 Minion Lightning Penetration": [
+0.0
+],
+"150078 Minion Cold Penetration": [
+0.0
+],
+"150079 Minion Fire Penetration": [
+0.0
+],
+"150080 Minion Erosion Penetration": [
+0.0
+],
+"150081 Minion Life": [
+1.0
+],
+"150082 Minion Energy Shield": [
+0.0
+],
+"150083 Minion Fire Resistance": [
+0.0,
+0.0
+],
+"150084 Minion Cold Resistance": [
+0.0,
+0.0
+],
+"150085 Minion Lightning Resistance": [
+0.0,
+0.0
+],
+"150086 Minion Erosion Resistance": [
+0.0,
+0.0
+],
+"150087 Minion Armor": [
+0.0
+],
+"150088 Minion Expected Physical Damage Mitigation": [
+0.0
+],
+"150089 Minion Physical Damage Converted to Lightning Damage": [
+0.0
+],
+"150090 Minion Physical Damage Converted to Cold Damage": [
+0.0
+],
+"150091 Minion Physical Damage Converted to Fire Damage": [
+0.0
+],
+"150092 Minion Physical Damage Converted to Erosion Damage": [
+0.0
+],
+"150093 Minion Lightning Damage Converted to Cold Damage": [
+0.0
+],
+"150094 Minion Lightning Damage Converted to Fire Damage": [
+0.0
+],
+"150095 Minion Lightning Damage Converted to Erosion Damage": [
+0.0
+],
+"150096 Minion Cold Damage Converted to Fire Damage": [
+0.0
+],
+"150097 Minion Cold Damage Converted to Erosion Damage": [
+0.0
+],
+"150098 Minion Fire Damage Converted to Erosion Damage": [
+0.0
+],
+"150099 Minion Armor DMG Mitigation Penetration": [
+0.0
+],
+"10900 Lightning Penetration": [
+0.0
+],
+"21212 Spell Critical Strike Chance": [
+0.0,
+0.0
+],
+"11000 Cold Penetration": [
+0.0
+],
+"140052 Affliction Per Second": [
+0.0
+],
+"140055 Reaping Cooldown Recovery Speed Bonus": [
+0.0
+],
+"140056 Reaping Duration Bonus": [
+0.0
+],
+"140058 Affliction Effect": [
+0.0
+],
+"140059 Additional Affliction Effect": [
+0.0
+],
+"140060 Additional Reaping Cooldown Recovery Speed Bonus": [
+0.0
+],
+"140061 Additional Reaping Duration Bonus": [
+0.0
+],
+"21301 Spell Critical Strike Rating Percentage": [
+1056.0
+],
+"11100 Erosion Penetration": [
+10.0
+],
+"11201 Armor DMG Mitigation Penetration": [
+0.0
+],
+"21501 Defensive Effect": [
+0.0
+],
+"21502 Warcry Effect": [
+0.0
+],
+"21503 Aura Effect": [
+0.0
+],
+"21504 Curse Effect": [
+0.0
+],
+"21505 Origin of Spirit Magus Effect": [
+0.0
+],
+"21507 Numbed Effect": [
+0.0
+],
+"21509 Blur Effect": [
+0.0
+],
+"21601 Spell Burst Charge Time": [
+0.0
+],
+"21602 Spell Burst Charge Speed Bonus": [
+0.0
+],
+"21603 Max Spell Burst": [
+0.0
+],
+"21604 Spell Burst Bonus Damage": [
+0.0
+],
+"21702 Multistrike Increment": [
+0.0
+],
+"21703 Knockback distance": [
+48.0
+],
+"21704 Projectile Speed": [
+10.0
+],
+"21705 Steep Strike Chance": [
+0.0
+],
+"21707 Demolisher Charge Restoration Speed": [
+0.0
+],
+"21709 Focus Speed Additional Bonus": [
+0.0
+],
+"21711 Combo Damage Enhancement": [
+0.0
+],
+"21712 Max Frostbite Rating": [
+10.0
+],
+"21713 Max Tangle Quantity": [
+2.0
+],
+"21714 Additional Tangle Attach Quantity": [
+1.0
+],
+"21715 Ill Omen Cumulative Efficiency": [
+0.0
+],
+"21717 Max Terra Charge Stacks": [
+1.0
+],
+"20222 Adds Lightning Flat Damage to Attacks": [
+0.0
+],
+"20230 Additional Damage Bonus": [
+1705.0086194297
+],
+"20302 Attack Speed Bonus": [
+44.0
+],
+"161001 Affliction Per Second": [
+0.0
+],
+"161003 Bonus Ignite Damage Per Affliction": [
+0.0
+],
+"161005 Trauma Damage Increase Per Affliction": [
+0.0
+],
+"161007 Bonus Wilt Damage Per Affliction": [
+0.0
+],
+"22000 Added Fire Damage based on Cold Damage": [
+0.0
+],
+"21990 Adds Fire Damage based on Lightning Damage": [
+0.0
+],
+"21980 Adds Cold Damage based on Lightning Damage": [
+0.0
+],
+"21970 Added Erosion Damage based on Fire Damage": [
+0.0
+],
+"21960 Added Erosion Damage based on Cold Damage": [
+0.0
+],
+"21950 Added Erosion Damage based on Lightning Damage": [
+0.0
+],
+"21940 Added Erosion Damage based on Physical Damage": [
+0.0
+],
+"21930 Added Lightning Damage based on Physical Damage": [
+0.0
+],
+"21920 Added Cold Damage based on Physical Damage": [
+0.0
+],
+"21910 Added Fire Damage based on Physical Damage": [
+0.0
+],
+"21900 Fire Damage converted to Erosion Damage": [
+0.0
+],
+"21890 Cold Damage converted to Erosion Damage": [
+0.0
+],
+"21880 Cold Damage converted to Fire Damage": [
+0.0
+],
+"21870 Lightning Damage converted to Erosion Damage": [
+0.0
+],
+"21860 Lightning Damage converted to Fire Damage": [
+0.0
+],
+"21850 Lightning Damage converted to Cold Damage": [
+0.0
+],
+"21840 Physical Damage converted to Erosion Damage": [
+0.0
+],
+"21830 Physical Damage converted to Fire Damage": [
+100.0
+],
+"21820 Physical Damage converted to Cold Damage": [
+0.0
+],
+"21810 Physical Damage converted to Lightning Damage": [
+0.0
+],
+"21716 Terra Charge Restoration Speed": [
+0.0
+],
+"21710 Focus Damage Enhancement": [
+0.0
+],
+"21708 Focus Speed Bonus": [
+0.0
+],
+"21706 Shadow Quantity": [
+0.0
+],
+"21700 Multistrike Chance": [
+0.0
+],
+"21600 Increases additional damage against Life": [
+18.0
+],
+"21508 Elixir Effect": [
+0.0
+],
+"21506 Frostbite Effect": [
+0.0
+],
+"21500 Empower Effect": [
+0.0
+],
+"21401 Double Damage Chance": [
+0.0
+],
+"21400 Spell Critical Strike Damage": [
+324.0
+],
+"21002 Cast Speed Additional Bonus": [
+0.0
+],
+"21001 Cast Speed Bonus": [
+35.0
+],
+"21000 Spells cast per second": [
+2.068416
+],
+"20700 Attack Critical Strike Damage": [
+324.0
+],
+"20602 Attack Critical Strike Rating Bonus": [
+1041.0
+],
+"20300 Main-Hand Attack Speed": [
+2.068416
+],
+"20232 Additional Cold Damage Bonus": [
+37.5
+],
+"20228 Adds Erosion Flat Damage to Spells": [
+0.0
+],
+"20220 Adds Cold Flat Damage to Attacks": [
+0.0
+],
+"20218 Erosion Damage Bonus": [
+247.0
+],
+"20212 Damage Bonus": [
+755.6
+],
+"153001 Minion Life Restoration Speed Bonus": [
+-100.0
+],
+"153002 Minion Attack Critical Strike Rating Percentage": [
+0.0
+],
+"153003 Minion Spell Critical Strike Rating Percentage": [
+0.0
+],
+"153005 Minion Attack Critical Strike Chance": [
+0.0,
+0.0
+],
+"153007 Minion Spell Critical Strike Chance": [
+0.0,
+0.0
+],
+"20213 Damage Bonus": [
+755.6
+],
+"20214 Physical Damage Bonus": [
+176.0
+],
+"20215 Cold Damage Bonus": [
+0.0
+],
+"20216 Fire Damage Bonus": [
+48.0
+],
+"20217 Lightning Damage Bonus": [
+0.0
+],
+"20219 Adds Physical Flat Damage to Attacks": [
+0.0
+],
+"20221 Adds Fire Flat Damage to Attacks": [
+0.0
+],
+"20223 Adds Erosion Flat Damage to Attacks": [
+0.0
+],
+"20224 Adds Physical Flat Damage to Spells": [
+0.0
+],
+"20225 Adds Cold Flat Damage to Spells": [
+0.0
+],
+"20226 Adds Fire Flat Damage to Spells": [
+0.0
+],
+"20227 Adds Lightning Flat Damage to Spells": [
+0.0
+],
+"20229 Additional Damage Bonus": [
+1705.0086194297
+],
+"20231 Additional Physical Damage Bonus": [
+45.6125
+],
+"20233 Additional Fire Damage Bonus": [
+37.5
+],
+"20234 Additional Lightning Damage Bonus": [
+37.5
+],
+"20235 Additional Erosion Damage Bonus": [
+435.318146
+],
+"20303 Additional Attack Speed Bonus": [
+-16.0
+],
+"150032 Added Cold Damage Based on Minion Physical Damage": [
+0.0
+],
+"150066 Minion Attack Critical Strike Damage": [
+0.0
+],
+"153000 Minion Life Regeneration Per Second": [
+0.0
+]
+},
+"hanshan40t": {
+"10300 Main-Hand Physical Attack Damage": [
+0.0,
+0.0
+],
+"160000 Trauma DPS": [
+0.0
+],
+"160001 Ignite DPS": [
+0.0
+],
+"160003 Wilt DPS": [
+0.0
+],
+"10500 Main-Hand Cold Attack Damage": [
+5425.4640451882,
+5425.4640451882
+],
+"10600 Main-Hand Fire Attack Damage": [
+16066858.848946,
+18426593.800494
+],
+"10700 Main-Hand Erosion Attack Damage": [
+0.0,
+0.0
+],
+"150000 Minion Attack DPS": [
+0.0
+],
+"150001 Minion Spell DPS": [
+0.0
+],
+"150002 Minion DoT DPS": [
+0.0
+],
+"140000 DoT DPS": [
+34655914.507341
+],
+"11400 Ignite DPS": [
+0.0,
+0.0
+],
+"11600 Wilt DPS": [
+0.0,
+0.0
+],
+"160002 Wilt DPS": [
+0.0
+],
+"10100 Attack DPS": [
+269180549.66204
+],
+"12100 Cold Spell Damage": [
+5425.4640451882,
+5425.4640451882
+],
+"12300 Erosion Spell Damage": [
+0.0,
+0.0
+],
+"12000 Lightning Spell Damage": [
+5425.4640451882,
+16276.392135564
+],
+"11900 Physical Spell Damage": [
+0.0,
+0.0
+],
+"11800 Total Spell Damage": [
+16317246.116999,
+18739415.748958
+],
+"10400 Main-Hand Lightning Attack Damage": [
+2712.7320225941,
+8138.1960677822
+],
+"10200 Total Main-Hand Attack Damage": [
+16074997.045014,
+18440157.460607
+],
+"10103 Spell DPS": [
+53678760.649152
+],
+"12200 Fire Spell Damage": [
+16306395.188909,
+18717713.892777
+],
+"20506 Main-Hand Attack Critical Strike Chance": [
+89.378919,
+89.378919
+],
+"20603 Additional Attack Critical Strike Rating Bonus": [
+0.0
+],
+"20800 Projectile Quantity Bonus": [
+4.0
+],
+"160100 Base Trauma Damage": [
+5.0
+],
+"20900 Projectile Flying Speed Modifier": [
+0.0
+],
+"160200 Base Ignite Damage": [
+0.0
+],
+"150025 Command Restoration Per Second": [
+0.0
+],
+"150031 Added Fire Damage Based on Minion Physical Damage": [
+0.0
+],
+"150033 Added Lightning Damage Based on Minion Physical Damage": [
+0.0
+],
+"150034 Added Erosion Damage Based on Minion Physical Damage": [
+0.0
+],
+"150035 Added Erosion Damage Based on Minion Lightning Damage": [
+0.0
+],
+"150036 Added Erosion Damage Based on Minion Cold Damage": [
+0.0
+],
+"150037 Added Erosion Damage Based on Minion Fire Damage": [
+0.0
+],
+"150040 Max Summonable Minions": [
+1.0
+],
+"150041 Max Summonable Minions": [
+1.0
+],
+"150044 Minion Double Damage Chance": [
+0.0
+],
+"150050 Minion Attack Speed Bonus": [
+0.0
+],
+"150051 Additional Minion Attack Speed Bonus": [
+0.0
+],
+"150052 Minion Cast Speed Bonus": [
+0.0
+],
+"150053 Additional Minion Cast Speed Bonus": [
+0.0
+],
+"160300 Base Wilt Damage": [
+0.0
+],
+"10800 Fire Penetration": [
+0.0
+],
+"150069 Minion Spell Critical Strike Rating": [
+0.0
+],
+"150070 Minion Spell Critical Strike Damage": [
+0.0
+],
+"150077 Minion Lightning Penetration": [
+0.0
+],
+"150078 Minion Cold Penetration": [
+0.0
+],
+"150079 Minion Fire Penetration": [
+0.0
+],
+"150080 Minion Erosion Penetration": [
+0.0
+],
+"150081 Minion Life": [
+1.0
+],
+"150082 Minion Energy Shield": [
+0.0
+],
+"150083 Minion Fire Resistance": [
+0.0,
+0.0
+],
+"150084 Minion Cold Resistance": [
+0.0,
+0.0
+],
+"150085 Minion Lightning Resistance": [
+0.0,
+0.0
+],
+"150086 Minion Erosion Resistance": [
+0.0,
+0.0
+],
+"150087 Minion Armor": [
+0.0
+],
+"150088 Minion Expected Physical Damage Mitigation": [
+0.0
+],
+"150089 Minion Physical Damage Converted to Lightning Damage": [
+0.0
+],
+"150090 Minion Physical Damage Converted to Cold Damage": [
+0.0
+],
+"150091 Minion Physical Damage Converted to Fire Damage": [
+0.0
+],
+"150092 Minion Physical Damage Converted to Erosion Damage": [
+0.0
+],
+"150093 Minion Lightning Damage Converted to Cold Damage": [
+0.0
+],
+"150094 Minion Lightning Damage Converted to Fire Damage": [
+0.0
+],
+"150095 Minion Lightning Damage Converted to Erosion Damage": [
+0.0
+],
+"150096 Minion Cold Damage Converted to Fire Damage": [
+0.0
+],
+"150097 Minion Cold Damage Converted to Erosion Damage": [
+0.0
+],
+"150098 Minion Fire Damage Converted to Erosion Damage": [
+0.0
+],
+"150099 Minion Armor DMG Mitigation Penetration": [
+0.0
+],
+"10900 Lightning Penetration": [
+0.0
+],
+"21212 Spell Critical Strike Chance": [
+0.0,
+0.0
+],
+"11000 Cold Penetration": [
+0.0
+],
+"140052 Affliction Per Second": [
+0.0
+],
+"140055 Reaping Cooldown Recovery Speed Bonus": [
+0.0
+],
+"140056 Reaping Duration Bonus": [
+0.0
+],
+"140058 Affliction Effect": [
+20.4
+],
+"140059 Additional Affliction Effect": [
+0.0
+],
+"140060 Additional Reaping Cooldown Recovery Speed Bonus": [
+0.0
+],
+"140061 Additional Reaping Duration Bonus": [
+0.0
+],
+"21301 Spell Critical Strike Rating Percentage": [
+1248.2
+],
+"11100 Erosion Penetration": [
+26.0
+],
+"11201 Armor DMG Mitigation Penetration": [
+0.0
+],
+"21501 Defensive Effect": [
+0.0
+],
+"21502 Warcry Effect": [
+28.0
+],
+"21503 Aura Effect": [
+0.0
+],
+"21504 Curse Effect": [
+6.0
+],
+"21505 Origin of Spirit Magus Effect": [
+0.0
+],
+"21507 Numbed Effect": [
+0.0
+],
+"21509 Blur Effect": [
+0.0
+],
+"21601 Spell Burst Charge Time": [
+0.0
+],
+"21602 Spell Burst Charge Speed Bonus": [
+0.0
+],
+"21603 Max Spell Burst": [
+0.0
+],
+"21604 Spell Burst Bonus Damage": [
+0.0
+],
+"21702 Multistrike Increment": [
+0.0
+],
+"21703 Knockback distance": [
+0.0
+],
+"21704 Projectile Speed": [
+16.0
+],
+"21705 Steep Strike Chance": [
+0.0
+],
+"21707 Demolisher Charge Restoration Speed": [
+0.0
+],
+"21709 Focus Speed Additional Bonus": [
+0.0
+],
+"21711 Combo Damage Enhancement": [
+0.0
+],
+"21712 Max Frostbite Rating": [
+10.0
+],
+"21713 Max Tangle Quantity": [
+2.0
+],
+"21714 Additional Tangle Attach Quantity": [
+1.0
+],
+"21715 Ill Omen Cumulative Efficiency": [
+0.0
+],
+"21717 Max Terra Charge Stacks": [
+1.0
+],
+"20222 Adds Lightning Flat Damage to Attacks": [
+2.0
+],
+"20230 Additional Damage Bonus": [
+39559.579628536
+],
+"20302 Attack Speed Bonus": [
+54.0
+],
+"161001 Affliction Per Second": [
+0.0
+],
+"161003 Bonus Ignite Damage Per Affliction": [
+0.0
+],
+"161005 Trauma Damage Increase Per Affliction": [
+0.0
+],
+"161007 Bonus Wilt Damage Per Affliction": [
+0.0
+],
+"22000 Added Fire Damage based on Cold Damage": [
+0.0
+],
+"21990 Adds Fire Damage based on Lightning Damage": [
+0.0
+],
+"21980 Adds Cold Damage based on Lightning Damage": [
+0.0
+],
+"21970 Added Erosion Damage based on Fire Damage": [
+0.0
+],
+"21960 Added Erosion Damage based on Cold Damage": [
+0.0
+],
+"21950 Added Erosion Damage based on Lightning Damage": [
+0.0
+],
+"21940 Added Erosion Damage based on Physical Damage": [
+0.0
+],
+"21930 Added Lightning Damage based on Physical Damage": [
+0.0
+],
+"21920 Added Cold Damage based on Physical Damage": [
+0.0
+],
+"21910 Added Fire Damage based on Physical Damage": [
+0.0
+],
+"21900 Fire Damage converted to Erosion Damage": [
+0.0
+],
+"21890 Cold Damage converted to Erosion Damage": [
+0.0
+],
+"21880 Cold Damage converted to Fire Damage": [
+0.0
+],
+"21870 Lightning Damage converted to Erosion Damage": [
+0.0
+],
+"21860 Lightning Damage converted to Fire Damage": [
+0.0
+],
+"21850 Lightning Damage converted to Cold Damage": [
+0.0
+],
+"21840 Physical Damage converted to Erosion Damage": [
+0.0
+],
+"21830 Physical Damage converted to Fire Damage": [
+100.0
+],
+"21820 Physical Damage converted to Cold Damage": [
+0.0
+],
+"21810 Physical Damage converted to Lightning Damage": [
+0.0
+],
+"21716 Terra Charge Restoration Speed": [
+0.0
+],
+"21710 Focus Damage Enhancement": [
+0.0
+],
+"21708 Focus Speed Bonus": [
+0.0
+],
+"21706 Shadow Quantity": [
+0.0
+],
+"21700 Multistrike Chance": [
+0.0
+],
+"21600 Increases additional damage against Life": [
+18.0
+],
+"21508 Elixir Effect": [
+0.0
+],
+"21506 Frostbite Effect": [
+0.0
+],
+"21500 Empower Effect": [
+0.0
+],
+"21401 Double Damage Chance": [
+0.0
+],
+"21400 Spell Critical Strike Damage": [
+802.2
+],
+"21002 Cast Speed Additional Bonus": [
+0.0
+],
+"21001 Cast Speed Bonus": [
+25.0
+],
+"21000 Spells cast per second": [
+2.14368
+],
+"20700 Attack Critical Strike Damage": [
+802.2
+],
+"20602 Attack Critical Strike Rating Bonus": [
+1248.2
+],
+"20300 Main-Hand Attack Speed": [
+2.14368
+],
+"20232 Additional Cold Damage Bonus": [
+0.0
+],
+"20228 Adds Erosion Flat Damage to Spells": [
+0.0
+],
+"20220 Adds Cold Flat Damage to Attacks": [
+2.0
+],
+"20218 Erosion Damage Bonus": [
+408.0
+],
+"20212 Damage Bonus": [
+278.3
+],
+"153001 Minion Life Restoration Speed Bonus": [
+-100.0
+],
+"153002 Minion Attack Critical Strike Rating Percentage": [
+0.0
+],
+"153003 Minion Spell Critical Strike Rating Percentage": [
+0.0
+],
+"153005 Minion Attack Critical Strike Chance": [
+0.0,
+0.0
+],
+"153007 Minion Spell Critical Strike Chance": [
+0.0,
+0.0
+],
+"20213 Damage Bonus": [
+278.3
+],
+"20214 Physical Damage Bonus": [
+0.0
+],
+"20215 Cold Damage Bonus": [
+0.0
+],
+"20216 Fire Damage Bonus": [
+0.0
+],
+"20217 Lightning Damage Bonus": [
+0.0
+],
+"20219 Adds Physical Flat Damage to Attacks": [
+65.5
+],
+"20221 Adds Fire Flat Damage to Attacks": [
+2.0
+],
+"20223 Adds Erosion Flat Damage to Attacks": [
+0.0
+],
+"20224 Adds Physical Flat Damage to Spells": [
+65.5
+],
+"20225 Adds Cold Flat Damage to Spells": [
+2.0
+],
+"20226 Adds Fire Flat Damage to Spells": [
+2.0
+],
+"20227 Adds Lightning Flat Damage to Spells": [
+2.0
+],
+"20229 Additional Damage Bonus": [
+39559.579628536
+],
+"20231 Additional Physical Damage Bonus": [
+46.2725
+],
+"20233 Additional Fire Damage Bonus": [
+0.0
+],
+"20234 Additional Lightning Damage Bonus": [
+0.0
+],
+"20235 Additional Erosion Damage Bonus": [
+270.1535316875
+],
+"20303 Additional Attack Speed Bonus": [
+-20.0
+],
+"150032 Added Cold Damage Based on Minion Physical Damage": [
+0.0
+],
+"150066 Minion Attack Critical Strike Damage": [
+0.0
+],
+"153000 Minion Life Regeneration Per Second": [
+0.0
+]
+}
+}
+}

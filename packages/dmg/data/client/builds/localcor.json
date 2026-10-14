@@ -1,0 +1,7177 @@
+{
+"slug": "localcor",
+"pageStats": null,
+"skillDamagePct": {
+"Hammer of Ash": 369.0
+},
+"source": "dps-debug/tools/build_model.py + run_model.py (live client tables, PE 0x6aa39847)",
+"skills": {
+"Hammer of Ash": {
+"sid": 1110,
+"level": 21,
+"tags": [
+6000130,
+6001030,
+6001180,
+6001060,
+6001090,
+6001110,
+6001120,
+6010010,
+6000200,
+6001111,
+6000001,
+6101284
+],
+"kind": "active",
+"slot": 0
+},
+"Blink": {
+"sid": 1040,
+"level": 22,
+"tags": [
+6000010,
+6001100,
+6000200,
+6000081
+],
+"kind": "active",
+"slot": 1
+},
+"Corruption": {
+"sid": 2030,
+"level": 17,
+"tags": [
+6001100,
+6000130,
+6000140,
+6001020,
+6000200,
+6000081,
+6000150
+],
+"kind": "active",
+"slot": 2,
+"buff": 16100
+},
+"Bull's Rage": {
+"sid": 1230,
+"level": 21,
+"tags": [
+6000140,
+6001100,
+6000200,
+6000081,
+6001230
+],
+"kind": "active",
+"slot": 3,
+"buff": 10120
+},
+"Flame Core": {
+"sid": 1580,
+"level": 17,
+"tags": [
+6001100,
+6000130,
+6001060,
+6000200,
+6001030,
+6000140,
+6000081,
+6001180,
+6000360,
+6300011,
+6101311,
+6000003
+],
+"kind": "active",
+"slot": 4
+},
+"Precise: Precise Projectiles": {
+"sid": 63100,
+"level": 21,
+"tags": [
+6000160,
+6000130,
+6000201,
+6001110,
+6101409,
+6001250
+],
+"kind": "passive",
+"slot": 0,
+"buff": 15103
+},
+"Precise: Cruelty": {
+"sid": 63300,
+"level": 21,
+"tags": [
+6000160,
+6000130,
+6000201,
+6001090,
+6101423,
+6001250
+],
+"kind": "passive",
+"slot": 1,
+"buff": 15183
+},
+"Precise: Weapon Amplification": {
+"sid": 63020,
+"level": 21,
+"tags": [
+6000160,
+6000130,
+6000201,
+6001050,
+6101401,
+6001250
+],
+"kind": "passive",
+"slot": 2,
+"buff": 15023
+},
+"Precise: Erosion Amplification": {
+"sid": 63140,
+"level": 21,
+"tags": [
+6000160,
+6000130,
+6000201,
+6001020,
+6101413,
+6001250
+],
+"kind": "passive",
+"slot": 3,
+"buff": 15143
+}
+},
+"records": [
+{
+"src": "gear#0:+1920 Gear Armor",
+"cls": 233589,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4001,
+"bucket": 1,
+"lo": 1920.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+1920.0
+]
+},
+{
+"src": "gear#0:+4185 Gear Armor",
+"cls": 233589,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4001,
+"bucket": 1,
+"lo": 4185.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+4185.0
+]
+},
+{
+"src": "gear#0:-99% additional Intelligence",
+"cls": 2198,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3,
+"bucket": 4,
+"lo": -99.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-99.0
+]
+},
+{
+"src": "gear#0:Adds 97 - 123 Physical Damage to the Main-Hand Weapon",
+"cls": 4246,
+"scope": "player",
+"node": 321,
+"filter": [
+103
+],
+"attr": 5002,
+"bucket": 2,
+"lo": 97.0,
+"hi": 123.0,
+"tags": [
+6001090
+],
+"P": [
+97.0,
+123.0
+]
+},
+{
+"src": "gear#0:+148 Strength",
+"cls": 101010001,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 1,
+"lo": 148.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+148.0
+]
+},
+{
+"src": "gear#0:+2% Fire Resistance",
+"cls": 101010103,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5101,
+"bucket": 1,
+"lo": 2.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+2.0
+]
+},
+{
+"src": "gear#1:+170 gear Energy Shield",
+"cls": 101010113,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1601,
+"bucket": 1,
+"lo": 170.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+170.0
+]
+},
+{
+"src": "gear#1:+24% Erosion Resistance",
+"cls": 101010106,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5401,
+"bucket": 1,
+"lo": 24.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+24.0
+]
+},
+{
+"src": "gear#1:+30% additional Deterioration Duration",
+"cls": 612445504,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 30.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+30.0
+]
+},
+{
+"src": "gear#1:Every 0.5 s, your next non-Channeled Main Skill is enhanced ",
+"cls": 710684544,
+"scope": "player",
+"node": 301,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+0.5
+]
+},
+{
+"src": "gear#1:Every 0.5 s, your next non-Channeled Main Skill is enhanced ",
+"cls": 710684544,
+"scope": "player",
+"node": 111,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+0.5
+]
+},
+{
+"src": "gear#1:Every 0.5 s, your next non-Channeled Main Skill is enhanced ",
+"cls": 787072384,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006884,
+"lo": -10000.0,
+"tags": [],
+"P": []
+},
+{
+"src": "gear#1:Deterioration no longer deals True Damage when it expires. I",
+"cls": 297006144,
+"scope": "player",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3000123,
+"lo": 1.0,
+"tags": [],
+"P": [
+30.0,
+5.0
+]
+},
+{
+"src": "gear#1:Deterioration no longer deals True Damage when it expires. I",
+"cls": 297006144,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006887,
+"lo": 30.0,
+"tags": [],
+"P": [
+30.0,
+5.0
+]
+},
+{
+"src": "gear#1:Deterioration no longer deals True Damage when it expires. I",
+"cls": 297006144,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006888,
+"lo": 5.0,
+"tags": [],
+"P": [
+30.0,
+5.0
+]
+},
+{
+"src": "gear#2:+1920 Gear Armor",
+"cls": 233589,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4001,
+"bucket": 1,
+"lo": 1920.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+1920.0
+]
+},
+{
+"src": "gear#2:+12% Attack Speed",
+"cls": 101010002,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "gear#2:+250 Max Life",
+"cls": 101010011,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1001,
+"bucket": 1,
+"lo": 250.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+250.0
+]
+},
+{
+"src": "gear#2:+85% additional Base Damage for Two-Handed Weapons",
+"cls": 101010697,
+"scope": "player",
+"node": 101,
+"filter": [
+103
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 85.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+85.0
+]
+},
+{
+"src": "gear#2:The Critical Strike Rating is fixed at 500 for the Weapon",
+"cls": 437971104,
+"scope": "player",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3000116,
+"lo": 1.0,
+"tags": [],
+"P": [
+500.0
+]
+},
+{
+"src": "gear#2:The Critical Strike Rating is fixed at 500 for the Weapon",
+"cls": 437971104,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006770,
+"lo": 500.0,
+"tags": [],
+"P": [
+500.0
+]
+},
+{
+"src": "gear#2:+14% Main-Hand Weapon Attack Speed",
+"cls": 103210009,
+"scope": "player",
+"node": 321,
+"filter": [
+103
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 14.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+14.0
+]
+},
+{
+"src": "gear#2:Adds 59 - 71 Physical Damage to the Main-Hand Weapon",
+"cls": 4246,
+"scope": "player",
+"node": 321,
+"filter": [
+103
+],
+"attr": 5002,
+"bucket": 2,
+"lo": 59.0,
+"hi": 71.0,
+"tags": [
+6001090
+],
+"P": [
+59.0,
+71.0
+]
+},
+{
+"src": "gear#3:+1920 gear Evasion",
+"cls": 101010145,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4002,
+"bucket": 1,
+"lo": 1920.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+1920.0
+]
+},
+{
+"src": "gear#3:+1 Mobility Skill Level",
+"cls": 32350,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006400,
+"lo": 1.0,
+"tags": [
+6000010
+],
+"P": [
+1.0
+]
+},
+{
+"src": "gear#3:+35% Movement Speed if you have used a Mobility Skill recent",
+"cls": 931424,
+"scope": "player",
+"node": 306,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+35.0
+]
+},
+{
+"src": "gear#3:+45% additional damage for 5 s after using Mobility Skills",
+"cls": 170781584,
+"scope": "player",
+"node": 306,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+45.0,
+5.0
+]
+},
+{
+"src": "gear#3:When using a Mobility Skill, you can use 1 stack(s) of Agili",
+"cls": 236000,
+"scope": "player",
+"node": 623,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+1.0,
+0.6
+]
+},
+{
+"src": "gear#3:When using a Mobility Skill, you can use 1 stack(s) of Agili",
+"cls": 236000,
+"scope": "player",
+"node": 320,
+"filter": [
+102
+],
+"lo": 0.0,
+"P": [
+1.0,
+0.6
+]
+},
+{
+"src": "gear#4:+50 Max Energy Shield",
+"cls": 101010056,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1601,
+"bucket": 1,
+"lo": 50.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+50.0
+]
+},
+{
+"src": "gear#4:-7% additional Attack and Cast Speed for Sentry Skills",
+"cls": 945890,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 4,
+"lo": -7.0,
+"hi": 0.0,
+"tags": [
+6300011
+],
+"P": [
+-7.0
+]
+},
+{
+"src": "gear#4:-7% additional Attack and Cast Speed for Sentry Skills",
+"cls": 945890,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 4,
+"lo": -7.0,
+"hi": 0.0,
+"tags": [
+6300011
+],
+"P": [
+-7.0
+]
+},
+{
+"src": "gear#4:+48% Skill Area",
+"cls": 101010005,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 48.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+48.0
+]
+},
+{
+"src": "gear#4:+30% additional damage taken by enemies in proximity to Sent",
+"cls": 525925,
+"scope": "player",
+"node": 111,
+"filter": [
+117
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "gear#4:+30% additional damage taken by enemies in proximity to Sent",
+"cls": 525925,
+"scope": "player",
+"node": 374,
+"filter": [
+1,
+[
+8
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "gear#4:Gains Demolisher Charge when using Sentry Skills. Interval: ",
+"cls": 168890,
+"scope": "player",
+"node": 2230,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "gear#5:+4% Erosion Resistance",
+"cls": 101010106,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5401,
+"bucket": 1,
+"lo": 4.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+4.0
+]
+},
+{
+"src": "gear#5:+66 Max Life",
+"cls": 101010011,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1001,
+"bucket": 1,
+"lo": 66.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+66.0
+]
+},
+{
+"src": "gear#5:+7% Attack and Cast Speed",
+"cls": 200000118,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 7.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+7.0
+]
+},
+{
+"src": "gear#5:+7% Attack and Cast Speed",
+"cls": 200000118,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 3,
+"lo": 7.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+7.0
+]
+},
+{
+"src": "gear#5:Gains the following buffs by turns. Each buff lasts for 8 s:",
+"cls": 980071,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 4,
+"lo": 48.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+48.0,
+8.0
+]
+},
+{
+"src": "gear#5:Gains the following buffs by turns. Each buff lasts for 8 s:",
+"cls": 980071,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5727,
+"bucket": 4,
+"lo": 48.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+48.0,
+8.0
+]
+},
+{
+"src": "gear#5:Gains the following buffs by turns. Each buff lasts for 8 s:",
+"cls": 980071,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 4,
+"lo": 48.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+48.0,
+8.0
+]
+},
+{
+"src": "gear#6:+4% Erosion Resistance",
+"cls": 101010106,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5401,
+"bucket": 1,
+"lo": 4.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+4.0
+]
+},
+{
+"src": "gear#6:+66 Max Life",
+"cls": 101010011,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1001,
+"bucket": 1,
+"lo": 66.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+66.0
+]
+},
+{
+"src": "gear#6:+7% Attack and Cast Speed",
+"cls": 200000118,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 7.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+7.0
+]
+},
+{
+"src": "gear#6:+7% Attack and Cast Speed",
+"cls": 200000118,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 3,
+"lo": 7.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+7.0
+]
+},
+{
+"src": "gear#6:Gains the following buffs by turns. Each buff lasts for 8 s:",
+"cls": 980071,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 4,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0,
+8.0
+]
+},
+{
+"src": "gear#6:Gains the following buffs by turns. Each buff lasts for 8 s:",
+"cls": 980071,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5727,
+"bucket": 4,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0,
+8.0
+]
+},
+{
+"src": "gear#6:Gains the following buffs by turns. Each buff lasts for 8 s:",
+"cls": 980071,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 4,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0,
+8.0
+]
+},
+{
+"src": "gear#7:+8 Dexterity",
+"cls": 101010063,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 2,
+"bucket": 1,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "gear#7:+222 Max Life",
+"cls": 101010011,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1001,
+"bucket": 1,
+"lo": 222.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+222.0
+]
+},
+{
+"src": "gear#7:+11% Elemental Resistance",
+"cls": 560655,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5741,
+"bucket": 1,
+"lo": 11.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+11.0
+]
+},
+{
+"src": "gear#7:Solar Ring",
+"cls": 505600160,
+"scope": "player",
+"node": 325,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "gear#7:+41% additional Area Damage for this skill when Demolisher C",
+"cls": 428480,
+"scope": "player",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"ns": 1,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [
+6000130
+],
+"trigger": true,
+"P": [
+41.0
+]
+},
+{
+"src": "gear#8:220 - 220 Physical Damage",
+"cls": 69155,
+"scope": "player",
+"node": 364,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 2,
+"lo": 220.0,
+"hi": 220.0,
+"tags": [],
+"P": [
+220.0,
+220.0
+]
+},
+{
+"src": "gear#8:500 Critical Strike Rating",
+"cls": 170782,
+"scope": "player",
+"node": 364,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 1,
+"lo": 500.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+500.0
+]
+},
+{
+"src": "gear#8:1.5 Attack Speed",
+"cls": 349651,
+"scope": "player",
+"node": 364,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 1,
+"lo": 1.5,
+"hi": 0.0,
+"tags": [],
+"P": [
+1.5
+]
+},
+{
+"src": "gear#8:+62% Gear Physical Damage",
+"cls": 101010003,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 3,
+"lo": 62.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+62.0
+]
+},
+{
+"src": "gear#8:Adds 72 - 87 Physical Damage to the gear",
+"cls": 101010004,
+"scope": "player",
+"node": 363,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 2,
+"lo": 72.0,
+"hi": 87.0,
+"tags": [
+6001090
+],
+"P": [
+72.0,
+87.0
+]
+},
+{
+"src": "gear#8:+174% Melee Damage",
+"cls": 101010306,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 174.0,
+"hi": 0.0,
+"tags": [
+6001120
+],
+"P": [
+174.0
+]
+},
+{
+"src": "gear#8:+99% additional Attack Damage after standing still for 0.1s.",
+"cls": 541428864,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 4,
+"lo": -20.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-20.0,
+99.0
+]
+},
+{
+"src": "gear#8:+99% additional Attack Damage after standing still for 0.1s.",
+"cls": 541428864,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 99.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+-20.0,
+99.0
+]
+},
+{
+"src": "gear#8:+273% Critical Strike Rating",
+"cls": 101010037,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 273.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+273.0
+]
+},
+{
+"src": "gear#8:+176% Physical Damage",
+"cls": 101010191,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 3,
+"lo": 176.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+176.0
+]
+},
+{
+"src": "gear#8:+16% additional damage for Main-Hand Weapons",
+"cls": 103210002,
+"scope": "player",
+"node": 321,
+"filter": [
+103
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 16.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+16.0
+]
+},
+{
+"src": "heroMemories#0:+28% damage",
+"cls": 101010131,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 28.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+28.0
+]
+},
+{
+"src": "heroMemories#0:+80% Critical Strike Rating",
+"cls": 101010037,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 80.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+80.0
+]
+},
+{
+"src": "heroMemories#0:+90 Strength",
+"cls": 101010001,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 1,
+"lo": 90.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+90.0
+]
+},
+{
+"src": "heroMemories#0:+47% Attack Damage",
+"cls": 101010308,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 47.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+47.0
+]
+},
+{
+"src": "heroMemories#0:+53% Fire Skill Critical Strike Damage",
+"cls": 106845304,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 53.0,
+"hi": 0.0,
+"tags": [
+6001030
+],
+"P": [
+53.0
+]
+},
+{
+"src": "heroMemories#1:+10% Cooldown Recovery Speed",
+"cls": 101010070,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6007,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+10.0
+]
+},
+{
+"src": "heroMemories#1:+15% Minion Critical Strike Damage",
+"cls": 101010132,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+15.0
+]
+},
+{
+"src": "heroMemories#1:+330 Max Life",
+"cls": 101010011,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1001,
+"bucket": 1,
+"lo": 330.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+330.0
+]
+},
+{
+"src": "heroMemories#1:+52% Attack Damage",
+"cls": 101010308,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 52.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+52.0
+]
+},
+{
+"src": "heroMemories#1:+40% Spell Damage",
+"cls": 101010059,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 40.0,
+"hi": 0.0,
+"tags": [
+6001100
+],
+"P": [
+40.0
+]
+},
+{
+"src": "heroMemories#2:+23% Skill Area",
+"cls": 101010005,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 23.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+23.0
+]
+},
+{
+"src": "heroMemories#2: Immune to Weaken",
+"cls": 624408704,
+"scope": "player",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3001450,
+"lo": 1.0,
+"tags": [
+5100109
+],
+"P": []
+},
+{
+"src": "heroMemories#2:+24.7% Movement Speed",
+"cls": 101010040,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4,
+"bucket": 3,
+"lo": 24.7,
+"hi": 0.0,
+"tags": [],
+"P": [
+24.7
+]
+},
+{
+"src": "heroMemories#2:+48% Fire Damage",
+"cls": 101010073,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5107,
+"bucket": 3,
+"lo": 48.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+48.0
+]
+},
+{
+"src": "heroMemories#2:+80% Attack Critical Strike Rating",
+"cls": 101010137,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 80.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+80.0
+]
+},
+{
+"src": "heroMemories#2:+20% of the bonus to Erosion Damage also applied to Deterior",
+"cls": 16346693,
+"scope": "player",
+"node": null,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+20.0,
+40.0
+]
+},
+{
+"src": "talent:12020100",
+"cls": 16578317,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 54.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+54.0
+]
+},
+{
+"src": "talent:12070400",
+"cls": 101010193,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "talent:12070200",
+"cls": 227088224,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3401,
+"bucket": 3,
+"lo": 80.0,
+"hi": 0.0,
+"tags": [
+5100111
+],
+"P": [
+80.0
+]
+},
+{
+"src": "talent:12070100",
+"cls": 101010697,
+"scope": "player",
+"node": 101,
+"filter": [
+103
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+10.0
+]
+},
+{
+"src": "talent:12060400",
+"cls": 101010193,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "talent:12060200",
+"cls": 46601764,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 120.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+120.0
+]
+},
+{
+"src": "talent:12060100",
+"cls": 101010697,
+"scope": "player",
+"node": 101,
+"filter": [
+103
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+12.0
+]
+},
+{
+"src": "talent:12050100",
+"cls": 158238464,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 36.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+36.0
+]
+},
+{
+"src": "talent:12010100",
+"cls": 16578317,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:12040500",
+"cls": 6468653,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 36.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+36.0
+]
+},
+{
+"src": "talent:12040100",
+"cls": 3692269,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 40.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+40.0
+]
+},
+{
+"src": "talent:12040100",
+"cls": 16706109,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+10.0
+]
+},
+{
+"src": "talent:12030500",
+"cls": 6468653,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+18.0
+]
+},
+{
+"src": "talent:12030100",
+"cls": 3692269,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 45.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+45.0
+]
+},
+{
+"src": "talent:50030500",
+"cls": 101010434,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 45.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+45.0
+]
+},
+{
+"src": "talent:50070500",
+"cls": 740867,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2010024,
+"lo": 8.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "talent:50020200",
+"cls": 101010040,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+6.0
+]
+},
+{
+"src": "talent:50020200",
+"cls": 6468653,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+18.0
+]
+},
+{
+"src": "talent:50020300",
+"cls": 16235709,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 54.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+54.0
+]
+},
+{
+"src": "talent:50060500",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:50060400",
+"cls": 831415744,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006884,
+"lo": 12.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "talent:50030200",
+"cls": 101010040,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "talent:50030200",
+"cls": 6468653,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 36.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+36.0
+]
+},
+{
+"src": "talent:50040500",
+"cls": 101010434,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0
+]
+},
+{
+"src": "talent:50040500",
+"cls": 16706109,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 30.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+30.0
+]
+},
+{
+"src": "talent:50010300",
+"cls": 16235709,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:54070500",
+"cls": 101010133,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "talent:54020100",
+"cls": 16235709,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 54.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+54.0
+]
+},
+{
+"src": "talent:54020100",
+"cls": 13936877,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 54.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+54.0
+]
+},
+{
+"src": "talent:54070100",
+"cls": 101080051,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006400,
+"lo": 1.0,
+"tags": [],
+"P": [
+1.0
+]
+},
+{
+"src": "talent:54060500",
+"cls": 101010133,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 9.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+9.0
+]
+},
+{
+"src": "talent:54060100",
+"cls": 200000020,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+18.0
+]
+},
+{
+"src": "talent:54060100",
+"cls": 200000020,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 3,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+18.0
+]
+},
+{
+"src": "talent:54060100",
+"cls": 200000425,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+18.0
+]
+},
+{
+"src": "talent:54060100",
+"cls": 200000425,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 3,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+18.0
+]
+},
+{
+"src": "talent:54050500",
+"cls": 101010133,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 4.5,
+"hi": 0.0,
+"tags": [],
+"P": [
+4.5
+]
+},
+{
+"src": "talent:54010100",
+"cls": 16235709,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:54010100",
+"cls": 13936877,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:54050100",
+"cls": 16235709,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:54050100",
+"cls": 13936877,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:54040100",
+"cls": 101010434,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0
+]
+},
+{
+"src": "talent:54040100",
+"cls": 101010182,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+60.0
+]
+},
+{
+"src": "talent:54040100",
+"cls": 16706109,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+15.0
+]
+},
+{
+"src": "talent:54040100",
+"cls": 101010132,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+15.0
+]
+},
+{
+"src": "talent:54030100",
+"cls": 101010434,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 45.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+45.0
+]
+},
+{
+"src": "talent:54030100",
+"cls": 101010182,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 45.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+45.0
+]
+},
+{
+"src": "talent:51030400",
+"cls": 92928864,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6302,
+"bucket": 3,
+"lo": 24.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+24.0
+]
+},
+{
+"src": "talent:51020100",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 54.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+54.0
+]
+},
+{
+"src": "talent:51020100",
+"cls": 909299008,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+3
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 54.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+54.0
+]
+},
+{
+"src": "talent:51070200",
+"cls": 363017664,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6302,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "talent:51070200",
+"cls": 612445504,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+5.0
+]
+},
+{
+"src": "talent:51060200",
+"cls": 831415744,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006884,
+"lo": 24.0,
+"tags": [],
+"P": [
+24.0
+]
+},
+{
+"src": "talent:51050100",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:51010100",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:51010100",
+"cls": 909299008,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+3
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+27.0
+]
+},
+{
+"src": "talent:51020400",
+"cls": 831415744,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006884,
+"lo": 12.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "talent:51040100",
+"cls": 101010434,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0
+]
+},
+{
+"src": "talent:51040100",
+"cls": 16706109,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 30.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+30.0
+]
+},
+{
+"src": "talent:51030100",
+"cls": 101010434,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 45.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+45.0
+]
+},
+{
+"src": "prism-ext:51060200",
+"cls": 101010010,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [],
+"extPoints": 3.0,
+"P": [
+18.0
+]
+},
+{
+"src": "prism-ext:51060200",
+"cls": 101010132,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"extPoints": 3.0,
+"P": [
+18.0
+]
+},
+{
+"src": "prism-ext:51040100",
+"cls": 101010010,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [],
+"extPoints": 3.0,
+"P": [
+18.0
+]
+},
+{
+"src": "prism-ext:51040100",
+"cls": 101010132,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4803,
+"bucket": 1,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"extPoints": 3.0,
+"P": [
+18.0
+]
+},
+{
+"src": "core:12001400",
+"cls": 179723504,
+"scope": "player",
+"node": 101,
+"filter": [
+107
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 40.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+40.0
+]
+},
+{
+"src": "core:12001400",
+"cls": 932615104,
+"scope": "player",
+"node": 101,
+"filter": [
+107
+],
+"attr": 5719,
+"bucket": 4,
+"lo": -15.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-15.0
+]
+},
+{
+"src": "core:51001100",
+"cls": 101010337,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 4,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+15.0
+]
+},
+{
+"src": "core:51001100",
+"cls": 740867,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2010024,
+"lo": 10.0,
+"tags": [],
+"P": [
+10.0
+]
+},
+{
+"src": "core:54001300",
+"cls": 101080040,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006400,
+"lo": 4.0,
+"tags": [
+6000100
+],
+"P": [
+4.0
+]
+},
+{
+"src": "core:54001300",
+"cls": 101070116,
+"scope": "player",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3010040,
+"lo": 1.0,
+"tags": [],
+"P": [
+95.0
+]
+},
+{
+"src": "core:54001300",
+"cls": 101070116,
+"scope": "player",
+"node": 336,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+95.0
+]
+},
+{
+"src": "core:50001100",
+"cls": 483413184,
+"scope": "player",
+"node": 306,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+20.0
+]
+},
+{
+"src": "core:50001100",
+"cls": 101010643,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [
+5100007
+],
+"P": [
+15.0
+]
+},
+{
+"src": "core:50002200",
+"cls": 101010337,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 4,
+"lo": 35.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+35.0
+]
+},
+{
+"src": "core:50002200",
+"cls": 200000178,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5101,
+"bucket": 1,
+"lo": -10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-10.0
+]
+},
+{
+"src": "core:50002200",
+"cls": 200000178,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5102,
+"bucket": 1,
+"lo": -10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-10.0
+]
+},
+{
+"src": "core:50002200",
+"cls": 200000178,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5103,
+"bucket": 1,
+"lo": -10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-10.0
+]
+},
+{
+"src": "slate:30060100",
+"cls": 4353285,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3,
+"bucket": 1,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "slate:10050300",
+"cls": 470016,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [
+5100208
+],
+"P": [
+10.0
+]
+},
+{
+"src": "slate:10050300",
+"cls": 639820544,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [
+4010050,
+6001090
+],
+"P": [
+10.0
+]
+},
+{
+"src": "slate:44020200",
+"cls": 200000020,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 3.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+3.0
+]
+},
+{
+"src": "slate:44020200",
+"cls": 200000020,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 3,
+"lo": 3.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+3.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 363017664,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6302,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 612445504,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+5.0
+]
+},
+{
+"src": "slate:30030100",
+"cls": 4046917,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [
+6001100
+],
+"P": [
+15.0
+]
+},
+{
+"src": "slate:30010300",
+"cls": 16235709,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 9.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+9.0
+]
+},
+{
+"src": "slate:54010500",
+"cls": 4373669,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1301,
+"bucket": 3,
+"lo": 4.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+4.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 363017664,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6302,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 612445504,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+5.0
+]
+},
+{
+"src": "slate:21050200",
+"cls": 609332544,
+"scope": "player",
+"node": 101,
+"filter": [
+107
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0
+]
+},
+{
+"src": "slate:43070400",
+"cls": 15936,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+8
+]
+],
+"attr": 5720,
+"bucket": 4,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+15.0
+]
+},
+{
+"src": "slate:21050200",
+"cls": 609332544,
+"scope": "player",
+"node": 101,
+"filter": [
+107
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 60.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+60.0
+]
+},
+{
+"src": "slate:43070500",
+"cls": 758842,
+"scope": "player",
+"node": null,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+120.0,
+100.0
+]
+},
+{
+"src": "slate:34040400",
+"cls": 101080003,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2010220,
+"lo": 1.25,
+"tags": [],
+"P": [
+1.25
+]
+},
+{
+"src": "slate:34040400",
+"cls": 101080018,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2010230,
+"lo": 1.25,
+"tags": [],
+"P": [
+1.25
+]
+},
+{
+"src": "slate:33040200",
+"cls": 101010617,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 9.0,
+"hi": 0.0,
+"tags": [
+6000030
+],
+"P": [
+9.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 363017664,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6302,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 612445504,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+5.0
+]
+},
+{
+"src": "slate:50001200",
+"cls": 831415744,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006884,
+"lo": 50.0,
+"tags": [],
+"P": [
+50.0
+]
+},
+{
+"src": "slate:21060500",
+"cls": 10282397,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4002,
+"bucket": 3,
+"lo": 7.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+7.0
+]
+},
+{
+"src": "slate:33030300",
+"cls": 101080048,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006592,
+"lo": 3.0,
+"tags": [
+5100002
+],
+"P": [
+3.0
+]
+},
+{
+"src": "slate:13060200",
+"cls": 6766677,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 1,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 363017664,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6302,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "slate:51070200",
+"cls": 612445504,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+5.0
+]
+},
+{
+"src": "kismet:100350007",
+"cls": 101010001,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 1,
+"lo": 13.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+13.0
+]
+},
+{
+"src": "kismet:100350007",
+"cls": 101010001,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1,
+"bucket": 1,
+"lo": 14.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+14.0
+]
+},
+{
+"src": "kismet:100350734",
+"cls": 573473344,
+"scope": "player",
+"node": null,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "kismet:100350119",
+"cls": 11970997,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 3.0,
+"hi": 0.0,
+"tags": [
+5200065
+],
+"P": [
+3.0
+]
+},
+{
+"src": "kismet:100350734",
+"cls": 573473344,
+"scope": "player",
+"node": null,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 101080023,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006108,
+"lo": 2.0,
+"tags": [],
+"P": [
+2.0
+]
+},
+{
+"src": "trait:810001:L1",
+"cls": 245094144,
+"scope": "player",
+"node": 112,
+"filter": [
+113
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 245094144,
+"scope": "player",
+"node": 112,
+"filter": [
+113
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 245094144,
+"scope": "player",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3050503,
+"lo": 1.0,
+"tags": [
+6001110
+],
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 245094144,
+"scope": "player",
+"node": 2402,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 245094144,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2302001,
+"lo": 1.0,
+"tags": [],
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 4881501,
+"scope": "player",
+"node": null,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810001:L1",
+"cls": 4881501,
+"scope": "player",
+"node": null,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810011:L2",
+"cls": 188300,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006216,
+"lo": 50.0,
+"tags": [],
+"P": [
+50.0
+]
+},
+{
+"src": "trait:810011:L2",
+"cls": 101010040,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4,
+"bucket": 3,
+"lo": -30.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+-30.0
+]
+},
+{
+"src": "trait:810011:L2",
+"cls": 6565213,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6390,
+"bucket": 4,
+"lo": -37.0,
+"hi": 0.0,
+"tags": [
+4000600
+],
+"P": [
+-37.0
+]
+},
+{
+"src": "trait:810011:L2",
+"cls": 9521365,
+"scope": "player",
+"node": 243,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810011:L2",
+"cls": 7999301,
+"scope": "player",
+"node": 501,
+"filter": [
+114
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810011:L2",
+"cls": 7999301,
+"scope": "player",
+"node": 2320,
+"filter": [
+1,
+[
+8
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810021:L2",
+"cls": 326425984,
+"scope": "player",
+"node": 2402,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810021:L2",
+"cls": 326425984,
+"scope": "player",
+"node": 112,
+"filter": [
+113
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "trait:810021:L2",
+"cls": 4332661,
+"scope": "player",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 2302001,
+"ns": 2,
+"bucket": 1,
+"lo": 2.0,
+"hi": 0.0,
+"tags": [],
+"trigger": true,
+"P": [
+25.0,
+2.0
+]
+},
+{
+"src": "trait:810032:L2",
+"cls": 3176093,
+"scope": "player",
+"node": 101,
+"filter": [
+107
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 40.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+10.0,
+40.0
+]
+},
+{
+"src": "prism:1204200101->1204404001",
+"cls": 264870144,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+5000791,
+6001090
+],
+"P": [
+12.0
+]
+},
+{
+"src": "prism:1204200101->1204404001",
+"cls": 101010697,
+"scope": "player",
+"node": 101,
+"filter": [
+103
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+12.0
+]
+},
+{
+"src": "pact:12130:node1",
+"cls": 199804672,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3430,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "pact:12130:node2",
+"cls": 199804672,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3430,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+12.0
+]
+},
+{
+"src": "pact:12130:node5",
+"cls": 101010146,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [
+6001110
+],
+"P": [
+10.0
+]
+},
+{
+"src": "pact:12130:node6",
+"cls": 101010146,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [
+6001110
+],
+"P": [
+10.0
+]
+},
+{
+"src": "pact:12130:node21",
+"cls": 199804672,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3430,
+"bucket": 3,
+"lo": 24.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+24.0
+]
+},
+{
+"src": "pact:12130:node23",
+"cls": 101010146,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 20.0,
+"hi": 0.0,
+"tags": [
+6001110
+],
+"P": [
+20.0
+]
+},
+{
+"src": "pact:12130:node31",
+"cls": 878078592,
+"scope": "player",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006108,
+"lo": 2.0,
+"tags": [],
+"P": [
+2.0
+]
+},
+{
+"src": "pact:12130:node40",
+"cls": 10214,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+6.0,
+6.0
+]
+},
+{
+"src": "pact:12130:node40",
+"cls": 10214,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+6.0,
+6.0
+]
+},
+{
+"src": "pact:15230:node1",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 14.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+14.0
+]
+},
+{
+"src": "pact:15230:node2",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 14.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+14.0
+]
+},
+{
+"src": "pact:15230:node3",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 14.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+14.0
+]
+},
+{
+"src": "pact:15230:node4",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 14.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+14.0
+]
+},
+{
+"src": "pact:15230:node5",
+"cls": 101010061,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5414,
+"bucket": 1,
+"lo": 2.5,
+"hi": 0.0,
+"tags": [],
+"P": [
+2.5
+]
+},
+{
+"src": "pact:15230:node6",
+"cls": 101010061,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5414,
+"bucket": 1,
+"lo": 2.5,
+"hi": 0.0,
+"tags": [],
+"P": [
+2.5
+]
+},
+{
+"src": "pact:15230:node21",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 28.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+28.0
+]
+},
+{
+"src": "pact:15230:node22",
+"cls": 101010116,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 3,
+"lo": 28.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+28.0
+]
+},
+{
+"src": "pact:15230:node23",
+"cls": 101010061,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5414,
+"bucket": 1,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+5.0
+]
+},
+{
+"src": "pact:15230:node31",
+"cls": 905911424,
+"scope": "player",
+"node": 374,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "pact:15230:node40",
+"cls": 10214,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+6.0,
+6.0
+]
+},
+{
+"src": "pact:15230:node40",
+"cls": 10214,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+6.0,
+6.0
+]
+},
+{
+"src": "pact:15230:promo4",
+"cls": 547013760,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3442,
+"bucket": 1,
+"lo": 1.0,
+"hi": 0.0,
+"tags": [
+5200058
+],
+"P": [
+1.0
+]
+},
+{
+"src": "pact:15230:promo4",
+"cls": 352122560,
+"scope": "player",
+"node": 116,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+2.0
+]
+},
+{
+"src": "pact:15230:promo4",
+"cls": 352122560,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5401,
+"bucket": 1,
+"lo": 2.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+2.0
+]
+},
+{
+"src": "pact:18230:node1",
+"cls": 101010308,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+12.0
+]
+},
+{
+"src": "pact:18230:node2",
+"cls": 101010308,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+12.0
+]
+},
+{
+"src": "pact:18230:node3",
+"cls": 101010137,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 22.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+22.0
+]
+},
+{
+"src": "pact:18230:node4",
+"cls": 101010137,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 22.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+22.0
+]
+},
+{
+"src": "pact:18230:node6",
+"cls": 512314,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 4.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+4.0
+]
+},
+{
+"src": "pact:18230:node22",
+"cls": 101010137,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4802,
+"bucket": 3,
+"lo": 44.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+44.0
+]
+},
+{
+"src": "pact:18230:node23",
+"cls": 512314,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+8.0
+]
+},
+{
+"src": "pact:18230:node31",
+"cls": 715628480,
+"scope": "player",
+"node": 374,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "pact:18230:node40",
+"cls": 10214,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+6.0,
+6.0
+]
+},
+{
+"src": "pact:18230:node40",
+"cls": 10214,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 3,
+"lo": 6.0,
+"hi": 0.0,
+"tags": [
+5002060
+],
+"P": [
+6.0,
+6.0
+]
+},
+{
+"src": "pact:18230:promo6",
+"cls": 540910080,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3442,
+"bucket": 1,
+"lo": 2.0,
+"hi": 0.0,
+"tags": [
+5200081
+],
+"P": [
+2.0
+]
+},
+{
+"src": "pact:18230:promo6",
+"cls": 798760960,
+"scope": "player",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [
+4015366,
+6001090
+],
+"P": [
+8.0
+]
+},
+{
+"src": "pact:18230:promo6",
+"cls": 86855680,
+"scope": "player",
+"node": 325,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "skill:Hammer of Ash:0x120",
+"cls": 101010438,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5113,
+"bucket": 1,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+100.0
+]
+},
+{
+"src": "skill:Hammer of Ash:0x120",
+"cls": 601489,
+"scope": "skill:Hammer of Ash",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006108,
+"lo": 2.0,
+"tags": [
+5000002
+],
+"P": [
+2.0
+]
+},
+{
+"src": "skill:Hammer of Ash:0x120",
+"cls": 10223701,
+"scope": "skill:Hammer of Ash",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"ns": 1,
+"bucket": 4,
+"lo": 215.0,
+"hi": 0.0,
+"tags": [
+5000003
+],
+"trigger": true,
+"P": [
+215.0
+]
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 72818,
+"scope": "skill:Hammer of Ash",
+"node": 612,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 72818,
+"scope": "skill:Hammer of Ash",
+"node": 425,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 101070079,
+"scope": "skill:Hammer of Ash",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3001036,
+"lo": 1.0,
+"tags": [
+5000002
+],
+"P": []
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 918942,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 10.000000000000009,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.0,
+10.0,
+10.0,
+30.0
+]
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 918942,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 10.000000000000009,
+"hi": 0.0,
+"tags": [
+5000002,
+5002060
+],
+"P": [
+20.0,
+10.0,
+10.0,
+30.0
+]
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 918942,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 0.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+30.0,
+8.0,
+8.0,
+200.0
+]
+},
+{
+"src": "skill:Hammer of Ash:0x130",
+"cls": 918942,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 0.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5002060
+],
+"P": [
+30.0,
+8.0,
+8.0,
+200.0
+]
+},
+{
+"src": "support:Elemental Fusion:L25:0x120",
+"cls": 200000356,
+"scope": "skill:Hammer of Ash",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3001431,
+"lo": 1.0,
+"tags": [
+5000002,
+5100002
+],
+"P": []
+},
+{
+"src": "support:Elemental Fusion:L25:0x120",
+"cls": 954741,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5727,
+"bucket": 4,
+"lo": 37.5,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+37.5
+]
+},
+{
+"src": "support:Passivation:L25:0x120",
+"cls": 562487,
+"scope": "skill:Hammer of Ash",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3001431,
+"lo": 1.0,
+"tags": [
+5000002,
+5100007
+],
+"P": []
+},
+{
+"src": "support:Passivation:L25:0x120",
+"cls": 201178,
+"scope": "skill:Hammer of Ash",
+"node": 632,
+"filter": [
+107
+],
+"attr": 5402,
+"ns": 1,
+"bucket": 4,
+"lo": 0.65,
+"per": 1.0,
+"source": 5,
+"tags": [],
+"P": [
+65.0
+]
+},
+{
+"src": "support:Hammer of Ash: Upheaval (Magnificent):L7:0x120",
+"cls": 255256800,
+"scope": "skill:Hammer of Ash",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2600032,
+"lo": 30.0,
+"tags": [
+5000002
+],
+"P": [
+30.0
+]
+},
+{
+"src": "support-mod:Hammer of Ash: Upheaval (Magnificent)",
+"cls": 146244704,
+"scope": "skill:Hammer of Ash",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2600031,
+"lo": 32.0,
+"tags": [
+5000002
+],
+"P": [
+32.0
+]
+},
+{
+"src": "support:Steamroll:L25:0x120",
+"cls": 101010462,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 43.0,
+"hi": 0.0,
+"tags": [
+6001120,
+5000002
+],
+"P": [
+43.0
+]
+},
+{
+"src": "support:Steamroll:L25:0x120",
+"cls": 101010468,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 43.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5100001
+],
+"P": [
+43.0
+]
+},
+{
+"src": "support:Steamroll:L25:0x120",
+"cls": 101010409,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": -15.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+-15.0
+]
+},
+{
+"src": "support:Critical Strike Damage Increase:L25:0x120",
+"cls": 12329,
+"scope": "skill:Hammer of Ash",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 38.0,
+"hi": 0.0,
+"tags": [
+5001010,
+5000002
+],
+"P": [
+38.0
+]
+},
+{
+"src": "skill:Blink:0x120",
+"cls": 101010429,
+"scope": "skill:Blink",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6007,
+"bucket": 4,
+"lo": 26.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+26.0
+]
+},
+{
+"src": "support:Magic Dash:L26:0x120",
+"cls": 200000372,
+"scope": "skill:Blink",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006020,
+"lo": 1.0,
+"tags": [
+5000002
+],
+"P": [
+1.0
+]
+},
+{
+"src": "support:Magic Dash:L26:0x120",
+"cls": 18457,
+"scope": "skill:Blink",
+"node": 301,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+2.0
+]
+},
+{
+"src": "support:Quick Mobility:L26:0x120",
+"cls": 421674,
+"scope": "skill:Blink",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 3,
+"lo": 23.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+23.0
+]
+},
+{
+"src": "support:Quick Mobility:L26:0x120",
+"cls": 421674,
+"scope": "skill:Blink",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 3,
+"lo": 23.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+23.0
+]
+},
+{
+"src": "support:Quick Mobility:L26:0x120",
+"cls": 101010419,
+"scope": "skill:Blink",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6007,
+"bucket": 3,
+"lo": 33.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+33.0
+]
+},
+{
+"src": "support:Cooldown Reduction:L24:0x120",
+"cls": 101010419,
+"scope": "skill:Blink",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6007,
+"bucket": 3,
+"lo": 24.5,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+24.5
+]
+},
+{
+"src": "support-mod:Activation Medium: Demolisher",
+"cls": 420453504,
+"scope": "skill:Corruption",
+"node": 2320,
+"filter": [
+1,
+[
+8
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "support-mod:Activation Medium: Demolisher",
+"cls": 420453504,
+"scope": "skill:Corruption",
+"node": 612,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "support-mod:Activation Medium: Demolisher",
+"cls": 146977,
+"scope": "skill:Corruption",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 4,
+"lo": 8.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5100310
+],
+"P": [
+8.0
+]
+},
+{
+"src": "support:Extended Duration:L25:0x120",
+"cls": 101010466,
+"scope": "skill:Corruption",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 3,
+"lo": 25.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5100310
+],
+"P": [
+25.0
+]
+},
+{
+"src": "support:Cooldown Reduction:L21:0x120",
+"cls": 101010419,
+"scope": "skill:Corruption",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6007,
+"bucket": 3,
+"lo": 23.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+23.0
+]
+},
+{
+"src": "buff:Corruption:16100:L17",
+"cls": 694448704,
+"scope": "buff:Corruption",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5408,
+"bucket": 4,
+"lo": 36.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+36.0
+]
+},
+{
+"src": "buff:Corruption:16100:L17",
+"cls": 297281,
+"scope": "buff:Corruption",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006850,
+"lo": 10.0,
+"tags": [],
+"P": [
+10.0
+]
+},
+{
+"src": "skill:Bull's Rage:0x120",
+"cls": 101080116,
+"scope": "skill:Bull's Rage",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2010060,
+"lo": 100.0,
+"tags": [
+5000002
+],
+"P": [
+100.0
+]
+},
+{
+"src": "support-mod:Activation Medium: Demolisher",
+"cls": 420453504,
+"scope": "skill:Bull's Rage",
+"node": 2320,
+"filter": [
+1,
+[
+8
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "support-mod:Activation Medium: Demolisher",
+"cls": 420453504,
+"scope": "skill:Bull's Rage",
+"node": 612,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "support-mod:Activation Medium: Demolisher",
+"cls": 146977,
+"scope": "skill:Bull's Rage",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 4,
+"lo": 18.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5100310
+],
+"P": [
+18.0
+]
+},
+{
+"src": "support:Well-Fought Battle:L25:0x120",
+"cls": 217871632,
+"scope": "skill:Bull's Rage",
+"node": 2221,
+"filter": null,
+"lo": 0.0,
+"P": [
+11.25,
+3.0
+]
+},
+{
+"src": "support:Well-Fought Battle:L25:0x120",
+"cls": 217871632,
+"scope": "skill:Bull's Rage",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3401,
+"bucket": 3,
+"lo": 11.25,
+"hi": 0.0,
+"tags": [
+5000002,
+5100310
+],
+"P": [
+11.25,
+3.0
+]
+},
+{
+"src": "buff:Bull's Rage:10120:L21",
+"cls": 200000285,
+"scope": "buff:Bull's Rage",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 27.5,
+"hi": 0.0,
+"tags": [
+6001120
+],
+"P": [
+27.5
+]
+},
+{
+"src": "skill:Flame Core:0x120",
+"cls": 454482,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6322,
+"bucket": 1,
+"lo": 1.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+1.0
+]
+},
+{
+"src": "skill:Flame Core:0x120",
+"cls": 447554,
+"scope": "skill:Flame Core",
+"node": 111,
+"filter": [
+117
+],
+"lo": 0.0,
+"P": [
+20.0
+]
+},
+{
+"src": "skill:Flame Core:0x120",
+"cls": 447554,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6321,
+"bucket": 4,
+"lo": 20.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+20.0
+]
+},
+{
+"src": "skill:Flame Core:0x130",
+"cls": 247963,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3402,
+"bucket": 4,
+"lo": 1.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5100310
+],
+"P": [
+1.0
+]
+},
+{
+"src": "skill:Flame Core:0x130",
+"cls": 918942,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 0.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.0,
+10.0,
+10.0,
+30.0
+]
+},
+{
+"src": "skill:Flame Core:0x130",
+"cls": 918942,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 0.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5002060
+],
+"P": [
+20.0,
+10.0,
+10.0,
+30.0
+]
+},
+{
+"src": "skill:Flame Core:0x130",
+"cls": 918942,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 0.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+30.0,
+8.0,
+8.0,
+200.0
+]
+},
+{
+"src": "skill:Flame Core:0x130",
+"cls": 918942,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 0.0,
+"hi": 0.0,
+"tags": [
+5000002,
+5002060
+],
+"P": [
+30.0,
+8.0,
+8.0,
+200.0
+]
+},
+{
+"src": "support-mod:Activation Medium: Motionless",
+"cls": 140415664,
+"scope": "skill:Flame Core",
+"node": 2322,
+"filter": [
+1,
+[
+8
+]
+],
+"lo": 0.0,
+"P": []
+},
+{
+"src": "support-mod:Activation Medium: Motionless",
+"cls": 5035554,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [
+6000084,
+5000002
+],
+"P": [
+10.0
+]
+},
+{
+"src": "support:Quick Decision:L25:0x120",
+"cls": 75564,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 4,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+27.0
+]
+},
+{
+"src": "support:Quick Decision:L25:0x120",
+"cls": 75564,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6002,
+"bucket": 4,
+"lo": 27.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+27.0
+]
+},
+{
+"src": "support:Glacial Freeze:L21:0x120",
+"cls": 200000351,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5109,
+"bucket": 4,
+"lo": 16.3,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+16.3
+]
+},
+{
+"src": "support:Glacial Freeze:L21:0x120",
+"cls": 3545165,
+"scope": "skill:Flame Core",
+"node": 108,
+"filter": [
+1,
+[
+1
+]
+],
+"field": 2006490,
+"lo": 100.0,
+"tags": [
+5000002
+],
+"P": []
+},
+{
+"src": "support:Grudge:L25:0x120",
+"cls": 591021,
+"scope": "skill:Flame Core",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 22.5,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+22.5
+]
+},
+{
+"src": "support:Grudge:L25:0x120",
+"cls": 369609664,
+"scope": "skill:Flame Core",
+"node": 301,
+"filter": [
+101
+],
+"lo": 0.0,
+"P": [
+55.0
+]
+},
+{
+"src": "support:Restrain:L24:0x120",
+"cls": 101010471,
+"scope": "skill:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+12.0
+]
+},
+{
+"src": "support:Seal Conversion:L25:0x120",
+"cls": 680441,
+"scope": "skill:Precise: Precise Projectiles",
+"node": 107,
+"filter": [
+1,
+[
+1
+]
+],
+"label": 3000340,
+"lo": 1.0,
+"tags": [
+5000002
+],
+"P": []
+},
+{
+"src": "support:Seal Conversion:L25:0x120",
+"cls": 707327,
+"scope": "skill:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 4,
+"lo": -62.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+-62.0
+]
+},
+{
+"src": "support:Increased Area:L25:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 20.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.0
+]
+},
+{
+"src": "support:Increased Area:L25:0x120",
+"cls": 825739,
+"scope": "skill:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 20.8,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.8
+]
+},
+{
+"src": "buff:Precise: Precise Projectiles:15103:L21",
+"cls": 200000401,
+"scope": "buff:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [
+6001110
+],
+"P": [
+41.0
+]
+},
+{
+"src": "buff:Precise: Precise Projectiles:15103:L21",
+"cls": 101010524,
+"scope": "buff:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3604,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [
+6001110,
+5100003
+],
+"P": [
+41.0
+]
+},
+{
+"src": "buff:Precise: Precise Projectiles:15103:L21",
+"cls": 101010524,
+"scope": "buff:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3604,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [
+6001110,
+5100007
+],
+"P": [
+41.0
+]
+},
+{
+"src": "buff:Precise: Precise Projectiles:15103:L21",
+"cls": 101010524,
+"scope": "buff:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3604,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [
+6001110,
+5100006
+],
+"P": [
+41.0
+]
+},
+{
+"src": "buff:Precise: Precise Projectiles:15103:L21",
+"cls": 382580,
+"scope": "buff:Precise: Precise Projectiles",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6005,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+10.0
+]
+},
+{
+"src": "support:Restrain:L24:0x120",
+"cls": 101010471,
+"scope": "skill:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+12.0
+]
+},
+{
+"src": "support:Aura Amplification:L25:0x120",
+"cls": 894802,
+"scope": "skill:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3401,
+"bucket": 3,
+"lo": 11.25,
+"hi": 0.0,
+"tags": [
+5000002,
+5100305
+],
+"P": [
+11.25
+]
+},
+{
+"src": "support:Aura Amplification:L25:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+100.0
+]
+},
+{
+"src": "support:Increased Area:L25:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 20.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.0
+]
+},
+{
+"src": "support:Increased Area:L25:0x120",
+"cls": 825739,
+"scope": "skill:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 20.8,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.8
+]
+},
+{
+"src": "buff:Precise: Cruelty:15183:L21",
+"cls": 101010078,
+"scope": "buff:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 22.5,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+22.5
+]
+},
+{
+"src": "buff:Precise: Cruelty:15183:L21",
+"cls": 50355540,
+"scope": "buff:Precise: Cruelty",
+"node": 374,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+1.0,
+40.0,
+5.0,
+2.5,
+8.0,
+40.0
+]
+},
+{
+"src": "buff:Precise: Cruelty:15183:L21",
+"cls": 50355540,
+"scope": "buff:Precise: Cruelty",
+"node": 374,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+1.0,
+40.0,
+5.0,
+2.5,
+8.0,
+40.0
+]
+},
+{
+"src": "buff:Precise: Cruelty:15183:L21",
+"cls": 50355540,
+"scope": "buff:Precise: Cruelty",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3401,
+"bucket": 4,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [
+5100305,
+5100419
+],
+"P": [
+1.0,
+40.0,
+5.0,
+2.5,
+8.0,
+40.0
+]
+},
+{
+"src": "support:Restrain:L24:0x120",
+"cls": 101010471,
+"scope": "skill:Precise: Weapon Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+12.0
+]
+},
+{
+"src": "support:Aura Amplification:L25:0x120",
+"cls": 894802,
+"scope": "skill:Precise: Weapon Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3401,
+"bucket": 3,
+"lo": 11.25,
+"hi": 0.0,
+"tags": [
+5000002,
+5100305
+],
+"P": [
+11.25
+]
+},
+{
+"src": "support:Aura Amplification:L25:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Weapon Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+100.0
+]
+},
+{
+"src": "support:Increased Area:L25:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Weapon Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 20.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.0
+]
+},
+{
+"src": "support:Increased Area:L25:0x120",
+"cls": 825739,
+"scope": "skill:Precise: Weapon Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 20.8,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.8
+]
+},
+{
+"src": "buff:Precise: Weapon Amplification:15023:L21",
+"cls": 200000399,
+"scope": "buff:Precise: Weapon Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5002,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+41.0
+]
+},
+{
+"src": "support:Restrain:L24:0x120",
+"cls": 101010471,
+"scope": "skill:Precise: Erosion Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 1304,
+"bucket": 3,
+"lo": 12.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+12.0
+]
+},
+{
+"src": "support:Aura Amplification:L25:0x120",
+"cls": 894802,
+"scope": "skill:Precise: Erosion Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 3401,
+"bucket": 3,
+"lo": 11.25,
+"hi": 0.0,
+"tags": [
+5000002,
+5100305
+],
+"P": [
+11.25
+]
+},
+{
+"src": "support:Aura Amplification:L25:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Erosion Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+100.0
+]
+},
+{
+"src": "support:Increased Area:L23:0x120",
+"cls": 386395,
+"scope": "skill:Precise: Erosion Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 20.0,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.0
+]
+},
+{
+"src": "support:Increased Area:L23:0x120",
+"cls": 825739,
+"scope": "skill:Precise: Erosion Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 20.4,
+"hi": 0.0,
+"tags": [
+5000002
+],
+"P": [
+20.4
+]
+},
+{
+"src": "buff:Precise: Erosion Amplification:15143:L21",
+"cls": 319376192,
+"scope": "buff:Precise: Erosion Amplification",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 4,
+"lo": 41.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+41.0
+]
+},
+{
+"src": "nodebuff:35100:momie:from:gear#1:Every 0.5 s, your next ",
+"cls": 355845824,
+"scope": "buff:35100",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 2006884,
+"ns": 2,
+"bucket": 1,
+"lo": 10000.0,
+"hi": 0.0,
+"tags": [],
+"trigger": true,
+"P": [
+100.0
+]
+},
+{
+"src": "nodebuff:35100:momie:from:gear#1:Every 0.5 s, your next ",
+"cls": 355845824,
+"scope": "buff:35100",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5403,
+"ns": 1,
+"bucket": 1,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [],
+"trigger": true,
+"P": [
+100.0
+]
+},
+{
+"src": "nodebuff:35100:momie:from:gear#1:Every 0.5 s, your next ",
+"cls": 355845824,
+"scope": "buff:35100",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5404,
+"ns": 1,
+"bucket": 1,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [],
+"trigger": true,
+"P": [
+100.0
+]
+},
+{
+"src": "nodebuff:35100:momie:from:gear#1:Every 0.5 s, your next ",
+"cls": 355845824,
+"scope": "buff:35100",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5405,
+"ns": 1,
+"bucket": 1,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [],
+"trigger": true,
+"P": [
+100.0
+]
+},
+{
+"src": "nodebuff:35100:momie:from:gear#1:Every 0.5 s, your next ",
+"cls": 355845824,
+"scope": "buff:35100",
+"node": 624,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5406,
+"ns": 1,
+"bucket": 1,
+"lo": 100.0,
+"hi": 0.0,
+"tags": [],
+"trigger": true,
+"P": [
+100.0
+]
+},
+{
+"src": "nodebuff:35100:momie:from:gear#1:Every 0.5 s, your next ",
+"cls": 355845824,
+"scope": "buff:35100",
+"node": 302,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+100.0
+]
+},
+{
+"src": "nodebuff:35086:pozhen:from:gear#4:+30% additional damage ",
+"cls": 117558,
+"scope": "buff:35086",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5720,
+"bucket": 4,
+"lo": 30.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+30.0
+]
+},
+{
+"src": "nodebuff:35107:rihuan:from:gear#7:Solar Ring",
+"cls": 909512640,
+"scope": "buff:35107",
+"node": 2320,
+"filter": [
+1,
+[
+1
+]
+],
+"lo": 0.0,
+"P": [
+1.0
+]
+},
+{
+"src": "nodebuff:35107:rihuan:from:gear#7:Solar Ring",
+"cls": 101010005,
+"scope": "buff:35107",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6201,
+"bucket": 3,
+"lo": 48.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+48.0
+]
+},
+{
+"src": "nodebuff:11210:chankui:from:pact:15230:node31",
+"cls": 319376192,
+"scope": "buff:11210",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5402,
+"bucket": 4,
+"lo": 4.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+4.0
+]
+},
+{
+"src": "nodebuff:11360:maoyongxingfenji:from:pact:18230:node31",
+"cls": 101010078,
+"scope": "buff:11360",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+5.0
+]
+},
+{
+"src": "nodebuff:3411:gongjijijin:from:pact:18230:promo6",
+"cls": 101010078,
+"scope": "buff:3411",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5719,
+"bucket": 4,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [
+6001090
+],
+"P": [
+5.0
+]
+},
+{
+"src": "nodebuff:3411:gongjijijin:from:pact:18230:promo6",
+"cls": 649800,
+"scope": "buff:3411",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 6001,
+"bucket": 4,
+"lo": 5.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+5.0
+]
+},
+{
+"src": "nodebuff:3411:gongjijijin:from:pact:18230:promo6",
+"cls": 200000402,
+"scope": "buff:3411",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4,
+"bucket": 3,
+"lo": 10.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+10.0
+]
+},
+{
+"src": "nodebuff:16220:fashuweiyi_1:from:support:Magic Dash:L26:0x120",
+"cls": 509049,
+"scope": "buff:16220",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 4,
+"bucket": 3,
+"lo": 1.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+1.0
+]
+},
+{
+"src": "nodebuff:230:tanhuan:from:support:Grudge:L25:0x120",
+"cls": 631244864,
+"scope": "buff:230",
+"node": 101,
+"filter": [
+1,
+[
+1
+]
+],
+"attr": 5720,
+"bucket": 3,
+"lo": 15.0,
+"hi": 0.0,
+"tags": [],
+"P": [
+15.0
+]
+}
+]
+}

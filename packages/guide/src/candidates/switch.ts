@@ -9,12 +9,33 @@ import { pinRoot, table } from '../pin';
 import { basesFor } from './gear';
 import { costOf } from '../priceOf';
 import { gemLevelAt, gemRequires, mainSid, supportsFor } from './gems';
-import type { Change, Generator } from '../types';
+import { pointsAtLevel } from '../talentRules';
+import type { Change, Generator, Move } from '../types';
 
 type Gem = { sid: number; name: string; level: number; mods?: [number, number[]][]; place: { kind: string; slot: number; ownerKind?: string; ownerSlot?: number } };
 const TARGET = 're/evidence/loadout_probuild-hanshansi-bing.json';
-let target: Gem[] | undefined;
-const targetSkills = (): Gem[] => target ??= JSON.parse(readFileSync(join(pinRoot(), TARGET), 'utf8')).skills;
+type TargetFile = { skills: Gem[]; talents: Record<string, number>; coreTalents: number[] };
+let target: TargetFile | undefined;
+const targetFile = (): TargetFile => target ??= JSON.parse(readFileSync(join(pinRoot(), TARGET), 'utf8'));
+const targetSkills = (): Gem[] => targetFile().skills;
+
+/** The planned leg change (ideal mode): the switch move plus the target build's talent page (every point and core of the current page removed, the
+ *  target's set), so Hammer of Ash starts on its own trees instead of Ice Shot's. Null (with the reason in notSearched) until the page fits the level's
+ *  points or while the switch itself is not offered. */
+export const switchWithPage: (s: Parameters<Generator>[0], ctx: Parameters<Generator>[1]) => Move | null = (s, ctx) => {
+  const m = switchMoves(s, ctx)[0];
+  if (!m || m.minLevel > ctx.level) { ctx.notSearched.add(`planned switch waits: the switch is not offered at level ${ctx.level}`); return null; }
+  const t = targetFile(), need = Object.values(t.talents).reduce((a, b) => a + b, 0), have = pointsAtLevel(ctx.level);
+  if (need > have) { ctx.notSearched.add(`planned switch waits: the target talent page needs ${need} points, level ${ctx.level} has ${have}`); return null; }
+  const l = s.loadout as { talents?: Record<string, number>; coreTalents?: number[] };
+  const page: Change[] = [
+    ...Object.entries(l.talents ?? {}).filter(([, p]) => p > 0).map(([k]) => ({ kind: 'talent', node: +k, points: 0 }) as Change),
+    ...(l.coreTalents ?? []).map(c => ({ kind: 'core', node: c, action: 'remove' }) as Change),
+    ...Object.entries(t.talents).map(([k, p]) => ({ kind: 'talent', node: +k, points: p }) as Change),
+    ...t.coreTalents.map(c => ({ kind: 'core', node: c, action: 'add' }) as Change),
+  ];
+  return { ...m, label: `${m.label}, on the target build's talent page (${need} points, cores ${t.coreTalents.join(', ')})`, changes: [...m.changes, ...page] };
+};
 
 export const switchMoves: Generator = (s, ctx) => {
   if (s.skill !== 'iceShot') return [];

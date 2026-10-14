@@ -8,12 +8,12 @@ import { memoryMoves } from './candidates/memories';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
 import { slateMoves } from './candidates/slates';
-import { switchMoves } from './candidates/switch';
+import { switchMoves, switchWithPage } from './candidates/switch';
 import { targetMoves } from './candidates/target';
 import { talentMoves, talentPointMoves } from './candidates/talents';
 import { traitMoves } from './candidates/traits';
 import { type EtorHistory, type EtorItems, historyBook, snapshotBook } from './pricing';
-import { DEFAULT_KNOBS, type Knobs, newMem, overBudget, path, rankableMove, spendFree, step } from './search';
+import { DEFAULT_KNOBS, type Knobs, newMem, overBudget, path, rankableMove, resolve, spendFree, step } from './search';
 import { ICE_SHOT_INPUTS, idealStartNotes } from './start';
 import { setTalentPoints } from './talentRules';
 import type { Evaluator, Figure, GenCtx, Generator, GuideOut, Move, PriceBook, State, Step } from './types';
@@ -27,8 +27,11 @@ export interface IdealKnobs extends Knobs {
   /** accepted steps per level stage before the path moves on */ stepsPerStage: number;
   startLevel: number; endLevel: number; stageStep: number;
   /** full-level talent budget (below 93 scaled by round(full x (L - 1) / 92)) */ talentPoints: number;
+  /** the planned leg change: at the first stage start whose Ice Shot kill average reaches this (or after a stage with no step), the path switches to
+   *  Hammer of Ash on the target build's talent page; a greedy step never takes it (a bare maul cannot beat a geared bow) */ switchAt: number;
+  /** reconfiguration rounds re-solved right after the planned switch (churn 0) */ switchRounds: number;
 }
-export const DEFAULT_IDEAL: IdealKnobs = { ...DEFAULT_KNOBS, stepsPerStage: 25, startLevel: 60, endLevel: 100, stageStep: 5, talentPoints: 108 };
+export const DEFAULT_IDEAL: IdealKnobs = { ...DEFAULT_KNOBS, stepsPerStage: 25, startLevel: 60, endLevel: 100, stageStep: 5, talentPoints: 108, switchAt: 2e8, switchRounds: 5 };
 
 const ALL: Generator[] = [gearMoves, gemMoves, kismetMoves, memoryMoves, pactMoves, prismMoves, slateMoves, switchMoves, talentMoves, traitMoves, targetMoves];
 const only = (acquisition: boolean) => (g: Generator): Generator => (s, c) => g(s, c).filter((m) => m.acquisition === acquisition);
@@ -76,7 +79,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     return out({ start: first.figure, inputs, notCalculable: [why] });
   }
   const mem = newMem(), steps: Step[] = [], notSearched = new Set<string>(), unpriced: string[] = [];
-  let f = first.figure, stopped = false;
+  let f = first.figure, stopped = false, stalled = false;
   /** the output so far; callers pass `partialRun` until the run completes */
   const snap = (extra: Record<string, unknown>) => out({ start: first.figure, inputs, steps: [...steps], notSearched: [...notSearched], unpriced: [...unpriced], notCalculable: [...mem.notCalculable],
     knobs: { ...K, fight: ev.fight, fightNote: ev.fightNote, rollBudget: ev.rollBudget, ...extra } });
@@ -88,11 +91,28 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     f = (await ev.run(s.loadout, [], { level, skill: s.skill })).figure;
     if (f.stop) { const why = `L${level} ${s.skill} leg cannot be priced yet: ${f.stop}`; mem.notCalculable.add(why); notes.push(why); break; }
     mem.scores.clear(); mem.since = 0;   // scores of the last stage are no upper bound on this one (new level, new points, new prices)
+    if (s.skill === 'iceShot' && (f.kill >= K.switchAt || stalled)) {
+      const ctx = ctxOf(s), m = switchWithPage(s, ctx);
+      ctx.notSearched.forEach((x) => notSearched.add(x));
+      const e = m && m.costFE !== null ? await ev.run(s.loadout, m.changes, { level, skill: 'hoa' }) : null;
+      if (e?.figure.stop) { const why = `L${level} planned switch cannot be priced yet: ${e.figure.stop}`; mem.notCalculable.add(why); notes.push(why); }
+      else if (m && e) {
+        const r = await resolve({ ...s, loadout: e.loadout, skill: 'hoa', fe: s.fe - m.costFE! }, ev, recon, ctx, { ...K, churn: 0, maxRounds: K.switchRounds }, e.figure, mem);
+        const sp = await spendFree(r.state, ev, talentPointMoves, ctx, K, r.figure, mem);
+        mem.cumFE += m.costFE!;
+        const why = f.kill >= K.switchAt ? `the Ice Shot leg reached ${f.kill.toExponential(2)} (switchAt ${K.switchAt.toExponential(0)})` : 'the Ice Shot leg stalled (no step last stage)';
+        steps.push({ level, move: m, triggered: [...r.taken, ...sp.taken], before: f, after: sp.figure, cumFE: mem.cumFE,
+          notes: [`planned switch: ${why}; the kill average may drop here`, ...(level < 93 ? ['talent points assumed'] : [])] });
+        s = sp.state; f = sp.figure;
+        onStep?.(snap({ partialRun: true }));
+      }
+    }
     // the level-up's new talent points are spent at once, free and ungated: one point is worth less than the churn gate
     const spent = await spendFree(s, ev, talentPointMoves, ctxOf(s), K, f, mem);
     if (spent.taken.length) { const per = new Map<number, number>();
       for (const m of spent.taken) for (const c of m.changes as { kind: string; node?: number }[]) if (c.kind === 'talent') per.set(c.node!, (per.get(c.node!) ?? 0) + 1);
       notes.push(`L${level}: ${spent.taken.length} new talent point(s) spent on nodes ${[...per].map(([n, p]) => `${n} (+${p})`).join(', ')}`); s = spent.state; f = spent.figure; }
+    const before = steps.length;
     for (let n = 0; n < K.stepsPerStage; n++) {
       if (overBudget(K, t0, ev)) { stopped = true; break; }
       const ctx = ctxOf(s);
@@ -104,6 +124,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
       onStep?.(snap({ partialRun: true }));
     }
     if (stopped || overBudget(K, t0, ev)) { stopped = true; break; }
+    stalled = K.stepsPerStage > 0 && steps.length === before;
     // acquisitions nobody sells: what they would add, never ranked
     const ctx = ctxOf(s);
     const cands = unpricedAcquisitions(acq, s, ctx);

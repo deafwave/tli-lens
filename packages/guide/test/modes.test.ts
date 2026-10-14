@@ -210,6 +210,14 @@ describe('fix round 1', () => {
     expect(out.notCalculable.some((n) => /^L65 .*cannot be priced yet/.test(n))).toBe(true);
     expect(out.startNotes!.at(-1)).toMatch(/^L65 .*cannot be priced yet/);
   });
+  it('the planned switch: at a stage start whose kill reaches switchAt, Hammer of Ash on the target talent page; never below it', async () => {
+    const at = (switchAt: number) => runIdeal(stubEv(), { ...small, startLevel: 90, endLevel: 90, stepsPerStage: 0, switchAt });
+    const sw = (await at(0)).steps[0];
+    expect(sw.move.kind).toBe('switch');
+    expect(sw.move.label).toMatch(/on the target build's talent page \(\d+ points, cores /);
+    expect(sw.notes![0]).toMatch(/^planned switch: the Ice Shot leg reached /);
+    expect((await at(Infinity)).steps.some((st) => st.move.kind === 'switch')).toBe(false);
+  });
   it('fromExport names a missing hero, items or loadout', () => {
     expect(() => fromExport(exportOf({ hero: undefined }))).toThrow('export has no hero.level');
     expect(() => fromExport(exportOf({ items: undefined }))).toThrow('export has no items list');

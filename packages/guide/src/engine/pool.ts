@@ -19,7 +19,7 @@ export const STILL_NOTE = 'training dummy stands still (dps-debug STILL / e2e1-l
 /** also stated by dps-debug: the castLogSum of the recent-movement window is 0 = STILL_NOTE */
 export const STILL_KEY = 'castLogSum id=10000000 window=4s tags=[[],[],[],[]]';
 /** joint-roll budget handed to dps-debug's figure entry (its `rollBudget` option) */
-export const DEFAULT_ROLL_BUDGET = 1 << 23;
+export const DEFAULT_ROLL_BUDGET = 1 << 20;
 export const DEFAULT_FIGHT: Fight = { bombs: 10, inputs: { [STILL_KEY]: 0 } };
 export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight; rollBudget: number }
 export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown> } }

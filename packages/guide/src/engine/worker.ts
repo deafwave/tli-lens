@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { parentPort, workerData } from 'node:worker_threads';
 import { pathToFileURL } from 'node:url';
 import { register } from 'tsx/esm/api';
+import type { Loadout } from '../types';
 import type { Job, JobResult } from './pool';
 
 register();
@@ -17,10 +18,10 @@ const session = fig.figureSession(cat);   // one per worker: related builds shar
 
 function price({ loadout, changes, ctx, fight, rollBudget }: Job): JobResult {
   const { loadout: lo, dropped } = applyInOrder(loadout, changes, { isPatch, applyPatch,
-    applyChanges: (l, cs) => fig.applyChanges(cat, l, cs, ctx.skill, { heroLevel: ctx.level }) });
+    applyChanges: (l, cs) => fig.applyChanges(cat, l as never, cs, ctx.skill, { heroLevel: ctx.level }) as unknown as { loadout: Loadout; dropped: string[] } });
   const base = fig.GROUNDS[ctx.skill];
   const ground = { ...base, carry: { ...base.carry, fight } };
-  const g = figureDefaultFirst(o => session.figure(lo, ctx.skill, { heroLevel: ctx.level, ground, ...o }), rollBudget);
+  const g = figureDefaultFirst(o => session.figure(lo as never, ctx.skill, { heroLevel: ctx.level, ground, ...o }), rollBudget);
   return { loadout: lo, dropped, fig: { life100: g.life100, life0: g.life0, left: g.left.map(x => x.name), needs: g.needs, stop: g.stop, inputs: g.inputs as never } };
 }
 

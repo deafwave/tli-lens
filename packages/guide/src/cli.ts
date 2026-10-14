@@ -1,4 +1,4 @@
-/** guide ideal [--out path] | advise <export.json> [--fe N] [--season N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<23]) */
+/** guide ideal [--out path] | advise <export.json> [--fe N] [--season N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<20]) */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { writeAtomic } from './atomic';

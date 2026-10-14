@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_KNOBS, newMem, path, rankable, resolve, step } from '../src/search';
+import type { LoadoutPatch } from '../src/patches';
 import type { Change, Evaluator, Figure, GenCtx, Generator, Move, State } from '../src/types';
 
 // Stub: a loadout is { labels }; a change is { label }. Label "+x%" multiplies by 1+x/100; "E" + "R" together multiply by 3;
@@ -134,7 +135,7 @@ describe('step', () => {
 });
 
 test('a move carrying a loadout patch reaches the evaluator with the patch intact', async () => {
-  const patch = { kind: 'patch', op: 'prism-provide', tree: 51, extraAffix: [{ id: 1, dyn: [2, 2] }] } as const;
+  const patch = { kind: 'patch', op: 'prism-provide', tree: 51, extraAffix: [{ id: 1, dyn: [2, 2] }] } satisfies LoadoutPatch;
   const got: unknown[] = [];
   const { ev } = stub();
   const spy: Evaluator = { ...ev, run: (l, c, x) => { got.push(...c); return ev.run(l, c, x); } };

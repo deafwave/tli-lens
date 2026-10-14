@@ -41,7 +41,7 @@ describe('gearMoves', () => {
   });
 
   it('craft cost = expected embers x ember price at the level, null when the ember is unpriced', () => {
-    const moves = gearMoves(hoa60(), ctx(60, { 'Precious Ember': 0.06 })).filter(m => m.kind === 'craft' && m.changes[0].slot === 'mainHand');
+    const moves = gearMoves(hoa60(), ctx(60, { 'Precious Ember': 0.06 })).filter(m => m.kind === 'craft' && (m.changes[0] as { slot?: string }).slot === 'mainHand');
     const opts = new Map(craftOptions(library, 'Two-Handed Hammer', 60).map(o => [Number(o.tierAffixId), o]));
     let priced = 0, unpriced = 0;
     for (const m of moves) {
@@ -64,7 +64,7 @@ describe('gearMoves', () => {
 
   it('emits the rare base upgrade of each slot as a gear move at the base level', () => {
     const moves = gearMoves(hoa60(), ctx(60)).filter(m => m.kind === 'gear');
-    const mh = moves.find(m => m.changes[0].slot === 'mainHand')!, hel = moves.find(m => m.changes[0].slot === 'helmet')!;
+    const mh = moves.find(m => (m.changes[0] as { slot?: string }).slot === 'mainHand')!, hel = moves.find(m => (m.changes[0] as { slot?: string }).slot === 'helmet')!;
     expect(swapped(mh).baseId).toBe(1013);                  // Vanquisher Mallet L59 (Platinum Mallet is L64)
     expect(mh.minLevel).toBe(59);
     expect(mh.costFE).toBe(0);
@@ -116,7 +116,7 @@ describe('gearMoves', () => {
     expect(basesFor('mainHand', 60, 'hoa').every(b => b.level <= 60)).toBe(true);
     const bow = ice[0], c = ctx(60);
     const g = gearMoves(state('hoa', 60, [item('mainHand', bow.baseId, bow.name)]), c);
-    expect(g.filter(m => m.changes[0].slot === 'mainHand')).toEqual([]);   // a bow is not a hoa weapon
+    expect(g.filter(m => (m.changes[0] as { slot?: string }).slot === 'mainHand')).toEqual([]);   // a bow is not a hoa weapon
     expect([...c.notSearched].some(x => /weapon rule/.test(x))).toBe(true);
   });
 
@@ -175,7 +175,7 @@ describe('gearMoves', () => {
   it('a swapped base carries exactly the base-attribute ids of a real bag dump (base 1019) and the implicit gap is named', () => {
     const dump = JSON.parse(readFileSync(`${PIN}/game/bagdump-1019-20261013-061901-4.json`, 'utf8'));
     const real = (dump.modifiers['baseAttr(BaseAttrAffix)'] ?? dump.modifiers.baseAttr).map((m: { id: number }) => m.id);
-    const c = ctx(100), mh = gearMoves(state('hoa', 100, [MAUL]), c).find(m => m.kind === 'gear' && m.changes[0].slot === 'mainHand')!;
+    const c = ctx(100), mh = gearMoves(state('hoa', 100, [MAUL]), c).find(m => m.kind === 'gear' && (m.changes[0] as { slot?: string }).slot === 'mainHand')!;
     expect(swapped(mh).baseId).toBe(1019);
     expect(swapped(mh).modifiers.baseAttr.map((m: { id: number }) => m.id)).toEqual(real);
     expect(swapped(mh).modifiers.baseAffix).toBeUndefined();

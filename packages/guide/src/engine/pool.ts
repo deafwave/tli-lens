@@ -10,7 +10,7 @@ import type { Change, EvalCtx, Evaluated, Evaluator, Loadout } from '../types';
 import { createMemo, memoKey } from './memo';
 
 /** dps-debug lines that are notes, not omissions (their numbers vary per build): never part of `partial` */
-export const INFO_PREFIXES = ['price:'];
+export const INFO: (string | RegExp)[] = ['price:', /^held buff \d+ \(.*\) not carried: no piece of this build adds it/];
 
 /** Stated fight inputs (dps-debug Carry.fight): `bombs` = bombs on the battlefield, `inputs` = other named per-cast / fight inputs */
 export interface Fight { bombs?: number; inputs?: Record<string, number> }
@@ -142,7 +142,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
     schedule(w => w.run({ loadout, changes, ctx, fight })).then(
       ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped, ...(fig.inputs ? { inputs: fig.inputs } : {}),
-        figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs].filter(l => !INFO_PREFIXES.some(p => l.startsWith(p))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
+        figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs].filter(l => !INFO.some(p => typeof p === 'string' ? l.startsWith(p) : p.test(l))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
       (e: Error) => {
         if (e.message === 'evaluator closed') throw e;
         return { keep: !(e instanceof WorkerDied), v: { loadout, dropped: [], figure: { life100: 0, life0: 0, kill: 0, partial: [], stop: e.message } } };

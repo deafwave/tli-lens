@@ -8,7 +8,7 @@ import { pinRoot } from '../src/pin';
 import { applyInOrder } from '../src/engine/apply';
 import { type Knobs, overBudget, rankable } from '../src/search';
 import { writeAtomic } from '../src/atomic';
-import { createEvaluator, DEFAULT_FIGHT, INFO_PREFIXES, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
+import { createEvaluator, DEFAULT_FIGHT, INFO, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
 import { realSkip } from './real';
 
@@ -46,7 +46,12 @@ describe('evaluator (stub workers)', () => {
     const a = (await ev.run(lo, [], ctx)).figure, b = (await ev2.run(lo, [], ctx)).figure;
     expect(a.partial).toEqual([node]);
     expect(rankable(a, b)).toBe(true);
-    expect(INFO_PREFIXES).toEqual(['price:']);
+    expect(INFO[0]).toBe('price:');
+  });
+  it('held buff "not carried" lines are informational; "left off" stays an omission', async () => {
+    const off = 'held buffs left off: 11210';
+    const ev = await createEvaluator({ factory: stub(() => ({ life100: 200, life0: 100, left: [], needs: ['held buff 390 (zhanyi) not carried: no piece of this build adds it', off, 'price: x'] })).factory, workers: 1, pin: 'p' });
+    expect((await ev.run(lo, [], ctx)).figure.partial).toEqual([off]);
   });
   it('memo: same call runs once (also concurrently, key order irrelevant); another pin or level never hits it', async () => {
     const s = stub(undefined, 5);

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { basesFor, gearMoves } from '../src/candidates/gear';
 import { craftOptions, type LibraryAffix } from '../src/craft';
 import { pinRoot, table } from '../src/pin';
@@ -91,8 +91,20 @@ describe('gearMoves', () => {
     const lang = rows('lang_en'), l = loadout(L100);
     const ms = gearMoves(state('hoa', 100, l.gear), ctx(100)).filter(m => m.kind === 'unique');
     expect(ms.length).toBeGreaterThan(0);
+    for (const m of ms) expect(swapped(m).baseName).toBeTruthy();
     for (const m of ms) expect(swapped(m).baseName).toBe(lang[`item_base|name|${swapped(m).baseId}`]);
     expect(() => applyAll(l, ms[0], GROUND.hoa)).not.toThrow();
+  });
+
+  it('a unique whose base has no lang name is not offered and is named in notSearched', async () => {
+    const m0 = gearMoves(state('hoa', 100, [CHEST]), ctx(100)).find(m => m.kind === 'unique')!;
+    const bid = swapped(m0).baseId, uname = m0.label.replace(/^Unique (.*) in \w+$/, '$1');
+    vi.resetModules();   // fresh pin + gear modules, so the stubbed lang table never reaches the other tests
+    const pin = await import('../src/pin'), fresh = await import('../src/candidates/gear');
+    delete pin.table<{ rows: Record<string, string> }>('lang_en').rows[`item_base|name|${bid}`];
+    const c = ctx(100), ms = fresh.gearMoves(state('hoa', 100, [CHEST]), c);
+    expect(ms.some(m => m.label === m0.label)).toBe(false);
+    expect([...c.notSearched]).toContain(`unique ${uname}: base ${bid} has no lang name; not offered`);
   });
 
   it('Bing1 weapon rule: iceShot offers bow-family weapons only, hoa two-handed hammers/mauls only', () => {

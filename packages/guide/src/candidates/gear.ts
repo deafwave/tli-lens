@@ -158,7 +158,10 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   // uniques: config_item_gold joined to etor by English name; one modifier per group at the highest catalog tier digit [inf]
   for (const [gid, g] of Object.entries(c.gold)) {
     const name = c.lang[`item_gold|name|${gid}`], nb = c.rows.get(g.i8), raw = c.base[g.i8];
-    if (!name || !nb || !raw || nb.level > ctx.level) continue;
+    if (!name || !raw) continue;
+    if (!nb) { ctx.notSearched.add(`unique ${name}: base ${g.i8} has no lang name; not offered`); continue; }   // rows holds only bases with a lang name
+    if (nb.level > ctx.level) continue;
+    const baseName = nb.name;
     const targets = isWeapon(raw.i20, raw.i24, raw.a1b8 ?? []) ? (SKILL_GROUPS[s.skill].includes(raw.i24) ? ['mainHand'] : []) : TYPE_SLOTS[raw.i20] ?? [];
     const here = targets.filter(t => slots.has(t));
     if (!here.length) continue;
@@ -171,7 +174,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     if (!mods.length) continue;
     const price = priceOfGold(ctx.prices, Number(gid), ctx.level).fe;
     for (const slot of here) {
-      const item: Dump = { baseId: g.i8, baseName: c.lang[`item_base|name|${g.i8}`], itemId: `guide-unique-${gid}`, level: ctx.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
+      const item: Dump = { baseId: g.i8, baseName, itemId: `guide-unique-${gid}`, level: ctx.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
       moves.push({ kind: 'unique', label: `Unique ${name} in ${slot}`, acquisition: true, costFE: price, minLevel: nb.level, changes: swap(slot, item) });
     }
   }

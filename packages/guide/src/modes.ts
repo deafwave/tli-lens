@@ -60,7 +60,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
   const books = prices ?? historyBook(localItems(), localHistory());
   const acq = ALL.map(only(true)), recon = ALL.map(only(false));
   const ctxOf = (s: State): GenCtx => ({ prices: books, level: s.level, notSearched: new Set() });
-  const start = idealStartNotes();
+  const start = idealStartNotes(K.startLevel);
   let s: State = { ...start.state, level: K.startLevel };
   const notes = [...start.notes];
   const out = (o: Partial<GuideOut>): GuideOut => ({

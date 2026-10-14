@@ -34,13 +34,28 @@ const exportOf = (o: Record<string, unknown> = {}) => ({
 
 describe('idealStart', () => {
   const s = idealStart();
-  it('is level 60, Ice Shot, with only a bow-family white base and no affixes', () => {
+  it('is level 60, Ice Shot, with a white drop base (no affixes) in every slot of the L94 loadout', () => {
     expect(s.level).toBe(60); expect(s.skill).toBe('iceShot');
-    const gear = s.loadout.gear as { slot: string; baseId: number; affixes: { list: string }[]; market: string }[];
-    expect(gear.map((g) => g.slot)).toEqual(['mainHand']);
-    expect(slotsOfBase(gear[0].baseId, 'iceShot').slots).toEqual(['mainHand']);
-    expect(gear[0].market).toBe('drop');
-    expect(gear[0].affixes.every((a) => a.list === 'BaseAttrInfoList')).toBe(true);
+    const gear = s.loadout.gear as { slot: string; baseId: number; level: number; affixes: { list: string }[]; market: string }[];
+    expect(gear.map((g) => g.slot).sort()).toEqual(['belt', 'boots', 'chest', 'gloves', 'helmet', 'mainHand', 'necklace', 'ring2']);
+    for (const g of gear) {
+      expect(slotsOfBase(g.baseId, 'iceShot').slots, g.slot).toContain(g.slot);
+      expect(g.level).toBeLessThanOrEqual(60);
+      expect(g.market).toBe('drop');
+      expect(g.affixes.every((a) => a.list === 'BaseAttrInfoList')).toBe(true);
+    }
+  });
+  it('gearMoves offers moves on every slot the start carries', () => {
+    const ctx = { prices: { season: 's', fetchedAt: 'x', price: () => 0.05 }, level: 60, notSearched: new Set<string>() };
+    const slots = new Set(gearMoves(s, ctx).map((m) => (m.changes[0] as { slot?: string }).slot));
+    for (const g of s.loadout.gear as { slot: string }[]) expect(slots.has(g.slot), g.slot).toBe(true);
+  });
+  it('honours the start level: bases and the talent budget follow it', () => {
+    const t = idealStart(70), gear = t.loadout.gear as { level: number }[];
+    expect(t.level).toBe(70);
+    expect(Math.max(...gear.map((g) => g.level))).toBeGreaterThanOrEqual(Math.max(...(s.loadout.gear as { level: number }[]).map((g) => g.level)));
+    expect((t.loadout.hero as { level: number }).level).toBe(70);
+    expect(Object.values(t.loadout.talents as Record<string, number>).reduce((a, b) => a + b, 0)).toBe(pointsAtLevel(70));
   });
   it('strips slates, pacts, kismets, prisms and seeds the level-60 talent budget', () => {
     const l = s.loadout as Record<string, any>;

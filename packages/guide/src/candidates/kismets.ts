@@ -6,6 +6,7 @@
 import { fateExtraPoints } from '@dps/src/core/fate';
 import type { Catalog } from '@dps/src/types';
 import { table } from '../pin';
+import { priceOfBase } from '../priceOf';
 import type { Change, GenCtx, Generator, Move, State } from '../types';
 
 const rows = (f: string) => table<{ rows: Record<string, any> }>(f).rows;   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -27,7 +28,7 @@ function candidates(): Cand[] {
 export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   const ns = ctx.notSearched, l = s.loadout as { kismets?: K[]; contractKeys?: number[]; pacts?: { slot?: number }[] };
   ns.add('kismet: big points, secret points without a Fate, and the order of equivalent free points in one area are not searched (the first free point of each area and size stands for the rest)');
-  ns.add("kismet: a kismet costs its etor price by English name; the owner's own kismet is not credited when it is replaced");
+  ns.add("kismet: a kismet / fate costs its etor price by its game item name (priceOfBase); the owner's own kismet is not credited when it is replaced");
   if (!l.kismets || !l.contractKeys) { ns.add('kismet: the loadout has no kismets / contractKeys'); return []; }
   if (l.kismets.some(k => k.servantId !== null)) { ns.add('kismet: the loadout addresses kismets by servant page node (the planner file), not by contract point'); return []; }
   const cp = rows('config_contract_point'), lang = rows('lang_en'), keys = new Set(l.contractKeys);
@@ -35,7 +36,7 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   const at = new Map(l.kismets.map(k => [k.node, k]));
   const kindOf = (n: number): number => cp[n]?.i10;
   const moves: Move[] = [];
-  const price = (name: string) => ctx.prices.price(name, ctx.level);
+  const price = (baseId: number) => priceOfBase(ctx.prices, baseId, ctx.level).fe;
   const socketChange = (c: Cand, point: number, action: 'socket' | 'replace'): Change => ({ kind: 'kismet', action, point, modifierId: c.modifierId, rolls: c.rolls });
 
   const onPage = [...keys].filter(n => equipped.has(Math.floor(n / 100)));
@@ -46,9 +47,9 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     return seenFree.has(g) ? false : (seenFree.add(g), true);
   });
   for (const c of candidates().filter(x => x.level <= ctx.level)) {
-    for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on contract point ${p}`, acquisition: true, costFE: price(c.name), minLevel: c.level, changes: [socketChange(c, p, 'socket')] });
+    for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on contract point ${p}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'socket')] });
     for (const p of occupied) if (c.kind === kindOf(p) && at.get(p)!.modifierId !== c.modifierId)
-      moves.push({ kind: 'kismet', label: `Replace the kismet on contract point ${p} with ${c.name}`, acquisition: true, costFE: price(c.name), minLevel: c.level, changes: [socketChange(c, p, 'replace')] });
+      moves.push({ kind: 'kismet', label: `Replace the kismet on contract point ${p} with ${c.name}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'replace')] });
   }
   for (const p of occupied) moves.push({ kind: 'kismet', label: `Remove the kismet on contract point ${p}`, acquisition: false, costFE: 0, minLevel: 0, changes: [{ kind: 'kismet', action: 'remove', point: p }] });
 
@@ -60,7 +61,7 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   for (const p of onPage.filter(n => !at.has(n) && kindOf(n) === SLOT))
     for (const f of lists.values()) {
       if (tat[f.baseId!]?.TattooType !== FATE_TYPE) continue;
-      moves.push({ kind: 'kismet', label: `Install ${fateName(f.baseId!)} (extra points ${f.extraContractPoints}) on contract point ${p}`, acquisition: true, costFE: price(fateName(f.baseId!)),
+      moves.push({ kind: 'kismet', label: `Install ${fateName(f.baseId!)} (extra points ${f.extraContractPoints}) on contract point ${p}`, acquisition: true, costFE: price(f.baseId!),
         minLevel: 0, enabler: true, changes: [{ kind: 'fate', action: 'install', point: p, baseId: f.baseId!, extra: f.extraContractPoints! }] });
     }
   for (const f of fates) {

@@ -15,9 +15,9 @@ describe('pactMoves', () => {
       expect(ranks, String(p.servantId)).toEqual(Array.from({ length: 5 - p.rank }, (_, i) => p.rank + 1 + i));
     }
   });
-  it('is unpriced (null) without an etor row and priced by servant name with one', () => {
-    expect(moves.every(m => m.acquisition && m.costFE === null)).toBe(true);
-    expect(gen({ 'Red Umbrella': 9 }).filter(m => m.costFE === 9).length).toBe(3);
+  it('a rank-up is not on the market: costFE null even when etor prices the servant name', () => {
+    expect(moves.every(m => m.acquisition && m.costFE === null && m.market === 'not-on-market')).toBe(true);
+    expect(gen({ 'Red Umbrella': 9 }).every(m => m.costFE === null)).toBe(true);
   });
   it('re-equips with the contractKeys of its own slot only', () => {
     const m = moves.find(x => equip(x).servantId === 1130)!;

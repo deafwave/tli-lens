@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { table as catalogTable } from '../pin';
 import { craftOptions, type LibraryAffix } from '../craft';
 import affixIds from '../data/affix-ids.json';
+import { costOf, priceOfGold } from '../priceOf';
 import type { Change, GenCtx, Generator, Move, Skill, State } from '../types';
 
 type Mods = Record<string, { id: number; dynArgs: number[] }[]>;
@@ -129,12 +130,12 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     if (skipped.size) ctx.notSearched.add(`craft on ${slot}: ${skipped.size} tiers whose library text ranges differ from the catalog rolls`);
     for (const side of full) ctx.notSearched.add(`craft on ${slot}: ${side} side full (${SIDE_MAX}); replacing an affix is not ported`);
 
-    // base upgrade: the best rare base of the same line at the hero level (a white base costs ~nothing, as the Bing1 guide priced it)
+    // base upgrade: the best rare base of the same line at the hero level (a white base is a drop unless etor prices it)
     const best = basesFor(slot, ctx.level, s.skill, base.family).at(-1);
     if (best && best.level > base.level) {
       const nb = c.rows.get(best.baseId)!;
       moves.push({
-        kind: 'gear', label: `Rare base ${best.name} (item level ${best.level}) on ${slot}`, acquisition: true, costFE: 0, minLevel: best.level,
+        kind: 'gear', label: `Rare base ${best.name} (item level ${best.level}) on ${slot}`, acquisition: true, ...costOf(ctx.prices, best.name, ctx.level, 'bare'), minLevel: best.level,
         changes: [{ kind: 'gear', slot, item: { ...withBase(dump, nb, `guide-base-${best.baseId}`), baseId: best.baseId, baseName: best.name } }],
       });
     }
@@ -154,7 +155,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     }
     if (lost.length) { ctx.notSearched.add(`unique ${name}: modifier group(s) ${lost.join(', ')} not in the catalog; not offered`); continue; }
     if (!mods.length) continue;
-    const price = ctx.prices.price(name, ctx.level);
+    const price = priceOfGold(ctx.prices, Number(gid), ctx.level).fe;
     for (const slot of here) {
       const item: Dump = { baseId: g.i8, baseName: name, itemId: `guide-unique-${gid}`, level: ctx.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
       moves.push({ kind: 'unique', label: `Unique ${name} in ${slot}`, acquisition: true, costFE: price, minLevel: nb.level, changes: swap(slot, item) });

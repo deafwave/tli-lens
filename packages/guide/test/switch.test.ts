@@ -4,6 +4,9 @@ import { gemLevelAt, mainSid, supportsFor } from '../src/candidates/gems';
 import { table } from '../src/pin';
 import { switchMoves } from '../src/candidates/switch';
 import type { Skill } from '../src/types';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { snapshotBook, type EtorItems } from '../src/pricing';
 import { GROUND, L100, L94, applyAll, fakePrices, loadout } from './apply';
 
 const l94 = loadout(L94);
@@ -45,18 +48,28 @@ describe('switchMoves', () => {
     expect(multi.changes.find(c => c.kind === 'skill')!.gem.level).toBe(gemLevelAt(1110, hero, 20));
     expect(gen('iceShot', 0, all).moves).toEqual([]);
   });
-  it('an unpriced component is named in notSearched so the gap is visible', () => {
+  it('an unpriced component that is not a drop (no etor row) is named in notSearched so the gap is visible', () => {
     const r = gen('iceShot', 94, {});
     expect(r.moves[0].costFE).toBeNull();
-    expect([...r.notSearched].join()).toMatch(/switch unpriced \(Hammer of Ash.*\): not ranked until Task 5b's drop pricing/);
+    expect([...r.notSearched].join()).toMatch(/switch unpriced \(Hammer of Ash.*\): no etor price and not a white base \/ normal gem/);
     expect([...gen('iceShot', 94, all).notSearched].some(n => /switch unpriced/.test(n))).toBe(false);
+  });
+  it('with the real etor snapshot the switch is priced: normal gems and the bare maul that etor does not price are drops', () => {
+    const items: EtorItems = JSON.parse(readFileSync(fileURLToPath(new URL('../../../data/etor/items_1501.json', import.meta.url)), 'utf8'));
+    const prices = snapshotBook(items), notSearched = new Set<string>();
+    const [m] = switchMoves({ loadout: l94, owned: [], fe: 0, level: 94, skill: 'iceShot' }, { prices, level: 94, notSearched });
+    const cat = (n: string) => prices.category!(n);
+    expect(m.costFE, `unpriced: ${[...notSearched].filter(n => /switch unpriced/.test(n))}`).not.toBeNull();
+    expect(cat('Hammer of Ash')).toBe('Active Skill');
+    expect(prices.price(maulName(94), 94)).toBeNull();
+    if (m.market === 'drop') expect(m.costNote).toBe('drop');
   });
   it('costs the sum of the skill, support and maul prices by name; any missing price makes it unpriced (null)', () => {
     expect(gen('iceShot', 94, all).moves[0].costFE).toBe(Object.values(all).reduce((a, b) => a + b, 0));
     const { Steamroll: _s, ...missing } = all;
-    expect(gen('iceShot', 94, missing).moves[0].costFE).toBeNull();
-    const { [maulName(94)]: _m, ...noMaul } = all;
-    expect(gen('iceShot', 94, noMaul).moves[0].costFE).toBeNull();
+    expect(gen('iceShot', 94, missing).moves[0].costFE).toBeNull();   // the fake book carries no etor categories, so an unpriced gem is not a drop
+    const { [maulName(94)]: _m, ...noMaul } = all;   // a bare maul etor does not price is a drop: 0 FE, the rest still sum
+    expect(gen('iceShot', 94, noMaul).moves[0].costFE).toBe(Object.values(all).reduce((x, y) => x + y, 0) - all[maulName(94)]);
   });
   it('supports come from the target build and every one compiles on Hammer of Ash (SUP1)', () => {
     const { moves, notSearched } = gen('iceShot', 94, all);

@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pinRoot, table } from '../pin';
 import { basesFor } from './gear';
+import { costOf } from '../priceOf';
 import { gemLevelAt, gemRequires, mainSid, supportsFor } from './gems';
 import type { Change, Generator } from '../types';
 
@@ -47,13 +48,14 @@ export const switchMoves: Generator = (s, ctx) => {
     else if (have.has(socket)) sockets.push({ kind: 'support', action: 'remove', owner, socket });
   }
   const maulName = table<{ rows: Record<string, string> }>('lang_en').rows[`item_base|name|${maul.baseId}`];
-  const names = ['Hammer of Ash', ...gems.map(g => g.name), maulName], prices = names.map(n => ctx.prices.price(n, ctx.level));
-  const unpriced = names.filter((_, i) => prices[i] === null);
-  if (unpriced.length) ns.add(`switch unpriced (${unpriced.join(', ')}): not ranked until Task 5b's drop pricing`);
+  const parts = [costOf(ctx.prices, 'Hammer of Ash', ctx.level, 'gem'), ...gems.map(g => costOf(ctx.prices, g.name, ctx.level, 'gem')), costOf(ctx.prices, maulName, ctx.level, 'bare')];
+  const names = ['Hammer of Ash', ...gems.map(g => g.name), maulName], unpriced = names.filter((_, i) => parts[i].costFE === null);
+  if (unpriced.length) ns.add(`switch unpriced (${unpriced.join(', ')}): no etor price and not a white base / normal gem`);
+  const allDrop = parts.every(p => p.market === 'drop');
   return [{
     kind: 'switch', skill: 'hoa', acquisition: true, minLevel: Math.max(maul.level, need), enabler: true,
     label: `Switch to Hammer of Ash with ${maul.name} (level ${maul.level}) and ${gems.map(g => g.name).join(', ')}`,
-    costFE: prices.some(p => p === null) ? null : prices.reduce<number>((a, p) => a + (p as number), 0),
+    costFE: unpriced.length ? null : parts.reduce((a, p) => a + p.costFE!, 0), market: allDrop ? 'drop' : 'tradeable', ...(allDrop ? { costNote: 'drop' } : {}),
     changes: [weapon, { kind: 'multi', changes: [{ kind: 'skill', action: 'replace', owner, gem: { sid: hoa.sid, level: hoaLevel, name: hoa.name } }, ...sockets] as never }],
   }];
 };

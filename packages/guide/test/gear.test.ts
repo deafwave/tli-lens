@@ -87,6 +87,27 @@ describe('gearMoves', () => {
     expect(mine(gearMoves(state('hoa', level - 1, [CHEST]), ctx(level - 1, { [name]: 7 })))).toEqual([]);
   });
 
+  it('a base upgrade is a new item: its crafted affixes are paid again, the old fixed affix stays behind', () => {
+    const craft = gearMoves(hoa60(), ctx(60)).find(m => m.kind === 'craft' && (m.changes[0] as any).slot === 'helmet' && swapped(m).modifiers.prefix)!;
+    const p = swapped(craft).modifiers.prefix.at(-1);
+    const helm = { ...HELM, affixes: [{ id: p.id, dyn: p.dynArgs, list: 'PrefixInfoList' }, { id: 660002, dyn: [35], list: 'FixedBaseAffix' }] };
+    const up = gearMoves(state('hoa', 60, [MAUL, helm]), ctx(60)).find(m => m.label.startsWith('Rare base') && (m.changes[0] as any).slot === 'helmet')!;
+    expect(up.label).toContain('1 affix(es) crafted again');
+    expect(up.costFE).toBeCloseTo(craft.costFE!);
+    expect(swapped(up).modifiers.prefix).toEqual([p]);
+    expect(swapped(up).modifiers.fixed).toBeUndefined();
+  });
+
+  it('a unique takes no craft and no base upgrade, but can still be replaced by another unique', () => {
+    const goldGroup = Number(Object.keys((Object.values(rows('config_item_gold'))[0] as any).m88)[0]);
+    for (const chest of [{ ...CHEST, itemId: 'guide-unique-1' }, { ...CHEST, affixes: [{ id: goldGroup * 10, dyn: [1] }] }]) {
+      const ms = gearMoves(state('hoa', 100, [chest]), ctx(100)).filter(m => (m.changes[0] as any).slot === 'chest');
+      expect(ms.filter(m => m.kind === 'craft' || m.label.startsWith('Rare base'))).toEqual([]);
+      expect(ms.some(m => m.kind === 'unique')).toBe(true);
+    }
+    expect(gearMoves(state('hoa', 100, [CHEST]), ctx(100)).some(m => m.kind === 'craft')).toBe(true);
+  });
+
   it('a unique carries its base item name (the unique name stays in the label), and applies through dps-debug', () => {
     const lang = rows('lang_en'), l = loadout(L100);
     const ms = gearMoves(state('hoa', 100, l.gear), ctx(100)).filter(m => m.kind === 'unique');
@@ -163,11 +184,11 @@ describe('gearMoves', () => {
     expect([...c.notSearched].some(x => /library text ranges differ/.test(x))).toBe(true);
   });
 
-  it('a base swap replaces the base lists and keeps crafted lines', () => {
+  it('a base swap replaces the base lists and leaves off a crafted line the new base cannot take', () => {
     const st = state('hoa', 60, [{ ...MAUL, affixes: [{ id: 111, dyn: [1], list: 'BAffixInfoList' }, { id: 222, dyn: [2], list: 'PrefixInfoList' }, { id: 510002, dyn: [1], list: 'BaseAttrInfoList' }] }]);
     const mh = swapped(gearMoves(st, ctx(60)).find(m => m.kind === 'gear')!);
     expect(mh.modifiers.baseAffix).toBeUndefined();
-    expect(mh.modifiers.prefix).toEqual([{ id: 222, dynArgs: [2] }]);
+    expect(mh.modifiers.prefix).toBeUndefined();
     expect(mh.modifiers.baseAttr.some((x: { id: number }) => x.id === 510002)).toBe(false);
     expect(mh.level).toBe(60);
   });

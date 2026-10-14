@@ -10,7 +10,7 @@ import type { Change, GenCtx, Generator, Move, Skill, State } from '../types';
 
 type Mods = Record<string, { id: number; dynArgs: number[] }[]>;
 interface Dump { baseId: number; baseName?: string; itemId: string; level: number; modifiers: Mods }
-interface GearItem { slot?: string; label: string; baseId?: number; level?: number; affixes: { id: number; dyn: number[]; list?: string }[] }
+interface GearItem { slot?: string; label: string; baseId?: number; level?: number; itemId?: string; affixes: { id: number; dyn: number[]; list?: string }[] }
 export interface Base { baseId: number; name: string; level: number }
 interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; lib: string | null }
 
@@ -103,12 +103,29 @@ function toDump(it: GearItem, baseId: number, name: string, level: number): Dump
 }
 
 const withMods = (d: Dump, patch: Mods, id: string): Dump => ({ ...d, itemId: id, modifiers: { ...d.modifiers, ...patch } });
-/** a base swap replaces the base's own lists (attributes and implicit) and keeps the crafted prefix/suffix */
-const withBase = (d: Dump, nb: Row, id: string): Dump => {
-  const { baseAttr: _a, baseAffix: _b, ...kept } = d.modifiers;
-  return { ...d, itemId: id, modifiers: { ...kept, baseAttr: attrMods(nb) } };
-};
+/** a base upgrade is a new item: the new base's own attributes, and the old prefix/suffix crafted again on it at the expected embers of
+ *  their tiers (`recraft`, null when an ember is unpriced); an affix the new base's pool cannot take is left off, and the old item's other
+ *  lists (implicit, fixed, chip) stay with the old item */
+function rebased(d: Dump, nb: Row, id: string, ctx: GenCtx): { item: Dump; recraft: number | null; dropped: number } {
+  const opts = new Map(craftOptions(library, nb.lib!, ctx.level).map(o => [Number(o.tierAffixId), o]));
+  let recraft: number | null = 0, dropped = 0;
+  const modifiers: Mods = { baseAttr: attrMods(nb) };
+  for (const side of ['prefix', 'suffix']) {
+    const kept = (d.modifiers[side] ?? []).filter(m => {
+      const o = opts.get(m.id), p = o && ctx.prices.price(o.ember, ctx.level);
+      if (!o) { dropped++; return false; }
+      recraft = recraft === null || p == null ? null : recraft + o.expectedEmbers * p;
+      return true;
+    });
+    if (kept.length) modifiers[side] = kept;
+  }
+  return { item: { ...d, itemId: id, modifiers }, recraft, dropped };
+}
 const swap = (slot: string, item: Dump): Change[] => [{ kind: 'gear', slot, item }];
+let goldGroups: Set<number> | undefined;
+/** a unique (one the guide bought, or a game item carrying a config_item_gold modifier group) takes no ember craft and keeps its base */
+const isUnique = (it: GearItem) => (it.itemId ?? '').startsWith('guide-unique-') || it.affixes.some(a => (goldGroups ??= new Set(Object.values(cat().gold)
+  .flatMap(g => ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168'].flatMap(k => Object.keys(g[k] ?? {}).map(Number))))).has(Math.floor(a.id / 10)));
 
 export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   const c = cat(), moves: Move[] = [];
@@ -122,6 +139,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     if (slot === 'mainHand' && !SKILL_GROUPS[s.skill].includes(base.family)) {
       ctx.notSearched.add(`gear mainHand: "${it.label}" is not a ${s.skill} weapon (Bing1 weapon rule); weapon moves not searched`); slots.delete(slot); continue;
     }
+    if (isUnique(it)) continue;
     const dump = toDump(it, baseId, base.name, ctx.level);
     if (!dump) { ctx.notSearched.add(`gear ${slot}: the loadout item carries no affix list; crafts not searched`); continue; }
 
@@ -150,10 +168,13 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     // base upgrade: the best rare base of the same line at the hero level (a white base is a drop unless etor prices it)
     const best = basesFor(slot, ctx.level, s.skill, base.family).at(-1);
     if (best && best.level > base.level) {
-      const nb = c.rows.get(best.baseId)!;
+      const nb = c.rows.get(best.baseId)!, cost = costOf(ctx.prices, best.name, ctx.level, 'bare'), r = rebased(dump, nb, `guide-base-${best.baseId}`, ctx);
+      const crafted = (r.item.modifiers.prefix?.length ?? 0) + (r.item.modifiers.suffix?.length ?? 0);
       moves.push({
-        kind: 'gear', label: `Rare base ${best.name} (item level ${best.level}) on ${slot}`, acquisition: true, ...costOf(ctx.prices, best.name, ctx.level, 'bare'), minLevel: best.level,
-        changes: [{ kind: 'gear', slot, item: { ...withBase(dump, nb, `guide-base-${best.baseId}`), baseId: best.baseId, baseName: best.name } }],
+        kind: 'gear', label: `Rare base ${best.name} (item level ${best.level}) on ${slot}${crafted ? `, ${crafted} affix(es) crafted again` : ''}${r.dropped ? `, ${r.dropped} the base cannot take left off` : ''}`,
+        acquisition: true, ...cost, costFE: cost.costFE === null || r.recraft === null ? null : cost.costFE + r.recraft, minLevel: best.level,
+        ...(crafted ? { costNote: `${cost.costNote ?? 'base'} + re-craft ${r.recraft === null ? '(an ember unpriced)' : `${r.recraft.toFixed(2)} FE`}` } : {}),
+        changes: [{ kind: 'gear', slot, item: { ...r.item, baseId: best.baseId, baseName: best.name } }],
       });
     }
   }

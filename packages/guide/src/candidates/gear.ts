@@ -1,0 +1,153 @@
+/* Gear candidates: ember crafts, rare-base upgrades and uniques, each a dps-debug `gear` what-if change with an FE cost and a level gate.
+   Catalog tables are read from the pinned dps-debug checkout (read-only; env DPS_DEBUG_PIN overrides its root). */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { craftOptions, type LibraryAffix } from '../craft';
+import affixIds from '../data/affix-ids.json';
+import type { Change, GenCtx, Generator, Move, Skill, State } from '../types';
+
+type Mods = Record<string, { id: number; dynArgs: number[] }[]>;
+interface Dump { baseId: number; baseName?: string; itemId: string; level: number; modifiers: Mods }
+interface GearItem { slot?: string; label: string; baseId?: number; level?: number; affixes: { id: number; dyn: number[]; list?: string }[] }
+export interface Base { baseId: number; name: string; level: number }
+interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; lib: string | null }
+
+const PIN = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const table = (f: string): Record<string, any> => JSON.parse(readFileSync(`${PIN}/catalog/0x6aa39847/${f}.json`, 'utf8')).rows;
+const library: LibraryAffix[] = JSON.parse(readFileSync(fileURLToPath(new URL('../../../../data/affix_library.json', import.meta.url)), 'utf8')).affixes;
+const VERIFIED = new Set(Object.keys(affixIds.map));
+
+/** Bing1 weapon rule (config_weapon row = config_item_base i24): iceShot = bow family, hoa = two-handed hammers/mauls. */
+const WEAPON_GROUPS: Record<number, string> = { 9: 'Bow', 29: 'Crossbow', 26: 'Pistol', 27: 'Musket', 28: 'Fire Cannon', 11: 'Two-Handed Hammer' };
+const SKILL_GROUPS: Record<Skill, number[]> = { iceShot: [9, 29, 26, 27, 28], hoa: [11] };
+/** loadout slot -> config_item_base i20 (slot type); the catalog's helmets are 15 (11 is the shield) */
+const SLOT_TYPE: Record<string, number> = { helmet: 15, gloves: 12, boots: 13, chest: 14, necklace: 16, belt: 17, ring1: 18, ring2: 18 };
+const TYPE_SLOTS: Record<number, string[]> = { 15: ['helmet'], 12: ['gloves'], 13: ['boots'], 14: ['chest'], 16: ['necklace'], 17: ['belt'], 18: ['ring1', 'ring2'] };
+const ARMOR_LIB: Record<string, string> = { '16/20': 'Necklace', '17/23': 'Belt', '18/21': 'Ring', '18/90': 'Spirit Ring' };
+for (const [t, first, name] of [[15, 70, 'Helmet'], [12, 40, 'Gloves'], [13, 50, 'Boots'], [14, 60, 'Chest Armor']] as const)
+  ['STR', 'DEX', 'INT'].forEach((f, i) => { ARMOR_LIB[`${t}/${first + i}`] = `${f} ${name}`; });
+/** weapon columns also match pacts, prisms and cores (same i20/i24); only equipment carries base-attribute modifiers (a1b8) */
+const isWeapon = (i20: number, i24: number, attrs: number[]) => attrs.length > 0 && i20 >= 1 && i20 <= 10 && i24 in WEAPON_GROUPS;
+const libType = (i20: number, i24: number, attrs: number[]) => isWeapon(i20, i24, attrs) ? WEAPON_GROUPS[i24] : ARMOR_LIB[`${i20}/${i24}`] ?? null;
+
+const ENABLER = /Reservation|Support Skill.*Level|\+\d+ to .*Skill Level|Core Talent|talent/i;
+const LIST_KEY: Record<string, string> = { BAffixInfoList: 'baseAffix', BaseAttrInfoList: 'baseAttr', PrefixInfoList: 'prefix', SuffixInfoList: 'suffix', FixedBaseAffix: 'fixed', ChipAffixList: 'chip' };
+const SIDE_MAX = 3;
+
+interface Cat { base: Record<string, any>; lang: Record<string, string>; gold: Record<string, any>; rolls: Record<string, number[][]>; rows: Map<number, Row> }
+let memo: Cat | undefined;
+function cat(): Cat {
+  if (memo) return memo;
+  const base = table('config_item_base'), lang = table('lang_en'), gold = table('config_item_gold'), rolls = table('config_modifier_rolls');
+  const rows = new Map<number, Row>();
+  for (const [k, r] of Object.entries(base)) {
+    const name = lang[`item_base|name|${k}`];
+    if (name) rows.set(Number(k), { name, slotType: r.i20, family: r.i24, level: r.i3c, attrs: r.a1b8 ?? [], lib: libType(r.i20, r.i24, r.a1b8 ?? []) });
+  }
+  return memo = { base, lang, gold, rolls, rows };
+}
+
+/** rare bases legal for `slot` at hero `level`; weapons are filtered by the Bing1 weapon rule for `skill`; `family` (config_item_base i24) narrows to one line. */
+export function basesFor(slot: string, level: number, skill: Skill, family?: number): Base[] {
+  const out: Base[] = [];
+  for (const [baseId, r] of cat().rows) {
+    if (!r.lib || r.level > level || (family !== undefined && r.family !== family)) continue;
+    const ok = slot === 'mainHand' ? isWeapon(r.slotType, r.family, r.attrs) && SKILL_GROUPS[skill].includes(r.family)
+      : r.slotType === SLOT_TYPE[slot] && (family !== undefined || !/Spirit/.test(r.lib));
+    if (ok) out.push({ baseId, name: r.name, level: r.level });
+  }
+  return out.sort((a, b) => a.level - b.level || a.baseId - b.baseId);
+}
+
+/** a modifier's rolls at the upper end of each range (the dynArgs of a top-rolled item) */
+const tops = (id: number): number[] | null => cat().rolls[id]?.map(r => r[1]) ?? null;
+const attrMods = (r: Row) => r.attrs.map(id => ({ id, dynArgs: tops(id) })).filter((m): m is { id: number; dynArgs: number[] } => !!m.dynArgs);
+
+function currentBase(it: GearItem): number | null {
+  if (typeof it.baseId === 'number' && cat().rows.has(it.baseId)) return it.baseId;
+  const have = new Set(it.affixes.map(a => a.id));
+  const ids = [...cat().rows].filter(([, r]) => r.name === it.label && r.attrs.every(m => have.has(m)));
+  const best = Math.max(...ids.map(([, r]) => r.attrs.length));
+  const top = ids.filter(([, r]) => r.attrs.length === best);
+  return top.length === 1 ? top[0][0] : null;
+}
+
+function toDump(it: GearItem, baseId: number, name: string, level: number): Dump | null {
+  const modifiers: Mods = {};
+  for (const a of it.affixes) {
+    const k = a.list && LIST_KEY[a.list];
+    if (!k) return null;
+    (modifiers[k] ??= []).push({ id: a.id, dynArgs: [...a.dyn] });
+  }
+  return { baseId, baseName: name, itemId: `guide-${baseId}`, level: it.level ?? level, modifiers };
+}
+
+const withMods = (d: Dump, patch: Mods, id: string): Dump => ({ ...d, itemId: id, modifiers: { ...d.modifiers, ...patch } });
+const swap = (slot: string, item: Dump): Change[] => [{ kind: 'gear', slot, item }];
+
+export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
+  const c = cat(), moves: Move[] = [];
+  const slots = new Set<string>();
+  for (const it of s.loadout.gear as GearItem[]) {
+    const slot = it.slot;
+    if (!slot || !(slot === 'mainHand' || SLOT_TYPE[slot])) continue;
+    slots.add(slot);
+    const baseId = currentBase(it), base = baseId === null ? undefined : c.rows.get(baseId);
+    if (baseId === null || !base?.lib) { ctx.notSearched.add(`gear ${slot}: "${it.label}" has no catalog base id; crafts and base upgrades not searched`); continue; }
+    if (slot === 'mainHand' && !SKILL_GROUPS[s.skill].includes(base.family)) {
+      ctx.notSearched.add(`gear mainHand: "${it.label}" is not a ${s.skill} weapon (Bing1 weapon rule); weapon moves not searched`); slots.delete(slot); continue;
+    }
+    const dump = toDump(it, baseId, base.name, s.level);
+    if (!dump) { ctx.notSearched.add(`gear ${slot}: the loadout item carries no affix list; crafts not searched`); continue; }
+
+    // ember crafts: add one affix to a side with room, never a second affix of a family the item has
+    const have = new Set(Object.values(dump.modifiers).flat().map(m => Math.floor(m.id / 100)));
+    const full = new Set<string>();
+    for (const o of craftOptions(library, base.lib, ctx.level)) {
+      if (!VERIFIED.has(o.tierAffixId) || have.has(Math.floor(Number(o.tierAffixId) / 100))) continue;
+      const side = o.side.toLowerCase();
+      if ((dump.modifiers[side]?.length ?? 0) >= SIDE_MAX) { full.add(side); continue; }
+      const dynArgs = tops(Number(o.tierAffixId));
+      if (!dynArgs) continue;
+      const price = ctx.prices.price(o.ember, ctx.level);
+      moves.push({
+        kind: 'craft', label: `Craft ${o.tier} ${o.text.replace(/\n/g, ' / ')} (${side}) on ${slot}`, acquisition: true,
+        costFE: price === null ? null : o.expectedEmbers * price, minLevel: o.requiredLevel,
+        changes: swap(slot, withMods(dump, { [side]: [...(dump.modifiers[side] ?? []), { id: Number(o.tierAffixId), dynArgs }] }, `guide-craft-${slot}-${o.tierAffixId}`)),
+        enabler: ENABLER.test(o.text) || undefined,
+      });
+    }
+    for (const side of full) ctx.notSearched.add(`craft on ${slot}: ${side} side full (${SIDE_MAX}); replacing an affix is not ported`);
+
+    // base upgrade: the best rare base of the same line at the hero level (a white base costs ~nothing, as the Bing1 guide priced it)
+    const best = basesFor(slot, ctx.level, s.skill, base.family).at(-1);
+    if (best && best.level > base.level) {
+      const nb = c.rows.get(best.baseId)!;
+      moves.push({
+        kind: 'gear', label: `Rare base ${best.name} (item level ${best.level}) on ${slot}`, acquisition: true, costFE: 0, minLevel: best.level,
+        changes: [{ kind: 'gear', slot, item: { ...withMods(dump, { baseAttr: attrMods(nb) }, `guide-base-${best.baseId}`), baseId: best.baseId, baseName: best.name } }],
+      });
+    }
+  }
+
+  // uniques: config_item_gold joined to etor by English name; one modifier per group at the highest catalog tier digit [inf]
+  for (const [gid, g] of Object.entries(c.gold)) {
+    const name = c.lang[`item_gold|name|${gid}`], nb = c.rows.get(g.i8), raw = c.base[g.i8];
+    if (!name || !nb || !raw || nb.level > ctx.level) continue;
+    const targets = isWeapon(raw.i20, raw.i24, raw.a1b8 ?? []) ? (SKILL_GROUPS[s.skill].includes(raw.i24) ? ['mainHand'] : []) : TYPE_SLOTS[raw.i20] ?? [];
+    const here = targets.filter(t => slots.has(t));
+    if (!here.length) continue;
+    const mods: { id: number; dynArgs: number[] }[] = [];
+    for (const key of ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168']) for (const grp of Object.keys(g[key] ?? {})) {
+      for (let d = 9; d >= 0; d--) { const dyn = tops(Number(grp) * 10 + d); if (dyn) { mods.push({ id: Number(grp) * 10 + d, dynArgs: dyn }); break; } }
+    }
+    if (!mods.length) continue;
+    const price = ctx.prices.price(name, ctx.level);
+    for (const slot of here) {
+      const item: Dump = { baseId: g.i8, baseName: name, itemId: `guide-unique-${gid}`, level: s.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
+      moves.push({ kind: 'unique', label: `Unique ${name} in ${slot}`, acquisition: true, costFE: price, minLevel: nb.level, changes: swap(slot, item) });
+    }
+  }
+  return moves;
+};

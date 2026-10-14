@@ -44,6 +44,8 @@ export interface EvaluatorOpts {
   fight?: Fight;
   /** dps-debug figure `rollBudget` (default DEFAULT_ROLL_BUDGET) */
   rollBudget?: number;
+  /** settled figures kept in memory, least recently used out first (default DEFAULT_MEMO_ENTRIES) */
+  memoEntries?: number;
   /** while this file exists no job is started (running ones finish). Default: env GUIDE_BUSY_FILE, else the owner's game-capture flag
    *  (only for real workers; stub factories skip it). null disables. */
   busyFile?: string | null;
@@ -103,7 +105,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const queue: { go: () => void; fail: (e: Error) => void }[] = [];
   let closed = false;
   const fight = o.fight ?? DEFAULT_FIGHT, rollBudget = o.rollBudget ?? DEFAULT_ROLL_BUDGET;
-  const memo = createMemo<Evaluated>(pin, o.memoDir);
+  const memo = createMemo<Evaluated>(pin, o.memoDir, o.memoEntries);
 
   const busyFile = o.busyFile === undefined ? (process.env.GUIDE_BUSY_FILE ?? (o.factory ? null : DEFAULT_BUSY_FILE)) : o.busyFile;
   let paused = false, pausedSince = 0, pausedTotal = 0, poll: Promise<void> | undefined, wake: (() => void) | undefined;

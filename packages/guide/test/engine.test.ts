@@ -65,6 +65,20 @@ describe('evaluator (stub workers)', () => {
     await a.run({ a: 1, b: 2 }, ch, { level: 99, skill: 'hoa' });
     expect(s.jobs).toHaveLength(3);
   });
+  it('memo is bounded: settled results leave least-recently-used first; in-flight calls are always shared', async () => {
+    const s = stub(() => fig(200, 100), 5);
+    const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', memoEntries: 2 });
+    const c = (n: number) => [{ kind: 'stub', n }] as unknown as Change[];
+    await Promise.all([ev.run(lo, c(1), ctx), ev.run(lo, c(1), ctx)]);   // in flight together: one job
+    expect(s.jobs).toHaveLength(1);
+    await ev.run(lo, c(2), ctx); await ev.run(lo, c(1), ctx);            // 1 touched: 2 is now the oldest
+    await ev.run(lo, c(3), ctx);                                           // evicts 2
+    expect(s.jobs).toHaveLength(3);
+    await ev.run(lo, c(1), ctx); await ev.run(lo, c(3), ctx);            // both still held
+    expect(s.jobs).toHaveLength(3);
+    await ev.run(lo, c(2), ctx);                                           // recomputed
+    expect(s.jobs).toHaveLength(4);
+  });
   it('disk memo is written for a clean pin and never for +dirty', async () => {
     for (const [pin, files] of [['abc', 1], ['abc+dirty', 0]] as const) {
       const dir = mkdtempSync(join(tmpdir(), 'memo-'));

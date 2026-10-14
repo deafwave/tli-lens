@@ -218,6 +218,20 @@ describe('fix round 1', () => {
     expect(sw.notes![0]).toMatch(/^planned switch: the Ice Shot leg reached /);
     expect((await at(Infinity)).steps.some((st) => st.move.kind === 'switch')).toBe(false);
   });
+  it('the planned switch fires after a stage with no step, and its page zeroes the old points, removes cores, then sets the target page', async () => {
+    const flat: Evaluator = { pin: 'stub', async close() {}, async run(lo) { return { loadout: lo, dropped: [], figure: { life100: 100, life0: 100, kill: 100, partial: [] } }; } };
+    const out = await runIdeal(flat, { ...small, startLevel: 90, endLevel: 95, stepsPerStage: 1, switchAt: Infinity });
+    const sw = out.steps.find((st) => st.move.kind === 'switch')!;
+    expect(sw.level).toBe(95);
+    expect(sw.notes![0]).toBe('planned switch: the Ice Shot leg stalled (no step last stage); the kill average may drop here');
+    const kinds = (sw.move.changes.slice(2) as { kind: string; action?: string; points?: number }[]).map((c) => (c.kind === 'core' ? `core-${c.action}` : c.points === 0 ? 'zero' : 'set'));
+    expect(kinds.join(',')).toMatch(/^(zero,)+(core-remove,)*(set,)+(core-add,)*core-add$/);
+  });
+  it('the planned switch waits (named) while the target page does not fit the level points', async () => {
+    const out = await runIdeal(stubEv(), { ...small, startLevel: 60, endLevel: 60, stepsPerStage: 0, switchAt: 0 });
+    expect(out.steps.some((st) => st.move.kind === 'switch')).toBe(false);
+    expect(out.notSearched.some((n) => /^planned switch waits: the target talent page needs \d+ points, level 60 has \d+$/.test(n))).toBe(true);
+  });
   it('fromExport names a missing hero, items or loadout', () => {
     expect(() => fromExport(exportOf({ hero: undefined }))).toThrow('export has no hero.level');
     expect(() => fromExport(exportOf({ items: undefined }))).toThrow('export has no items list');

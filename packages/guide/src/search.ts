@@ -19,7 +19,7 @@ export function rankable(before: Figure, after: Figure): boolean {
 /** A move's figure is rankable by `rankable`, except a skill switch: a different skill compiles different pieces, so its omissions need not be a subset
  *  of the old skill's; it ranks when it computed, and the step says what differs (`switchNote`). */
 export const rankableMove = (m: Move, before: Figure, after: Figure): boolean => m.kind === 'switch' ? !after.stop : rankable(before, after);
-const switchNote = (b: Figure, a: Figure): string[] => {
+export const switchNote = (b: Figure, a: Figure): string[] => {
   const added = a.partial.filter((p) => !b.partial.includes(p)), removed = b.partial.filter((p) => !a.partial.includes(p));
   return added.length || removed.length ? [`omissions differ across the skill switch: +${added.join(', ') || 'none'} / −${removed.join(', ') || 'none'}`] : [];
 };

@@ -13,7 +13,7 @@ import { targetMoves } from './candidates/target';
 import { talentMoves, talentPointMoves } from './candidates/talents';
 import { traitMoves } from './candidates/traits';
 import { type EtorHistory, type EtorItems, historyBook, snapshotBook } from './pricing';
-import { DEFAULT_KNOBS, type Knobs, newMem, overBudget, path, rankableMove, resolve, spendFree, step } from './search';
+import { DEFAULT_KNOBS, type Knobs, newMem, overBudget, path, rankableMove, resolve, spendFree, step, switchNote } from './search';
 import { ICE_SHOT_INPUTS, idealStartNotes } from './start';
 import { setTalentPoints } from './talentRules';
 import type { Evaluator, Figure, GenCtx, Generator, GuideOut, Move, PriceBook, State, Step } from './types';
@@ -91,7 +91,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     f = (await ev.run(s.loadout, [], { level, skill: s.skill })).figure;
     if (f.stop) { const why = `L${level} ${s.skill} leg cannot be priced yet: ${f.stop}`; mem.notCalculable.add(why); notes.push(why); break; }
     mem.scores.clear(); mem.since = 0;   // scores of the last stage are no upper bound on this one (new level, new points, new prices)
-    if (s.skill === 'iceShot' && (f.kill >= K.switchAt || stalled)) {
+    if (s.skill === 'iceShot' && (f.kill >= K.switchAt || stalled) && !overBudget(K, t0, ev)) {
       const ctx = ctxOf(s), m = switchWithPage(s, ctx);
       ctx.notSearched.forEach((x) => notSearched.add(x));
       const e = m && m.costFE !== null ? await ev.run(s.loadout, m.changes, { level, skill: 'hoa' }) : null;
@@ -102,7 +102,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
         mem.cumFE += m.costFE!;
         const why = f.kill >= K.switchAt ? `the Ice Shot leg reached ${f.kill.toExponential(2)} (switchAt ${K.switchAt.toExponential(0)})` : 'the Ice Shot leg stalled (no step last stage)';
         steps.push({ level, move: m, triggered: [...r.taken, ...sp.taken], before: f, after: sp.figure, cumFE: mem.cumFE,
-          notes: [`planned switch: ${why}; the kill average may drop here`, ...(level < 93 ? ['talent points assumed'] : [])] });
+          notes: [`planned switch: ${why}; the kill average may drop here`, ...switchNote(f, sp.figure), ...(level < 93 ? ['talent points assumed'] : [])] });
         s = sp.state; f = sp.figure;
         onStep?.(snap({ partialRun: true }));
       }
@@ -124,7 +124,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
       onStep?.(snap({ partialRun: true }));
     }
     if (stopped || overBudget(K, t0, ev)) { stopped = true; break; }
-    stalled = K.stepsPerStage > 0 && steps.length === before;
+    if (K.stepsPerStage > 0 && steps.length === before) stalled = true;   // kept until the switch is taken (it may wait for the page to fit)
     // acquisitions nobody sells: what they would add, never ranked
     const ctx = ctxOf(s);
     const cands = unpricedAcquisitions(acq, s, ctx);

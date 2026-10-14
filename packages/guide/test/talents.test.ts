@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { talentMoves } from '../src/candidates/talents';
-import { legalAllocation, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed } from '../src/talentRules';
+import { talentMoves, talentMovesWith } from '../src/candidates/talents';
+import { POINT_OBSERVATIONS, legalAllocation, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed } from '../src/talentRules';
 
 const pin = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
 const l94 = JSON.parse(readFileSync(`${pin}/game/loadout_l94-20261013-160234.json`, 'utf8'));
@@ -22,8 +22,19 @@ const apply = (talents: Record<string, number>, cores: number[], changes: any[])
 const gen = (level = 94) => { const ctx = { prices: {} as any, level, notSearched: new Set<string>() }; return { moves: talentMoves(state, ctx), ctx }; };
 
 describe('talent rules', () => {
-  it('points at level are the sourced anchors', () => {
-    expect(pointsAtLevel(60)).toBe(Math.round(107 * 59 / 99));
+  it('points at observed levels equal the captured totals (recomputed from the captures)', () => {
+    for (const o of POINT_OBSERVATIONS) {
+      const player = JSON.parse(readFileSync(`${pin}/captures/${o.capture}/pre/player.json`, 'utf8'));
+      const t = JSON.parse(readFileSync(`${pin}/captures/${o.capture}/pre/talents.json`, 'utf8'));
+      const total = Object.values(t).flatMap((n: any) => Object.values(n)).reduce((a: number, n: any) => a + (n.IsMapping ? 0 : n.Point), 0);
+      expect(player.cfg.level, o.capture).toBe(o.level);
+      expect(total, o.capture).toBe(o.points);
+      expect(pointsAtLevel(o.level)).toBe(o.points);
+    }
+  });
+  it('unobserved levels use the nearest / lower bounding observed value', () => {
+    expect(pointsAtLevel(94)).toBe(108);
+    expect(pointsAtLevel(60)).toBe(108);
     expect(pointsAtLevel(100)).toBe(108);
   });
   it('accepts the owner L94 allocation, per tree', () => {
@@ -34,12 +45,16 @@ describe('talent rules', () => {
     expect(legalAllocation(34, { 34010100: 3, 34020100: 2, 34030200: 1 })).toBe(false);
     expect(legalAllocation(34, { 34010100: 2, 34020100: 1 })).toBe(false); // prereq 34010100 not at max
   });
-  it('offers any tree in each of 4 slots', () => { expect(treeSlotsAllowed(4001)).toHaveLength(4); expect(treeSlotsAllowed(4001)[0]).toContain(34); });
+  it('offers per slot only the trees observed there (prisms.md:69)', () => {
+    const s = treeSlotsAllowed(4001);
+    expect(s).toEqual([[], [], [51], [12]]);
+  });
 });
 
 describe('talent moves', () => {
-  const { moves, ctx } = gen();
-  it('emits point, core and tree-swap moves, all free reconfigurations', () => {
+  const { moves: base, ctx } = gen();
+  const moves = [...base, ...talentMovesWith({ 2: [34, 10] })(state, { prices: {} as any, level: 94, notSearched: new Set() })];
+  it('emits point, core and tree-swap moves (swap from a synthetic slot map), all free reconfigurations', () => {
     expect(moves.some(m => m.label.startsWith('Swap talent tree'))).toBe(true);
     expect(moves.some(m => m.label.startsWith('Swap core') || m.label.startsWith('Add core'))).toBe(true);
     expect(moves.some(m => m.label.startsWith('Move a point'))).toBe(true);
@@ -62,6 +77,10 @@ describe('talent moves', () => {
     expect(Object.keys(t).some(k => treeOf(+k) === 34)).toBe(false);
     expect(c).not.toContain(34001200);
     expect(Object.keys(t).some(k => treeOf(+k) === 10)).toBe(true);
+  });
+  it('with the on-disk slot evidence, trees without an observed slot are not swapped and are listed', () => {
+    expect(base.some(m => m.label.startsWith('Swap talent tree'))).toBe(false);
+    expect([...ctx.notSearched].some(x => x.startsWith('tree swaps for tree 34'))).toBe(true);
   });
   it('lists the unported rules, inverse images included', () => {
     expect([...ctx.notSearched].some(x => x.startsWith('inverse images'))).toBe(true);

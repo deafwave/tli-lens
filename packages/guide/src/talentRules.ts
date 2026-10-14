@@ -28,16 +28,31 @@ export const treeCores = (tree: number) => [...load().nodes.values()].filter(n =
 export const coreSet = (core: number) => Math.floor(core / 1e4) % 10;
 export const nodeRow = (id: number) => load().nodes.get(id);
 
-/** Talent points at a hero level. UNSOURCED beyond the owner's 108 points at player level 93 (LADDER.md L13e);
- *  below 93 the tli-lens Bing guide's prior 107*(L-1)/99 (assumed). See docs/talent-rules.md. */
-export function pointsAtLevel(level: number): number {
-  return level >= 93 ? 108 : Math.round(107 * (level - 1) / 99);
-}
+/** Observed (player level, talent points spent) pairs: captures/<id>/pre/player.json cfg.level + pre/talents.json (sum of Point, copies excluded).
+ *  Spent points are a lower bound on the budget. No level -> points table exists in the catalog or the Lua walks (re/lua strings hold type names only). */
+export const POINT_OBSERVATIONS = [
+  { level: 93, points: 108, capture: 'L100.state-20261013-165251' },
+  { level: 96, points: 108, capture: 'OTHERCHAR-L105.state-20261013-210519' },
+] as const;
 
-/** Trees allowed per slot. 4 slots (every loadout in game/ holds 4 trees); no per-slot restriction is in the catalog,
- *  so every hero tree is allowed in every slot (inferred; restriction rule not found: reported in notSearched). */
-export function treeSlotsAllowed(_heroId: number): number[][] {
-  return [0, 1, 2, 3].map(() => [...load().trees]);
+/** Exact at an observed level; between observed levels the lower bounding value; outside the range the nearest observed value (an assumption). */
+export function pointsAtLevel(level: number): number {
+  const o = POINT_OBSERVATIONS;
+  const exact = o.find(x => x.level === level);
+  if (exact) return exact.points;
+  const lo = o.filter(x => x.level < level).at(-1), hi = o.find(x => x.level > level);
+  if (lo && hi) return Math.min(lo.points, hi.points);
+  return (lo ?? hi)!.points;
+}
+export const pointsOutsideObserved = (level: number) => level < POINT_OBSERVATIONS[0].level || level > POINT_OBSERVATIONS.at(-1)!.level;
+
+/** Slot of a tree seen on disk: docs say "tree 51 = 2, tree 12 = 3" (re/evidence/prisms.md:69, the skillTree record Index). No loadout or
+ *  capture records the slot of any other tree. */
+export const OBSERVED_SLOTS: Record<number, number[]> = { 2: [51], 3: [12] };
+
+/** Trees allowed per slot (4 slots, 0..3): only trees observed in that slot. Every other tree/slot pair is not offered. */
+export function treeSlotsAllowed(_heroId: number, observed: Record<number, number[]> = OBSERVED_SLOTS): number[][] {
+  return [0, 1, 2, 3].map(s => [...(observed[s] ?? [])]);
 }
 
 export const allTrees = () => [...load().trees];

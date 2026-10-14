@@ -1,6 +1,6 @@
 /** Talent, core-talent and inverse-image candidates. All reconfigurations (acquisition false, 0 FE). Rules: docs/talent-rules.md. */
 import type { Change, Generator, Move } from '../types';
-import { allTrees, coreSet, legalAllocation, nodeRow, pointsAtLevel, treeCores, treeNodes, treeOf } from '../talentRules';
+import { OBSERVED_SLOTS, coreSet, legalAllocation, nodeRow, pointsAtLevel, pointsOutsideObserved, treeCores, treeNodes, treeOf, treeSlotsAllowed } from '../talentRules';
 
 type Pts = Record<number, number>;
 
@@ -30,7 +30,7 @@ function fill(tree: number, total: number): Pts {
 }
 const setPts = (node: number, points: number): Change => ({ kind: 'talent', node, points });
 
-export const talentMoves: Generator = (s, ctx) => {
+export const talentMovesWith = (observed: Record<number, number[]>): Generator => (s, ctx) => {
   const l = s.loadout as { talents?: Pts; coreTalents?: number[] };
   const talents: Pts = Object.fromEntries(Object.entries(l.talents ?? {}).map(([k, v]) => [+k, v]));
   const cores = l.coreTalents ?? [];
@@ -40,6 +40,7 @@ export const talentMoves: Generator = (s, ctx) => {
     if (legalAll(next, nextCores)) out.push({ kind: changes.some(c => c.kind === 'core') && !changes.some(c => c.kind === 'talent') ? 'core' : 'talent', label, acquisition: false, costFE: 0, minLevel: 1, changes, ...(enabler ? { enabler } : {}) });
   };
   const used = [...byTree(talents).keys()];
+  const slots = treeSlotsAllowed(0, observed);
 
   // points: add one, remove one, shift one (budget full)
   const nodes = used.flatMap(treeNodes);
@@ -66,7 +67,9 @@ export const talentMoves: Generator = (s, ctx) => {
   for (const t of used) {
     const tp = byTree(talents).get(t)!, total = sum(tp), gone = cores.filter(c => treeOf(c) === t);
     const rest = Object.fromEntries(Object.entries(talents).filter(([k]) => treeOf(+k) !== t)) as Pts;
-    for (const u of allTrees()) {
+    const slot = slots.findIndex(a => a.includes(t));
+    if (slot < 0) { ctx.notSearched.add(`tree swaps for tree ${t}: its slot is not observed on disk`); continue; }
+    for (const u of slots[slot]) {
       if (used.includes(u)) continue;
       const filled = fill(u, total);
       push(`Swap talent tree ${t} for tree ${u}`,
@@ -77,8 +80,10 @@ export const talentMoves: Generator = (s, ctx) => {
 
   // inverse images: dps-debug's what-if has no change that places or removes one
   ctx.notSearched.add('inverse images: no dps-debug what-if change kind places an Inverse Image (the talent change keeps an existing one; the item is server-resolved, prisms.md (c)); none generated');
-  ctx.notSearched.add('talent points per level: no game-config source found; owner anchor 108 at level 93, prior 107*(L-1)/99 below (docs/talent-rules.md)');
-  ctx.notSearched.add('tree slot restrictions per slot: not found in the catalog; every tree is offered in every slot');
+  if (pointsOutsideObserved(ctx.level)) ctx.notSearched.add(`talent points at level ${ctx.level}: no level -> points table exists; the nearest observed value (${budget}) is used, observed only at levels 93-96 (docs/talent-rules.md)`);
+  ctx.notSearched.add('tree/slot pairs not observed on disk (only tree 51 in slot 2 and tree 12 in slot 3 are recorded, prisms.md:69): not offered, so tree swaps beyond those slots are not generated');
   ctx.notSearched.add('core talent limits (count per build): not found; one per (tree, set) assumed');
   return out;
 };
+
+export const talentMoves: Generator = talentMovesWith(OBSERVED_SLOTS);

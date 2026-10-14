@@ -171,7 +171,7 @@ describe('path', () => {
 });
 
 describe('lazy greedy edge cases', () => {
-  test.each([1, 8])('a candidate whose score rises after another move is taken, not left stale (parallelism %i)', async (par) => {
+  test.each([1, 8])('a synergy move is taken once its partner is owned (parallelism %i; not the retry path)', async (par) => {
     // "S" is worth +1% alone but +50% once "A" is owned (synergy, not flagged enabler)
     const { ev } = stub(par);
     const wrapped: Evaluator = {
@@ -202,6 +202,35 @@ test('a round evaluates unseen candidates at the parallelism', async () => {
   const ms = Array.from({ length: 40 }, (_, i) => mv(`+${i + 1}%`));
   await step(state(), base, ev, [fixed(...ms)], [], ctx(), { ...K, topK: 1 });
   expect(peak()).toBeGreaterThanOrEqual(8);
+});
+
+describe('retry after a null lazy pass', () => {
+  // S is harmful alone, x3 once A is owned. Round 2 at width 1 evaluates only N (unseen, +Inf); N's negative score is above S's stale one, so S is
+  // skipped, the lazy pass finds nothing, and step() clears the scores and retries. At width 8 S is in the first batch, so no retry is needed.
+  test.each([[1, 1], [8, 0]])('parallelism %i: S is found; retry runs %i time(s)', async (par, retries) => {
+    const base_ = stub(par).ev;
+    let sEvals = 0;
+    const ev: Evaluator = { ...base_, async run(l, c, x) {
+      const r = await base_.run(l, c, x);
+      const ls = (r.loadout as L).labels, f = figureOf(ls);
+      if (ls.includes('S')) { sEvals++; f.kill *= ls.includes('A') ? 3 : 0.5; }
+      if (ls.includes('N')) f.kill *= 0.99;
+      return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+    } };
+    const gen: Generator = (s) => {
+      const ls = (s.loadout as L).labels;
+      return [['A', '+10%'], ['S', '+0%'], ...(ls.includes('A') ? [['N', '+0%']] : [])]
+        .filter(([n]) => !ls.includes(n)).map(([n, b]) => mv(n, { changes: [ch(n), ch(b)] }));
+    };
+    const k = { ...K, topK: 1, refreshEvery: 100 }, mem = newMem();
+    let clears = 0; const clear = mem.scores.clear.bind(mem.scores); mem.scores.clear = () => { clears++; clear(); };
+    const s1 = await step(state(), base, ev, [gen], [], ctx(), k, mem);
+    expect(s1!.step.move.label).toBe('A');
+    const s2 = await step(s1!.state, s1!.step.after, ev, [gen], [], ctx(), k, mem);
+    expect(s2!.step.move.label).toBe('S');
+    expect(clears).toBe(retries);
+    expect(sEvals).toBeGreaterThan(0);
+  });
 });
 
 describe('batch size does not change the path', () => {

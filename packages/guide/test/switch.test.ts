@@ -1,0 +1,57 @@
+import { describe, expect, it } from 'vitest';
+import { basesFor } from '../src/candidates/gear';
+import { supportsFor } from '../src/candidates/gems';
+import { switchMoves } from '../src/candidates/switch';
+import type { Skill } from '../src/types';
+import { GROUND, L100, L94, applyAll, fakePrices, loadout } from './apply';
+
+const l94 = loadout(L94);
+const target = loadout('re/evidence/loadout_probuild-hanshansi-bing.json').skills as { sid: number; name: string; place: { kind: string; ownerKind?: string; ownerSlot?: number } }[];
+const targetSupports = target.filter(g => g.place.kind === 'support' && g.place.ownerKind === 'active' && g.place.ownerSlot === 0);
+const gen = (skill: Skill, level: number, prices: Record<string, number> = {}, l = l94) => {
+  const notSearched = new Set<string>();
+  return { moves: switchMoves({ loadout: l, owned: [], fe: 0, level, skill }, { prices: fakePrices(prices), level, notSearched }), notSearched };
+};
+const all = Object.fromEntries(['Hammer of Ash', ...targetSupports.map(g => g.name)].map((n, i) => [n, i + 1]));
+
+describe('switchMoves', () => {
+  it('Ice Shot offers exactly one acquisition switch to hoa; the reverse (a hoa state) is never offered', () => {
+    const { moves } = gen('iceShot', 94, all);
+    expect(moves).toHaveLength(1);
+    expect(moves[0]).toMatchObject({ kind: 'switch', skill: 'hoa', acquisition: true, enabler: true });
+    expect(gen('hoa', 100, all, loadout(L100)).moves).toEqual([]);
+  });
+  it('weapon is a maul base at the hero level; the level gate is that base', () => {
+    const { moves } = gen('iceShot', 94, all), w = moves[0].changes[0] as { kind: string; slot: string; item: { baseId: number; level: number } };
+    expect([w.kind, w.slot]).toEqual(['gear', 'mainHand']);
+    expect(basesFor('mainHand', 94, 'hoa').map(b => b.baseId)).toContain(w.item.baseId);
+    expect(moves[0].minLevel).toBe(basesFor('mainHand', 94, 'hoa').at(-1)!.level);
+    const low = gen('iceShot', 40, all);
+    expect(low.moves).toHaveLength(basesFor('mainHand', 40, 'hoa').length ? 1 : 0);
+    expect(low.moves.every(m => m.minLevel <= 40)).toBe(true);
+  });
+  it('costs the sum of the skill and support prices by name; any missing price makes it unpriced (null)', () => {
+    expect(gen('iceShot', 94, all).moves[0].costFE).toBe(Object.values(all).reduce((a, b) => a + b, 0));
+    const { Steamroll: _s, ...missing } = all;
+    expect(gen('iceShot', 94, missing).moves[0].costFE).toBeNull();
+  });
+  it('supports come from the target build and every one compiles on Hammer of Ash (SUP1)', () => {
+    const { moves, notSearched } = gen('iceShot', 94, all);
+    const multi = moves[0].changes[1] as { kind: string; changes: { kind: string; action: string; gem?: { sid: number } }[] };
+    expect(multi.kind).toBe('multi');
+    expect(multi.changes.some(c => c.kind === 'gear')).toBe(false);   // dps-debug multi would turn a gear entry into a removal
+    const got = multi.changes.filter(c => c.kind === 'support').map(c => c.gem!.sid);
+    const ok = new Set(supportsFor('hoa').map(s => s.sid));
+    expect(got.sort()).toEqual(targetSupports.map(g => g.sid).filter(s => ok.has(s)).sort());
+    expect([...notSearched].some(n => /does not compile/.test(n))).toBe(targetSupports.some(g => !ok.has(g.sid)));
+  });
+  it('the change list applies through dps-debug: maul in the main hand, Hammer of Ash in active slot 0 with the target supports', () => {
+    const m = gen('iceShot', 94, all).moves[0], out = applyAll(l94, m, GROUND.iceShot);
+    const w = m.changes[0] as { item: { baseId: number } };
+    expect((out.gear as { slot: string; baseId: number }[]).find(g => g.slot === 'mainHand')!.baseId).toBe(w.item.baseId);
+    const sk = out.skills as { sid: number; place: { kind: string; slot: number; ownerKind?: string; ownerSlot?: number } }[];
+    expect(sk.find(g => g.place.kind === 'active' && g.place.slot === 0)!.sid).toBe(1110);
+    expect(sk.filter(g => g.place.kind === 'support' && g.place.ownerKind === 'active' && g.place.ownerSlot === 0).map(g => g.sid).sort())
+      .toEqual(targetSupports.map(g => g.sid).sort());
+  });
+});

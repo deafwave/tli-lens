@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyChanges, openCatalog } from '@dps/guide/figure';
 import { pinRoot, table } from '../pin';
 import { priceOfBase, priceOfGold } from '../priceOf';
 import { slotsOfBase } from './gear';
@@ -43,15 +44,35 @@ function baseOf(it: TGear): number | null {
   return top.length === 1 ? Number(top[0]) : null;
 }
 
+let cat: ReturnType<typeof openCatalog> | undefined;
+const applied = new Map<string, string | null>();
+/** the error dps-debug's applyChanges raises for these changes on this loadout, null when they apply (memoised: a gear apply compiles the item) */
+function applyError(l: Record<string, unknown>, changes: Move["changes"], level: number): string | null {
+  const key = JSON.stringify([l, changes, level]);
+  if (!applied.has(key)) {
+    try { applyChanges(cat ??= openCatalog(join(pinRoot(), 'catalog')), l as never, changes as never, 'hoa', { heroLevel: level }); applied.set(key, null); }
+    catch (e) { applied.set(key, (e as Error).message); }
+  }
+  return applied.get(key)!;
+}
+
+const GOLD_KEYS = ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168'];
 const sig = (a: Aff[]) => JSON.stringify(a.map(x => [x.id, x.dyn]).sort());
 
 export const targetMoves: Generator = (s, ctx) => {
   if (s.skill !== 'hoa') return [];
-  const ns = ctx.notSearched, t = loadTarget(), l = s.loadout as Record<string, any>, moves: Move[] = [];   // eslint-disable-line @typescript-eslint/no-explicit-any
+  const ns = ctx.notSearched, t = loadTarget(), l = s.loadout as Record<string, any>;   // eslint-disable-line @typescript-eslint/no-explicit-any
   ns.add("target slates: the target data holds each slate's talents and influence arrays but no shape or board slot, which `slate place` needs; none generated");
   if (t.heroMemories.length) ns.add('target hero memories: dps-debug has no what-if change for them; not offered');
   if (t.vorax.length) ns.add('target vorax limbs: dps-debug has no what-if change for them; not offered');
+  ns.add('target kismets appear once their pact is equipped in that slot');
   const mk = (m: Omit<Move, 'acquisition' | 'enabler' | 'minLevel'> & { minLevel?: number }): Move => ({ acquisition: true, enabler: true, minLevel: 0, ...m });
+  const out: Move[] = [];
+  /** keep a move only if dps-debug applies it to this loadout */
+  const keep = (m: Move, piece: string) => {
+    const err = applyError(l, m.changes, ctx.level);
+    if (err) ns.add(`target ${piece}: ${err}`); else out.push(m);
+  };
 
   // gear: the slot the state already wears an item of that type in
   const held = new Map<string, Aff[]>((l.gear ?? []).map((g: { slot: string; affixes: Aff[] }) => [g.slot, g.affixes]));
@@ -65,21 +86,24 @@ export const targetMoves: Generator = (s, ctx) => {
     if (held.has(slot) && sig(held.get(slot)!) === sig(it.affixes)) continue;
     const attrs = new Set<number>(base[baseId].a1b8 ?? []), modifiers: Record<string, { id: number; dynArgs: number[] }[]> = {};
     for (const a of it.affixes) (modifiers[attrs.has(a.id) ? 'baseAttr' : sideOf(a.id) ?? 'fixed'] ??= []).push({ id: a.id, dynArgs: [...a.dyn] });
-    const gid = Object.keys(gold).find(g => gold[g].i8 === baseId && lang[`item_gold|name|${g}`] === it.label);
-    const price = gid ? priceOfGold(ctx.prices, Number(gid), ctx.level).fe : priceOfBase(ctx.prices, baseId, ctx.level).fe;
-    moves.push(mk({ kind: 'gear', label: `Target: ${it.label} in ${slot}`, costFE: price, minLevel: level,
-      changes: [{ kind: 'gear', slot, item: { baseId, baseName: it.label, itemId: `guide-target-${baseId}`, level, modifiers } }] }));
+    // a legendary: a gold item on this base whose modifier groups the item carries (its label is the base's name, not the legendary's)
+    const groups = new Set(it.affixes.map(a => Math.floor(a.id / 10)));
+    const gid = Object.keys(gold).find(g => gold[g].i8 === baseId && GOLD_KEYS.flatMap(k => Object.keys(gold[g][k] ?? {})).every(x => groups.has(Number(x))) && GOLD_KEYS.some(k => Object.keys(gold[g][k] ?? {}).length));
+    const cost = gid ? { costFE: priceOfGold(ctx.prices, Number(gid), ctx.level).fe } : { costFE: null, costNote: 'rare: its affixes have no market price' };
+    keep(mk({ kind: 'gear', label: `Target: ${it.label} in ${slot}`, ...cost, minLevel: level,
+      changes: [{ kind: 'gear', slot, item: { baseId, baseName: it.label, itemId: `guide-target-${baseId}`, level, modifiers } }] }), it.label);
   }
 
   // pacts: not on the market
   const pacts = (l.pacts ?? []) as { servantId: number; slot?: number; rank: number }[];
   for (const p of t.pacts) {
     if (pacts.some(x => x.servantId === p.servantId && x.slot === p.slot && x.rank === p.rank)) continue;
+    if (pacts.some(x => x.servantId === p.servantId && x.slot !== p.slot)) continue;   // already held in another slot: no duplicate servant
     const occupant = pacts.find(x => x.slot === p.slot);
     const name = lang[`servant|name|${p.servantId}`] ?? String(p.servantId);
-    moves.push(mk({ kind: 'pact', label: `Target: ${name} (rank ${p.rank}) in pact slot ${p.slot}`, costFE: null, market: 'not-on-market',
+    keep(mk({ kind: 'pact', label: `Target: ${name} (rank ${p.rank}) in pact slot ${p.slot}`, costFE: null, market: 'not-on-market',
       changes: [{ kind: 'multi', changes: [...(occupant ? [{ kind: 'pact', action: 'remove', servantId: occupant.servantId } as const] : []),
-        { kind: 'pact', action: 'equip', servantId: p.servantId, slot: p.slot, rank: p.rank, promotionLevels: p.promotionLevels, contractKeys: t.contractKeys.filter(k => Math.floor(k / 100) === p.slot) }] }] }));
+        { kind: 'pact', action: 'equip', servantId: p.servantId, slot: p.slot, rank: p.rank, promotionLevels: p.promotionLevels, contractKeys: t.contractKeys.filter(k => Math.floor(k / 100) === p.slot) }] }] }), name);
   }
 
   // kismets: socketed on the point of their pact's slot, once that pact is held
@@ -94,7 +118,7 @@ export const targetMoves: Generator = (s, ctx) => {
     const baseId = tat.find(([, r]) => r.Modifier?.[0] === k.modifierId)?.[0];
     const name = baseId ? lang[`item_base|name|${baseId}`] : undefined;
     const change: Change = { kind: 'kismet', action: at.has(point) ? 'replace' : 'socket', point, modifierId: k.modifierId, rolls: k.rolls };
-    moves.push(mk({ kind: 'kismet', label: `Target: ${name ?? k.modifierId} on contract point ${point}`, costFE: baseId ? priceOfBase(ctx.prices, Number(baseId), ctx.level).fe : null, changes: [change] }));
+    keep(mk({ kind: 'kismet', label: `Target: ${name ?? k.modifierId} on contract point ${point}`, costFE: baseId ? priceOfBase(ctx.prices, Number(baseId), ctx.level).fe : null, changes: [change] }), String(name ?? k.modifierId));
   }
-  return moves;
+  return out;
 };

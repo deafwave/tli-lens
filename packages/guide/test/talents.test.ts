@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { talentMoves } from '../src/candidates/talents';
-import { POINT_OBSERVATIONS, legalAllocation, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed } from '../src/talentRules';
+import { talentMoves, talentMovesWith } from '../src/candidates/talents';
+import { POINT_OBSERVATIONS, copiesOf, legalAllocation, nodeRow, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed, violations } from '../src/talentRules';
 
 const pin = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
 const l94 = JSON.parse(readFileSync(`${pin}/game/loadout_l94-20261013-160234.json`, 'utf8'));
@@ -63,7 +63,7 @@ describe('talent rules', () => {
 
 describe('talent moves', () => {
   const { moves, ctx } = gen();
-  it('emits point, core and tree-swap moves , all free reconfigurations', () => {
+  it('emits point, core and tree-swap moves, all free reconfigurations', () => {
     expect(moves.some(m => m.label.startsWith('Swap talent tree'))).toBe(true);
     expect(moves.some(m => m.label.startsWith('Swap core') || m.label.startsWith('Add core'))).toBe(true);
     expect(moves.some(m => m.label.startsWith('Move a point'))).toBe(true);
@@ -73,7 +73,7 @@ describe('talent moves', () => {
     for (const m of moves) {
       const { t, c } = apply(l94.talents, l94.coreTalents, m.changes);
       for (const [tree, p] of tr(t)) expect(legalAllocation(tree, p), m.label).toBe(true);
-      expect(Object.values(t).reduce((a: number, b: any) => a + b, 0), m.label).toBeLessThanOrEqual(Math.max(108, pointsAtLevel(94)));
+      expect(Object.values(t).reduce((a: number, b: any) => a + b, 0), m.label).toBeLessThanOrEqual(pointsAtLevel(94));
       for (const core of c) {
         const need = treeCores(treeOf(core)).find(n => n.id === core)!.need;
         expect([...(tr(t).get(treeOf(core)) ? Object.values(tr(t).get(treeOf(core))!) : [])].reduce((a, b) => a + b, 0), m.label).toBeGreaterThanOrEqual(need);
@@ -113,5 +113,75 @@ describe('talent moves', () => {
       checked++;
     }
     expect(checked).toBeGreaterThanOrEqual(10);
+  });
+
+  const total = (t: Record<string, number>) => Object.values(t).reduce((a, b) => a + b, 0);
+  const run = (loadout: any, level = 94, gen = talentMoves) => gen({ ...state, loadout, level }, { prices: {} as any, level, notSearched: new Set<string>() });
+
+  it('at 107 of 108 points: point adds exist and nothing goes past the budget', () => {
+    const talents = { ...l94.talents }; delete talents['34070400'];
+    expect(total(talents)).toBe(107);
+    const ms = run({ ...l94, talents });
+    const adds = ms.filter(m => m.label.endsWith('+1 point'));
+    expect(adds.length).toBeGreaterThan(0);
+    for (const m of ms) expect(total(apply(talents, l94.coreTalents, m.changes).t), m.label).toBeLessThanOrEqual(108);
+    expect(ms.some(m => m.label.startsWith('Move a point'))).toBe(false);
+  });
+  it('a core is offered at exactly its threshold and not one point below', () => {
+    const t21 = Object.fromEntries(Object.entries(l94.talents).filter(([k]) => k.startsWith('21'))) as Record<string, number>;
+    expect(total(t21)).toBe(24);
+    const cores = (t: Record<string, number>) => run({ ...l94, talents: t, coreTalents: [] }).filter(m => m.kind === 'core').map(m => m.label);
+    expect(cores(t21)).toContain('Add core talent 21001100');
+    expect(cores(t21).some(x => x.includes('21002'))).toBe(false); // set 2 needs 32
+    expect(cores({ ...t21, '21050300': 0 })).toEqual([]);
+  });
+  it('unknown, foreign or malformed nodes are illegal and never throw', () => {
+    expect(legalAllocation(34, { 99999999: 1 })).toBe(false);
+    expect(legalAllocation(34, { 12010100: 1 })).toBe(false);
+    expect(legalAllocation(34, { 34010100: 4 })).toBe(false);
+    expect(legalAllocation(34, { 34010100: NaN })).toBe(false);
+    expect(violations(34, { 99999999: 1, 34010100: 3 })).toEqual([99999999]);
+    expect(nodeRow(99999999)).toBeUndefined();
+    const ms = run({ ...l94, coreTalents: [...l94.coreTalents, 99999999] });
+    expect(ms.length).toBeGreaterThan(0);
+  });
+  it('shifts are bounded by maxShifts and the selection is deterministic', () => {
+    const shifts = (n: number) => run(l94, 94, talentMovesWith({ maxShifts: n })).filter(m => m.label.startsWith('Move a point')).map(m => m.label);
+    expect(shifts(60).length).toBe(60);
+    expect(shifts(5)).toHaveLength(5);
+    expect(shifts(5)).toEqual(shifts(5));
+    expect(shifts(60).slice(0, 5)).toEqual(shifts(5));
+    expect(shifts(1000).length).toBeGreaterThan(60);
+  });
+  const withCopies = ['loadout_l104-20261013-205555.json', 'loadout_probuild-hanshansi-bing-20261013-040710.json'];
+  it('a real loadout with Inverse Image copies still gets moves, each touched tree gains no rule break', () => {
+    for (const f of withCopies) {
+      const l = JSON.parse(readFileSync(`${pin}/game/${f}`, 'utf8'));
+      const copies = copiesOf(l.resolvedTalents.talents);
+      expect(copies.length, f).toBeGreaterThan(0);
+      const ms = run(l);
+      expect(ms.length, f).toBeGreaterThan(10);
+      for (const m of ms) {
+        const { t } = apply(l.talents, l.coreTalents, m.changes);
+        for (const tree of new Set(m.changes.map((c: any) => treeOf(c.node)))) {
+          const was = violations(tree, tr(l.talents).get(tree) ?? {}, copies), now = violations(tree, tr(t).get(tree) ?? {}, copies);
+          expect(now.filter(n => !was.includes(n)), `${f} ${m.label}`).toEqual([]);
+        }
+      }
+    }
+  });
+  it('counting Inverse Image copies at their mirrored row satisfies every row threshold on disk; held cores are met with copies counted', () => {
+    let withCopy = 0;
+    for (const f of readdirSync(`${pin}/game`).filter(f => /^loadout_.*json$/.test(f))) {
+      const l = JSON.parse(readFileSync(`${pin}/game/${f}`, 'utf8')), copies = copiesOf(l.resolvedTalents?.talents);
+      withCopy += copies.length ? 1 : 0;
+      for (const [id, p] of Object.entries(l.talents ?? {}) as [string, number][]) {
+        const n = nodeRow(+id)!, above = Object.entries(l.talents).reduce((a, [k, q]: any) => a + (treeOf(+k) === treeOf(+id) && nodeRow(+k)!.row < n.row ? q : 0), 0)
+          + copies.reduce((a, c) => a + (c.tree === treeOf(+id) && c.row < n.row ? c.point : 0), 0);
+        if (p > 0) expect(above, `${f} ${id}`).toBeGreaterThanOrEqual(n.need);
+      }
+      for (const c of (l.coreTalents ?? []).filter((x: number) => nodeRow(x))) expect(total(Object.fromEntries(Object.entries(l.talents).filter(([k]) => treeOf(+k) === treeOf(c)))) + copies.reduce((a, x) => a + (x.tree === treeOf(c) ? x.point : 0), 0), `${f} core ${c}`).toBeGreaterThanOrEqual(nodeRow(c)!.need);
+    }
+    expect(withCopy).toBeGreaterThan(100);
   });
 });

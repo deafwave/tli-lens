@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 export interface TalentRow { id: number; kind: number; max: number; need: number; prereq: number[]; row: number }
 
 const pin = process.env.DPS_DEBUG_PIN ?? fileURLToPath(new URL('../../../../dps-debug/.worktrees/guide-pin', import.meta.url));
-let cache: { nodes: Map<number, TalentRow>; trees: number[] } | undefined;
+let cache: { nodes: Map<number, TalentRow>; trees: number[]; plain: Map<number, TalentRow[]>; cores: Map<number, TalentRow[]> } | undefined;
 
 function load() {
   if (cache) return cache;
@@ -18,13 +18,18 @@ function load() {
     nodes.set(r.i0, { id: r.i0, kind: r.i4, max: r.ic, need: r.i10, prereq: (r.a30 as number[]).filter(x => x), row: r.a40[1] });
     trees.add(tree);
   }
-  return (cache = { nodes, trees: [...trees].sort((a, b) => a - b) });
+  const plain = new Map<number, TalentRow[]>(), cores = new Map<number, TalentRow[]>();
+  for (const n of [...nodes.values()].sort((a, b) => a.id - b.id)) {
+    const m = n.kind === 2 ? cores : plain, t = treeOf(n.id);
+    m.set(t, [...(m.get(t) ?? []), n]);
+  }
+  return (cache = { nodes, trees: [...trees].sort((a, b) => a - b), plain, cores });
 }
 
 export const treeOf = (node: number) => Math.floor(node / 1e6);
-export const treeNodes = (tree: number) => [...load().nodes.values()].filter(n => treeOf(n.id) === tree && n.kind !== 2).sort((a, b) => a.id - b.id);
+export const treeNodes = (tree: number) => load().plain.get(tree) ?? [];
 /** Core talents of a tree: id `{tree}00{set}{n}00`; `need` = points in the tree. */
-export const treeCores = (tree: number) => [...load().nodes.values()].filter(n => treeOf(n.id) === tree && n.kind === 2).sort((a, b) => a.id - b.id);
+export const treeCores = (tree: number) => load().cores.get(tree) ?? [];
 export const coreSet = (core: number) => Math.floor(core / 1e4) % 10;
 export const nodeRow = (id: number) => load().nodes.get(id);
 
@@ -58,14 +63,31 @@ export function treeSlotsAllowed(_heroId: number): number[][] {
 
 export const allTrees = () => [...load().trees];
 
-/** Points of one tree: node -> points. Legal = within max, prerequisites at max, and the node's row threshold met by the points in earlier rows. */
-export function legalAllocation(tree: number, points: Record<number, number>): boolean {
-  const { nodes } = load();
-  const rowPts = (row: number) => Object.entries(points).reduce((s, [id, p]) => s + (nodes.get(+id)!.row < row ? p : 0), 0);
-  for (const [k, p] of Object.entries(points)) {
-    const n = nodes.get(+k);
-    if (!n || n.kind === 2 || treeOf(n.id) !== tree || p < 0 || p > n.max) return false;
-    if (p > 0 && (n.prereq.some(q => (points[q] ?? 0) < nodes.get(q)!.max) || rowPts(n.row) < n.need)) return false;
+/** An Inverse Image copy: points standing at the mirrored row (x,y)->(6-x,8-y) of its source node (re/evidence/prisms.md (c)). */
+export interface Copy { tree: number; row: number; point: number }
+/** Copies of a loadout's `resolvedTalents.talents`: tag `talent:-<id>@<100+EE>%`, weight = Point x (1 + EE/100) (dps-debug loadout.ts:237-250). */
+export function copiesOf(resolved: readonly (readonly [number, number, string])[] | undefined): Copy[] {
+  const out: Copy[] = [];
+  for (const [id, w, tag] of resolved ?? []) {
+    const m = /^talent:-\d+@(-?\d+)%$/.exec(tag), n = load().nodes.get(id);
+    if (m && n && +m[1] !== 0) out.push({ tree: treeOf(id), row: 8 - n.row, point: Math.round(w / (+m[1] / 100)) });
   }
-  return true;
+  return out;
 }
+
+/** Nodes of `points` (node -> points, one tree) that break a rule: unknown or foreign node, points out of range, a prerequisite below max,
+ *  or fewer than `need` points in EARLIER rows (Inverse Image copies of the tree count at their mirrored row). Never throws. */
+export function violations(tree: number, points: Record<number, number>, copies: readonly Copy[] = []): number[] {
+  const { nodes } = load(), bad: number[] = [];
+  const known = (k: string) => { const n = nodes.get(+k); return n && n.kind !== 2 && treeOf(n.id) === tree ? n : undefined; };
+  const above = (row: number) =>
+    Object.entries(points).reduce((s, [k, p]) => s + (known(k) && nodes.get(+k)!.row < row ? p : 0), 0)
+    + copies.reduce((s, c) => s + (c.tree === tree && c.row < row ? c.point : 0), 0);
+  for (const [k, p] of Object.entries(points)) {
+    const n = known(k);
+    if (!n || !(p >= 0) || p > n.max) { bad.push(+k); continue; }
+    if (p > 0 && (n.prereq.some(q => (points[q] ?? 0) < (nodes.get(q)?.max ?? Infinity)) || above(n.row) < n.need)) bad.push(n.id);
+  }
+  return bad;
+}
+export const legalAllocation = (tree: number, points: Record<number, number>, copies: readonly Copy[] = []) => violations(tree, points, copies).length === 0;

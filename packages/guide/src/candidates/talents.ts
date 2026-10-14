@@ -1,21 +1,18 @@
 /** Talent, core-talent and inverse-image candidates. All reconfigurations (acquisition false, 0 FE). Rules: docs/talent-rules.md. */
-import type { Change, Generator, Move } from '../types';
-import { allTrees, coreSet, isGodTree, legalAllocation, nodeRow, pointsAtLevel, pointsOutsideObserved, treeCores, treeNodes, treeOf } from '../talentRules';
+import type { Change, Generator, Move, MoveKind } from '../types';
+import { type Copy, coreSet, copiesOf, nodeRow, pointsAtLevel, pointsOutsideObserved, treeCores, treeNodes, treeOf, treeSlotsAllowed, violations } from '../talentRules';
 
 type Pts = Record<number, number>;
+export interface TalentOpts { /** cap on "move a point" candidates (docs/talent-rules.md, Shift selection) */ maxShifts: number }
 
-const byTree = (t: Pts) => {
-  const out = new Map<number, Pts>();
-  for (const [k, p] of Object.entries(t)) if (p > 0) { const tr = treeOf(+k); out.set(tr, { ...out.get(tr), [+k]: p }); }
-  return out;
-};
 const sum = (t: Pts) => Object.values(t).reduce((a, b) => a + b, 0);
-/** every tree legal and every held core unlocked by the points in its tree */
-function legalAll(t: Pts, cores: number[]): boolean {
-  const trees = byTree(t);
-  for (const [tr, p] of trees) if (!legalAllocation(tr, p)) return false;
-  return cores.every(c => sum(trees.get(treeOf(c)) ?? {}) >= nodeRow(c)!.need);
-}
+const ofTree = (t: Pts, tr: number): Pts => Object.fromEntries(Object.entries(t).filter(([k, p]) => p > 0 && treeOf(+k) === tr));
+const setPts = (node: number, points: number): Change => ({ kind: 'talent', node, points });
+/** Rule breaks of one tree: node violations ('n<id>') and held cores without enough points in the tree ('c<id>'). */
+const broken = (tr: number, t: Pts, cores: number[], copies: Copy[]) => {
+  const own = ofTree(t, tr), total = sum(own) + copies.reduce((a, c) => a + (c.tree === tr ? c.point : 0), 0);
+  return new Set([...violations(tr, own, copies).map(n => `n${n}`), ...cores.filter(c => treeOf(c) === tr && total < (nodeRow(c)?.need ?? Infinity)).map(c => `c${c}`)]);
+};
 /** fill `tree` with `total` points in node order (rows ascend with id), legal at every step */
 function fill(tree: number, total: number): Pts {
   const pts: Pts = {};
@@ -23,53 +20,75 @@ function fill(tree: number, total: number): Pts {
     moved = false;
     for (const n of treeNodes(tree)) {
       const give = Math.min(n.max - (pts[n.id] ?? 0), left);
-      if (give > 0 && legalAllocation(tree, { ...pts, [n.id]: (pts[n.id] ?? 0) + give })) { pts[n.id] = (pts[n.id] ?? 0) + give; left -= give; moved = true; }
+      if (give > 0 && violations(tree, { ...pts, [n.id]: (pts[n.id] ?? 0) + give }).length === 0) { pts[n.id] = (pts[n.id] ?? 0) + give; left -= give; moved = true; }
     }
   }
   return pts;
 }
-const setPts = (node: number, points: number): Change => ({ kind: 'talent', node, points });
 
-export const talentMoves: Generator = (s, ctx) => {
-  const l = s.loadout as { talents?: Pts; coreTalents?: number[] };
+export const talentMovesWith = (opts: TalentOpts): Generator => (s, ctx) => {
+  const l = s.loadout as { talents?: Pts; coreTalents?: number[]; resolvedTalents?: { talents?: [number, number, string][] } };
   const talents: Pts = Object.fromEntries(Object.entries(l.talents ?? {}).map(([k, v]) => [+k, v]));
   const cores = l.coreTalents ?? [];
+  const copies = copiesOf(l.resolvedTalents?.talents);
   const budget = pointsAtLevel(ctx.level), spent = sum(talents);
   const out: Move[] = [];
-  const push = (label: string, changes: Change[], next: Pts, nextCores: number[], enabler = false) => {
-    if (legalAll(next, nextCores)) out.push({ kind: changes.some(c => c.kind === 'core') && !changes.some(c => c.kind === 'talent') ? 'core' : 'talent', label, acquisition: false, costFE: 0, minLevel: 1, changes, ...(enabler ? { enabler } : {}) });
+  const before = new Map<number, Set<string>>();
+  const was = (tr: number) => before.get(tr) ?? (before.set(tr, broken(tr, talents, cores, copies)), before.get(tr)!);
+  /** a move is legal when no tree it touches gains a rule break; breaks the loadout already had (a state the reading cannot explain) are grandfathered */
+  const ok = (changes: Change[], next: Pts, nextCores: number[]) =>
+    [...new Set(changes.map(c => treeOf(c.kind === 'talent' || c.kind === 'core' ? c.node : 0)))]
+      .every(tr => [...broken(tr, next, nextCores, copies)].every(v => was(tr).has(v)));
+  const push = (kind: MoveKind, label: string, changes: Change[], next: Pts, nextCores: number[], enabler = false) => {
+    if (ok(changes, next, nextCores)) out.push({ kind, label, acquisition: false, costFE: 0, minLevel: 1, changes, ...(enabler ? { enabler } : {}) });
   };
-  const used = [...byTree(talents).keys()];
+  const used = [...new Set(Object.entries(talents).filter(([, p]) => p > 0).map(([k]) => treeOf(+k)))];
+  const inc = (id: number, d: number) => ({ ...talents, [id]: (talents[id] ?? 0) + d });
 
-  // points: add one, remove one, shift one (budget full)
+  // points: +1 (budget left), -1
   const nodes = used.flatMap(treeNodes);
   const adds = nodes.filter(n => (talents[n.id] ?? 0) < n.max);
   const has = nodes.filter(n => (talents[n.id] ?? 0) > 0);
-  const inc = (id: number, d: number) => ({ ...talents, [id]: (talents[id] ?? 0) + d });
-  if (spent < budget) for (const n of adds) push(`Talent ${n.id} +1 point`, [setPts(n.id, (talents[n.id] ?? 0) + 1)], inc(n.id, 1), cores);
-  for (const a of has) {
-    push(`Talent ${a.id} -1 point`, [setPts(a.id, talents[a.id] - 1)], inc(a.id, -1), cores);
-    if (spent >= budget) for (const b of adds) if (b.id !== a.id)
-      push(`Move a point from talent ${a.id} to ${b.id}`, [setPts(a.id, talents[a.id] - 1), setPts(b.id, (talents[b.id] ?? 0) + 1)], { ...inc(a.id, -1), [b.id]: (talents[b.id] ?? 0) + 1 }, cores);
+  if (spent < budget) for (const n of adds) push('talent', `Talent ${n.id} +1 point`, [setPts(n.id, (talents[n.id] ?? 0) + 1)], inc(n.id, 1), cores);
+  for (const a of has) push('talent', `Talent ${a.id} -1 point`, [setPts(a.id, talents[a.id] - 1)], inc(a.id, -1), cores);
+
+  // shifts (budget full): sources = held nodes whose removal breaks nothing, deepest row first; targets = nodes that accept the point,
+  // same tree first; pairs taken in anti-diagonal order (same-tree class first) until maxShifts, so the best sources and targets both appear
+  if (spent >= budget) {
+    const pairs: { key: number[]; a: number; b: number }[] = [];
+    has.filter(a => ok([setPts(a.id, talents[a.id] - 1)], inc(a.id, -1), cores)).sort((x, y) => y.row - x.row || x.id - y.id).forEach((a, si) => {
+      const minus = inc(a.id, -1), seen = [0, 0];
+      for (const b of [...adds.filter(n => treeOf(n.id) === treeOf(a.id)), ...adds.filter(n => treeOf(n.id) !== treeOf(a.id))]) {
+        if (b.id === a.id || !ok([setPts(a.id, talents[a.id] - 1), setPts(b.id, (talents[b.id] ?? 0) + 1)], { ...minus, [b.id]: (talents[b.id] ?? 0) + 1 }, cores)) continue;
+        const cls = treeOf(b.id) === treeOf(a.id) ? 0 : 1, ti = seen[cls]++;
+        pairs.push({ key: [cls, si + ti, si, ti], a: a.id, b: b.id });
+      }
+    });
+    pairs.sort((x, y) => x.key.reduce((d, k, i) => d || k - y.key[i], 0));
+    for (const { a, b } of pairs.slice(0, opts.maxShifts))
+      out.push({ kind: 'talent', label: `Move a point from talent ${a} to ${b}`, acquisition: false, costFE: 0, minLevel: 1, changes: [setPts(a, talents[a] - 1), setPts(b, (talents[b] ?? 0) + 1)] });
+    if (pairs.length > opts.maxShifts) ctx.notSearched.add(`point shifts beyond the best ${opts.maxShifts} of ${pairs.length} (maxShifts)`);
   }
 
   // core talents: add into a free (tree, set), or swap the held one of that set
   for (const t of used) for (const c of treeCores(t)) {
     if (cores.includes(c.id)) continue;
     const held = cores.find(h => treeOf(h) === t && coreSet(h) === coreSet(c.id));
-    push(held ? `Swap core talent ${held} for ${c.id}` : `Add core talent ${c.id}`,
+    push('core', held ? `Swap core talent ${held} for ${c.id}` : `Add core talent ${c.id}`,
       [...(held ? [{ kind: 'core', node: held, action: 'remove' } as Change] : []), { kind: 'core', node: c.id, action: 'add' }],
       talents, [...cores.filter(h => h !== held), c.id], true);
   }
 
-  // tree swap: drop tree T (points and its cores), fill tree U in node order with T's points (the search re-solves points)
+  // tree swap: drop tree T (points and its cores), fill tree U of the same role (god <-> god, profession <-> profession, not held) in node
+  // order with T's points (the search re-solves points)
+  const [gods, profs] = treeSlotsAllowed(0);
   for (const t of used) {
-    const tp = byTree(talents).get(t)!, total = sum(tp), gone = cores.filter(c => treeOf(c) === t);
+    const tp = ofTree(talents, t), total = sum(tp), gone = cores.filter(c => treeOf(c) === t);
     const rest = Object.fromEntries(Object.entries(talents).filter(([k]) => treeOf(+k) !== t)) as Pts;
-    for (const u of allTrees()) {
-      if (used.includes(u) || isGodTree(u) !== isGodTree(t)) continue;
+    for (const u of gods.includes(t) ? gods : profs) {
+      if (used.includes(u)) continue;
       const filled = fill(u, total);
-      push(`Swap talent tree ${t} for tree ${u}`,
+      push('talent', `Swap talent tree ${t} for tree ${u}`,
         [...Object.keys(tp).map(k => setPts(+k, 0)), ...gone.map(c => ({ kind: 'core', node: c, action: 'remove' }) as Change), ...Object.entries(filled).map(([k, p]) => setPts(+k, p))],
         { ...rest, ...filled }, cores.filter(c => !gone.includes(c)), true);
     }
@@ -83,3 +102,4 @@ export const talentMoves: Generator = (s, ctx) => {
   return out;
 };
 
+export const talentMoves: Generator = talentMovesWith({ maxShifts: 60 });

@@ -24,6 +24,8 @@ export function idealStartNotes(level = START_LEVEL): { state: State; notes: str
 
   // every slot the loadout carries gets the best white base at the start level (armor in the line of the original piece; the weapon by the Bing1 rule), so crafts/upgrades/uniques reach every slot
   const worn = (l.gear as Dict[]).map(g => g as { slot: string; baseId?: number });
+  // the L94 character wore a vorax limb in ring1 (stripped below): ring1 gets a white ring base in the gear list, so crafts and uniques reach both rings
+  if (!worn.some(g => g.slot === 'ring1')) worn.push({ slot: 'ring1', baseId: worn.find(g => g.slot === 'ring2')?.baseId });
   const bases = worn.map(({ slot, baseId }) => {
     const family = slot === 'mainHand' || baseId === undefined ? undefined : familyOf(baseId);
     const b = basesFor(slot, level, 'iceShot', family).at(-1);

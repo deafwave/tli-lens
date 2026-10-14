@@ -39,7 +39,7 @@ describe('idealStart', () => {
   it('is level 60, Ice Shot, with a white drop base (no affixes) in every slot of the L94 loadout', () => {
     expect(s.level).toBe(60); expect(s.skill).toBe('iceShot');
     const gear = s.loadout.gear as { slot: string; baseId: number; level: number; affixes: { list: string }[]; market: string }[];
-    expect(gear.map((g) => g.slot).sort()).toEqual(['belt', 'boots', 'chest', 'gloves', 'helmet', 'mainHand', 'necklace', 'ring2']);
+    expect(gear.map((g) => g.slot).sort()).toEqual(['belt', 'boots', 'chest', 'gloves', 'helmet', 'mainHand', 'necklace', 'ring1', 'ring2']);
     for (const g of gear) {
       expect(slotsOfBase(g.baseId, 'iceShot').slots, g.slot).toContain(g.slot);
       expect(g.level).toBeLessThanOrEqual(60);
@@ -51,6 +51,8 @@ describe('idealStart', () => {
     const ctx = { prices: { season: 's', fetchedAt: 'x', price: () => 0.05 }, level: 60, notSearched: new Set<string>() };
     const slots = new Set(gearMoves(s, ctx).map((m) => (m.changes[0] as { slot?: string }).slot));
     for (const g of s.loadout.gear as { slot: string }[]) expect(slots.has(g.slot), g.slot).toBe(true);
+    expect(slots.has('ring1') && slots.has('ring2')).toBe(true);
+    expect(s.loadout.vorax).toEqual([]);
   });
   it('honours the start level: bases and the talent budget follow it', () => {
     const t = idealStart(70), gear = t.loadout.gear as { level: number }[];

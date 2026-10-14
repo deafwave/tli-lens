@@ -46,13 +46,14 @@ export function pointsAtLevel(level: number): number {
 }
 export const pointsOutsideObserved = (level: number) => level < POINT_OBSERVATIONS[0].level || level > POINT_OBSERVATIONS.at(-1)!.level;
 
-/** Slot of a tree seen on disk: docs say "tree 51 = 2, tree 12 = 3" (re/evidence/prisms.md:69, the skillTree record Index). No loadout or
- *  capture records the slot of any other tree. */
-export const OBSERVED_SLOTS: Record<number, number[]> = { 2: [51], 3: [12] };
-
-/** Trees allowed per slot (4 slots, 0..3): only trees observed in that slot. Every other tree/slot pair is not offered. */
-export function treeSlotsAllowed(_heroId: number, observed: Record<number, number[]> = OBSERVED_SLOTS): number[][] {
-  return [0, 1, 2, 3].map(s => [...(observed[s] ?? [])]);
+/** Tree id = family*10 + k; k = 0 is a God/Goddess tree, k != 0 a profession. Inferred from 9 distinct tree sets over 181 loadouts/captures
+ *  (no counter-example, docs/talent-rules.md): at most one god tree plus up to three distinct professions of any family. */
+export const isGodTree = (tree: number) => tree % 10 === 0;
+/** Slots 0..3 = [god, profession, profession, profession]. Slots 2 (tree 51) and 3 (tree 12) are professions (prisms.md:69); whether the god
+ *  tree sits in slot 0 or 1 is not recorded, the order here is a label only. */
+export function treeSlotsAllowed(_heroId: number): number[][] {
+  const t = load().trees;
+  return [t.filter(isGodTree), t.filter(x => !isGodTree(x)), t.filter(x => !isGodTree(x)), t.filter(x => !isGodTree(x))];
 }
 
 export const allTrees = () => [...load().trees];

@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { talentMoves, talentMovesWith } from '../src/candidates/talents';
+import { talentMoves } from '../src/candidates/talents';
 import { POINT_OBSERVATIONS, legalAllocation, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed } from '../src/talentRules';
 
 const pin = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
@@ -45,16 +45,25 @@ describe('talent rules', () => {
     expect(legalAllocation(34, { 34010100: 3, 34020100: 2, 34030200: 1 })).toBe(false);
     expect(legalAllocation(34, { 34010100: 2, 34020100: 1 })).toBe(false); // prereq 34010100 not at max
   });
-  it('offers per slot only the trees observed there (prisms.md:69)', () => {
+  it('slot rule: one god tree (k=0) slot plus three profession slots', () => {
     const s = treeSlotsAllowed(4001);
-    expect(s).toEqual([[], [], [51], [12]]);
+    expect(s).toHaveLength(4);
+    expect(s[0]).toEqual([10, 20, 30, 40, 50, 60]);
+    expect(s[1]).toContain(34); expect(s[1]).not.toContain(10);
   });
+  it('every tree set on disk follows the rule (<=1 god tree, <=3 professions)', () => {
+    let n = 0;
+    const check = (trees: number[]) => { n++; expect(trees.filter(t => t % 10 === 0).length).toBeLessThanOrEqual(1); expect(trees.filter(t => t % 10 !== 0).length).toBeLessThanOrEqual(3); };
+    for (const f of readdirSync(`${pin}/game`).filter(f => /^loadout_.*json$/.test(f)))
+      check([...tr(JSON.parse(readFileSync(`${pin}/game/${f}`, 'utf8')).talents ?? {}).keys()]);
+    expect(n).toBeGreaterThan(100);
+  });
+
 });
 
 describe('talent moves', () => {
-  const { moves: base, ctx } = gen();
-  const moves = [...base, ...talentMovesWith({ 2: [34, 10] })(state, { prices: {} as any, level: 94, notSearched: new Set() })];
-  it('emits point, core and tree-swap moves (swap from a synthetic slot map), all free reconfigurations', () => {
+  const { moves, ctx } = gen();
+  it('emits point, core and tree-swap moves , all free reconfigurations', () => {
     expect(moves.some(m => m.label.startsWith('Swap talent tree'))).toBe(true);
     expect(moves.some(m => m.label.startsWith('Swap core') || m.label.startsWith('Add core'))).toBe(true);
     expect(moves.some(m => m.label.startsWith('Move a point'))).toBe(true);
@@ -72,15 +81,18 @@ describe('talent moves', () => {
     }
   });
   it('tree swap drops the old tree cores and fills the new tree', () => {
-    const m = moves.find(x => x.label === 'Swap talent tree 34 for tree 10')!;
+    const m = moves.find(x => x.label === 'Swap talent tree 34 for tree 11')!;
     const { t, c } = apply(l94.talents, l94.coreTalents, m.changes);
     expect(Object.keys(t).some(k => treeOf(+k) === 34)).toBe(false);
     expect(c).not.toContain(34001200);
-    expect(Object.keys(t).some(k => treeOf(+k) === 10)).toBe(true);
+    expect(Object.keys(t).some(k => treeOf(+k) === 11)).toBe(true);
   });
-  it('with the on-disk slot evidence, trees without an observed slot are not swapped and are listed', () => {
-    expect(base.some(m => m.label.startsWith('Swap talent tree'))).toBe(false);
-    expect([...ctx.notSearched].some(x => x.startsWith('tree swaps for tree 34'))).toBe(true);
+  it('swaps keep roles: profession for profession, god for god, never a tree already held', () => {
+    const swaps = moves.filter(m => m.label.startsWith('Swap talent tree')).map(m => m.label.match(/tree (\d+) for tree (\d+)/)!.slice(1).map(Number));
+    expect(swaps.length).toBeGreaterThan(0);
+    for (const [t, u] of swaps) { expect(t % 10 === 0).toBe(u % 10 === 0); expect([20, 21, 34, 43]).not.toContain(u); }
+    expect(swaps).toContainEqual([20, 30]);
+    expect(swaps).not.toContainEqual([34, 10]);
   });
   it('lists the unported rules, inverse images included', () => {
     expect([...ctx.notSearched].some(x => x.startsWith('inverse images'))).toBe(true);

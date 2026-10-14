@@ -205,31 +205,52 @@ test('a round evaluates unseen candidates at the parallelism', async () => {
 });
 
 describe('retry after a null lazy pass', () => {
-  // S is harmful alone, x3 once A is owned. Round 2 at width 1 evaluates only N (unseen, +Inf); N's negative score is above S's stale one, so S is
-  // skipped, the lazy pass finds nothing, and step() clears the scores and retries. At width 8 S is in the first batch, so no retry is needed.
-  test.each([[1, 1], [8, 0]])('parallelism %i: S is found; retry runs %i time(s)', async (par, retries) => {
+  // S is harmful alone, x3 once A is owned. In round 2 ten unseen fillers (x0.99) and N (offered only once A is owned) outrank S's stale score
+  // and fill the first batch at both widths, so S stays skipped, the lazy pass returns null, and step() clears the scores and retries.
+  test.each([[1, 1], [8, 1]])('parallelism %i: the retry runs %i time(s) and finds S', async (par, retries) => {
     const base_ = stub(par).ev;
-    let sEvals = 0;
+    let sWithA = 0;
     const ev: Evaluator = { ...base_, async run(l, c, x) {
       const r = await base_.run(l, c, x);
       const ls = (r.loadout as L).labels, f = figureOf(ls);
-      if (ls.includes('S')) { sEvals++; f.kill *= ls.includes('A') ? 3 : 0.5; }
+      if (ls.includes('S')) { f.kill *= ls.includes('A') ? 3 : 0.5; if (ls.includes('A')) sWithA++; }
       if (ls.includes('N')) f.kill *= 0.99;
+      f.kill *= 0.99 ** ls.filter((n) => /^F\d+$/.test(n)).length;
       return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
     } };
     const gen: Generator = (s) => {
       const ls = (s.loadout as L).labels;
-      return [['A', '+10%'], ['S', '+0%'], ...(ls.includes('A') ? [['N', '+0%']] : [])]
+      const fillers = ls.includes('A') ? Array.from({ length: 10 }, (_, i) => `F${i}`) : [];
+      return [['A', '+10%'], ['S', '+0%'], ...(ls.includes('A') ? [['N', '+0%']] : []), ...fillers.map((n) => [n, '+0%'])]
         .filter(([n]) => !ls.includes(n)).map(([n, b]) => mv(n, { changes: [ch(n), ch(b)] }));
     };
     const k = { ...K, topK: 1, refreshEvery: 100 }, mem = newMem();
     let clears = 0; const clear = mem.scores.clear.bind(mem.scores); mem.scores.clear = () => { clears++; clear(); };
     const s1 = await step(state(), base, ev, [gen], [], ctx(), k, mem);
     expect(s1!.step.move.label).toBe('A');
+    expect(sWithA).toBe(0);
     const s2 = await step(s1!.state, s1!.step.after, ev, [gen], [], ctx(), k, mem);
     expect(s2!.step.move.label).toBe('S');
     expect(clears).toBe(retries);
-    expect(sEvals).toBeGreaterThan(0);
+    expect(sWithA).toBe(1);   // S was first priced with A owned only by the retry
+  });
+
+  test('width 8 without fillers: S is in the first batch, no retry needed', async () => {
+    const mem = newMem(); let clears = 0; const clear = mem.scores.clear.bind(mem.scores); mem.scores.clear = () => { clears++; clear(); };
+    const base_ = stub(8).ev;
+    const ev: Evaluator = { ...base_, async run(l, c, x) {
+      const r = await base_.run(l, c, x), ls = (r.loadout as L).labels, f = figureOf(ls);
+      if (ls.includes('S')) f.kill *= ls.includes('A') ? 3 : 0.5;
+      if (ls.includes('N')) f.kill *= 0.99;
+      return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+    } };
+    const gen: Generator = (s) => { const ls = (s.loadout as L).labels;
+      return [['A', '+10%'], ['S', '+0%'], ...(ls.includes('A') ? [['N', '+0%']] : [])].filter(([n]) => !ls.includes(n)).map(([n, b]) => mv(n, { changes: [ch(n), ch(b)] })); };
+    const k = { ...K, topK: 1, refreshEvery: 100 };
+    const s1 = await step(state(), base, ev, [gen], [], ctx(), k, mem);
+    const s2 = await step(s1!.state, s1!.step.after, ev, [gen], [], ctx(), k, mem);
+    expect(s2!.step.move.label).toBe('S');
+    expect(clears).toBe(0);
   });
 });
 

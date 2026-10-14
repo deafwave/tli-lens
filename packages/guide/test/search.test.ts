@@ -156,3 +156,30 @@ describe('path', () => {
     expect(r.steps.map((x) => x.move.label)).toEqual(['switch', '+7%']);
   });
 });
+
+describe('lazy greedy edge cases', () => {
+  test('a candidate whose score rises after another move is taken, not left stale', async () => {
+    // "S" is worth +1% alone but +50% once "A" is owned (synergy, not flagged enabler)
+    const { ev } = stub();
+    const wrapped: Evaluator = {
+      ...ev, async run(l, c, x) {
+        const r = await ev.run(l, c, x);
+        const ls = (r.loadout as L).labels;
+        const f = figureOf(ls);
+        if (ls.includes('S') && ls.includes('A')) f.kill *= 1.5;
+        return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+      },
+    };
+    const defs: [string, string, number][] = [['X', '+10%', 1], ['A', '+5%', 1], ['S', '+1%', 2]];
+    const gen2: Generator = (s) => defs.filter(([n]) => !(s.loadout as L).labels.includes(n)).map(([n, b, c]) => mv(n, { costFE: c, changes: [ch(n), ch(b)] }));
+    const r = await path(state(), wrapped, [gen2], [], () => ctx(), { ...K, refreshEvery: 100 });
+    expect(r.steps.map((x) => x.move.label)).toContain('S');
+    expect(r.steps.at(-1)!.after.kill).toBeCloseTo(100 * 1.1 * 1.05 * 1.01 * 1.5);
+  });
+
+  test('an unseen free move with a bigger gain is evaluated even when the bar is +Infinity', async () => {
+    const owned = [{ itemId: 'a' }, { itemId: 'b' }] as State['owned'];
+    const r = await step(state({ owned }), base, stub().ev, [fixed(mv('+1%', { costFE: 0, consumes: 'a' }), mv('+9%', { costFE: 0, consumes: 'b' }))], [], ctx(), { ...K, topK: 1 });
+    expect(r!.step.move.label).toBe('+9%');
+  });
+});

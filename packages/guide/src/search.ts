@@ -58,7 +58,7 @@ export async function resolve(s: State, ev: Evaluator, gens: Generator[], ctx: G
   return { state: s, figure, taken };
 }
 
-export async function step(s: State, f: Figure, rawEv: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem()):
+async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem()):
   Promise<{ state: State; step: Step } | null> {
   const ev = memoEv(rawEv);
   if (mem.since >= k.refreshEvery) { mem.scores.clear(); mem.since = 0; }
@@ -76,7 +76,7 @@ export async function step(s: State, f: Figure, rawEv: Evaluator, acq: Generator
   const kth = () => [...fresh.values()].map((r) => r.score).sort((a, b) => b - a)[k.topK - 1] ?? -Infinity;
   for (;;) {
     const bar = kth();
-    const todo = cands.filter((m) => !fresh.has(key(m)) && (m.enabler || stale(m) > bar))
+    const todo = cands.filter((m) => !fresh.has(key(m)) && (m.enabler || !mem.scores.has(key(m)) || stale(m) > bar))
       .sort((a, b) => stale(b) - stale(a)).slice(0, Math.max(k.topK, cands.filter((m) => m.enabler && !fresh.has(key(m))).length));
     if (!todo.length) break;
     const evs = await Promise.all(todo.map((m) => evalMove(s, m, ev)));
@@ -101,6 +101,15 @@ export async function step(s: State, f: Figure, rawEv: Evaluator, acq: Generator
   const cost = win.r.m.costFE!;
   mem.cumFE += cost; mem.scores.delete(key(win.r.m));
   return { state: win.res.state, step: { level: s.level, move: win.r.m, triggered: win.res.taken, before: f, after: win.res.figure, cumFE: mem.cumFE } };
+}
+
+/** Lazy pass first; if it finds nothing, drop the stale scores and look at everything once before giving up. */
+export async function step(s: State, f: Figure, ev: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem()):
+  Promise<{ state: State; step: Step } | null> {
+  const r = await stepOnce(s, f, ev, acq, recon, ctx, k, mem);
+  if (r || !mem.scores.size) return r;
+  mem.scores.clear();
+  return stepOnce(s, f, ev, acq, recon, ctx, k, mem);
 }
 
 export async function path(s0: State, ev: Evaluator, acq: Generator[], recon: Generator[], ctxOf: (s: State) => GenCtx, k: Knobs):

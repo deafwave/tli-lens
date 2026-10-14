@@ -1,12 +1,13 @@
-import { mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyPatch, type LoadoutPatch } from '../src/patches';
 import { killAverage } from '../src/kill';
 import { pinRoot } from '../src/pin';
 import { applyInOrder } from '../src/engine/apply';
-import { rankable } from '../src/search';
+import { type Knobs, overBudget, rankable } from '../src/search';
+import { writeAtomic } from '../src/atomic';
 import { createEvaluator, DEFAULT_FIGHT, INFO_PREFIXES, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
 import { realSkip } from './real';
@@ -140,6 +141,76 @@ describe('busy file', () => {
     const off = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', busyFile: null });
     await off.run({ n: 3 }, [], ctx);
     expect(s.jobs).toHaveLength(3);
+  });
+});
+
+describe('busy file: retry, env, close, paused time', () => {
+  const tmpBusy = () => join(mkdtempSync(join(tmpdir(), 'busy-')), 'game.busy');
+  it('a retry after WorkerDied waits for the busy file too', async () => {
+    const busyFile = tmpBusy(), s = stub(); let made = 0;
+    const ev = await createEvaluator({ workers: 1, pin: 'p', busyFile, busyPollMs: 10, factory: () => {
+      const id = made++, w = s.factory();
+      return id === 0 ? { ...w, run: async () => { writeFileSync(busyFile, ''); throw new WorkerDied('boom'); } } : w;
+    } });
+    const p = ev.run(lo, [], ctx);
+    await new Promise(r => setTimeout(r, 80));
+    expect(s.jobs).toHaveLength(0);
+    rmSync(busyFile);
+    await p;
+    expect(s.jobs).toHaveLength(1);
+  });
+  it('GUIDE_BUSY_FILE overrides the default', async () => {
+    const busyFile = tmpBusy(); writeFileSync(busyFile, '');
+    process.env.GUIDE_BUSY_FILE = busyFile;
+    try {
+      const s = stub();
+      const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', busyPollMs: 10 });
+      const p = ev.run(lo, [], ctx);
+      await new Promise(r => setTimeout(r, 60));
+      expect(s.jobs).toHaveLength(0);
+      rmSync(busyFile); await p;
+    } finally { delete process.env.GUIDE_BUSY_FILE; }
+  });
+  it('close() ends a pause without a resume event; paused time is tracked', async () => {
+    const busyFile = tmpBusy(); writeFileSync(busyFile, '');
+    const events: boolean[] = [];
+    const ev = await createEvaluator({ factory: stub().factory, workers: 1, pin: 'p', busyFile, busyPollMs: 60_000, onBusy: p => events.push(p) });
+    const p = ev.run(lo, [], ctx).catch(e => e);
+    await new Promise(r => setTimeout(r, 30));
+    expect(ev.pausedMs!()).toBeGreaterThan(0);
+    await ev.close();
+    await p;
+    expect(events).toEqual([true]);
+  });
+  it('paused time is subtracted from the budget', async () => {
+    const busyFile = tmpBusy(); writeFileSync(busyFile, '');
+    let clock = 0;
+    const spy = vi.spyOn(Date, 'now').mockImplementation(() => clock);
+    try {
+      const ev = await createEvaluator({ factory: stub().factory, workers: 1, pin: 'p', busyFile, busyPollMs: 5 });
+      const p = ev.run(lo, [], ctx);
+      await new Promise(r => setTimeout(r, 30));
+      clock = 10 * 60_000;
+      expect(ev.pausedMs!()).toBe(10 * 60_000);
+      expect(overBudget({ budgetMinutes: 5 } as Knobs, 0, ev)).toBe(false);
+      expect(overBudget({ budgetMinutes: 5 } as Knobs, 0)).toBe(true);
+      rmSync(busyFile); await p;
+      expect(ev.pausedMs!()).toBe(10 * 60_000);
+    } finally { spy.mockRestore(); }
+  });
+});
+
+describe('writeAtomic', () => {
+  it('writes via temp + rename, retries a failing rename, and cleans up when it keeps failing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'atomic-')), f = join(dir, 'g.json');
+    expect(writeAtomic(f, '{"a":1}')).toBe(true);
+    expect(JSON.parse(readFileSync(f, 'utf8'))).toEqual({ a: 1 });
+    expect(readdirSync(dir)).toEqual(['g.json']);
+    // a directory at the target makes rename fail (EPERM/EISDIR): returns false, no temp left, run not aborted
+    const bad = join(dir, 'd'); mkdirSync(bad);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try { expect(writeAtomic(bad, 'x', 2, 1)).toBe(false); expect(warn).toHaveBeenCalled(); } finally { warn.mockRestore(); }
+    expect(readdirSync(dir).sort()).toEqual(['d', 'g.json']);
   });
 });
 

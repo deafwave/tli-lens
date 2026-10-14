@@ -102,15 +102,19 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const memo = createMemo<Evaluated>(pin, o.memoDir);
 
   const busyFile = o.busyFile === undefined ? (process.env.GUIDE_BUSY_FILE ?? (o.factory ? null : DEFAULT_BUSY_FILE)) : o.busyFile;
-  let paused = false, poll: Promise<void> | undefined;
+  let paused = false, pausedSince = 0, pausedTotal = 0, poll: Promise<void> | undefined, wake: (() => void) | undefined;
+  const sleep = () => poll ??= new Promise<void>(r => {
+    const t = setTimeout(r, o.busyPollMs ?? 5000);
+    wake = () => { clearTimeout(t); r(); };
+  }).finally(() => { poll = undefined; wake = undefined; });
   /** resolves once the busy file is gone, checked fresh each call; waiters share one poll timer so they resume in arrival order */
   const untilFree = async () => {
     if (!busyFile) return;
     while (!closed && existsSync(busyFile)) {
-      if (!paused) { paused = true; o.onBusy?.(true); }
-      await (poll ??= new Promise<void>(r => setTimeout(r, o.busyPollMs ?? 5000)).finally(() => { poll = undefined; }));
+      if (!paused) { paused = true; pausedSince = Date.now(); o.onBusy?.(true); }
+      await sleep();
     }
-    if (paused) { paused = false; o.onBusy?.(false); }
+    if (paused && !closed) { paused = false; pausedTotal += Date.now() - pausedSince; o.onBusy?.(false); }
   };
 
   /** runs f on an idle worker (queued when none). A dead worker is dropped and replaced; `f` is retried once on the replacement. */
@@ -118,8 +122,8 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
     const go = async () => {
       let w = idle.pop()!;
       try {
-        await untilFree();
         for (let attempt = 0; ; attempt++) {
+          await untilFree();   // also before the retry on a replacement worker
           try { ok(await f(w)); break; }
           catch (e) {
             if (!(e instanceof WorkerDied) || closed) { fail(e as Error); break; }
@@ -146,10 +150,13 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
 
   return {
     pin, fight, fightNote: STILL_NOTE,
+    /** ms spent paused on the busy file (a pause in progress included) */
+    pausedMs: () => pausedTotal + (paused ? Date.now() - pausedSince : 0),
     run: (loadout, changes, ctx) => closed ? Promise.reject(new Error('evaluator closed'))
       : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes, fight), () => price(loadout, changes, ctx)),
     close: async () => {
       closed = true;
+      wake?.();
       for (const q of queue.splice(0)) q.fail(new Error('evaluator closed'));
       await closing();
     },

@@ -87,7 +87,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     f = (await ev.run(s.loadout, [], { level, skill: s.skill })).figure;
     if (f.stop) { const why = `L${level} ${s.skill} leg cannot be priced yet: ${f.stop}`; mem.notCalculable.add(why); notes.push(why); break; }
     for (let n = 0; n < K.stepsPerStage; n++) {
-      if (overBudget(K, t0)) { stopped = true; break; }
+      if (overBudget(K, t0, ev)) { stopped = true; break; }
       const ctx = ctxOf(s);
       const r = await step(s, f, ev, acq, recon, ctx, K, mem);
       ctx.notSearched.forEach((x) => notSearched.add(x));
@@ -96,7 +96,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
       steps.push(r.step); s = r.state; f = r.step.after;
       onStep?.(snap({ partialRun: true }));
     }
-    if (stopped) break;
+    if (stopped || overBudget(K, t0, ev)) { stopped = true; break; }
     // acquisitions nobody sells: what they would add, never ranked
     const ctx = ctxOf(s);
     const cands = unpricedAcquisitions(acq, s, ctx);

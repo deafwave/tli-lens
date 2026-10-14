@@ -77,10 +77,13 @@ async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[],
   const fresh = new Map<string, { m: Move; e: Evaluated; gain: number; score: number }>();
   const stale = (m: Move) => mem.scores.get(key(m)) ?? Infinity;
   const kth = () => [...fresh.values()].map((r) => r.score).sort((a, b) => b - a)[k.topK - 1] ?? -Infinity;
+  let sweep = true; // first round takes every unseen candidate in one batch (they all score +∞, so no decision changes)
+  const unseen = cands.filter((m) => !mem.scores.has(key(m))).length;
   for (;;) {
     const bar = kth();
     const todo = cands.filter((m) => !fresh.has(key(m)) && (m.enabler || !mem.scores.has(key(m)) || stale(m) > bar))
-      .sort((a, b) => stale(b) - stale(a)).slice(0, Math.max(k.topK, ev.parallelism ?? 1, cands.filter((m) => m.enabler && !fresh.has(key(m))).length));
+      .sort((a, b) => stale(b) - stale(a)).slice(0, Math.max(k.topK, ev.parallelism ?? 1, cands.filter((m) => m.enabler && !fresh.has(key(m))).length, sweep ? unseen : 0));
+    sweep = false;
     if (!todo.length) break;
     const evs = await Promise.all(todo.map((m) => evalMove(s, m, ev)));
     todo.forEach((m, i) => {

@@ -45,6 +45,13 @@ test('rankable rejects a figure that dropped a new piece', () => {
 });
 
 describe('step', () => {
+  test('all unseen candidates are in flight at once, not one batch per slow figure', async () => {
+    const { ev, peak } = stub(8, 5);
+    const ms = Array.from({ length: 60 }, (_, i) => mv(`+${i + 1}%`));
+    await step(state(), base, ev, [fixed(...ms)], [], ctx(), K);
+    expect(peak()).toBeGreaterThanOrEqual(60);
+  });
+
   test('takes the best gain per FE and records the step', async () => {
     const r = await step(state(), base, stub().ev, [fixed(mv('+10%', { costFE: 1 }), mv('+30%', { costFE: 10 }), mv('+5%', { costFE: 1 }))], [], ctx(), K);
     expect(r!.step.move.label).toBe('+10%');

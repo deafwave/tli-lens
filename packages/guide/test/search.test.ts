@@ -12,17 +12,21 @@ function figureOf(labels: string[]): Figure {
   if (labels.includes('E') && labels.includes('R')) v *= 3;
   return { life100: v, life0: v, kill: v, partial: labels.includes('bad') ? ['p'] : [] };
 }
-function stub() {
+function stub(parallelism?: number, delayMs = 0) {
   const calls: string[] = [];
+  let active = 0, peak = 0;
   const ev: Evaluator = {
-    pin: 'stub', async close() {},
+    pin: 'stub', ...(parallelism ? { parallelism } : {}), async close() {},
     async run(loadout, changes, ctx) {
       calls.push(JSON.stringify([(loadout as L).labels, changes, ctx]));
+      peak = Math.max(peak, ++active);
+      if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+      active--;
       const labels = [...(loadout as L).labels, ...changes.map((c) => (c as unknown as { label: string }).label)];
       return { loadout: { labels }, figure: figureOf(labels), dropped: [] };
     },
   };
-  return { ev, calls };
+  return { ev, calls, peak: () => peak };
 }
 const mv = (label: string, o: Partial<Move> = {}): Move => ({ kind: 'gear', label, acquisition: true, costFE: 1, minLevel: 0, changes: [ch(label)], ...o });
 const rc = (label: string): Move => mv(label, { acquisition: false, costFE: 0 });
@@ -167,9 +171,9 @@ describe('path', () => {
 });
 
 describe('lazy greedy edge cases', () => {
-  test('a candidate whose score rises after another move is taken, not left stale', async () => {
+  test.each([1, 8])('a candidate whose score rises after another move is taken, not left stale (parallelism %i)', async (par) => {
     // "S" is worth +1% alone but +50% once "A" is owned (synergy, not flagged enabler)
-    const { ev } = stub();
+    const { ev } = stub(par);
     const wrapped: Evaluator = {
       ...ev, async run(l, c, x) {
         const r = await ev.run(l, c, x);
@@ -193,19 +197,42 @@ describe('lazy greedy edge cases', () => {
   });
 });
 
-test('a round evaluates unseen candidates at the evaluator\'s parallelism', async () => {
-  let active = 0, peak = 0;
-  const ev: Evaluator = {
-    pin: 'stub', parallelism: 8, async close() {},
-    async run(loadout, changes) {
-      peak = Math.max(peak, ++active);
-      await new Promise((r) => setTimeout(r, 2));
-      active--;
-      const labels = [...(loadout as L).labels, ...changes.map((c) => (c as unknown as { label: string }).label)];
-      return { loadout: { labels }, figure: figureOf(labels), dropped: [] };
-    },
-  };
+test('a round evaluates unseen candidates at the parallelism', async () => {
+  const { ev, peak } = stub(8, 2);
   const ms = Array.from({ length: 40 }, (_, i) => mv(`+${i + 1}%`));
   await step(state(), base, ev, [fixed(...ms)], [], ctx(), { ...K, topK: 1 });
-  expect(peak).toBeGreaterThanOrEqual(8);
+  expect(peak()).toBeGreaterThanOrEqual(8);
+});
+
+describe('batch size does not change the path', () => {
+  const k = { ...K, topK: 1, refreshEvery: 100 };
+  const go = (gen: Generator, par: number) => path(state(), stub(par).ev, [gen], [], () => ctx(), k);
+  const labels = (r: Awaited<ReturnType<typeof path>>) => r.steps.map((x) => x.move.label);
+  const fin = (r: Awaited<ReturnType<typeof path>>) => r.steps.at(-1)!.after.kill;
+
+  test('independent gains: identical moves and final kill at parallelism 1 and 8', async () => {
+    const ms = Array.from({ length: 12 }, (_, i) => mv(`+${i + 2}%`, { costFE: i + 1 }));
+    const gen: Generator = (s) => ms.filter((m) => !(s.loadout as L).labels.includes(m.label));
+    const [a, b] = [await go(gen, 1), await go(gen, 8)];
+    expect(labels(a).length).toBeGreaterThan(3);
+    expect(labels(b)).toEqual(labels(a));
+    expect(fin(b)).toBeCloseTo(fin(a));
+  });
+
+  test('synergy (stale scores): the wider batch is never worse', async () => {
+    const synergy = (par: number) => {
+      const base_ = stub(par).ev;
+      const ev: Evaluator = { ...base_, async run(l, c, x) {
+        const r = await base_.run(l, c, x);
+        const ls = (r.loadout as L).labels, f = figureOf(ls);
+        if (ls.includes('S') && ls.includes('A')) f.kill *= 1.5;
+        return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+      } };
+      const defs: [string, string, number][] = [['X', '+10%', 1], ['A', '+5%', 1], ['S', '+1%', 2], ['Y', '+3%', 1]];
+      const gen: Generator = (s) => defs.filter(([n]) => !(s.loadout as L).labels.includes(n)).map(([n, b, c]) => mv(n, { costFE: c, changes: [ch(n), ch(b)] }));
+      return path(state(), ev, [gen], [], () => ctx(), k);
+    };
+    const [a, b] = [await synergy(1), await synergy(8)];
+    expect(fin(b)).toBeGreaterThanOrEqual(fin(a) - 1e-9);
+  });
 });

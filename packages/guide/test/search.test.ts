@@ -122,6 +122,15 @@ describe('step', () => {
   });
 });
 
+test('a move carrying a loadout patch reaches the evaluator with the patch intact', async () => {
+  const patch = { kind: 'patch', op: 'prism-provide', tree: 51, extraAffix: [{ id: 1, dyn: [2, 2] }] } as const;
+  const got: unknown[] = [];
+  const { ev } = stub();
+  const spy: Evaluator = { ...ev, run: (l, c, x) => { got.push(...c); return ev.run(l, c, x); } };
+  await step(state(), base, spy, [fixed(mv('+10%', { changes: [ch('+10%'), patch] }))], [], ctx(), K);
+  expect(got).toContain(patch);
+});
+
 describe('path', () => {
   const ms = [mv('+10%'), mv('+20%', { costFE: 4 }), mv('+3%')];
   const gen: Generator = (s) => ms.filter((m) => !(s.loadout as L).labels.includes(m.label));

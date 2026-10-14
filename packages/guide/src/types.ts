@@ -46,8 +46,8 @@ export interface Move {
 export interface EvalCtx { level: number; skill: Skill }
 export interface Evaluated { loadout: Loadout; figure: Figure; dropped: string[] }
 export interface Evaluator {
-  /** apply `changes` to `loadout` (dps-debug applyGearChange / applyOtherChange) and price the result */
-  run(loadout: Loadout, changes: Change[], ctx: EvalCtx): Promise<Evaluated>;
+  /** apply `changes` to `loadout` in order (a `LoadoutPatch` through applyPatch, the rest through dps-debug applyGearChange / applyOtherChange) and price the result */
+  run(loadout: Loadout, changes: (Change | LoadoutPatch)[], ctx: EvalCtx): Promise<Evaluated>;
   readonly pin: string;
   close(): Promise<void>;
 }

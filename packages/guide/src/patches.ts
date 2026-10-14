@@ -16,7 +16,7 @@ export function applyPatch(lo: Loadout, p: LoadoutPatch): Loadout {
   const l = structuredClone(lo) as Record<string, any>;
   if (p.op === 'prism-provide') {
     const slot = ((l.prisms ??= {}).provide ??= {})[p.tree] ??= { ExtraAffix: [], TalentId: 0 };
-    slot.ExtraAffix = [...(Array.isArray(slot.ExtraAffix) ? slot.ExtraAffix : []), ...p.extraAffix.map(x => ({ Id: x.id, DynArgs: x.dyn }))];
+    slot.ExtraAffix = [...(Array.isArray(slot.ExtraAffix) ? slot.ExtraAffix : []), ...p.extraAffix.map(x => ({ Id: x.id, DynArgs: [...x.dyn] }))];
     return l;
   }
   const rt: Rt[] = l.resolvedTalents?.talents ?? Object.entries(l.talents ?? {}).map(([id, pt]) => [Number(id), pt as number, `talent:${id}`] as Rt);

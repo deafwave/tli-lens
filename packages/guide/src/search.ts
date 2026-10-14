@@ -1,6 +1,6 @@
 /** Two-loop progression search (spec §3.2): acquisitions ranked by kill-average gain per FE (lazy greedy),
  *  reconfigurations re-solved by a churn-gated hill climb. */
-import type { Change, Evaluated, Evaluator, Figure, GenCtx, Generator, Move, State, Step } from './types';
+import type { Evaluated, Evaluator, Figure, GenCtx, Generator, Move, State, Step } from './types';
 
 export interface Knobs { churn: number; topK: number; maxRounds: number; refreshEvery: number; maxSteps: number; targetKill?: number; budgetFE?: number }
 export const DEFAULT_KNOBS: Knobs = { churn: 0.05, topK: 5, maxRounds: 10, refreshEvery: 10, maxSteps: 400 };
@@ -31,7 +31,7 @@ function memoEv(ev: Evaluator): Evaluator {
   };
 }
 
-const evalMove = (s: State, m: Move, ev: Evaluator) => ev.run(s.loadout, m.changes as Change[], { level: s.level, skill: m.skill ?? s.skill });
+const evalMove = (s: State, m: Move, ev: Evaluator) => ev.run(s.loadout, m.changes, { level: s.level, skill: m.skill ?? s.skill });
 const apply = (s: State, m: Move, e: Evaluated): State => ({
   ...s, loadout: e.loadout, fe: s.fe - (m.costFE ?? 0), skill: m.skill ?? s.skill,
   owned: m.consumes ? s.owned.filter((o) => o.itemId !== m.consumes) : s.owned,

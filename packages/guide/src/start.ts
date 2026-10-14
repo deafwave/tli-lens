@@ -79,6 +79,9 @@ export const idealStart = (): State => idealStartNotes().state;
 export function fromExport(json: unknown, fe?: number): State {
   const j = json as Dict;
   if (j?.schema !== 'tli-lens-export/1') throw new Error(`not a tli-lens export (schema ${JSON.stringify(j?.schema)}, want "tli-lens-export/1")`);
+  if (typeof j.hero?.level !== 'number') throw new Error('export has no hero.level');
+  if (!Array.isArray(j.items)) throw new Error('export has no items list');
+  if (!j.loadout || typeof j.loadout !== 'object') throw new Error('export has no loadout');
   const budget = fe ?? j.fe;
   if (typeof budget !== 'number' || !Number.isFinite(budget)) throw new Error('export has no fe; pass --fe N');
   const loadout = j.loadout as Dict, active = (loadout?.skills as Dict[] | undefined)?.find(g => g.place?.kind === 'active' && g.place.slot === 0);

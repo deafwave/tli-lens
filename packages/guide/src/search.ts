@@ -34,7 +34,7 @@ function memoEv(ev: Evaluator): Evaluator {
 const evalMove = (s: State, m: Move, ev: Evaluator) => ev.run(s.loadout, m.changes, { level: s.level, skill: m.skill ?? s.skill });
 const apply = (s: State, m: Move, e: Evaluated): State => ({
   ...s, loadout: e.loadout, fe: s.fe - (m.costFE ?? 0), skill: m.skill ?? s.skill,
-  owned: m.consumes ? s.owned.filter((o) => o.itemId !== m.consumes) : s.owned,
+  owned: m.consumes ? s.owned.flatMap((o) => (o.itemId !== m.consumes ? [o] : (o.count ?? 1) > 1 ? [{ ...o, count: o.count - 1 }] : [])) : s.owned,
 });
 const legal = (s: State, m: Move) => m.minLevel <= s.level;
 const lnGain = (b: number, a: number) => (a > b ? (b > 0 ? Math.log(a / b) : Infinity) : (a > 0 ? Math.log(a / b) : b > 0 ? -Infinity : 0));

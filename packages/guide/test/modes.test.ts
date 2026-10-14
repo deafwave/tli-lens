@@ -1,21 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { basesFor, slotsOfBase } from '../src/candidates/gear';
-import { ownedGear, runAdvise, runIdeal } from '../src/modes';
+import { localHistory, localItems, ownedGear, runAdvise, runIdeal, unpricedAcquisitions } from '../src/modes';
+import { historyBook } from '../src/pricing';
 import { fromExport, idealStart, ICE_SHOT_INPUTS } from '../src/start';
-import { pointsAtLevel } from '../src/talentRules';
-import type { Evaluator } from '../src/types';
+import { legalAllocation, pointsAtLevel, treeOf } from '../src/talentRules';
+import { gearMoves } from '../src/candidates/gear';
+import { slateMoves } from '../src/candidates/slates';
+import { pactMoves } from '../src/candidates/pacts';
+import { switchMoves } from '../src/candidates/switch';
+import type { Evaluator, Generator } from '../src/types';
 import { parseAdvice, renderGuide } from '../../page/src/guide-view';
 
 /** stub: every applied change adds 10 to the kill average; `stop` makes every figure refuse */
-const stubEv = (stop?: string): Evaluator => ({
+const stubEv = (stop?: string, o: { runs?: { changes: unknown[]; level: number }[]; stopFrom?: number } = {}): Evaluator => ({
   pin: 'stub', async close() {},
-  async run(lo, changes) {
+  async run(lo, changes, ctx) {
+    o.runs?.push({ changes, level: ctx.level });
+    if (o.stopFrom !== undefined && ctx.level >= o.stopFrom) stop = 'not ported: later stage';
     const n = ((lo as { __n?: number }).__n ?? 0) + changes.length, k = 100 + 10 * n;
     return { loadout: { ...lo, __n: n }, dropped: [], inputs: { ground: 'stub-ground', elites: 0 },
       figure: stop ? { life100: 0, life0: 0, kill: 0, partial: [], stop } : { life100: k, life0: k, kill: k, partial: [] } };
   },
 });
-const small = { stepsPerStage: 1, endLevel: 65, topK: 2, maxRounds: 1, unpricedEval: 3 };
+const small = { stepsPerStage: 1, endLevel: 65, topK: 2, maxRounds: 1 };
 
 const helmet = basesFor('helmet', 60, 'iceShot').at(-1)!, ring = basesFor('ring1', 60, 'iceShot').at(-1)!;
 const item = (itemId: string, where: string, base: { baseId: number; name: string; level: number }) =>
@@ -104,5 +111,57 @@ describe('advise on a stopped start', () => {
     const out = await runAdvise(stubEv('not ported: x'), fromExport(exportOf()));
     expect(out.steps).toEqual([]);
     expect(out.notCalculable[0]).toMatch(/cannot be priced yet/);
+  });
+});
+
+describe('fix round 1', () => {
+  it('the talent seed is a legal allocation per tree', () => {
+    const t = idealStart().loadout.talents as Record<string, number>, trees = new Set(Object.keys(t).map((k) => treeOf(+k)));
+    for (const tr of trees) expect(legalAllocation(tr, Object.fromEntries(Object.entries(t).filter(([k]) => treeOf(+k) === tr).map(([k, v]) => [+k, v]))), `tree ${tr}`).toBe(true);
+  });
+  it('a custom talentPoints does not leak into later calls', async () => {
+    await runIdeal(stubEv(), { ...small, talentPoints: 50, endLevel: 60, stepsPerStage: 0 });
+    expect(pointsAtLevel(60)).toBe(Math.round(108 * 59 / 92));
+    expect(Object.values(idealStart().loadout.talents as Record<string, number>).reduce((a, b) => a + b, 0)).toBe(pointsAtLevel(60));
+  });
+  it('every distinct unpriced acquisition is evaluated each stage, none truncated', async () => {
+    const runs: { changes: unknown[]; level: number }[] = [];
+    const out = await runIdeal(stubEv(undefined, { runs }), { ...small, endLevel: 60, stepsPerStage: 0 });
+    const s = idealStart();
+    const ctx = { prices: historyBook(localItems(), localHistory()), level: 60, notSearched: new Set<string>() };
+    const want = unpricedAcquisitions([gearMoves, switchMoves, slateMoves, pactMoves].map((g): Generator => (st, c) => g(st, c).filter((m) => m.acquisition)), s, ctx);
+    expect(want.length).toBeGreaterThan(0);
+    expect(out.knobs).not.toHaveProperty('unpricedEval');
+    const seen = new Set(runs.map((r) => JSON.stringify(r.changes)));
+    for (const m of want) expect(seen.has(JSON.stringify(m.changes)), m.label).toBe(true);
+  });
+  it('level 65 reaches the evaluator and the generators', async () => {
+    const runs: { changes: unknown[]; level: number }[] = [];
+    const out = await runIdeal(stubEv(undefined, { runs }), small);
+    expect(runs.some((r) => r.level === 65)).toBe(true);
+    expect(out.steps.some((st) => st.level === 65)).toBe(true);
+    expect(out.notSearched.some((n) => n.includes('level 65'))).toBe(true);
+  });
+  it('a stop at a later stage ends the path with a note', async () => {
+    const out = await runIdeal(stubEv(undefined, { stopFrom: 65 }), small);
+    expect(out.steps.length).toBeGreaterThan(0);
+    expect(out.steps.every((st) => st.level === 60)).toBe(true);
+    expect(out.notCalculable.some((n) => /^L65 .*cannot be priced yet/.test(n))).toBe(true);
+    expect(out.startNotes!.at(-1)).toMatch(/^L65 .*cannot be priced yet/);
+  });
+  it('fromExport names a missing hero, items or loadout', () => {
+    expect(() => fromExport(exportOf({ hero: undefined }))).toThrow('export has no hero.level');
+    expect(() => fromExport(exportOf({ items: undefined }))).toThrow('export has no items list');
+    expect(() => fromExport(exportOf({ loadout: undefined }))).toThrow('export has no loadout');
+    expect(() => fromExport(null)).toThrow(/tli-lens export/);
+  });
+  it('an owned stack is consumed count times; the item level gates it', async () => {
+    const stack = fromExport(exportOf({ items: [{ ...item('bag-1', 'bag', helmet), count: 2 }] }));
+    const ctx = { prices: { season: 's', fetchedAt: 'x', price: () => null }, level: 60, notSearched: new Set<string>() };
+    expect(ownedGear(stack, ctx)[0].minLevel).toBeGreaterThanOrEqual(helmet.level);
+    const high = fromExport(exportOf({ items: [{ ...item('bag-9', 'bag', helmet), level: 99 }] }));
+    expect(ownedGear(high, ctx)[0].minLevel).toBe(99);
+    const out = await runAdvise(stubEv(), stack, { maxRounds: 1, topK: 2, maxSteps: 6 });
+    expect(out.steps.filter((st) => st.move.consumes === 'bag-1')).toHaveLength(2);
   });
 });

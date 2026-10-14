@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gearMoves, slotsOfBase } from './candidates/gear';
-import { gemLevelAt, gemMoves } from './candidates/gems';
+import { GEM_LEVEL, gemLevelAt, gemMoves } from './candidates/gems';
 import { kismetMoves } from './candidates/kismets';
 import { memoryMoves } from './candidates/memories';
 import { pactMoves } from './candidates/pacts';
@@ -26,11 +26,9 @@ export interface IdealKnobs extends Knobs {
   /** accepted steps per level stage before the path moves on */ stepsPerStage: number;
   startLevel: number; endLevel: number; stageStep: number;
   /** full-level talent budget (below 93 scaled by round(full x (L - 1) / 92)) */ talentPoints: number;
-  /** unpriced / not-on-market acquisitions evaluated per stage for the "if you get it" list */ unpricedEval: number;
 }
-export const DEFAULT_IDEAL: IdealKnobs = { ...DEFAULT_KNOBS, stepsPerStage: 25, startLevel: 60, endLevel: 100, stageStep: 5, talentPoints: 108, unpricedEval: 40 };
+export const DEFAULT_IDEAL: IdealKnobs = { ...DEFAULT_KNOBS, stepsPerStage: 25, startLevel: 60, endLevel: 100, stageStep: 5, talentPoints: 108 };
 
-const GEM_MAX = 20;
 const ALL: Generator[] = [gearMoves, gemMoves, kismetMoves, memoryMoves, pactMoves, prismMoves, slateMoves, switchMoves, talentMoves, traitMoves];
 const only = (acquisition: boolean) => (g: Generator): Generator => (s, c) => g(s, c).filter((m) => m.acquisition === acquisition);
 
@@ -38,16 +36,26 @@ const only = (acquisition: boolean) => (g: Generator): Generator => (s, c) => g(
 export const ownedGear: Generator = (s) => s.owned.flatMap((it) => {
   const { slots, level } = slotsOfBase(it.baseId, s.skill);
   return slots.map((slot): Move => ({
-    kind: 'gear', label: `Wear your ${it.baseName ?? it.baseId} (${it.where}) in ${slot}`, acquisition: true, costFE: 0, costNote: 'owned', minLevel: level, consumes: it.itemId,
+    kind: 'gear', label: `Wear your ${it.baseName ?? it.baseId} (${it.where}) in ${slot}`, acquisition: true, costFE: 0, costNote: 'owned', minLevel: Math.max(level, it.level), consumes: it.itemId,
     changes: [{ kind: 'gear', slot, item: { baseId: it.baseId, baseName: it.baseName ?? undefined, itemId: it.itemId, level: it.level, modifiers: it.modifiers } }] as never,
   }));
 });
 
 const pct = (b: Figure, a: Figure) => `+${((a.kill / b.kill - 1) * 100).toFixed(1)} %`;
 
+/** every acquisition at this state that has no price, one per distinct change list */
+export function unpricedAcquisitions(acq: Generator[], s: State, ctx: GenCtx): Move[] {
+  const seen = new Set<string>();
+  return acq.flatMap((g) => g(s, ctx)).filter((m) => m.minLevel <= s.level && m.costFE === null && !seen.has(JSON.stringify(m.changes)) && seen.add(JSON.stringify(m.changes)));
+}
+
 export async function runIdeal(ev: Evaluator, k: Partial<IdealKnobs> = {}, prices?: PriceBook): Promise<GuideOut> {
   const K = { ...DEFAULT_IDEAL, ...k };
   setTalentPoints(K.talentPoints);
+  try { return await ideal(ev, K, prices); } finally { setTalentPoints(DEFAULT_IDEAL.talentPoints); }
+}
+
+async function ideal(ev: Evaluator, K: IdealKnobs, prices?: PriceBook): Promise<GuideOut> {
   const books = prices ?? historyBook(localItems(), localHistory());
   const acq = ALL.map(only(true)), recon = ALL.map(only(false));
   const ctxOf = (s: State): GenCtx => ({ prices: books, level: s.level, notSearched: new Set() });
@@ -69,11 +77,11 @@ export async function runIdeal(ev: Evaluator, k: Partial<IdealKnobs> = {}, price
   let f = first.figure;
   for (let level = K.startLevel; level <= K.endLevel; level += K.stageStep) {
     // stage upkeep: gems level up with the hero (to what each ladder allows)
-    const skills = (s.loadout.skills as { sid: number; level: number }[]).map((g) => ({ ...g, level: Math.max(g.level, gemLevelAt(g.sid, level, GEM_MAX)) }));
+    const skills = (s.loadout.skills as { sid: number; level: number }[]).map((g) => ({ ...g, level: Math.max(g.level, gemLevelAt(g.sid, level, GEM_LEVEL)) }));
     if (level > K.startLevel) notes.push(`L${level}: gems raised to the hero-level limit`);
     s = { ...s, level, loadout: { ...s.loadout, skills } };
     f = (await ev.run(s.loadout, [], { level, skill: s.skill })).figure;
-    if (f.stop) { mem.notCalculable.add(`L${level} ${s.skill} leg cannot be priced yet: ${f.stop}`); break; }
+    if (f.stop) { const why = `L${level} ${s.skill} leg cannot be priced yet: ${f.stop}`; mem.notCalculable.add(why); notes.push(why); break; }
     for (let n = 0; n < K.stepsPerStage; n++) {
       const ctx = ctxOf(s);
       const r = await step(s, f, ev, acq, recon, ctx, K, mem);
@@ -84,7 +92,7 @@ export async function runIdeal(ev: Evaluator, k: Partial<IdealKnobs> = {}, price
     }
     // acquisitions nobody sells: what they would add, never ranked
     const ctx = ctxOf(s);
-    const cands = acq.flatMap((g) => g(s, ctx)).filter((m) => m.minLevel <= level && m.costFE === null).slice(0, K.unpricedEval);
+    const cands = unpricedAcquisitions(acq, s, ctx);
     const evs = await Promise.all(cands.map((m) => ev.run(s.loadout, m.changes, { level, skill: m.skill ?? s.skill })));
     ctx.notSearched.forEach((x) => notSearched.add(x));
     cands.map((m, i) => ({ m, e: evs[i].figure }))

@@ -30,6 +30,9 @@ export interface Move {
   acquisition: boolean;
   /** FE cost; null = unpriced (listed, never ranked). Reconfigurations: 0. */
   costFE: number | null;
+  /** 'drop' = a white base / normal gem etor does not price (0 FE, ranked); 'not-on-market' = cannot be bought (costFE null, listed under unpriced, never ranked) */
+  market?: 'tradeable' | 'drop' | 'not-on-market';
+  costNote?: string;
   /** hero level gate */
   minLevel: number;
   /** dps-debug what-if changes applied in order (dps-debug model/src/core/whatif.ts `Change`; a `LoadoutPatch` is applied by applyPatch, runs of Changes by applyChanges) */
@@ -56,6 +59,8 @@ export interface PriceBook {
   season: string; fetchedAt: string;
   /** FE price of an item by etor id or exact English name at a hero level (ideal: level picks the history window) */
   price(key: number | string, level: number): number | null;
+  /** etor category of an item by id or exact name (tells a normal gem from a Noble/Magnificent one) */
+  category?(key: number | string): string | null;
 }
 
 /** `notSearched`: generators add one line per configuration they skip because its rule is not ported (copied to GuideOut.notSearched) */

@@ -10,7 +10,7 @@ const MAX_RANK = 5;
 
 export const pactMoves: Generator = (s, ctx) => {
   ctx.notSearched.add('pact: equipping a different pactspirit: its promotionLevels and whether the owner has it are not known');
-  ctx.notSearched.add('pact: a rank-up is priced by the servant\'s English name; etor lists pactspirits only as "Divinity Pact - <profession>", so rank-ups are unpriced');
+  ctx.notSearched.add('pact: a rank-up is not on the market (listed under unpriced with its gain, never ranked)');
   const pacts = s.loadout.pacts as P[] | undefined, keys = s.loadout.contractKeys as number[] | undefined;
   if (!pacts) return [];
   const stages = new Set(Object.values(table<{ rows: Record<string, { i4: number; i8: number }> }>('config_gen_contract_servant').rows).map(r => `${r.i4}/${r.i8}`));
@@ -22,7 +22,7 @@ export const pactMoves: Generator = (s, ctx) => {
     for (let rank = p.rank + 1; rank <= MAX_RANK; rank++) {
       if (!stages.has(`${p.servantId}/${rank}`)) continue;
       moves.push({
-        kind: 'pact', label: `Raise ${name} (slot ${p.slot}) from rank ${p.rank} to ${rank}`, acquisition: true, costFE: ctx.prices.price(name, ctx.level), minLevel: 0,
+        kind: 'pact', label: `Raise ${name} (slot ${p.slot}) from rank ${p.rank} to ${rank}`, acquisition: true, costFE: null, market: 'not-on-market', minLevel: 0,
         changes: [{ kind: 'multi', changes: [{ kind: 'pact', action: 'remove', servantId: p.servantId },
           { kind: 'pact', action: 'equip', servantId: p.servantId, slot: p.slot, rank, promotionLevels: p.promotionLevels, contractKeys: (keys ?? []).filter(k => Math.floor(k / 100) === p.slot) }] }],
       });

@@ -6,6 +6,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sup1 from '../data/sup1.json';
 import { pinRoot, table } from '../pin';
+import { costOf } from '../priceOf';
 import type { Generator, Move, Skill } from '../types';
 
 /** the main skill's sid, read from the active slot 0 gem of the pin's loadouts: Ice Shot = game/loadout_l94-*.json (the owner's Ice Shot build), Hammer of Ash = re/evidence/loadout_probuild-hanshansi-bing.json (the target build) */
@@ -62,7 +63,7 @@ export const gemMoves: Generator = (s, ctx) => {
       if (have.has(c.sid) || !level) continue;
       const gem = { sid: c.sid, level, name: c.name };
       moves.push({
-        kind: 'support', label: `${cur ? 'Replace socket ' + socket : 'Install in socket ' + socket} with ${c.name}`, acquisition: true, costFE: ctx.prices.price(c.name, ctx.level), minLevel: gemRequires(c.sid, 1),
+        kind: 'support', label: `${cur ? 'Replace socket ' + socket : 'Install in socket ' + socket} with ${c.name}`, acquisition: true, ...costOf(ctx.prices, c.name, ctx.level, 'gem'), minLevel: gemRequires(c.sid, 1),
         changes: [{ kind: 'support', action: cur ? 'replace' : 'install', owner, socket, gem }],
       });
     }

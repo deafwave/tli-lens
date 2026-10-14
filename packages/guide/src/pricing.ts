@@ -22,6 +22,7 @@ function book(snapshot: EtorItems, priceOf: (id: string, level: number, row: Eto
   for (const i of snapshot.items) if (!byName.has(i.name)) byName.set(i.name, i);
   return {
     season: snapshot.season, fetchedAt: snapshot.fetchedAt,
+    category: (key) => (typeof key === 'number' ? byId.get(String(key)) : byName.get(key))?.category ?? null,
     price(key, level) {
       const row = typeof key === 'number' ? byId.get(String(key)) : byName.get(key);
       return row ? priceOf(String(row.id), level, row) : null;

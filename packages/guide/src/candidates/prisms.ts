@@ -3,9 +3,7 @@
  * the result AND dps-debug's `prism add` change can express it. Rules and sources: docs/prism-rules.md.
  * Everything else goes to ctx.notSearched with its reason.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { pinRoot, table } from '../pin';
 import type { Change, Generator, Move, OwnedItem, State } from '../types';
 
 type Rows<T> = Record<string, T>;
@@ -16,22 +14,13 @@ interface Catalog {
   talent: Rows<{ i4: number; i18: number; a40: [number, number] }>;
 }
 
-/** The pin root: DPS_DEBUG_PIN, else the nearest `dps-debug/.worktrees/guide-pin` beside an ancestor of this file. */
-export function pinRoot(): string {
-  if (process.env.DPS_DEBUG_PIN) return process.env.DPS_DEBUG_PIN;
-  for (let d = dirname(fileURLToPath(import.meta.url)); dirname(d) !== d; d = dirname(d)) {
-    const p = join(d, 'dps-debug', '.worktrees', 'guide-pin');
-    if (existsSync(p)) return p;
-  }
-  throw new Error('prisms: the dps-debug pin was not found (set DPS_DEBUG_PIN)');
-}
+export { pinRoot };   // tests import it from here
 
 let cat: Catalog | undefined;
 export function catalog(): Catalog {
   if (cat) return cat;
-  const base = join(pinRoot(), 'catalog'), dir = join(base, readdirSync(base).filter(n => n.startsWith('0x'))[0]);
-  const rows = (f: string) => JSON.parse(readFileSync(join(dir, f), 'utf8')).rows;
-  return (cat = { modifier: rows('config_modifier.json'), rolls: rows('config_modifier_rolls.json'), talent: rows('config_talent.json') });
+  const rows = (f: string) => table<{ rows: any }>(f).rows;
+  return (cat = { modifier: rows('config_modifier'), rolls: rows('config_modifier_rolls'), talent: rows('config_talent') });
 }
 
 /** config_prism_influence_shape (re/evidence/prisms.md (b)): cell offsets [dx (col), dy (row)] relative to the prism, own cell added. Ids 6, 7 are not documented. */

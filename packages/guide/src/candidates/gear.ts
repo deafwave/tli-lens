@@ -2,6 +2,7 @@
    Catalog tables are read from the pinned dps-debug checkout (read-only; env DPS_DEBUG_PIN overrides its root). */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { table as catalogTable } from '../pin';
 import { craftOptions, type LibraryAffix } from '../craft';
 import affixIds from '../data/affix-ids.json';
 import type { Change, GenCtx, Generator, Move, Skill, State } from '../types';
@@ -12,9 +13,8 @@ interface GearItem { slot?: string; label: string; baseId?: number; level?: numb
 export interface Base { baseId: number; name: string; level: number }
 interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; lib: string | null }
 
-const PIN = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const table = (f: string): Record<string, any> => JSON.parse(readFileSync(`${PIN}/catalog/0x6aa39847/${f}.json`, 'utf8')).rows;
+const table = (f: string): Record<string, any> => catalogTable<{ rows: Record<string, any> }>(f).rows;
 const library: LibraryAffix[] = JSON.parse(readFileSync(fileURLToPath(new URL('../../../../data/affix_library.json', import.meta.url)), 'utf8')).affixes;
 // tiers whose id is not a catalog modifier or whose text ranges differ from the modifier's rolls are not crafted (see docs/gear-rules.md)
 const UNVERIFIED = new Set([...affixIds.mismatches, ...affixIds.rollMismatches]);

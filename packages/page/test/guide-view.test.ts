@@ -21,6 +21,11 @@ describe('guide view', () => {
     for (const l of [...g.notSearched, ...g.unpriced, ...g.notCalculable]) expect(html).toContain(l);
     expect(html).toContain('partial: sample-piece');
   });
+  it('a partial or stopped run shows a banner; a finished one does not', () => {
+    expect(html).not.toContain('gl-banner');
+    expect(renderGuide({ ...g, knobs: { ...g.knobs, partialRun: true } })).toContain('Partial run');
+    expect(renderGuide({ ...g, knobs: { ...g.knobs, stoppedBy: 'budget' } })).toContain('Stopped early (budget)');
+  });
   it('parseAdvice rejects wrong mode and schema', () => {
     expect(() => parseAdvice(JSON.stringify(g))).toThrow(/advise/);
     expect(() => parseAdvice('{')).toThrow(/JSON/);

@@ -643,3 +643,4 @@ a.t-branch:hover,a.t-branch:focus-visible{text-decoration:underline}
 .gl-table .respec td{color:var(--muted);font-size:12px}
 #advice textarea{width:100%;background:var(--night-2);color:var(--text);border:1px solid var(--ice-line);font-family:"IBM Plex Mono",monospace}
 #advice button{margin:8px 0;padding:6px 14px}
+.gl-banner{margin:0 0 .6rem;padding:.5rem .8rem;border:1px solid var(--marble);color:var(--marble);background:var(--night-2)}

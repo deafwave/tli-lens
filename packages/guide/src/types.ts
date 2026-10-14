@@ -53,6 +53,8 @@ export interface Evaluator {
   /** apply `changes` to `loadout` in order (a `LoadoutPatch` through applyPatch, the rest through dps-debug applyGearChange / applyOtherChange) and price the result */
   run(loadout: Loadout, changes: (Change | LoadoutPatch)[], ctx: EvalCtx): Promise<Evaluated>;
   readonly pin: string;
+  /** ms spent paused (busy file); the wall-clock budget does not count it */
+  pausedMs?(): number;
   /** the stated fight inputs every figure is priced under (Carry.fight) */
   readonly fightNote?: string;
   readonly fight?: { bombs?: number; inputs?: Record<string, number> };

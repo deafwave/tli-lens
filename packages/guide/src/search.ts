@@ -2,7 +2,10 @@
  *  reconfigurations re-solved by a churn-gated hill climb. */
 import type { Evaluated, Evaluator, Figure, GenCtx, Generator, Move, State, Step } from './types';
 
-export interface Knobs { churn: number; topK: number; maxRounds: number; refreshEvery: number; maxSteps: number; targetKill?: number; budgetFE?: number }
+export interface Knobs { churn: number; topK: number; maxRounds: number; refreshEvery: number; maxSteps: number; targetKill?: number; budgetFE?: number;
+  /** wall-clock minutes; once over, the run stops after the current step (knobs.stoppedBy = 'budget') */ budgetMinutes?: number }
+export const overBudget = (k: Knobs, t0: number, ev?: Evaluator) =>
+  k.budgetMinutes !== undefined && Date.now() - t0 - (ev?.pausedMs?.() ?? 0) >= k.budgetMinutes * 60_000;
 export const DEFAULT_KNOBS: Knobs = { churn: 0.05, topK: 5, maxRounds: 10, refreshEvery: 10, maxSteps: 400 };
 
 /** A figure is rankable only if it dropped no piece the baseline still had, and it computed. */
@@ -112,17 +115,24 @@ export async function step(s: State, f: Figure, ev: Evaluator, acq: Generator[],
   return stepOnce(s, f, ev, acq, recon, ctx, k, mem);
 }
 
-export async function path(s0: State, ev: Evaluator, acq: Generator[], recon: Generator[], ctxOf: (s: State) => GenCtx, k: Knobs):
-  Promise<{ start: Figure; steps: Step[]; notCalculable: string[]; unpriced: string[]; notSearched: string[] }> {
+export interface PathOut { start: Figure; steps: Step[]; notCalculable: string[]; unpriced: string[]; notSearched: string[]; stoppedBy?: 'budget' }
+export async function path(s0: State, ev: Evaluator, acq: Generator[], recon: Generator[], ctxOf: (s: State) => GenCtx, k: Knobs,
+  onStep?: (p: PathOut) => void):
+  Promise<PathOut> {
+  const t0 = Date.now();
   const start = (await ev.run(s0.loadout, [], { level: s0.level, skill: s0.skill })).figure;
   const mem = newMem(), notSearched = new Set<string>(), steps: Step[] = [];
   let s = s0, f = start;
+  const snap = (): PathOut => ({ start, steps: [...steps], notCalculable: [...mem.notCalculable], unpriced: [...mem.unpriced], notSearched: [...notSearched] });
+  let stoppedBy: 'budget' | undefined;
   while (steps.length < k.maxSteps && !(k.targetKill !== undefined && f.kill >= k.targetKill)) {
+    if (overBudget(k, t0, ev)) { stoppedBy = 'budget'; break; }
     const ctx = ctxOf(s);
     const r = await step(s, f, ev, acq, recon, ctx, k, mem);
     ctx.notSearched.forEach((n) => notSearched.add(n));
     if (!r) break;
     steps.push(r.step); s = r.state; f = r.step.after;
+    onStep?.(snap());
   }
-  return { start, steps, notCalculable: [...mem.notCalculable], unpriced: [...mem.unpriced], notSearched: [...notSearched] };
+  return { ...snap(), ...(stoppedBy ? { stoppedBy } : {}) };
 }

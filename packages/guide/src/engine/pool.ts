@@ -146,7 +146,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
     schedule(w => w.run({ loadout, changes, ctx, fight, rollBudget })).then(
       ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped, ...(fig.inputs ? { inputs: fig.inputs } : {}),
-        figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs].filter(l => !INFO.some(p => typeof p === 'string' ? l.startsWith(p) : p.test(l))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
+        figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs, ...dropped].filter(l => !INFO.some(p => typeof p === 'string' ? l.startsWith(p) : p.test(l))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
       (e: Error) => {
         if (e.message === 'evaluator closed') throw e;
         return { keep: !(e instanceof WorkerDied), v: { loadout, dropped: [], figure: { life100: 0, life0: 0, kill: 0, partial: [], stop: e.message } } };

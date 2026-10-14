@@ -14,13 +14,13 @@ import { realSkip } from './real';
 
 const fig = (life100: number, life0: number, extra: Partial<JobResult['fig']> = {}) => ({ life100, life0, left: [], needs: [], ...extra });
 /** stub worker: records jobs; `f` decides the figure (throwing = dps-debug throwing, reported as a rejection) */
-function stub(f: (j: Job) => JobResult['fig'] = () => fig(200, 100), delay = 0) {
+function stub(f: (j: Job) => JobResult['fig'] = () => fig(200, 100), delay = 0, dropped: string[] = []) {
   const jobs: Job[] = []; let active = 0, peak = 0;
   const factory = (): WorkerLike => ({
     ready: Promise.resolve(),
     async run(j) {
       jobs.push(j); peak = Math.max(peak, ++active);
-      try { await new Promise(r => setTimeout(r, delay)); return { loadout: j.loadout, dropped: ['x'], fig: f(j) }; } finally { active--; }
+      try { await new Promise(r => setTimeout(r, delay)); return { loadout: j.loadout, dropped, fig: f(j) }; } finally { active--; }
     },
     async close() {},
   });
@@ -31,11 +31,11 @@ const lo = { a: 1 };
 const ch = [{ kind: 'stub' }] as unknown as Change[];
 
 describe('evaluator (stub workers)', () => {
-  it('maps the figure: kill = killAverage, partial = left + needs, dropped passes through', async () => {
-    const s = stub(() => ({ life100: 200, life0: 100, left: ['L'], needs: ['N'] }));
+  it('maps the figure: kill = killAverage, partial = left + needs + dropped, dropped passes through', async () => {
+    const s = stub(() => ({ life100: 200, life0: 100, left: ['L'], needs: ['N'] }), 0, ['x']);
     const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p' });
     const r = await ev.run(lo, [], ctx);
-    expect(r.figure).toEqual({ life100: 200, life0: 100, kill: killAverage(200, 100), partial: ['L', 'N'] });
+    expect(r.figure).toEqual({ life100: 200, life0: 100, kill: killAverage(200, 100), partial: ['L', 'N', 'x'] });
     expect(r.dropped).toEqual(['x']);
   });
   it('informational price: notes are not omissions: figures differing only in them are rankable', async () => {

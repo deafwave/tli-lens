@@ -1,4 +1,4 @@
-/** guide ideal [--out path] | advise <export.json> [--fe N] [--season N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<20]) */
+/** guide ideal [--out path] | advise <export.json> [--fe N] [--season N] [--out path] [--budget-minutes N, default 30] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<20]) */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { writeAtomic } from './atomic';
@@ -35,7 +35,8 @@ async function main() {
     const prices = snapshotBook(await Promise.resolve().then(async () => fetchSnapshot(num('season') ?? await fetchSeason(), localItems())).catch((e: Error) => { console.warn(`live etor prices unavailable (${e.message}); using the stored snapshot`); return localItems(); }));
     const ev = await evaluator();
     const out = flag('out') ?? 'advice.json';
-    try { final(out, dump(await runAdvise(ev, state, budgetMinutes === undefined ? {} : { budgetMinutes }, prices, (o) => writeAtomic(out, dump(o))))); } finally { await ev.close(); }
+    // the export button waits on this: a Hammer of Ash figure is slow, so advise stops after 30 minutes unless told otherwise (the page shows a partial run)
+    try { final(out, dump(await runAdvise(ev, state, { budgetMinutes: budgetMinutes ?? 30 }, prices, (o) => writeAtomic(out, dump(o))))); } finally { await ev.close(); }
     // UTF-8 through an env-named file, as reader/export.py does, so non-ASCII names survive
     execFileSync('powershell', ['-NoProfile', '-Command', 'Set-Clipboard -Value ([IO.File]::ReadAllText($env:ADVICE_FILE, [Text.Encoding]::UTF8))'], { env: { ...process.env, ADVICE_FILE: out } });
     console.log(`wrote ${out} and copied it to the clipboard`);

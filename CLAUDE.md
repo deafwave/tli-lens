@@ -23,7 +23,7 @@ dps-debug's guide gates (`GUIDE_GATES=1`, tests in `model/guide/`).
 ## Commands
 
 `pnpm guide ideal | advise <export.json> [--fe N] [--season N] | figure <loadout.json> [--skill hoa|iceShot] [--level N]`;
-shared flags `--workers --bombs --roll-budget --budget-minutes --out`. `pnpm dev` / `pnpm build` / `pnpm test`
+shared flags `--workers --bombs --roll-budget --budget-minutes --out` (advise: `--budget-minutes` defaults to 30). `pnpm dev` / `pnpm build` / `pnpm test`
 (guide: `tsc --noEmit && vitest run`). `GUIDE_REAL=1` also runs real-figure tests; they and the pool pause while
 the `game.busy` file exists (`DEFAULT_BUSY_FILE` in `engine/pool.ts`, env `GUIDE_BUSY_FILE`).
 

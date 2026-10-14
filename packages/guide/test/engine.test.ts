@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -107,6 +107,39 @@ describe('evaluator (stub workers)', () => {
     await Promise.all(Array.from({ length: 40 }, (_, i) => ev.run({ i }, [], ctx)));
     expect(s.jobs).toHaveLength(40);
     expect(s.peak()).toBe(3);
+  });
+});
+
+describe('busy file', () => {
+  it('starts no job while the file exists, keeps queue order, and resumes when it is removed', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'busy-')), busyFile = join(dir, 'game.busy');
+    writeFileSync(busyFile, '');
+    const s = stub(), events: boolean[] = [];
+    const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', busyFile, busyPollMs: 10, onBusy: p => events.push(p) });
+    const runs = [1, 2, 3].map(n => ev.run({ n }, [], ctx));
+    await new Promise(r => setTimeout(r, 80));
+    expect(s.jobs).toHaveLength(0);
+    expect(events).toEqual([true]);
+    rmSync(busyFile);
+    await Promise.all(runs);
+    expect(s.jobs.map(j => (j.loadout as { n: number }).n)).toEqual([1, 2, 3]);
+    expect(events).toEqual([true, false]);
+  });
+  it('a file that appears later pauses the next job, and null disables the check', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'busy-')), busyFile = join(dir, 'game.busy');
+    const s = stub();
+    const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', busyFile, busyPollMs: 10 });
+    await ev.run({ n: 1 }, [], ctx);
+    writeFileSync(busyFile, '');
+    const p = ev.run({ n: 2 }, [], ctx);
+    await new Promise(r => setTimeout(r, 60));
+    expect(s.jobs).toHaveLength(1);
+    rmSync(busyFile); await p;
+    expect(s.jobs).toHaveLength(2);
+    writeFileSync(busyFile, '');
+    const off = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', busyFile: null });
+    await off.run({ n: 3 }, [], ctx);
+    expect(s.jobs).toHaveLength(3);
   });
 });
 

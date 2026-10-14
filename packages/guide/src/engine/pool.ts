@@ -1,5 +1,6 @@
 /** Evaluator: a worker_threads pool pricing loadouts with the pinned dps-debug figure entry. */
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import { Worker } from 'node:worker_threads';
 import { killAverage } from '../kill';
@@ -39,7 +40,15 @@ export interface EvaluatorOpts {
   memoDir?: string;
   /** the scenario's stated fight inputs (default DEFAULT_FIGHT) */
   fight?: Fight;
+  /** while this file exists no job is started (running ones finish). Default: env GUIDE_BUSY_FILE, else the owner's game-capture flag
+   *  (only for real workers; stub factories skip it). null disables. */
+  busyFile?: string | null;
+  /** how often the busy file is re-checked (ms, default 5000) */
+  busyPollMs?: number;
+  /** called with true when the pool pauses on the busy file, false when it resumes */
+  onBusy?: (paused: boolean) => void;
 }
+export const DEFAULT_BUSY_FILE = 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/track-a/.cache/game.busy';
 
 /** HEAD sha of the pin, plus `+dirty` when its tree has changes (same rule as dps-debug's pinOf) */
 function gitPin(root: string): string {
@@ -92,11 +101,24 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const fight = o.fight ?? DEFAULT_FIGHT;
   const memo = createMemo<Evaluated>(pin, o.memoDir);
 
+  const busyFile = o.busyFile === undefined ? (process.env.GUIDE_BUSY_FILE ?? (o.factory ? null : DEFAULT_BUSY_FILE)) : o.busyFile;
+  let paused = false, poll: Promise<void> | undefined;
+  /** resolves once the busy file is gone, checked fresh each call; waiters share one poll timer so they resume in arrival order */
+  const untilFree = async () => {
+    if (!busyFile) return;
+    while (!closed && existsSync(busyFile)) {
+      if (!paused) { paused = true; o.onBusy?.(true); }
+      await (poll ??= new Promise<void>(r => setTimeout(r, o.busyPollMs ?? 5000)).finally(() => { poll = undefined; }));
+    }
+    if (paused) { paused = false; o.onBusy?.(false); }
+  };
+
   /** runs f on an idle worker (queued when none). A dead worker is dropped and replaced; `f` is retried once on the replacement. */
   const schedule = <T>(f: (w: WorkerLike) => Promise<T>): Promise<T> => new Promise<T>((ok, fail) => {
     const go = async () => {
       let w = idle.pop()!;
       try {
+        await untilFree();
         for (let attempt = 0; ; attempt++) {
           try { ok(await f(w)); break; }
           catch (e) {

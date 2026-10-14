@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { basesFor, slotsOfBase } from '../src/candidates/gear';
 import { localHistory, localItems, ownedGear, runAdvise, runIdeal, unpricedAcquisitions } from '../src/modes';
 import { historyBook } from '../src/pricing';
@@ -103,6 +103,37 @@ describe('runIdeal', () => {
     expect(out.notCalculable[0]).toMatch(/cannot be priced yet: not ported: Ice Shot build entry/);
     expect(out.startNotes!.at(-1)).toMatch(/cannot be priced yet/);
     expect(renderGuide(out as never)).toContain('stopped');
+  });
+});
+
+describe('long-run safety', () => {
+  it('onStep gets a valid partial output per step; the final output is not partial', async () => {
+    const seen: string[] = [];
+    const out = await runIdeal(stubEv(), small, undefined, (o) => seen.push(JSON.stringify(o)));
+    const parsed = seen.map((t) => JSON.parse(t));
+    expect(parsed.length).toBeGreaterThanOrEqual(out.steps.length);
+    expect(parsed.every((p) => p.knobs.partialRun === true && p.mode === 'ideal')).toBe(true);
+    expect(parsed.map((p) => p.steps.length)).toEqual([...parsed.map((p) => p.steps.length)].sort((a, b) => a - b));
+    expect(out.knobs.partialRun).toBeUndefined();
+    const adv: string[] = [];
+    const a = await runAdvise(stubEv(), fromExport(exportOf()), { maxRounds: 1, topK: 2, maxSteps: 3 }, undefined, (o) => adv.push(JSON.stringify(o)));
+    expect(adv).toHaveLength(a.steps.length);
+    expect(adv.every((t) => JSON.parse(t).knobs.partialRun === true)).toBe(true);
+    expect(a.knobs.partialRun).toBeUndefined();
+  });
+  it('budgetMinutes stops after the current step and marks stoppedBy', async () => {
+    let clock = 0;   // fake wall clock: a minute passes with every checkpoint
+    const spy = vi.spyOn(Date, 'now').mockImplementation(() => clock);
+    try {
+      const tick = () => { clock += 60_000; };
+      const ideal = await runIdeal(stubEv(), { ...small, endLevel: 100, stepsPerStage: 5, budgetMinutes: 0.5 }, undefined, tick);
+      expect(ideal.knobs.stoppedBy).toBe('budget');
+      expect(ideal.steps).toHaveLength(1);
+      clock = 0;
+      const adv = await runAdvise(stubEv(), fromExport(exportOf()), { maxRounds: 1, topK: 2, maxSteps: 50, budgetMinutes: 0.5 }, undefined, tick);
+      expect(adv.knobs.stoppedBy).toBe('budget');
+      expect(adv.steps).toHaveLength(1);
+    } finally { spy.mockRestore(); }
   });
 });
 

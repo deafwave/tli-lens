@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { dumpToItem } from '@dps/src/core/whatif';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { pinRoot } from '../src/pin';
-import { targetMoves } from '../src/candidates/target';
+import { pinRoot, table } from '../src/pin';
+import { goldOf, targetMoves } from '../src/candidates/target';
 import type { Move, Skill } from '../src/types';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
@@ -64,6 +64,16 @@ describe('targetMoves', () => {
     expect(gold.length).toBeGreaterThan(0);
     expect(rare.length).toBeGreaterThan(0);
     expect(rare.every(m => m.costNote === 'rare: its affixes have no market price')).toBe(true);
+  });
+  it('goldOf: a real legendary matches; the same item padded with unrelated groups is a rare', () => {
+    const lang = table<{ rows: Record<string, string> }>('lang_en').rows, base = table<{ rows: Record<string, { a1b8?: number[] }> }>('config_item_base').rows;
+    const baseOf = (label: string) => Number(Object.keys(base).find(k => lang[`item_base|name|${k}`] === label && (base[k].a1b8 ?? []).length) ?? 0);
+    const hits = tg.gear.filter(g => baseOf(g.label) > 0 && goldOf(g, baseOf(g.label)) !== undefined);
+    expect(hits.length).toBeGreaterThan(0);
+    const g = hits[0], b = baseOf(g.label), attrs = new Set(base[b].a1b8 ?? []);
+    const other = tg.gear.filter(x => x !== g).flatMap(x => x.affixes).filter(a => !attrs.has(a.id));
+    const own = g.affixes.filter(a => !attrs.has(a.id)).length;
+    expect(goldOf({ ...g, affixes: [...g.affixes, ...other.slice(0, own + 2)] }, b)).toBeUndefined();   // carries the whole row, but most of its groups are not the row's
   });
   it('a move dps-debug rejects is skipped and named', () => {
     const noBelt = { ...l100, gear: (l100.gear as { slot: string }[]).filter(g => g.slot !== 'belt') };

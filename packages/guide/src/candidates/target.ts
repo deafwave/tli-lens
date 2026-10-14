@@ -15,7 +15,7 @@ import { slotsOfBase } from './gear';
 import type { Change, Generator, Move } from '../types';
 
 type Aff = { id: number; dyn: number[] };
-interface TGear { label: string; affixes: Aff[] }
+export interface TGear { label: string; affixes: Aff[] }
 interface Target { gear: TGear[]; pacts: { servantId: number; rank: number; promotionLevels: number[][]; slot: number }[];
   kismets: { modifierId: number | null; servantId: number; node: number; rolls: number[] }[]; contractKeys: number[]; heroMemories: unknown[]; vorax: unknown[] }
 
@@ -59,6 +59,19 @@ function applyError(l: Record<string, unknown>, changes: Move["changes"], level:
 const GOLD_KEYS = ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168'];
 const sig = (a: Aff[]) => JSON.stringify(a.map(x => [x.id, x.dyn]).sort());
 
+/** the gold item a target item is, else undefined: it carries ALL of a gold row's modifier groups on that base AND at least half of its own non-base-attribute
+ *  groups belong to that row (a rare sharing 1-3 craftable groups with a short gold row is not a legendary). Its label is the base's name, not the legendary's. */
+export function goldOf(it: TGear, baseId: number): string | undefined {
+  const gold = rows('config_item_gold'), attrs = new Set<number>(rows('config_item_base')[baseId].a1b8 ?? []);
+  const own = new Set(it.affixes.filter(a => !attrs.has(a.id)).map(a => Math.floor(a.id / 10)));
+  return Object.keys(gold).find(g => {
+    if (gold[g].i8 !== baseId) return false;
+    const row = new Set(GOLD_KEYS.flatMap(k => Object.keys(gold[g][k] ?? {})).map(Number));
+    const groups = new Set(it.affixes.map(a => Math.floor(a.id / 10)));
+    return row.size > 0 && [...row].every(x => groups.has(x)) && [...own].filter(x => row.has(x)).length * 2 >= own.size;
+  });
+}
+
 export const targetMoves: Generator = (s, ctx) => {
   if (s.skill !== 'hoa') return [];
   const ns = ctx.notSearched, t = loadTarget(), l = s.loadout as Record<string, any>;   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -86,9 +99,7 @@ export const targetMoves: Generator = (s, ctx) => {
     if (held.has(slot) && sig(held.get(slot)!) === sig(it.affixes)) continue;
     const attrs = new Set<number>(base[baseId].a1b8 ?? []), modifiers: Record<string, { id: number; dynArgs: number[] }[]> = {};
     for (const a of it.affixes) (modifiers[attrs.has(a.id) ? 'baseAttr' : sideOf(a.id) ?? 'fixed'] ??= []).push({ id: a.id, dynArgs: [...a.dyn] });
-    // a legendary: a gold item on this base whose modifier groups the item carries (its label is the base's name, not the legendary's)
-    const groups = new Set(it.affixes.map(a => Math.floor(a.id / 10)));
-    const gid = Object.keys(gold).find(g => gold[g].i8 === baseId && GOLD_KEYS.flatMap(k => Object.keys(gold[g][k] ?? {})).every(x => groups.has(Number(x))) && GOLD_KEYS.some(k => Object.keys(gold[g][k] ?? {}).length));
+    const gid = goldOf(it, baseId);
     const cost = gid ? { costFE: priceOfGold(ctx.prices, Number(gid), ctx.level).fe } : { costFE: null, costNote: 'rare: its affixes have no market price' };
     keep(mk({ kind: 'gear', label: `Target: ${it.label} in ${slot}`, ...cost, minLevel: level,
       changes: [{ kind: 'gear', slot, item: { baseId, baseName: it.label, itemId: `guide-target-${baseId}`, level, modifiers } }] }), it.label);

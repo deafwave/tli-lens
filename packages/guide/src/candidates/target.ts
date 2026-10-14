@@ -12,17 +12,27 @@ import { applyChanges, openCatalog } from '@dps/guide/figure';
 import { pinRoot, table } from '../pin';
 import { priceOfBase, priceOfGold } from '../priceOf';
 import { slotsOfBase } from './gear';
+import type { LoadoutPatch } from '../patches';
 import type { Change, Generator, Move } from '../types';
 
 type Aff = { id: number; dyn: number[] };
-interface TGear { label: string; affixes: Aff[] }
+export interface TGear { label: string; affixes: Aff[] }
 interface Target { gear: TGear[]; pacts: { servantId: number; rank: number; promotionLevels: number[][]; slot: number }[];
-  kismets: { modifierId: number | null; servantId: number; node: number; rolls: number[] }[]; contractKeys: number[]; heroMemories: unknown[]; vorax: unknown[] }
+  kismets: { modifierId: number | null; servantId: number; node: number; rolls: number[] }[]; contractKeys: number[]; heroMemories: unknown[]; vorax: unknown[]; slates: number[] }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rows = (f: string): Record<string, any> => table<{ rows: Record<string, any> }>(f).rows;
 let target: Target | undefined;
 const loadTarget = (): Target => target ??= JSON.parse(readFileSync(join(pinRoot(), 're/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
+
+/** The target's slates as the server's resolved influence tables, assembled exactly as dps-debug's target.test.ts / guide/figure.ts do: the V2 file filtered to
+ *  the slates whose talents the target holds. */
+let board: Extract<LoadoutPatch, { op: 'slate-board' }>['items'] | undefined;
+const targetBoard = () => board ??= (() => {
+  const mine = new Set(loadTarget().slates);
+  const v2 = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/t5_slate_v2_probuild.json'), 'utf8')) as (Record<string, unknown> & { id: number; EffectTalentIds: number[] })[];
+  return v2.filter(v => v.EffectTalentIds.every(t => mine.has(t))).map(v => ({ itemId: `probuild_${v.id}`, baseId: 0, talents: v.EffectTalentIds, influence: v }));
+})();
 
 /** affix tier id -> 'prefix' | 'suffix' from the craft library; the target file carries no list names */
 let sides: Map<number, string> | undefined;
@@ -59,10 +69,23 @@ function applyError(l: Record<string, unknown>, changes: Move["changes"], level:
 const GOLD_KEYS = ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168'];
 const sig = (a: Aff[]) => JSON.stringify(a.map(x => [x.id, x.dyn]).sort());
 
+/** the gold item a target item is, else undefined: it carries ALL of a gold row's modifier groups on that base AND at least half of its own non-base-attribute
+ *  groups belong to that row (a rare sharing 1-3 craftable groups with a short gold row is not a legendary). Its label is the base's name, not the legendary's. */
+export function goldOf(it: TGear, baseId: number): string | undefined {
+  const gold = rows('config_item_gold'), attrs = new Set<number>(rows('config_item_base')[baseId].a1b8 ?? []);
+  const own = new Set(it.affixes.filter(a => !attrs.has(a.id)).map(a => Math.floor(a.id / 10)));
+  return Object.keys(gold).find(g => {
+    if (gold[g].i8 !== baseId) return false;
+    const row = new Set(GOLD_KEYS.flatMap(k => Object.keys(gold[g][k] ?? {})).map(Number));
+    const groups = new Set(it.affixes.map(a => Math.floor(a.id / 10)));
+    return row.size > 0 && [...row].every(x => groups.has(x)) && [...own].filter(x => row.has(x)).length * 2 >= own.size;
+  });
+}
+
 export const targetMoves: Generator = (s, ctx) => {
   if (s.skill !== 'hoa') return [];
   const ns = ctx.notSearched, t = loadTarget(), l = s.loadout as Record<string, any>;   // eslint-disable-line @typescript-eslint/no-explicit-any
-  ns.add("target slates: the target data holds each slate's talents and influence arrays but no shape or board slot, which `slate place` needs; none generated");
+  ns.add("single slates: board adjacency is resolved server-side");
   if (t.heroMemories.length) ns.add('target hero memories: dps-debug has no what-if change for them; not offered');
   if (t.vorax.length) ns.add('target vorax limbs: dps-debug has no what-if change for them; not offered');
   ns.add('target kismets appear once their pact is equipped in that slot');
@@ -86,13 +109,19 @@ export const targetMoves: Generator = (s, ctx) => {
     if (held.has(slot) && sig(held.get(slot)!) === sig(it.affixes)) continue;
     const attrs = new Set<number>(base[baseId].a1b8 ?? []), modifiers: Record<string, { id: number; dynArgs: number[] }[]> = {};
     for (const a of it.affixes) (modifiers[attrs.has(a.id) ? 'baseAttr' : sideOf(a.id) ?? 'fixed'] ??= []).push({ id: a.id, dynArgs: [...a.dyn] });
-    // a legendary: a gold item on this base whose modifier groups the item carries (its label is the base's name, not the legendary's)
-    const groups = new Set(it.affixes.map(a => Math.floor(a.id / 10)));
-    const gid = Object.keys(gold).find(g => gold[g].i8 === baseId && GOLD_KEYS.flatMap(k => Object.keys(gold[g][k] ?? {})).every(x => groups.has(Number(x))) && GOLD_KEYS.some(k => Object.keys(gold[g][k] ?? {}).length));
+    const gid = goldOf(it, baseId);
     const cost = gid ? { costFE: priceOfGold(ctx.prices, Number(gid), ctx.level).fe } : { costFE: null, costNote: 'rare: its affixes have no market price' };
     keep(mk({ kind: 'gear', label: `Target: ${it.label} in ${slot}`, ...cost, minLevel: level,
       changes: [{ kind: 'gear', slot, item: { baseId, baseName: it.label, itemId: `guide-target-${baseId}`, level, modifiers } }] }), it.label);
   }
+
+  // the slate board: one acquisition, the resolved arrays written into the loadout. A slate is priced only by a sourced etor mapping (its game item name, or its
+  // tree); the target data carries neither (baseId 0, talents span several trees), so no slate maps and the board is unpriced.
+  const items = targetBoard(), placed = ((l.slateItems ?? []) as { itemId: string }[]).map(x => x.itemId).sort().join();
+  if (items.length && placed !== items.map(x => x.itemId).sort().join())
+    out.push(mk({ kind: 'slate', label: `Target slate board (${items.length} slates)`, costFE: null,
+      costNote: `unmapped slates (no etor row: the target data gives no item name or tree): ${items.map(x => x.itemId).join(', ')}`,
+      changes: [{ kind: 'patch', op: 'slate-board', items }] }));
 
   // pacts: not on the market
   const pacts = (l.pacts ?? []) as { servantId: number; slot?: number; rank: number }[];

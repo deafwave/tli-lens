@@ -57,6 +57,12 @@ describe('fetchSnapshot', () => {
     expect(out.items).toHaveLength(I.items.length);          // unknown live id 999999 has no name: dropped
     expect(out.fetchedAt).toBe('2026-10-14T00:00:00.000Z');
   });
+  it('records the season it fetched, not the local files', async () => {
+    expect(snapshotBook(await fetchSnapshot(1501, I, json(live))).season).toBe(I.season);
+    const other = await fetchSnapshot(1999, I, json(live));
+    expect(other.seasonId).toBe(1999);
+    expect(snapshotBook(other).season).toBe('1999');
+  });
   it('throws a clear error on a wrong body, never a TypeError', async () => {
     await expect(fetchSnapshot(1, I, json({ success: true }))).rejects.toThrow(/unexpected response/);
     await expect(fetchSnapshot(1, I, json(null))).rejects.toThrow(/unexpected response/);

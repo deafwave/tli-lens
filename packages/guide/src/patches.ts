@@ -3,6 +3,7 @@ import type { Change, Loadout } from './types';
 
 export type LoadoutPatch =
   | { kind: 'patch'; op: 'prism-provide'; tree: number; extraAffix: { id: number; dyn: number[] }[] }
+  | { kind: 'patch'; op: 'slate-board'; items: { itemId: string; baseId: number; talents: number[]; influence: Record<string, unknown> }[] }
   | { kind: 'patch'; op: 'inverse'; copies: { node: number; points: number; ee: number }[]; remove?: number[] };
 
 export const isPatch = (c: Change | LoadoutPatch): c is LoadoutPatch => (c as { kind: string }).kind === 'patch';
@@ -10,6 +11,7 @@ export const isPatch = (c: Change | LoadoutPatch): c is LoadoutPatch => (c as { 
 type Rt = [number, number, string];
 
 /** Pure. prism-provide: `prisms.provide[tree].ExtraAffix` (loadout.ts "prism-wide extra") gains the entries.
+ *  slate-board: `slateItems` becomes the given resolved slates (the server-resolved influence arrays, as dps-debug prices its target build).
  *  inverse: `resolvedTalents.talents` loses the `remove` originals and gains one mirror entry per copy, weight Point x (1 + EE/100),
  *  tag `talent:-<node>@<100+EE>%` (loadout.ts:237-250). */
 export function applyPatch(lo: Loadout, p: LoadoutPatch): Loadout {
@@ -19,6 +21,7 @@ export function applyPatch(lo: Loadout, p: LoadoutPatch): Loadout {
     slot.ExtraAffix = [...(Array.isArray(slot.ExtraAffix) ? slot.ExtraAffix : []), ...p.extraAffix.map(x => ({ Id: x.id, DynArgs: [...x.dyn] }))];
     return l;
   }
+  if (p.op === 'slate-board') { l.slateItems = structuredClone(p.items); return l; }   // slateItems replaces the flat slates / slateScale lists (dps-debug loadout.ts:211)
   const rt: Rt[] = l.resolvedTalents?.talents ?? Object.entries(l.talents ?? {}).map(([id, pt]) => [Number(id), pt as number, `talent:${id}`] as Rt);
   const gone = new Set(p.remove ?? []);
   l.resolvedTalents = { ...l.resolvedTalents, talents: [

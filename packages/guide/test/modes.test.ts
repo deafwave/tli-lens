@@ -39,7 +39,7 @@ describe('idealStart', () => {
   it('is level 60, Ice Shot, with a white drop base (no affixes) in every slot of the L94 loadout', () => {
     expect(s.level).toBe(60); expect(s.skill).toBe('iceShot');
     const gear = s.loadout.gear as { slot: string; baseId: number; level: number; affixes: { list: string }[]; market: string }[];
-    expect(gear.map((g) => g.slot).sort()).toEqual(['belt', 'boots', 'chest', 'gloves', 'helmet', 'mainHand', 'necklace', 'ring2']);
+    expect(gear.map((g) => g.slot).sort()).toEqual(['belt', 'boots', 'chest', 'gloves', 'helmet', 'mainHand', 'necklace', 'ring1', 'ring2']);
     for (const g of gear) {
       expect(slotsOfBase(g.baseId, 'iceShot').slots, g.slot).toContain(g.slot);
       expect(g.level).toBeLessThanOrEqual(60);
@@ -51,6 +51,8 @@ describe('idealStart', () => {
     const ctx = { prices: { season: 's', fetchedAt: 'x', price: () => 0.05 }, level: 60, notSearched: new Set<string>() };
     const slots = new Set(gearMoves(s, ctx).map((m) => (m.changes[0] as { slot?: string }).slot));
     for (const g of s.loadout.gear as { slot: string }[]) expect(slots.has(g.slot), g.slot).toBe(true);
+    expect(slots.has('ring1') && slots.has('ring2')).toBe(true);
+    expect(s.loadout.vorax).toEqual([]);
   });
   it('honours the start level: bases and the talent budget follow it', () => {
     const t = idealStart(70), gear = t.loadout.gear as { level: number }[];
@@ -105,7 +107,11 @@ describe('owned items as moves', () => {
 describe('runIdeal', () => {
   it('spends the level-up talent points at the stage start, free and ungated, and clears the lazy scores', async () => {
     const out = await runIdeal(stubEv(), { ...small, stepsPerStage: 0, endLevel: 65 });
-    expect(out.startNotes).toContain(`L65: ${pointsAtLevel(65) - pointsAtLevel(60)} new talent point(s) spent`);
+    const note = out.startNotes!.find((n) => n.startsWith('L65: ') && n.includes('new talent point(s) spent'))!;
+    expect(note.startsWith(`L65: ${pointsAtLevel(65) - pointsAtLevel(60)} new talent point(s) spent on nodes `)).toBe(true);
+    const nodes = [...note.matchAll(/(\d+) \(\+(\d+)\)/g)];
+    expect(nodes.length).toBeGreaterThan(0);
+    expect(nodes.reduce((a, m) => a + +m[2], 0)).toBe(pointsAtLevel(65) - pointsAtLevel(60));   // every point is listed on a node
   });
   it('writes an ideal GuideOut with pin, season, knobs, start notes and stated inputs', async () => {
     const out = await runIdeal(stubEv(), small);

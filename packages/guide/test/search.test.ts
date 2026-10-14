@@ -192,3 +192,20 @@ describe('lazy greedy edge cases', () => {
     expect(r!.step.move.label).toBe('+9%');
   });
 });
+
+test('a round evaluates unseen candidates at the evaluator\'s parallelism', async () => {
+  let active = 0, peak = 0;
+  const ev: Evaluator = {
+    pin: 'stub', parallelism: 8, async close() {},
+    async run(loadout, changes) {
+      peak = Math.max(peak, ++active);
+      await new Promise((r) => setTimeout(r, 2));
+      active--;
+      const labels = [...(loadout as L).labels, ...changes.map((c) => (c as unknown as { label: string }).label)];
+      return { loadout: { labels }, figure: figureOf(labels), dropped: [] };
+    },
+  };
+  const ms = Array.from({ length: 40 }, (_, i) => mv(`+${i + 1}%`));
+  await step(state(), base, ev, [fixed(...ms)], [], ctx(), { ...K, topK: 1 });
+  expect(peak).toBeGreaterThanOrEqual(8);
+});

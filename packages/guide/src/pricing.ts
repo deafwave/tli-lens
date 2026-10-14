@@ -47,9 +47,28 @@ export function snapshotBook(snapshot: EtorItems): PriceBook {
   return book(snapshot, (_id, _level, row) => (row.price == null || row.price === PLACEHOLDER ? null : row.price));
 }
 
-export async function fetchSnapshot(season: number, fetchImpl: typeof fetch = fetch): Promise<EtorItems> {
-  const res = await fetchImpl(`https://etor-beta.710421059.xyz/etor-api/api/prices-snapshot/${season}`,
-    { headers: { 'x-frontend-version': '1.0.6.2' } });
+const API = 'https://etor-beta.710421059.xyz/etor-api/api';
+const HEADERS = { 'x-frontend-version': '1.0.6.2' };
+
+/** The current season id from `/player/season-status` (`{ currentSeasonId: "1501", ... }`). */
+export async function fetchSeason(fetchImpl: typeof fetch = fetch): Promise<number> {
+  const res = await fetchImpl(`${API}/player/season-status`, { headers: HEADERS });
+  if (!res.ok) throw new Error(`etor season-status: HTTP ${res.status}`);
+  const id = Number(((await res.json()) as { currentSeasonId?: unknown })?.currentSeasonId);
+  if (!Number.isInteger(id)) throw new Error('etor season-status: no currentSeasonId in the response');
+  return id;
+}
+
+/** Live prices (`/prices-snapshot/{season}` = `{ success, data: [{ id: "110101", price: 10.08, updatedAt }] }`) laid over the local items table,
+ *  which supplies the names: a row the live body prices takes the live price, every other row keeps its stored one. */
+export async function fetchSnapshot(season: number, local: EtorItems, fetchImpl: typeof fetch = fetch, now = () => new Date()): Promise<EtorItems> {
+  const res = await fetchImpl(`${API}/prices-snapshot/${season}`, { headers: HEADERS });
   if (!res.ok) throw new Error(`etor snapshot ${season}: HTTP ${res.status}`);
-  return (await res.json()) as EtorItems;
+  const body = (await res.json()) as { data?: unknown };
+  if (!Array.isArray(body?.data)) throw new Error(`etor snapshot ${season}: unexpected response (want { data: [{ id, price }] })`);
+  const live = new Map<string, number>();
+  for (const r of body.data as { id?: unknown; price?: unknown }[])
+    if (r && (typeof r.id === 'string' || typeof r.id === 'number') && typeof r.price === 'number' && Number.isFinite(r.price)) live.set(String(r.id), r.price);
+  if (!live.size) throw new Error(`etor snapshot ${season}: no usable { id, price } rows in the response`);
+  return { ...local, fetchedAt: now().toISOString(), items: local.items.map((i) => (live.has(String(i.id)) ? { ...i, price: live.get(String(i.id))! } : i)) };
 }

@@ -1,12 +1,12 @@
-/** guide ideal [--out path] | advise <export.json> [--fe N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<23]) */
+/** guide ideal [--out path] | advise <export.json> [--fe N] [--season N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<23]) */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { writeAtomic } from './atomic';
 import { fileURLToPath } from 'node:url';
 import { mainSid } from './candidates/gems';
 import { createEvaluator, DEFAULT_FIGHT } from './engine/pool';
-import { localItems, runAdvise, runIdeal, SEASON } from './modes';
-import { fetchSnapshot, snapshotBook } from './pricing';
+import { localItems, runAdvise, runIdeal } from './modes';
+import { fetchSeason, fetchSnapshot, snapshotBook } from './pricing';
 import { fromExport } from './start';
 import type { GuideOut, Skill } from './types';
 
@@ -32,7 +32,7 @@ async function main() {
   } else if (cmd === 'advise') {
     if (!positional) throw new Error('usage: guide advise <export.json> [--fe N] [--out path]');
     const state = fromExport(readJson(positional), num('fe'));
-    const prices = snapshotBook(await fetchSnapshot(SEASON).catch((e: Error) => { console.warn(`live etor prices unavailable (${e.message}); using the stored snapshot`); return localItems(); }));
+    const prices = snapshotBook(await Promise.resolve().then(async () => fetchSnapshot(num('season') ?? await fetchSeason(), localItems())).catch((e: Error) => { console.warn(`live etor prices unavailable (${e.message}); using the stored snapshot`); return localItems(); }));
     const ev = await evaluator();
     const out = flag('out') ?? 'advice.json';
     try { final(out, dump(await runAdvise(ev, state, budgetMinutes === undefined ? {} : { budgetMinutes }, prices, (o) => writeAtomic(out, dump(o))))); } finally { await ev.close(); }

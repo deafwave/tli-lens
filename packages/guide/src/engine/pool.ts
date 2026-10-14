@@ -106,6 +106,11 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   let closed = false;
   const fight = o.fight ?? DEFAULT_FIGHT, rollBudget = o.rollBudget ?? DEFAULT_ROLL_BUDGET;
   const memo = createMemo<Evaluated>(pin, o.memoDir, o.memoEntries);
+  // env GUIDE_TRACE=1: once a minute, how busy the pool is; a figure over 2 minutes is named
+  let done = 0, workMs = 0;
+  const trace = process.env.GUIDE_TRACE ? setInterval(() => console.log(new Date().toISOString(),
+    `pool: ${n - idle.length} running, ${queue.length} queued, ${done} done, mean ${done ? (workMs / done / 1000).toFixed(1) : '-'} s per figure`), 60_000) : undefined;
+  trace?.unref();
 
   const busyFile = o.busyFile === undefined ? (process.env.GUIDE_BUSY_FILE ?? (o.factory ? null : DEFAULT_BUSY_FILE)) : o.busyFile;
   let paused = false, pausedSince = 0, pausedTotal = 0, poll: Promise<void> | undefined, wake: (() => void) | undefined;
@@ -145,8 +150,15 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   });
 
   /** `keep: false` marks a result that came from a worker dying twice: returned to the caller, never cached */
+  const timed = (w: WorkerLike, job: Job) => {
+    const t = Date.now();
+    return w.run(job).finally(() => {
+      const ms = Date.now() - t; done++; workMs += ms;
+      if (trace && ms > 120_000) console.log(new Date().toISOString(), `slow figure ${(ms / 1000).toFixed(0)} s: ${job.ctx.skill} L${job.ctx.level}, changes ${job.changes.map(c => (c as { kind?: string }).kind ?? 'patch').join(',')}`);
+    });
+  };
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
-    schedule(w => w.run({ loadout, changes, ctx, fight, rollBudget })).then(
+    schedule(w => timed(w, { loadout, changes, ctx, fight, rollBudget })).then(
       ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped, ...(fig.inputs ? { inputs: fig.inputs } : {}),
         figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs, ...dropped].filter(l => !INFO.some(p => typeof p === 'string' ? l.startsWith(p) : p.test(l))), ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
       (e: Error) => {
@@ -162,6 +174,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
       : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes, fight, rollBudget), () => price(loadout, changes, ctx)),
     close: async () => {
       closed = true;
+      clearInterval(trace);
       wake?.();
       for (const q of queue.splice(0)) q.fail(new Error('evaluator closed'));
       await closing();

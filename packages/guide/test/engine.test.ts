@@ -1,11 +1,12 @@
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { applyPatch, type LoadoutPatch } from '../src/patches';
 import { killAverage } from '../src/kill';
 import { pinRoot } from '../src/pin';
-import { createEvaluator, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
+import { applyInOrder } from '../src/engine/apply';
+import { createEvaluator, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
 
 const fig = (life100: number, life0: number, extra: Partial<JobResult['fig']> = {}) => ({ life100, life0, left: [], needs: [], ...extra });
@@ -13,6 +14,7 @@ const fig = (life100: number, life0: number, extra: Partial<JobResult['fig']> = 
 function stub(f: (j: Job) => JobResult['fig'] = () => fig(200, 100), delay = 0) {
   const jobs: Job[] = []; let active = 0, peak = 0;
   const factory = (): WorkerLike => ({
+    ready: Promise.resolve(),
     async run(j) {
       jobs.push(j); peak = Math.max(peak, ++active);
       try { await new Promise(r => setTimeout(r, delay)); return { loadout: j.loadout, dropped: ['x'], fig: f(j) }; } finally { active--; }
@@ -80,6 +82,77 @@ describe('evaluator (stub workers)', () => {
     await Promise.all(Array.from({ length: 40 }, (_, i) => ev.run({ i }, [], ctx)));
     expect(s.jobs).toHaveLength(40);
     expect(s.peak()).toBe(3);
+  });
+});
+
+describe('worker death, startup, close', () => {
+  it('a worker that dies mid-job is replaced, the job retried once, later jobs succeed', async () => {
+    let made = 0, closedWorkers = 0;
+    const ev = await createEvaluator({ workers: 1, pin: 'p', factory: () => {
+      const id = made++, w = stub().factory();
+      return { ...w, close: async () => { closedWorkers++; }, run: async j => { if (id === 0) throw new WorkerDied('exit 1'); return w.run(j); } };
+    } });
+    expect((await ev.run({ a: 1 }, [], ctx)).figure.stop).toBeUndefined();
+    expect(made).toBe(2); expect(closedWorkers).toBe(1);
+    expect((await ev.run({ a: 2 }, [], ctx)).figure.stop).toBeUndefined();
+  });
+  it('a crash-derived stop (retry also dies) is returned but never cached', async () => {
+    let dying = true, runs = 0;
+    const ev = await createEvaluator({ workers: 1, pin: 'p', factory: () => ({
+      ready: Promise.resolve(), close: async () => {},
+      run: async j => { runs++; if (dying) throw new WorkerDied('exit 1'); return { loadout: j.loadout, dropped: [], fig: fig(200, 100) }; },
+    }) });
+    expect((await ev.run(lo, [], ctx)).figure.stop).toBe('exit 1');
+    expect(runs).toBe(2);
+    dying = false;
+    expect((await ev.run(lo, [], ctx)).figure.stop).toBeUndefined();
+    expect(runs).toBe(3);
+  });
+  it('a crash stop is not written to disk', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    const ev = await createEvaluator({ workers: 1, pin: 'abc', memoDir: dir, factory: () => ({ ready: Promise.resolve(), close: async () => {}, run: async () => { throw new WorkerDied('x'); } }) });
+    await ev.run(lo, [], ctx);
+    expect(readdirSync(dir)).toHaveLength(0);
+  });
+  it('a corrupt disk memo file is a miss; writes leave no temp files', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    const mk = () => createEvaluator({ factory: stub().factory, workers: 1, pin: 'abc', memoDir: dir });
+    await (await mk()).run(lo, [], ctx);
+    const [f] = readdirSync(dir);
+    writeFileSync(join(dir, f), '{"torn');
+    const s = stub();
+    expect((await (await createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir })).run(lo, [], ctx)).figure.kill).toBe(killAverage(200, 100));
+    expect(s.jobs).toHaveLength(1);
+    expect(readdirSync(dir).filter(x => x.endsWith('.tmp'))).toHaveLength(0);
+  });
+  it('startup failure throws and closes the workers that started', async () => {
+    let closedWorkers = 0, i = 0;
+    await expect(createEvaluator({ workers: 3, pin: 'p', factory: () => ({
+      ready: i++ === 1 ? Promise.reject(new Error('tsx registration failed')) : Promise.resolve(),
+      run: async () => { throw new Error('unused'); }, close: async () => { closedWorkers++; },
+    }) })).rejects.toThrow('tsx registration failed');
+    expect(closedWorkers).toBe(3);
+  });
+  it('after close(), queued and new runs reject with "evaluator closed"', async () => {
+    const ev = await createEvaluator({ factory: stub(undefined, 20).factory, workers: 1, pin: 'p' });
+    const first = ev.run({ i: 1 }, [], ctx), queued = ev.run({ i: 2 }, [], ctx);
+    const queuedRej = expect(queued).rejects.toThrow('evaluator closed');
+    await ev.close();
+    await queuedRej;
+    await first;
+    await expect(ev.run({ i: 3 }, [], ctx)).rejects.toThrow('evaluator closed');
+  });
+  it('applies [Change, Change, Patch, Change] as applyChanges([c1,c2]) -> applyPatch -> applyChanges([c4])', () => {
+    const calls: string[] = [];
+    const c = (n: string) => ({ kind: 'c', n }) as unknown as Change;
+    const patch = { kind: 'patch', op: 'prism-provide', tree: 1, extraAffix: [] } as LoadoutPatch;
+    const r = applyInOrder({ v: '' }, [c('1'), c('2'), patch, c('4')], {
+      isPatch: (x): x is LoadoutPatch => (x as { kind: string }).kind === 'patch',
+      applyPatch: lo => { calls.push('patch'); return { v: `${lo.v}P` }; },
+      applyChanges: (lo, cs) => { calls.push(`changes[${cs.map(x => (x as any).n)}]`); return { loadout: { v: `${lo.v}C` }, dropped: [`d${calls.length}`] }; },
+    });
+    expect(calls).toEqual(['changes[1,2]', 'patch', 'changes[4]']);
+    expect(r).toEqual({ loadout: { v: 'CPC' }, dropped: ['d1', 'd3'] });
   });
 });
 

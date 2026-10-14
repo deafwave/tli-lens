@@ -9,21 +9,14 @@ import type { Job, JobResult } from './pool';
 
 register();
 const { applyPatch, isPatch } = await import('../patches');
+const { applyInOrder } = await import('./apply');
 const root = (workerData as { pinRoot: string }).pinRoot;
 const fig: typeof import('@dps/guide/figure') = await import(pathToFileURL(join(root, 'model', 'guide', 'figure.ts')).href);
 const cat = fig.openCatalog(join(root, 'catalog'));
 
-/** changes in order: runs of Changes through applyChanges, each LoadoutPatch through applyPatch; then the figure */
 function price({ loadout, changes, ctx }: Job): JobResult {
-  let lo = loadout as any;
-  const dropped: string[] = [];
-  for (let i = 0; i < changes.length;) {
-    if (isPatch(changes[i])) { lo = applyPatch(lo, changes[i] as any); i++; continue; }
-    let j = i;
-    while (j < changes.length && !isPatch(changes[j])) j++;
-    const r = fig.applyChanges(cat, lo, changes.slice(i, j) as any, ctx.skill, { heroLevel: ctx.level });
-    lo = r.loadout; dropped.push(...r.dropped); i = j;
-  }
+  const { loadout: lo, dropped } = applyInOrder(loadout, changes, { isPatch, applyPatch,
+    applyChanges: (l, cs) => fig.applyChanges(cat, l, cs, ctx.skill, { heroLevel: ctx.level }) });
   const g = fig.guideFigure(cat, lo, ctx.skill, { heroLevel: ctx.level });
   return { loadout: lo, dropped, fig: { life100: g.life100, life0: g.life0, left: g.left.map(x => x.name), needs: g.needs, stop: g.stop } };
 }

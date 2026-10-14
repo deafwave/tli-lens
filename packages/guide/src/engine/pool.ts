@@ -11,7 +11,14 @@ import { createMemo, memoKey } from './memo';
 export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx }
 export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string } }
 /** One worker: runs a job, rejects with the dps-debug error message when pricing throws. */
-export interface WorkerLike { run(job: Job): Promise<JobResult>; close(): Promise<void> }
+export interface WorkerLike {
+  /** settles when the worker can take jobs; rejects when its startup failed */
+  ready: Promise<void>;
+  run(job: Job): Promise<JobResult>;
+  close(): Promise<void>;
+}
+/** The worker itself died (exit, crash, failed startup): not a verdict on the job. Any other rejection is dps-debug throwing on the job. */
+export class WorkerDied extends Error {}
 export interface EvaluatorOpts {
   workers?: number; pinRoot?: string;
   /** replaces the worker_threads workers (tests) */
@@ -38,12 +45,14 @@ function threadWorker(root: string): WorkerLike {
       const p = pending.get(m.id!); pending.delete(m.id!);
       m.error === undefined ? p?.ok(m.result!) : p?.fail(new Error(m.error));
     });
-    const die = (e: Error) => { dead = e; fail(e); for (const p of pending.values()) p.fail(e); pending.clear(); };
+    const die = (e: Error) => {
+      if (!(e instanceof WorkerDied)) e = new WorkerDied(`figure worker failed: ${e.message}`); dead = e; fail(e); for (const p of pending.values()) p.fail(e); pending.clear(); };
     w.on('error', die);
-    w.on('exit', c => die(new Error(`figure worker exited (${c})`)));
+    w.on('exit', c => die(new WorkerDied(`figure worker exited (${c})`)));
   });
   ready.catch(() => {});
   return {
+    ready,
     async run(job) {
       await ready;
       if (dead) throw dead;
@@ -58,28 +67,56 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const pin = o.pin ?? gitPin(root);
   const n = Math.max(1, o.workers ?? Math.min(24, os.availableParallelism() - 4));
   if (!o.factory) os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL);   // process-wide; the workers are threads of it
-  const workers = Array.from({ length: n }, (_, i) => (o.factory ?? (() => threadWorker(root)))(i));
+  let serial = 0;
+  const spawn = (): WorkerLike => (o.factory ?? (() => threadWorker(root)))(serial++);
+  const workers = Array.from({ length: n }, spawn);
+  const all = new Set(workers);
+  const closing = () => Promise.all([...all].map(w => w.close().catch(() => {})));
+  try { await Promise.all(workers.map(w => w.ready)); }
+  catch (e) { await closing(); throw e; }
   const idle = [...workers];
-  const queue: (() => void)[] = [];
+  const queue: { go: () => void; fail: (e: Error) => void }[] = [];
+  let closed = false;
   const memo = createMemo<Evaluated>(pin, o.memoDir);
 
+  /** runs f on an idle worker (queued when none). A dead worker is dropped and replaced; `f` is retried once on the replacement. */
   const schedule = <T>(f: (w: WorkerLike) => Promise<T>): Promise<T> => new Promise<T>((ok, fail) => {
-    const go = () => {
-      const w = idle.pop()!;
-      f(w).then(ok, fail).finally(() => { idle.push(w); queue.shift()?.(); });
+    const go = async () => {
+      let w = idle.pop()!;
+      try {
+        for (let attempt = 0; ; attempt++) {
+          try { ok(await f(w)); break; }
+          catch (e) {
+            if (!(e instanceof WorkerDied) || closed) { fail(e as Error); break; }
+            all.delete(w); w.close().catch(() => {});
+            w = spawn(); all.add(w);
+            if (attempt === 1) { fail(e); break; }
+          }
+        }
+      } finally { idle.push(w); queue.shift()?.go(); }
     };
-    idle.length ? go() : queue.push(go);
+    if (closed) return fail(new Error('evaluator closed'));
+    idle.length ? void go() : queue.push({ go, fail });
   });
 
-  const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<Evaluated> =>
+  /** `keep: false` marks a result that came from a worker dying twice: returned to the caller, never cached */
+  const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
     schedule(w => w.run({ loadout, changes, ctx })).then(
-      ({ loadout: lo, dropped, fig }): Evaluated => ({ loadout: lo, dropped,
-        figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs], ...(fig.stop ? { stop: fig.stop } : {}) } }),
-      (e: Error): Evaluated => ({ loadout, dropped: [], figure: { life100: 0, life0: 0, kill: 0, partial: [], stop: e.message } }));
+      ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped,
+        figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs], ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
+      (e: Error) => {
+        if (e.message === 'evaluator closed') throw e;
+        return { keep: !(e instanceof WorkerDied), v: { loadout, dropped: [], figure: { life100: 0, life0: 0, kill: 0, partial: [], stop: e.message } } };
+      });
 
   return {
     pin,
-    run: (loadout, changes, ctx) => memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes), () => price(loadout, changes, ctx)),
-    close: async () => { await Promise.all(workers.map(w => w.close())); },
+    run: (loadout, changes, ctx) => closed ? Promise.reject(new Error('evaluator closed'))
+      : memo.get(memoKey(pin, ctx.skill, ctx.level, loadout, changes), () => price(loadout, changes, ctx)),
+    close: async () => {
+      closed = true;
+      for (const q of queue.splice(0)) q.fail(new Error('evaluator closed'));
+      await closing();
+    },
   };
 }

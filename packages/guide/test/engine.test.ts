@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { applyPatch, type LoadoutPatch } from '../src/patches';
 import { killAverage } from '../src/kill';
 import { pinRoot } from '../src/pin';
-import { applyInOrder } from '../src/engine/apply';
+import { applyInOrder, figureDefaultFirst } from '../src/engine/apply';
 import { type Knobs, overBudget, rankable } from '../src/search';
 import { writeAtomic } from '../src/atomic';
 import { createEvaluator, DEFAULT_FIGHT, INFO, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
@@ -364,4 +364,24 @@ describe('stated fight inputs (real worker)', () => {
       expect(r.figure.stop).toMatch(/not ported: an uptime add on event 1000074/);
     } finally { await ev.close(); }
   }, 900_000);
+});
+
+describe('figureDefaultFirst', () => {
+  const affine = (n: number, b: number) => `roll space of ${n} exceeds the enumeration budget ${b} and the price is not affine in the draw of type 3 (at 0.5: 1 against 2)`;
+  it('re-prices at the big budget only on a not-affine stop', () => {
+    const seen: (number | undefined)[] = [];
+    const r = figureDefaultFirst(o => { seen.push(o.rollBudget); return o.rollBudget ? { stop: undefined, v: 1 } : { stop: affine(9, 262144), v: 0 }; }, 1 << 23);
+    expect(r.v).toBe(1);
+    expect(seen).toEqual([undefined, 1 << 23]);
+  });
+  it('matches the across-the-draws form too', () => {
+    const seen: (number | undefined)[] = [];
+    figureDefaultFirst(o => { seen.push(o.rollBudget); return { stop: o.rollBudget ? undefined : "not ported: roll space of 9 exceeds the budget 262144 and the price is not affine across the draws (midpoint 1 against the corners' mean)" }; }, 1 << 23);
+    expect(seen).toEqual([undefined, 1 << 23]);
+  });
+  it('prices once, without a budget, when the default computes', () => {
+    const seen: unknown[] = [];
+    figureDefaultFirst(o => { seen.push(o); return { stop: undefined }; }, 1 << 23);
+    expect(seen).toEqual([{}]);
+  });
 });

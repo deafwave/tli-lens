@@ -9,7 +9,7 @@ import type { Job, JobResult } from './pool';
 
 register();
 const { applyPatch, isPatch } = await import('../patches');
-const { applyInOrder } = await import('./apply');
+const { applyInOrder, figureDefaultFirst } = await import('./apply');
 const root = (workerData as { pinRoot: string }).pinRoot;
 const fig: typeof import('@dps/guide/figure') = await import(pathToFileURL(join(root, 'model', 'guide', 'figure.ts')).href);
 const cat = fig.openCatalog(join(root, 'catalog'));
@@ -20,7 +20,7 @@ function price({ loadout, changes, ctx, fight, rollBudget }: Job): JobResult {
     applyChanges: (l, cs) => fig.applyChanges(cat, l, cs, ctx.skill, { heroLevel: ctx.level }) });
   const base = fig.GROUNDS[ctx.skill];
   const ground = { ...base, carry: { ...base.carry, fight } };
-  const g = session.figure(lo, ctx.skill, { heroLevel: ctx.level, ground, rollBudget });
+  const g = figureDefaultFirst(o => session.figure(lo, ctx.skill, { heroLevel: ctx.level, ground, ...o }), rollBudget);
   return { loadout: lo, dropped, fig: { life100: g.life100, life0: g.life0, left: g.left.map(x => x.name), needs: g.needs, stop: g.stop, inputs: g.inputs as never } };
 }
 

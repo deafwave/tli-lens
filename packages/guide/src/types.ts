@@ -1,5 +1,6 @@
 /** Shared interfaces of the guide. dps-debug types are imported from the pin (tsconfig path `@dps/*` → `<pin>/model/*`). */
 import type { Change } from '@dps/src/core/whatif';
+import type { LoadoutPatch } from './patches';
 
 export type Skill = 'iceShot' | 'hoa';
 /** A dps-debug loadout file (dps-debug model/src/core/loadout.ts `Loadout`), kept opaque here. */
@@ -31,8 +32,8 @@ export interface Move {
   costFE: number | null;
   /** hero level gate */
   minLevel: number;
-  /** dps-debug what-if changes applied in order (dps-debug model/src/core/whatif.ts `Change`) */
-  changes: Change[];
+  /** dps-debug what-if changes applied in order (dps-debug model/src/core/whatif.ts `Change`; a `LoadoutPatch` is applied by applyPatch, runs of Changes by applyChanges) */
+  changes: (Change | LoadoutPatch)[];
   /** mode 2: the owned itemId this move uses (cost 0, consumed once) */
   consumes?: string;
   /** set by generators for moves whose value may appear only after a re-solve (reservation efficiency, +support

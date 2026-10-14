@@ -19,8 +19,11 @@ const sorted = <T extends { node?: number }>(a: T[]) => [...a].sort((x, y) => x.
 
 describe('prism rules reproduce the owner captured server resolution', () => {
   const plan = planPrism(owned(HAZE.filter(id => id !== 1204200101)));
+  it('plans the 10004 ExtraAffix from the binding and the fixed roll', () => {
+    expect(planPrism(owned(HAZE))).toMatchObject({ provide: [{ id: 1204404001, dyn: [12, 12] }] });
+  });
   it('plans a 10007/10008 prism from the catalog (shape = the 10008 suffix, ExtAffix dyn = the fixed roll)', () => {
-    expect(plan).toEqual({ shape: 3, ext: [{ modifierId: 1204400071, dyn: [6, 6] }] });
+    expect(plan).toEqual({ shape: 3, ext: [{ modifierId: 1204400071, dyn: [6, 6] }], provide: [] });
   });
   it.each([['A52.state-20261013-043602', 54, 54060200], ['L104-20261013-205651', 51, 51050200]])('%s: tree %i prism on %i', (cap, tree, cell) => {
     expect('skip' in plan).toBe(false);
@@ -55,10 +58,16 @@ describe('prismMoves', () => {
     expect(hit).toMatchObject({ kind: 'prism', acquisition: false, costFE: 0, consumes: 'haze' });
     expect(moves.every(m => m.changes.length > 0 && m.changes.every(c => c.kind === 'prism'))).toBe(true);
   });
-  it('the real Haze is not searched: 10004 (prism-wide ExtraAffix) has no what-if change', () => {
-    const { moves, notSearched } = run(mk([owned(HAZE)], true));
+  it('the real Haze (with 10004) is offered with its prism-provide patch last', () => {
+    const { moves } = run(mk([owned(HAZE)], true));
+    const hit = moves.find(m => JSON.stringify(sorted(m.changes.filter(c => c.kind === 'prism') as { node?: number }[])) === JSON.stringify(captured('L104-20261013-205651', 51)));
+    expect(hit?.changes.at(-1)).toEqual({ kind: 'patch', op: 'prism-provide', tree: 51, extraAffix: [{ id: 1204404001, dyn: [12, 12] }] });
+  });
+  it('a shape without a captured resolution is not offered', () => {
+    const c = catalog(), shape4 = Object.entries(c.modifier).find(([, r]) => r.bindings?.[0] === '_mt43_10008_4')![0];
+    const { moves, notSearched } = run(mk([owned([Number(shape4), 1214300171])], true));
     expect(moves).toEqual([]);
-    expect([...notSearched].some(x => x.includes('10004') && x.includes('1204200101'))).toBe(true);
+    expect([...notSearched].some(x => x.includes('area shape 4'))).toBe(true);
   });
   it('an already placed prism is not offered again', () => {
     const l = mk([owned(HAZE.filter(id => id !== 1204200101), '360502_22a5b55a-82cc-11f1-bbf4-000000000fd3')], false);

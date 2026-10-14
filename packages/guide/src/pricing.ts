@@ -70,5 +70,6 @@ export async function fetchSnapshot(season: number, local: EtorItems, fetchImpl:
   for (const r of body.data as { id?: unknown; price?: unknown }[])
     if (r && (typeof r.id === 'string' || typeof r.id === 'number') && typeof r.price === 'number' && Number.isFinite(r.price)) live.set(String(r.id), r.price);
   if (!live.size) throw new Error(`etor snapshot ${season}: no usable { id, price } rows in the response`);
-  return { ...local, fetchedAt: now().toISOString(), items: local.items.map((i) => (live.has(String(i.id)) ? { ...i, price: live.get(String(i.id))! } : i)) };
+  // the book names the season it fetched: the local file's name only when it is that season's file, else the id
+  return { ...local, seasonId: season, season: String(local.seasonId) === String(season) ? local.season : String(season), fetchedAt: now().toISOString(), items: local.items.map((i) => (live.has(String(i.id)) ? { ...i, price: live.get(String(i.id))! } : i)) };
 }

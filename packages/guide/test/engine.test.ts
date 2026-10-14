@@ -7,7 +7,7 @@ import { killAverage } from '../src/kill';
 import { pinRoot } from '../src/pin';
 import { applyInOrder } from '../src/engine/apply';
 import { rankable } from '../src/search';
-import { createEvaluator, INFO_PREFIXES, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
+import { createEvaluator, DEFAULT_FIGHT, INFO_PREFIXES, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
 import { realSkip } from './real';
 
@@ -72,6 +72,19 @@ describe('evaluator (stub workers)', () => {
         expect(JSON.parse(readFileSync(join(dir, readdirSync(dir)[0]), 'utf8')).figure.kill).toBe(killAverage(200, 100));
       }
     }
+  });
+  it('fight inputs: workers get them (default bombs 10); evaluators with different fight never share a memo entry', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    const s = stub();
+    const mk = (fight?: { bombs?: number }) => createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir, ...(fight ? { fight } : {}) });
+    const [d, five, again] = [await mk(), await mk({ bombs: 5 }), await mk({ bombs: 5 })];
+    await d.run(lo, [], ctx); await five.run(lo, [], ctx); await again.run(lo, [], ctx);
+    expect(s.jobs.map(j => j.fight)).toEqual([DEFAULT_FIGHT, { bombs: 5 }]);
+    expect(d.fight).toEqual({ bombs: 10, inputs: { 'castLogSum id=10000000 window=4s tags=[[],[],[],[]]': 0 } });
+    expect(d.fightNote).toBe('training dummy stands still (dps-debug STILL / e2e1-lib.ts)');
+    // same bombs, different named input: its own entry too
+    await (await mk({ bombs: 5, inputs: { x: 1 } })).run(lo, [], ctx);
+    expect(readdirSync(dir)).toHaveLength(3);
   });
   it('a throwing job returns figure.stop with the message; the pool stays alive', async () => {
     const f = stub().factory;
@@ -184,7 +197,8 @@ describe('evaluator (real workers, pinned dps-debug)', () => {
     try {
       const [r, p, ice] = await Promise.all([
         ev.run(l, [], ctx), ev.run(l, [patch], ctx), ev.run(l, [], { level: 94, skill: 'iceShot' })]);
-      const ref = fx.guideFigure(fx.openCatalog(), structuredClone(l), 'hoa', { heroLevel: 100 });
+      const ground = { ...fx.GROUNDS.hoa, carry: { ...fx.GROUNDS.hoa.carry, fight: { bombs: 10 } } };
+      const ref = fx.guideFigure(fx.openCatalog(), structuredClone(l), 'hoa', { heroLevel: 100, ground });
       expect(r.figure.stop).toBeUndefined();
       expect(r.figure.life100).toBe(ref.life100);
       expect(r.figure.life0).toBe(ref.life0);
@@ -192,6 +206,18 @@ describe('evaluator (real workers, pinned dps-debug)', () => {
       expect(ev.pin).toMatch(/^[0-9a-f]{40}(\+dirty)?$/);
       expect(p.loadout).toEqual(applyPatch(l, patch));
       expect(ice.figure.stop).toMatch(/not ported/);
+    } finally { await ev.close(); }
+  }, 900_000);
+});
+
+describe('stated fight inputs (real worker)', () => {
+  it.skipIf(!!skipReal)('the L100 Phantom Delivery loadout gets past the bombs and castLogSum stops', async () => {
+    const dir = join(pinRoot(), 'game'), f = readdirSync(dir).filter(x => /^loadout_l100-.*\.json$/.test(x)).sort().pop()!;
+    const ev = await createEvaluator({ workers: 1 });
+    try {
+      const r = await ev.run(JSON.parse(readFileSync(join(dir, f), 'utf8')), [], { level: 93, skill: 'hoa' });
+      // past the bombs and castLogSum stops; it stops on a real unported mechanic of dps-debug (expected)
+      expect(r.figure.stop).toMatch(/not ported: an uptime add on event 1000074/);
     } finally { await ev.close(); }
   }, 900_000);
 });

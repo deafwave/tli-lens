@@ -9,7 +9,7 @@ import type { Change, EvalCtx, Evaluated, Evaluator, Loadout } from '../types';
 import { createMemo, memoKey } from './memo';
 
 export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx }
-export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string } }
+export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown> } }
 /** One worker: runs a job, rejects with the dps-debug error message when pricing throws. */
 export interface WorkerLike {
   /** settles when the worker can take jobs; rejects when its startup failed */
@@ -102,7 +102,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   /** `keep: false` marks a result that came from a worker dying twice: returned to the caller, never cached */
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
     schedule(w => w.run({ loadout, changes, ctx })).then(
-      ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped,
+      ({ loadout: lo, dropped, fig }) => ({ keep: true, v: { loadout: lo, dropped, ...(fig.inputs ? { inputs: fig.inputs } : {}),
         figure: { life100: fig.life100, life0: fig.life0, kill: killAverage(fig.life100, fig.life0), partial: [...fig.left, ...fig.needs], ...(fig.stop ? { stop: fig.stop } : {}) } } as Evaluated }),
       (e: Error) => {
         if (e.message === 'evaluator closed') throw e;

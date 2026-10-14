@@ -38,3 +38,11 @@ describe('guide view', () => {
     expect(fmtDps(999999.6)).toBe('1.00e6');
   });
 });
+
+describe('ideal-mode extras', () => {
+  it('shows drops as 0 FE, step notes, stated inputs and start notes', () => {
+    const step = { ...g.steps[0], move: { ...g.steps[0].move, costFE: 0, market: 'drop' }, notes: ['talent points assumed'] };
+    const html = renderGuide({ ...g, steps: [step], inputs: { ground: 'gx' }, startNotes: ['gear: stripped'] });
+    for (const t of ['0 FE (drops)', 'talent points assumed', 'gx', 'gear: stripped']) expect(html).toContain(t);
+  });
+});

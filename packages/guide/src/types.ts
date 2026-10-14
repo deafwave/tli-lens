@@ -47,7 +47,8 @@ export interface Move {
 }
 
 export interface EvalCtx { level: number; skill: Skill }
-export interface Evaluated { loadout: Loadout; figure: Figure; dropped: string[] }
+/** `inputs` = the scenario the figure was priced under (dps-debug GuideFigure.inputs), shown in the guide header */
+export interface Evaluated { loadout: Loadout; figure: Figure; dropped: string[]; inputs?: Record<string, unknown> }
 export interface Evaluator {
   /** apply `changes` to `loadout` in order (a `LoadoutPatch` through applyPatch, the rest through dps-debug applyGearChange / applyOtherChange) and price the result */
   run(loadout: Loadout, changes: (Change | LoadoutPatch)[], ctx: EvalCtx): Promise<Evaluated>;
@@ -70,6 +71,8 @@ export type Generator = (s: State, ctx: GenCtx) => Move[];
 export interface Step {
   level: number; move: Move; triggered: Move[];
   before: Figure; after: Figure; cumFE: number;
+  /** plain-language caveats for this step (e.g. assumed talent points) */
+  notes?: string[];
 }
 export interface GuideOut {
   mode: 'ideal' | 'advise';
@@ -77,6 +80,10 @@ export interface GuideOut {
   etor: { season: string; fetchedAt: string };
   knobs: Record<string, unknown>;
   start: Figure;
+  /** stated scenario the figures rest on (figure inputs; Ice Shot: ICE_SHOT_INPUTS, unverified) */
+  inputs?: Record<string, unknown>;
+  /** how the start state was derived, one entry per named step */
+  startNotes?: string[];
   steps: Step[];
   /** configurations not generated because their resolution rule is not ported, by reason */
   notSearched: string[];

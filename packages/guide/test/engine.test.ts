@@ -8,6 +8,7 @@ import { pinRoot } from '../src/pin';
 import { applyInOrder } from '../src/engine/apply';
 import { createEvaluator, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
+import { realSkip } from './real';
 
 const fig = (life100: number, life0: number, extra: Partial<JobResult['fig']> = {}) => ({ life100, life0, left: [], needs: [], ...extra });
 /** stub worker: records jobs; `f` decides the figure (throwing = dps-debug throwing, reported as a rejection) */
@@ -156,8 +157,10 @@ describe('worker death, startup, close', () => {
   });
 });
 
+const skipReal = realSkip();
+if (skipReal) console.warn(skipReal);
 describe('evaluator (real workers, pinned dps-debug)', () => {
-  it('equals guideFigure in-process on the target build; patches applied; iceShot stops', async () => {
+  it.skipIf(!!skipReal)('equals guideFigure in-process on the target build; patches applied; iceShot stops', async () => {
     const fx = await import('@dps/guide/figure');
     const root = pinRoot(), read = (p: string) => JSON.parse(readFileSync(join(root, p), 'utf8'));
     // target assembly of dps-debug guide/figure.test.ts (a): the slate file filtered to the build's slates

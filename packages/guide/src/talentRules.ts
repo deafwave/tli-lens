@@ -38,14 +38,12 @@ export const POINT_OBSERVATIONS = [
   { level: 96, points: 108, capture: 'OTHERCHAR-L105.state-20261013-210519' },
 ] as const;
 
-/** Exact at an observed level; between observed levels the lower bounding value; outside the range the nearest observed value (an assumption). */
+/** Full-level budget (knob `talentPoints`, default 108 = the value observed at 93 and 96). Below 93 no level was observed: the ledger rules
+ *  `round(full x (L - 1) / 92)`, an assumption every step below L93 must say so. 93 and above: the full budget. */
+let full = 108;
+export const setTalentPoints = (n: number) => { full = n; };
 export function pointsAtLevel(level: number): number {
-  const o = POINT_OBSERVATIONS;
-  const exact = o.find(x => x.level === level);
-  if (exact) return exact.points;
-  const lo = o.filter(x => x.level < level).at(-1), hi = o.find(x => x.level > level);
-  if (lo && hi) return Math.min(lo.points, hi.points);
-  return (lo ?? hi)!.points;
+  return level >= 93 ? full : Math.round(full * (level - 1) / 92);
 }
 export const pointsOutsideObserved = (level: number) => level < POINT_OBSERVATIONS[0].level || level > POINT_OBSERVATIONS.at(-1)!.level;
 

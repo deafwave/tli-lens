@@ -14,7 +14,7 @@ const broken = (tr: number, t: Pts, cores: number[], copies: Copy[]) => {
   return new Set([...violations(tr, own, copies).map(n => `n${n}`), ...cores.filter(c => treeOf(c) === tr && total < (nodeRow(c)?.need ?? Infinity)).map(c => `c${c}`)]);
 };
 /** fill `tree` with `total` points in node order (rows ascend with id), legal at every step */
-function fill(tree: number, total: number): Pts {
+export function fill(tree: number, total: number): Pts {
   const pts: Pts = {};
   for (let left = total, moved = true; left > 0 && moved;) {
     moved = false;
@@ -96,7 +96,7 @@ export const talentMovesWith = (opts: TalentOpts): Generator => (s, ctx) => {
 
   // inverse images: applyPatch (src/patches.ts) can write the copies, but the only captured resolution is not reproducible from documented rules
   ctx.notSearched.add('inverse images: the captured resolution is not reproduced by the documented rules (a prerequisite-locked source node, 12040100, has Point 0 on the server but its copy carries 2-3 points; which sources are copied is also unexplained); none generated (docs/talent-rules.md)');
-  if (pointsOutsideObserved(ctx.level)) ctx.notSearched.add(`talent points at level ${ctx.level}: no level -> points table exists; the nearest observed value (${budget}) is used, observed only at levels 93-96 (docs/talent-rules.md)`);
+  if (pointsOutsideObserved(ctx.level)) ctx.notSearched.add(`talent points at level ${ctx.level}: no level -> points table exists; ${budget} points assumed (round(108 x (L - 1) / 92) below 93, the value observed at 93-96 above; docs/talent-rules.md)`);
   ctx.notSearched.add('tree slot rule is inferred (one god tree k=0 + up to 3 distinct professions, from 9 observed tree sets); a build outside it is not offered');
   ctx.notSearched.add('core talent limits (count per build): not found; one per (tree, set) assumed');
   return out;

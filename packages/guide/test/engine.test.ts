@@ -6,7 +6,8 @@ import { applyPatch, type LoadoutPatch } from '../src/patches';
 import { killAverage } from '../src/kill';
 import { pinRoot } from '../src/pin';
 import { applyInOrder } from '../src/engine/apply';
-import { createEvaluator, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
+import { rankable } from '../src/search';
+import { createEvaluator, INFO_PREFIXES, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
 import { realSkip } from './real';
 
@@ -35,6 +36,16 @@ describe('evaluator (stub workers)', () => {
     const r = await ev.run(lo, [], ctx);
     expect(r.figure).toEqual({ life100: 200, life0: 100, kill: killAverage(200, 100), partial: ['L', 'N'] });
     expect(r.dropped).toEqual(['x']);
+  });
+  it('informational price: notes are not omissions: figures differing only in them are rankable', async () => {
+    const node = 'not in this figure: node 3030 - affix class x';
+    const mk = (n: number) => () => ({ life100: 200, life0: 100, left: [], needs: [`price: roll space of ${n} joint rolls priced by the affine closed form`, node, `price: roll space of ${n + 1} joint rolls`] });
+    const ev = await createEvaluator({ factory: stub(mk(5)).factory, workers: 1, pin: 'p' });
+    const ev2 = await createEvaluator({ factory: stub(mk(7)).factory, workers: 1, pin: 'p' });
+    const a = (await ev.run(lo, [], ctx)).figure, b = (await ev2.run(lo, [], ctx)).figure;
+    expect(a.partial).toEqual([node]);
+    expect(rankable(a, b)).toBe(true);
+    expect(INFO_PREFIXES).toEqual(['price:']);
   });
   it('memo: same call runs once (also concurrently, key order irrelevant); another pin or level never hits it', async () => {
     const s = stub(undefined, 5);

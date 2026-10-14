@@ -27,4 +27,14 @@ describe('guide view', () => {
     expect(() => parseAdvice('{"mode":"advise"}')).toThrow(/missing/);
     expect(parseAdvice(JSON.stringify({ ...g, mode: 'advise' })).mode).toBe('advise');
   });
+  it('escapes markup and rejects malformed steps', () => {
+    const evil = { ...g, steps: [{ ...g.steps[0], move: { ...g.steps[0].move, label: '<script>x</script>' } }] };
+    expect(renderGuide(evil)).not.toContain('<script>');
+    expect(() => parseAdvice(JSON.stringify({ ...g, mode: 'advise', steps: [{ ...g.steps[0], level: '<img src=x onerror=alert(1)>' }] }))).toThrow(/steps\[0\]\.level/);
+    expect(() => parseAdvice(JSON.stringify({ ...g, mode: 'advise', steps: [{}] }))).toThrow(/Advice is (missing|invalid): steps\[0\]/);
+    expect(() => parseAdvice(JSON.stringify({ ...g, mode: 'advise', start: {} }))).toThrow(/start\.life100/);
+  });
+  it('rounds before choosing the exponent form', () => {
+    expect(fmtDps(999999.6)).toBe('1.00e6');
+  });
 });

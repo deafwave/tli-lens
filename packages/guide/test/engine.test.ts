@@ -92,6 +92,16 @@ describe('evaluator (stub workers)', () => {
     await (await mk({ bombs: 5, inputs: { x: 1 } })).run(lo, [], ctx);
     expect(readdirSync(dir)).toHaveLength(3);
   });
+  it('roll budget: workers get it (default 1 << 23); different budgets never share a memo entry', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    const s = stub();
+    const mk = (rollBudget?: number) => createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir, ...(rollBudget ? { rollBudget } : {}) });
+    const [d, small] = [await mk(), await mk(1000)];
+    await d.run(lo, [], ctx); await small.run(lo, [], ctx);
+    expect(s.jobs.map(j => j.rollBudget)).toEqual([1 << 23, 1000]);
+    expect(d.rollBudget).toBe(1 << 23);
+    expect(readdirSync(dir)).toHaveLength(2);
+  });
   it('a throwing job returns figure.stop with the message; the pool stays alive', async () => {
     const f = stub().factory;
     const ev = await createEvaluator({ workers: 1, pin: 'p', factory: () => {

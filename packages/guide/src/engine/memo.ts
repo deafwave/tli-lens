@@ -9,8 +9,8 @@ export function canonical(v: unknown): string {
     ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : x);
 }
 
-export const memoKey = (pin: string, skill: string, level: number, loadout: unknown, changes: unknown, fight: unknown): string =>
-  `v3|${pin}|${skill}|${level}|${canonical([loadout, changes, fight])}`;
+export const memoKey = (pin: string, skill: string, level: number, loadout: unknown, changes: unknown, fight: unknown, rollBudget: number): string =>
+  `v4|${pin}|${skill}|${level}|${canonical([loadout, changes, fight, rollBudget])}`;
 
 export function createMemo<T>(pin: string, dir?: string) {
   const mem = new Map<string, Promise<T>>();

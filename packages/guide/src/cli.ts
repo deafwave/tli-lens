@@ -1,4 +1,4 @@
-/** guide ideal [--out path] | advise <export.json> [--fe N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N]) */
+/** guide ideal [--out path] | advise <export.json> [--fe N] [--out path] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<23]) */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { writeAtomic } from './atomic';
@@ -16,11 +16,12 @@ const positional = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.star
 const num = (name: string) => { const v = flag(name); if (v !== undefined && !Number.isFinite(Number(v))) throw new Error(`--${name} needs a number`); return v === undefined ? undefined : Number(v); };
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
 const bombs = num('bombs');
+const rollBudget = num('roll-budget');
 const budgetMinutes = num('budget-minutes');
 const final = (f: string, text: string) => { if (!writeAtomic(f, text)) throw new Error(`could not write ${f}`); };
 const dump = (o: GuideOut) => JSON.stringify(o, null, 1) + '\n';
 const evaluator = () => createEvaluator({ workers: num('workers'),
-  onBusy: (p) => console.log(p ? 'game busy: evaluator paused' : 'game free: evaluator resumed'), ...(bombs === undefined ? {} : { fight: { ...DEFAULT_FIGHT, bombs } }), memoDir: fileURLToPath(new URL('../.cache/memo', import.meta.url)) });
+  onBusy: (p) => console.log(p ? 'game busy: evaluator paused' : 'game free: evaluator resumed'), ...(rollBudget === undefined ? {} : { rollBudget }), ...(bombs === undefined ? {} : { fight: { ...DEFAULT_FIGHT, bombs } }), memoDir: fileURLToPath(new URL('../.cache/memo', import.meta.url)) });
 
 async function main() {
   if (cmd === 'ideal') {

@@ -59,6 +59,8 @@ export interface Evaluator {
   pausedMs?(): number;
   /** the stated fight inputs every figure is priced under (Carry.fight) */
   readonly fightNote?: string;
+  /** dps-debug figure roll budget every figure is priced under */
+  readonly rollBudget?: number;
   readonly fight?: { bombs?: number; inputs?: Record<string, number> };
   close(): Promise<void>;
 }

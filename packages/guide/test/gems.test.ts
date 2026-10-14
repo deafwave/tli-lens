@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gemMoves, supportsFor } from '../src/candidates/gems';
+import { gemLevel, gemMoves, supportsFor } from '../src/candidates/gems';
 import type { Skill } from '../src/types';
 import { GROUND, L100, L94, applyAll, fakePrices, loadout } from './apply';
 
@@ -21,6 +21,12 @@ describe('gemMoves', () => {
     expect(new Set(ice).size).toBeGreaterThan(10);
     const ok = new Set(supportsFor('iceShot').map(s => s.name));
     expect(ice.every(n => ok.has(n))).toBe(true);
+  });
+  it('hero-level gate: minLevel is the gem base level (config_item_base i3c) and nothing above the state level is offered', () => {
+    const moves = gen(l100, 'hoa').moves.filter(m => sup(m).gem);
+    expect(moves.every(m => m.minLevel === gemLevel(sup(m).gem!.sid) && m.minLevel <= 100)).toBe(true);
+    const sids = [...supportsFor('hoa'), ...supportsFor('iceShot')].map(s => s.sid);
+    expect(Math.max(...sids.map(gemLevel))).toBe(0);   // the catalog lists no hero-level requirement on any census support gem
   });
   it('never offers a support the skill already holds', () => {
     const held = new Set(sockets(l100).map(g => g.sid));

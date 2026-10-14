@@ -27,6 +27,15 @@ describe('kismetMoves', () => {
     const rm = moves.find(m => plain(m, 'remove'))!;
     expect([rm.acquisition, rm.costFE]).toEqual([false, 0]);
   });
+  it('no two moves have identical changes', () => {
+    const keys = moves.map(m => JSON.stringify(m.changes));
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+  it('hero-level gate: minLevel is the kismet base level (config_item_base i3c), which is 0 for every kismet, so none is withheld at level 0', () => {
+    const low = kismetMoves({ loadout: l100, owned: [], fe: 0, level: 0, skill: 'hoa' }, { prices: fakePrices({}), level: 0, notSearched: new Set() });
+    expect(low.length).toBe(moves.length);
+    expect(moves.every(m => m.minLevel === 0)).toBe(true);
+  });
   it('rolls are finite numbers from the catalog ranges', () => {
     expect(moves.filter(m => plain(m, 'socket')).every(m => ch(m).rolls!.every(Number.isFinite))).toBe(true);
   });

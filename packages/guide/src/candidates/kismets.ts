@@ -14,11 +14,13 @@ const SMALL = 1, MIDDLE = 2, SLOT = 4, FATE_TYPE = 500;
 let pointsCat: Catalog | undefined;
 const catalog = (): Catalog => pointsCat ??= { pe: '0x6aa39847', tables: { config_contract_point: rows('config_contract_point') } } as unknown as Catalog;
 
-interface Cand { baseId: number; name: string; kind: number; modifierId: number; rolls: number[] }
+interface Cand { level: number; baseId: number; name: string; kind: number; modifierId: number; rolls: number[] }
 function candidates(): Cand[] {
-  const tat = rows('lua_config_item_tattoo'), mod = rows('config_modifier'), rolls = rows('config_modifier_rolls'), lang = rows('lang_en');
+  const base = rows('config_item_base'), tat = rows('lua_config_item_tattoo'), mod = rows('config_modifier'), rolls = rows('config_modifier_rolls'), lang = rows('lang_en');
+  const seen = new Set<number>();   // one candidate per modifier (several bases can carry the same one), in catalog order
   return Object.values(tat).filter(t => t.TattooType === undefined && t.Modifier?.length === 1 && mod[t.Modifier[0]] && lang[`item_base|name|${t.Id}`])
-    .map(t => ({ baseId: t.Id, name: lang[`item_base|name|${t.Id}`] as string, kind: t.TattooSize === 1 ? SMALL : MIDDLE, modifierId: t.Modifier[0] as number,
+    .filter(t => !seen.has(t.Modifier[0]) && seen.add(t.Modifier[0]))
+    .map(t => ({ level: (base[t.Id]?.i3c ?? 0) as number, baseId: t.Id, name: lang[`item_base|name|${t.Id}`] as string, kind: t.TattooSize === 1 ? SMALL : MIDDLE, modifierId: t.Modifier[0] as number,
       rolls: ((rolls[t.Modifier[0]] ?? []) as number[][]).map(r => (r[0] + r[1]) / 2) }));
 }
 
@@ -43,10 +45,10 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     const g = `${Math.floor(n / 100)}/${kindOf(n)}`;
     return seenFree.has(g) ? false : (seenFree.add(g), true);
   });
-  for (const c of candidates()) {
-    for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on contract point ${p}`, acquisition: true, costFE: price(c.name), minLevel: 0, changes: [socketChange(c, p, 'socket')] });
+  for (const c of candidates().filter(x => x.level <= ctx.level)) {
+    for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on contract point ${p}`, acquisition: true, costFE: price(c.name), minLevel: c.level, changes: [socketChange(c, p, 'socket')] });
     for (const p of occupied) if (c.kind === kindOf(p) && at.get(p)!.modifierId !== c.modifierId)
-      moves.push({ kind: 'kismet', label: `Replace the kismet on contract point ${p} with ${c.name}`, acquisition: true, costFE: price(c.name), minLevel: 0, changes: [socketChange(c, p, 'replace')] });
+      moves.push({ kind: 'kismet', label: `Replace the kismet on contract point ${p} with ${c.name}`, acquisition: true, costFE: price(c.name), minLevel: c.level, changes: [socketChange(c, p, 'replace')] });
   }
   for (const p of occupied) moves.push({ kind: 'kismet', label: `Remove the kismet on contract point ${p}`, acquisition: false, costFE: 0, minLevel: 0, changes: [{ kind: 'kismet', action: 'remove', point: p }] });
 

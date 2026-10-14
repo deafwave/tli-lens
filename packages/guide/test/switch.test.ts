@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { basesFor } from '../src/candidates/gear';
-import { supportsFor } from '../src/candidates/gems';
+import { mainSid, supportsFor } from '../src/candidates/gems';
+import { table } from '../src/pin';
 import { switchMoves } from '../src/candidates/switch';
 import type { Skill } from '../src/types';
 import { GROUND, L100, L94, applyAll, fakePrices, loadout } from './apply';
@@ -12,7 +13,11 @@ const gen = (skill: Skill, level: number, prices: Record<string, number> = {}, l
   const notSearched = new Set<string>();
   return { moves: switchMoves({ loadout: l, owned: [], fe: 0, level, skill }, { prices: fakePrices(prices), level, notSearched }), notSearched };
 };
-const all = Object.fromEntries(['Hammer of Ash', ...targetSupports.map(g => g.name)].map((n, i) => [n, i + 1]));
+const lang = table<{ rows: Record<string, string> }>('lang_en').rows;
+const mauls = (level: number) => basesFor('mainHand', level, 'hoa');
+const maulName = (level: number) => lang[`item_base|name|${mauls(level).at(-1)!.baseId}`];
+const names = ['Hammer of Ash', ...targetSupports.map(g => g.name), maulName(94)];
+const all = Object.fromEntries(names.map((n, i) => [n, i + 1]));
 
 describe('switchMoves', () => {
   it('Ice Shot offers exactly one acquisition switch to hoa; the reverse (a hoa state) is never offered', () => {
@@ -26,14 +31,19 @@ describe('switchMoves', () => {
     expect([w.kind, w.slot]).toEqual(['gear', 'mainHand']);
     expect(basesFor('mainHand', 94, 'hoa').map(b => b.baseId)).toContain(w.item.baseId);
     expect(moves[0].minLevel).toBe(basesFor('mainHand', 94, 'hoa').at(-1)!.level);
-    const low = gen('iceShot', 40, all);
-    expect(low.moves).toHaveLength(basesFor('mainHand', 40, 'hoa').length ? 1 : 0);
-    expect(low.moves.every(m => m.minLevel <= 40)).toBe(true);
+    const first = mauls(100)[0].level;
+    expect(gen('iceShot', first - 1, all).moves).toHaveLength(0);
+    expect(gen('iceShot', first, all).moves).toHaveLength(1);
   });
-  it('costs the sum of the skill and support prices by name; any missing price makes it unpriced (null)', () => {
+  it('main skill sids come from the pin loadouts: Ice Shot 1030 (l94), Hammer of Ash 1110 (target build)', () => {
+    expect([mainSid('iceShot'), mainSid('hoa')]).toEqual([1030, 1110]);
+  });
+  it('costs the sum of the skill, support and maul prices by name; any missing price makes it unpriced (null)', () => {
     expect(gen('iceShot', 94, all).moves[0].costFE).toBe(Object.values(all).reduce((a, b) => a + b, 0));
     const { Steamroll: _s, ...missing } = all;
     expect(gen('iceShot', 94, missing).moves[0].costFE).toBeNull();
+    const { [maulName(94)]: _m, ...noMaul } = all;
+    expect(gen('iceShot', 94, noMaul).moves[0].costFE).toBeNull();
   });
   it('supports come from the target build and every one compiles on Hammer of Ash (SUP1)', () => {
     const { moves, notSearched } = gen('iceShot', 94, all);

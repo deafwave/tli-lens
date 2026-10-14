@@ -7,12 +7,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pinRoot, table } from '../pin';
 import { basesFor } from './gear';
-import { supportsFor } from './gems';
+import { gemLevel, mainSid, supportsFor } from './gems';
 import type { Change, Generator } from '../types';
 
 type Gem = { sid: number; name: string; level: number; mods?: [number, number[]][]; place: { kind: string; slot: number; ownerKind?: string; ownerSlot?: number } };
 const TARGET = 're/evidence/loadout_probuild-hanshansi-bing.json';
-const HOA_SID = 1110;
 let target: Gem[] | undefined;
 const targetSkills = (): Gem[] => target ??= JSON.parse(readFileSync(join(pinRoot(), TARGET), 'utf8')).skills;
 
@@ -20,12 +19,14 @@ export const switchMoves: Generator = (s, ctx) => {
   if (s.skill !== 'iceShot') return [];
   const ns = ctx.notSearched;
   ns.add('switch: the new maul is a bare rare base; the bow\'s affixes are lost and the maul is crafted by later gear moves');
-  const skills = targetSkills(), hoa = skills.find(g => g.place.kind === 'active' && g.place.slot === 0 && g.sid === HOA_SID);
+  const skills = targetSkills(), hoa = skills.find(g => g.place.kind === 'active' && g.place.slot === 0 && g.sid === mainSid('hoa'));
   if (!hoa) { ns.add(`switch: the target build has no Hammer of Ash in active slot 0 (${TARGET})`); return []; }
   const allowed = new Set(supportsFor('hoa').map(x => x.sid));
   const wanted = skills.filter(g => g.place.kind === 'support' && g.place.ownerKind === 'active' && g.place.ownerSlot === 0).sort((a, b) => a.place.slot - b.place.slot);
   const gems = wanted.filter(g => allowed.has(g.sid));
   for (const g of wanted) if (!allowed.has(g.sid)) ns.add(`switch: target support ${g.name} does not compile on Hammer of Ash (SUP1); left out`);
+  const need = Math.max(gemLevel(hoa.sid), ...gems.map(g => gemLevel(g.sid)));
+  if (need > ctx.level) { ns.add(`switch: a gem of the target build needs hero level ${need}`); return []; }
   const maul = basesFor('mainHand', ctx.level, 'hoa').at(-1);
   if (!maul) { ns.add(`switch: no maul base at hero level ${ctx.level}`); return []; }
 
@@ -41,11 +42,12 @@ export const switchMoves: Generator = (s, ctx) => {
     if (g) sockets.push({ kind: 'support', action: have.has(socket) ? 'replace' : 'install', owner, socket, gem: { sid: g.sid, level: g.level, name: g.name, mods: g.mods } });
     else if (have.has(socket)) sockets.push({ kind: 'support', action: 'remove', owner, socket });
   }
-  const names = ['Hammer of Ash', ...gems.map(g => g.name)], prices = names.map(n => ctx.prices.price(n, ctx.level));
+  const maulName = table<{ rows: Record<string, string> }>('lang_en').rows[`item_base|name|${maul.baseId}`];
+  const names = ['Hammer of Ash', ...gems.map(g => g.name), maulName], prices = names.map(n => ctx.prices.price(n, ctx.level));
   return [{
-    kind: 'switch', skill: 'hoa', acquisition: true, minLevel: maul.level, enabler: true,
+    kind: 'switch', skill: 'hoa', acquisition: true, minLevel: Math.max(maul.level, need), enabler: true,
     label: `Switch to Hammer of Ash with ${maul.name} (level ${maul.level}) and ${gems.map(g => g.name).join(', ')}`,
     costFE: prices.some(p => p === null) ? null : prices.reduce<number>((a, p) => a + (p as number), 0),
-    changes: [weapon, { kind: 'multi', changes: [{ kind: 'skill', action: 'replace', owner, gem: { sid: HOA_SID, level: hoa.level, name: hoa.name } }, ...sockets] as never }],
+    changes: [weapon, { kind: 'multi', changes: [{ kind: 'skill', action: 'replace', owner, gem: { sid: hoa.sid, level: hoa.level, name: hoa.name } }, ...sockets] as never }],
   }];
 };

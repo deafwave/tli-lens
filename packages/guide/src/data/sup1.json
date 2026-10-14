@@ -3,404 +3,504 @@
  "hoa": [
   {
    "sid": 10002010,
+   "item": 7401,
    "name": "Multiple Projectiles"
   },
   {
    "sid": 10002020,
+   "item": 7402,
    "name": "Greater Multiple Projectiles"
   },
   {
    "sid": 10002050,
+   "item": 7405,
    "name": "Multistrike"
   },
   {
    "sid": 10002070,
+   "item": 7407,
    "name": "Increased Area"
   },
   {
    "sid": 10002080,
+   "item": 7408,
    "name": "Melee Knockback"
   },
   {
    "sid": 10002090,
+   "item": 7409,
    "name": "Raid"
   },
   {
    "sid": 10002110,
+   "item": 7411,
    "name": "Tendonslicer"
   },
   {
    "sid": 10002120,
+   "item": 7412,
    "name": "Glacial Freeze"
   },
   {
    "sid": 10002130,
+   "item": 7413,
    "name": "Additional Ignite"
   },
   {
    "sid": 10002140,
+   "item": 7414,
    "name": "High Voltage"
   },
   {
    "sid": 10002180,
+   "item": 7418,
    "name": "Added Erosion Damage"
   },
   {
    "sid": 10002190,
+   "item": 7419,
    "name": "Critical Strike Rating Increase"
   },
   {
    "sid": 10002200,
+   "item": 7420,
    "name": "Critical Strike Damage Increase"
   },
   {
    "sid": 10002210,
+   "item": 7421,
    "name": "Physical to Fire"
   },
   {
    "sid": 10002220,
+   "item": 7422,
    "name": "Lightning to Cold"
   },
   {
    "sid": 10002230,
+   "item": 7423,
    "name": "Deep Wounds"
   },
   {
    "sid": 10002240,
+   "item": 7424,
    "name": "Improved Corrosion"
   },
   {
    "sid": 10002250,
+   "item": 7516,
    "name": "Electric Overload"
   },
   {
    "sid": 10002260,
+   "item": 7426,
    "name": "Passivation"
   },
   {
    "sid": 10002270,
+   "item": 7427,
    "name": "Quick Decision"
   },
   {
    "sid": 10002280,
+   "item": 7428,
    "name": "Cost Conversion"
   },
   {
    "sid": 10002290,
+   "item": 7429,
    "name": "Jump"
   },
   {
    "sid": 10002300,
+   "item": 7430,
    "name": "Shortened Duration"
   },
   {
    "sid": 10002310,
+   "item": 7431,
    "name": "Added Fire Damage"
   },
   {
    "sid": 10002320,
+   "item": 7432,
    "name": "Added Cold Damage"
   },
   {
    "sid": 10002330,
+   "item": 7433,
    "name": "Added Lightning Damage"
   },
   {
    "sid": 10002350,
+   "item": 7435,
    "name": "Elemental Fusion"
   },
   {
    "sid": 10002360,
+   "item": 7436,
    "name": "Fire Penetration"
   },
   {
    "sid": 10002370,
+   "item": 7437,
    "name": "Cold Penetration"
   },
   {
    "sid": 10002380,
+   "item": 7438,
    "name": "Lightning Penetration"
   },
   {
    "sid": 10002390,
+   "item": 7439,
    "name": "Recklessness"
   },
   {
    "sid": 10002400,
+   "item": 7440,
    "name": "Slow Projectile"
   },
   {
    "sid": 10002420,
+   "item": 7442,
    "name": "Projectile Penetration"
   },
   {
    "sid": 10002430,
+   "item": 7443,
    "name": "Steamroll"
   },
   {
    "sid": 10002440,
+   "item": 7444,
    "name": "Cataclysm"
   },
   {
    "sid": 10002490,
+   "item": 7449,
    "name": "Fire Explosion"
   },
   {
    "sid": 10002510,
+   "item": 7451,
    "name": "Precision Strike"
   },
   {
    "sid": 10002580,
+   "item": 7458,
    "name": "Quick Return"
   },
   {
    "sid": 10002590,
+   "item": 7459,
    "name": "Devastator"
   },
   {
    "sid": 10002640,
+   "item": 7464,
    "name": "Attack Focus"
   },
   {
    "sid": 10002670,
+   "item": 7467,
    "name": "Erosion Penetration"
   },
   {
    "sid": 10002690,
+   "item": 7469,
    "name": "Wind Projectiles"
   },
   {
    "sid": 10002720,
+   "item": 7472,
    "name": "Pain Amplification"
   },
   {
    "sid": 10002730,
+   "item": 7473,
    "name": "Blind"
   },
   {
    "sid": 10002740,
+   "item": 7474,
    "name": "Electric Punishment"
   },
   {
    "sid": 10002760,
+   "item": 7476,
    "name": "Enhanced Ailment"
   },
   {
    "sid": 10002780,
+   "item": 7478,
    "name": "Cooldown Reduction"
   },
   {
    "sid": 10003130,
+   "item": 7520,
    "name": "Mark"
   },
   {
    "sid": 10003200,
+   "item": 7527,
    "name": "Hardened"
   },
   {
    "sid": 10003270,
+   "item": 7477,
    "name": "Added Physical Damage"
   },
   {
    "sid": 10003574,
+   "item": 7734,
    "name": "Hammer of Ash: Upheaval (Magnificent)"
   },
   {
    "sid": 10003575,
+   "item": 7735,
    "name": "Hammer of Ash: Rekindle (Magnificent)"
   },
   {
    "sid": 10003577,
+   "item": 7737,
    "name": "Hammer of Ash: Quickfire (Noble)"
   },
   {
    "sid": 10003578,
+   "item": 7738,
    "name": "Hammer of Ash: Blast Quake (Noble)"
   }
  ],
  "iceShot": [
   {
    "sid": 10002010,
+   "item": 7401,
    "name": "Multiple Projectiles"
   },
   {
    "sid": 10002020,
+   "item": 7402,
    "name": "Greater Multiple Projectiles"
   },
   {
    "sid": 10002050,
+   "item": 7405,
    "name": "Multistrike"
   },
   {
    "sid": 10002070,
+   "item": 7407,
    "name": "Increased Area"
   },
   {
    "sid": 10002090,
+   "item": 7409,
    "name": "Raid"
   },
   {
    "sid": 10002110,
+   "item": 7411,
    "name": "Tendonslicer"
   },
   {
    "sid": 10002120,
+   "item": 7412,
    "name": "Glacial Freeze"
   },
   {
    "sid": 10002130,
+   "item": 7413,
    "name": "Additional Ignite"
   },
   {
    "sid": 10002140,
+   "item": 7414,
    "name": "High Voltage"
   },
   {
    "sid": 10002180,
+   "item": 7418,
    "name": "Added Erosion Damage"
   },
   {
    "sid": 10002190,
+   "item": 7419,
    "name": "Critical Strike Rating Increase"
   },
   {
    "sid": 10002200,
+   "item": 7420,
    "name": "Critical Strike Damage Increase"
   },
   {
    "sid": 10002210,
+   "item": 7421,
    "name": "Physical to Fire"
   },
   {
    "sid": 10002220,
+   "item": 7422,
    "name": "Lightning to Cold"
   },
   {
    "sid": 10002230,
+   "item": 7423,
    "name": "Deep Wounds"
   },
   {
    "sid": 10002240,
+   "item": 7424,
    "name": "Improved Corrosion"
   },
   {
    "sid": 10002250,
+   "item": 7516,
    "name": "Electric Overload"
   },
   {
    "sid": 10002260,
+   "item": 7426,
    "name": "Passivation"
   },
   {
    "sid": 10002270,
+   "item": 7427,
    "name": "Quick Decision"
   },
   {
    "sid": 10002280,
+   "item": 7428,
    "name": "Cost Conversion"
   },
   {
    "sid": 10002290,
+   "item": 7429,
    "name": "Jump"
   },
   {
    "sid": 10002300,
+   "item": 7430,
    "name": "Shortened Duration"
   },
   {
    "sid": 10002310,
+   "item": 7431,
    "name": "Added Fire Damage"
   },
   {
    "sid": 10002320,
+   "item": 7432,
    "name": "Added Cold Damage"
   },
   {
    "sid": 10002330,
+   "item": 7433,
    "name": "Added Lightning Damage"
   },
   {
    "sid": 10002350,
+   "item": 7435,
    "name": "Elemental Fusion"
   },
   {
    "sid": 10002360,
+   "item": 7436,
    "name": "Fire Penetration"
   },
   {
    "sid": 10002370,
+   "item": 7437,
    "name": "Cold Penetration"
   },
   {
    "sid": 10002380,
+   "item": 7438,
    "name": "Lightning Penetration"
   },
   {
    "sid": 10002390,
+   "item": 7439,
    "name": "Recklessness"
   },
   {
    "sid": 10002400,
+   "item": 7440,
    "name": "Slow Projectile"
   },
   {
    "sid": 10002420,
+   "item": 7442,
    "name": "Projectile Penetration"
   },
   {
    "sid": 10002440,
+   "item": 7444,
    "name": "Cataclysm"
   },
   {
    "sid": 10002490,
+   "item": 7449,
    "name": "Fire Explosion"
   },
   {
    "sid": 10002640,
+   "item": 7464,
    "name": "Attack Focus"
   },
   {
    "sid": 10002670,
+   "item": 7467,
    "name": "Erosion Penetration"
   },
   {
    "sid": 10002690,
+   "item": 7469,
    "name": "Wind Projectiles"
   },
   {
    "sid": 10002720,
+   "item": 7472,
    "name": "Pain Amplification"
   },
   {
    "sid": 10002730,
+   "item": 7473,
    "name": "Blind"
   },
   {
    "sid": 10002740,
+   "item": 7474,
    "name": "Electric Punishment"
   },
   {
    "sid": 10002760,
+   "item": 7476,
    "name": "Enhanced Ailment"
   },
   {
    "sid": 10002780,
+   "item": 7478,
    "name": "Cooldown Reduction"
   },
   {
    "sid": 10003130,
+   "item": 7520,
    "name": "Mark"
   },
   {
    "sid": 10003270,
+   "item": 7477,
    "name": "Added Physical Damage"
   },
   {
    "sid": 10003594,
+   "item": 7754,
    "name": "Ice Shot: Ice Blast (Magnificent)"
   },
   {
    "sid": 10003595,
+   "item": 7755,
    "name": "Ice Shot: Batter (Noble)"
   }
  ]

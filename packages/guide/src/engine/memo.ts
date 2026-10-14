@@ -10,7 +10,7 @@ export function canonical(v: unknown): string {
 }
 
 export const memoKey = (pin: string, skill: string, level: number, loadout: unknown, changes: unknown): string =>
-  `${pin}|${skill}|${level}|${canonical([loadout, changes])}`;
+  `v2|${pin}|${skill}|${level}|${canonical([loadout, changes])}`;
 
 export function createMemo<T>(pin: string, dir?: string) {
   const mem = new Map<string, Promise<T>>();

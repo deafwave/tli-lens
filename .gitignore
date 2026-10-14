@@ -13,3 +13,6 @@ Torchlight Sanity Retention.xlsx
 
 # per-task worktrees (removed before the folder rename)
 .worktrees/
+
+# figure memo (guide evaluator)
+.cache/

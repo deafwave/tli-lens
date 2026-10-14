@@ -62,6 +62,20 @@ export function basesFor(slot: string, level: number, skill: Skill, family?: num
   return out.sort((a, b) => a.level - b.level || a.baseId - b.baseId);
 }
 
+/** a white base as a loadout gear item: its own attribute modifiers at mid rolls, no affixes (`market: 'drop'`: a bare base is found, not bought) */
+export function bareItem(slot: string, baseId: number) {
+  const r = cat().rows.get(baseId);
+  if (!r) throw new Error(`no catalog base ${baseId}`);
+  return { label: r.name, slot, baseId, itemId: `guide-start-${baseId}`, level: r.level, market: 'drop' as const,
+    affixes: attrMods(r).map(m => ({ id: m.id, dyn: m.dynArgs, list: 'BaseAttrInfoList', text: '' })) };
+}
+/** the loadout slots an item of this catalog base can be worn in for `skill` (a weapon only if it is of the skill's Bing1 family), and the base level gate */
+export function slotsOfBase(baseId: number, skill: Skill): { slots: string[]; level: number } {
+  const r = cat().rows.get(baseId);
+  if (!r?.lib) return { slots: [], level: 0 };
+  return { level: r.level, slots: isWeapon(r.slotType, r.family, r.attrs) ? (SKILL_GROUPS[skill].includes(r.family) ? ['mainHand'] : []) : TYPE_SLOTS[r.slotType] ?? [] };
+}
+
 /** a modifier's rolls at the midpoint of each range (expected value of a random roll) */
 const mids = (id: number): number[] | null => cat().rolls[id]?.map(r => (r[0] + r[1]) / 2) ?? null;
 const attrMods = (r: Row) => r.attrs.map(id => ({ id, dynArgs: mids(id) })).filter((m): m is { id: number; dynArgs: number[] } => !!m.dynArgs);

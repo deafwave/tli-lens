@@ -18,7 +18,7 @@ function price({ loadout, changes, ctx }: Job): JobResult {
   const { loadout: lo, dropped } = applyInOrder(loadout, changes, { isPatch, applyPatch,
     applyChanges: (l, cs) => fig.applyChanges(cat, l, cs, ctx.skill, { heroLevel: ctx.level }) });
   const g = fig.guideFigure(cat, lo, ctx.skill, { heroLevel: ctx.level });
-  return { loadout: lo, dropped, fig: { life100: g.life100, life0: g.life0, left: g.left.map(x => x.name), needs: g.needs, stop: g.stop } };
+  return { loadout: lo, dropped, fig: { life100: g.life100, life0: g.life0, left: g.left.map(x => x.name), needs: g.needs, stop: g.stop, inputs: g.inputs as never } };
 }
 
 parentPort!.on('message', (m: { id: number; job: Job }) => {

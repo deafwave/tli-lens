@@ -42,7 +42,7 @@ export function gemLevelAt(sid: number, heroLevel: number, maxGemLevel: number, 
 export interface Support { sid: number; name: string }
 export const supportsFor = (skill: Skill): Support[] => (sup1 as unknown as Record<Skill, Support[]>)[skill];
 const SOCKETS = [1, 2, 3, 4, 5];   // a six-stone group = the skill + five supports (loadout sockets 1..5)
-const GEM_LEVEL = 20;
+export const GEM_LEVEL = 20;
 type Gem = { sid: number; level: number; place: { kind: string; slot: number; ownerKind?: string; ownerSlot?: number } };
 
 export const gemMoves: Generator = (s, ctx) => {

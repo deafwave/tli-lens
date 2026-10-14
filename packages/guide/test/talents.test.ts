@@ -33,9 +33,10 @@ describe('talent rules', () => {
       expect(pointsAtLevel(o.level)).toBe(o.points);
     }
   });
-  it('unobserved levels use the nearest / lower bounding observed value', () => {
+  it('below 93 the ledger formula round(108 x (L - 1) / 92) applies, from 93 the full budget', () => {
     expect(pointsAtLevel(94)).toBe(108);
-    expect(pointsAtLevel(60)).toBe(108);
+    expect(pointsAtLevel(60)).toBe(Math.round(108 * 59 / 92));
+    expect(pointsAtLevel(92)).toBe(107);
     expect(pointsAtLevel(100)).toBe(108);
   });
   it('accepts the owner L94 allocation, per tree', () => {

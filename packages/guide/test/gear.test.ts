@@ -3,10 +3,11 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { basesFor, gearMoves } from '../src/candidates/gear';
 import { craftOptions, type LibraryAffix } from '../src/craft';
+import { pinRoot, table } from '../src/pin';
 import type { GenCtx, Move, PriceBook, Skill, State } from '../src/types';
 
-const PIN = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
-const rows = (f: string) => JSON.parse(readFileSync(`${PIN}/catalog/0x6aa39847/${f}.json`, 'utf8')).rows;
+const PIN = pinRoot();
+const rows = (f: string) => table<{ rows: any }>(f).rows;
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const library: LibraryAffix[] = JSON.parse(readFileSync(here('../../../data/affix_library.json'), 'utf8')).affixes;
 // weapon base name -> compendium category: an independent check of the catalog columns the code filters on

@@ -1,9 +1,10 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { talentMoves, talentMovesWith } from '../src/candidates/talents';
+import { pinRoot } from '../src/pin';
 import { POINT_OBSERVATIONS, copiesOf, legalAllocation, nodeRow, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed, violations } from '../src/talentRules';
 
-const pin = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
+const pin = pinRoot();
 const l94 = JSON.parse(readFileSync(`${pin}/game/loadout_l94-20261013-160234.json`, 'utf8'));
 const state = { loadout: l94, owned: [], fe: 0, level: 94, skill: 'iceShot' as const };
 const tr = (t: Record<string, number>) => {

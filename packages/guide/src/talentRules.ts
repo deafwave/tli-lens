@@ -1,15 +1,13 @@
 /** Talent rules from the pinned dps-debug catalog (config_talent.r2). Sources and confidence: docs/talent-rules.md. */
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { table } from './pin';
 
 export interface TalentRow { id: number; kind: number; max: number; need: number; prereq: number[]; row: number }
 
-const pin = process.env.DPS_DEBUG_PIN ?? fileURLToPath(new URL('../../../../dps-debug/.worktrees/guide-pin', import.meta.url));
 let cache: { nodes: Map<number, TalentRow>; trees: number[]; plain: Map<number, TalentRow[]>; cores: Map<number, TalentRow[]> } | undefined;
 
 function load() {
   if (cache) return cache;
-  const raw = JSON.parse(readFileSync(`${pin}/catalog/0x6aa39847/config_talent.r2.json`, 'utf8')).rows as Record<string, any>;
+  const raw = table<{ rows: Record<string, any> }>('config_talent').rows as Record<string, any>;
   const nodes = new Map<number, TalentRow>(), trees = new Set<number>();
   for (const r of Object.values(raw)) {
     const tree = Math.floor(r.i0 / 1e6);

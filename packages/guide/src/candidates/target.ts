@@ -12,17 +12,27 @@ import { applyChanges, openCatalog } from '@dps/guide/figure';
 import { pinRoot, table } from '../pin';
 import { priceOfBase, priceOfGold } from '../priceOf';
 import { slotsOfBase } from './gear';
+import type { LoadoutPatch } from '../patches';
 import type { Change, Generator, Move } from '../types';
 
 type Aff = { id: number; dyn: number[] };
 export interface TGear { label: string; affixes: Aff[] }
 interface Target { gear: TGear[]; pacts: { servantId: number; rank: number; promotionLevels: number[][]; slot: number }[];
-  kismets: { modifierId: number | null; servantId: number; node: number; rolls: number[] }[]; contractKeys: number[]; heroMemories: unknown[]; vorax: unknown[] }
+  kismets: { modifierId: number | null; servantId: number; node: number; rolls: number[] }[]; contractKeys: number[]; heroMemories: unknown[]; vorax: unknown[]; slates: number[] }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rows = (f: string): Record<string, any> => table<{ rows: Record<string, any> }>(f).rows;
 let target: Target | undefined;
 const loadTarget = (): Target => target ??= JSON.parse(readFileSync(join(pinRoot(), 're/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
+
+/** The target's slates as the server's resolved influence tables, assembled exactly as dps-debug's target.test.ts / guide/figure.ts do: the V2 file filtered to
+ *  the slates whose talents the target holds. */
+let board: Extract<LoadoutPatch, { op: 'slate-board' }>['items'] | undefined;
+const targetBoard = () => board ??= (() => {
+  const mine = new Set(loadTarget().slates);
+  const v2 = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/t5_slate_v2_probuild.json'), 'utf8')) as (Record<string, unknown> & { id: number; EffectTalentIds: number[] })[];
+  return v2.filter(v => v.EffectTalentIds.every(t => mine.has(t))).map(v => ({ itemId: `probuild_${v.id}`, baseId: 0, talents: v.EffectTalentIds, influence: v }));
+})();
 
 /** affix tier id -> 'prefix' | 'suffix' from the craft library; the target file carries no list names */
 let sides: Map<number, string> | undefined;
@@ -75,7 +85,7 @@ export function goldOf(it: TGear, baseId: number): string | undefined {
 export const targetMoves: Generator = (s, ctx) => {
   if (s.skill !== 'hoa') return [];
   const ns = ctx.notSearched, t = loadTarget(), l = s.loadout as Record<string, any>;   // eslint-disable-line @typescript-eslint/no-explicit-any
-  ns.add("target slates: the target data holds each slate's talents and influence arrays but no shape or board slot, which `slate place` needs; none generated");
+  ns.add("single slates: board adjacency is resolved server-side");
   if (t.heroMemories.length) ns.add('target hero memories: dps-debug has no what-if change for them; not offered');
   if (t.vorax.length) ns.add('target vorax limbs: dps-debug has no what-if change for them; not offered');
   ns.add('target kismets appear once their pact is equipped in that slot');
@@ -104,6 +114,14 @@ export const targetMoves: Generator = (s, ctx) => {
     keep(mk({ kind: 'gear', label: `Target: ${it.label} in ${slot}`, ...cost, minLevel: level,
       changes: [{ kind: 'gear', slot, item: { baseId, baseName: it.label, itemId: `guide-target-${baseId}`, level, modifiers } }] }), it.label);
   }
+
+  // the slate board: one acquisition, the resolved arrays written into the loadout. A slate is priced only by a sourced etor mapping (its game item name, or its
+  // tree); the target data carries neither (baseId 0, talents span several trees), so no slate maps and the board is unpriced.
+  const items = targetBoard(), placed = ((l.slateItems ?? []) as { itemId: string }[]).map(x => x.itemId).sort().join();
+  if (items.length && placed !== items.map(x => x.itemId).sort().join())
+    out.push(mk({ kind: 'slate', label: `Target slate board (${items.length} slates)`, costFE: null,
+      costNote: `unmapped slates (no etor row: the target data gives no item name or tree): ${items.map(x => x.itemId).join(', ')}`,
+      changes: [{ kind: 'patch', op: 'slate-board', items }] }));
 
   // pacts: not on the market
   const pacts = (l.pacts ?? []) as { servantId: number; slot?: number; rank: number }[];

@@ -28,8 +28,7 @@
    }
   },
   "fightNote": "training dummy stands still (dps-debug STILL / e2e1-lib.ts)",
-  "rollBudget": 1048576,
-  "partialRun": true
+  "rollBudget": 1048576
  },
  "startNotes": [
   "base loadout: game/loadout_l94-20261013-160234.json (the owner's L94 Ice Shot character, dps-debug pin)",
@@ -55,7 +54,10 @@
   "L80: 6 new talent point(s) spent on nodes 34060400 (+1), 21030300 (+2), 21080200 (+3)",
   "L85: gems raised to the hero-level limit",
   "L85: 6 new talent point(s) spent on nodes 21060100 (+3), 20030300 (+3)",
-  "L90: gems raised to the hero-level limit"
+  "L90: gems raised to the hero-level limit",
+  "L95: gems raised to the hero-level limit",
+  "L95: 4 new talent point(s) spent on nodes 51020100 (+2), 50020400 (+1), 12020100 (+1)",
+  "L100: gems raised to the hero-level limit"
  ],
  "steps": [
   {
@@ -7421,6 +7423,1329 @@
    "notes": [
     "talent points assumed"
    ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "craft",
+    "label": "Craft T7 +36 Strength (prefix) on mainHand",
+    "acquisition": true,
+    "costFE": 0.7287125,
+    "minLevel": 1,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "mainHand",
+      "item": {
+       "baseId": 1019,
+       "baseName": "Sierra Reverberation Maul",
+       "itemId": "guide-craft-mainHand-109110007",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 510020,
+          "dynArgs": [
+           220,
+           220
+          ]
+         },
+         {
+          "id": 740000,
+          "dynArgs": [
+           500
+          ]
+         },
+         {
+          "id": 740001,
+          "dynArgs": [
+           1.5
+          ]
+         }
+        ],
+        "suffix": [
+         {
+          "id": 110110007,
+          "dynArgs": [
+           -7.5,
+           22
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 109110007,
+          "dynArgs": [
+           32
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1182552612.354188,
+    "life0": 1182552612.354188,
+    "kill": 1182552612.354188,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 1265759489.918717,
+    "life0": 1265759489.918717,
+    "kill": 1265759489.918717,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4949.863896262365,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "craft",
+    "label": "Craft T6 +47% Critical Strike Damage (suffix) on mainHand",
+    "acquisition": true,
+    "costFE": 1.0599454545454545,
+    "minLevel": 40,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "mainHand",
+      "item": {
+       "baseId": 1019,
+       "baseName": "Sierra Reverberation Maul",
+       "itemId": "guide-craft-mainHand-111110406",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 510020,
+          "dynArgs": [
+           220,
+           220
+          ]
+         },
+         {
+          "id": 740000,
+          "dynArgs": [
+           500
+          ]
+         },
+         {
+          "id": 740001,
+          "dynArgs": [
+           1.5
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 109110007,
+          "dynArgs": [
+           32
+          ]
+         }
+        ],
+        "suffix": [
+         {
+          "id": 110110007,
+          "dynArgs": [
+           -7.5,
+           22
+          ]
+         },
+         {
+          "id": 111110406,
+          "dynArgs": [
+           42
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1265759489.918717,
+    "life0": 1265759489.918717,
+    "kill": 1265759489.918717,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 1383621081.9653158,
+    "life0": 1383621081.9653158,
+    "kill": 1383621081.9653158,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4950.923841716911,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "craft",
+    "label": "Craft T7 +10% Attack Critical Strike Rating for this gear (suffix) on mainHand",
+    "acquisition": true,
+    "costFE": 0.7287125,
+    "minLevel": 1,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "mainHand",
+      "item": {
+       "baseId": 1019,
+       "baseName": "Sierra Reverberation Maul",
+       "itemId": "guide-craft-mainHand-110110107",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 510020,
+          "dynArgs": [
+           220,
+           220
+          ]
+         },
+         {
+          "id": 740000,
+          "dynArgs": [
+           500
+          ]
+         },
+         {
+          "id": 740001,
+          "dynArgs": [
+           1.5
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 109110007,
+          "dynArgs": [
+           32
+          ]
+         }
+        ],
+        "suffix": [
+         {
+          "id": 110110007,
+          "dynArgs": [
+           -7.5,
+           22
+          ]
+         },
+         {
+          "id": 111110406,
+          "dynArgs": [
+           42
+          ]
+         },
+         {
+          "id": 110110107,
+          "dynArgs": [
+           9.5
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1383621081.9653158,
+    "life0": 1383621081.9653158,
+    "kill": 1383621081.9653158,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 1457607745.60818,
+    "life0": 1457607745.60818,
+    "kill": 1457607745.60818,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4951.652554216911,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "craft",
+    "label": "Craft T7 +43% Melee Damage (prefix) on mainHand",
+    "acquisition": true,
+    "costFE": 1.0896000000000001,
+    "minLevel": 1,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "mainHand",
+      "item": {
+       "baseId": 1019,
+       "baseName": "Sierra Reverberation Maul",
+       "itemId": "guide-craft-mainHand-140110407",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 510020,
+          "dynArgs": [
+           220,
+           220
+          ]
+         },
+         {
+          "id": 740000,
+          "dynArgs": [
+           500
+          ]
+         },
+         {
+          "id": 740001,
+          "dynArgs": [
+           1.5
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 109110007,
+          "dynArgs": [
+           32
+          ]
+         },
+         {
+          "id": 140110407,
+          "dynArgs": [
+           38
+          ]
+         }
+        ],
+        "suffix": [
+         {
+          "id": 110110007,
+          "dynArgs": [
+           -7.5,
+           22
+          ]
+         },
+         {
+          "id": 111110406,
+          "dynArgs": [
+           42
+          ]
+         },
+         {
+          "id": 110110107,
+          "dynArgs": [
+           9.5
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1457607745.60818,
+    "life0": 1457607745.60818,
+    "kill": 1457607745.60818,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 1540648341.8440564,
+    "life0": 1540648341.8440564,
+    "kill": 1540648341.8440564,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4952.742154216911,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "craft",
+    "label": "Craft T7 +4% Gear Physical Damage (prefix) on mainHand",
+    "acquisition": true,
+    "costFE": 0.7287125,
+    "minLevel": 1,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "mainHand",
+      "item": {
+       "baseId": 1019,
+       "baseName": "Sierra Reverberation Maul",
+       "itemId": "guide-craft-mainHand-107110007",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 510020,
+          "dynArgs": [
+           220,
+           220
+          ]
+         },
+         {
+          "id": 740000,
+          "dynArgs": [
+           500
+          ]
+         },
+         {
+          "id": 740001,
+          "dynArgs": [
+           1.5
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 109110007,
+          "dynArgs": [
+           32
+          ]
+         },
+         {
+          "id": 140110407,
+          "dynArgs": [
+           38
+          ]
+         },
+         {
+          "id": 107110007,
+          "dynArgs": [
+           4
+          ]
+         }
+        ],
+        "suffix": [
+         {
+          "id": 110110007,
+          "dynArgs": [
+           -7.5,
+           22
+          ]
+         },
+         {
+          "id": 111110406,
+          "dynArgs": [
+           42
+          ]
+         },
+         {
+          "id": 110110107,
+          "dynArgs": [
+           9.5
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1540648341.8440564,
+    "life0": 1540648341.8440564,
+    "kill": 1540648341.8440564,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 1583972991.001409,
+    "life0": 1583972991.001409,
+    "kill": 1583972991.001409,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4953.470866716912,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "support",
+    "label": "Replace socket 4 with Erosion Penetration",
+    "acquisition": true,
+    "costFE": 0,
+    "market": "drop",
+    "costNote": "drop",
+    "minLevel": 1,
+    "changes": [
+     {
+      "kind": "support",
+      "action": "replace",
+      "owner": {
+       "kind": "active",
+       "slot": 0
+      },
+      "socket": 4,
+      "gem": {
+       "sid": 10002670,
+       "level": 20,
+       "name": "Erosion Penetration"
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1583972991.001409,
+    "life0": 1583972991.001409,
+    "kill": 1583972991.001409,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 1757247596.450289,
+    "life0": 1757247596.450289,
+    "kill": 1757247596.450289,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4953.470866716912,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "unique",
+    "label": "Unique Pathfinder's Path in boots",
+    "acquisition": true,
+    "costFE": 1,
+    "minLevel": 76,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "boots",
+      "item": {
+       "baseId": 4010,
+       "baseName": "Demon Slayer's Feet",
+       "itemId": "guide-unique-112440",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 590010,
+          "dynArgs": [
+           1777
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 51444010,
+          "dynArgs": [
+           35
+          ]
+         },
+         {
+          "id": 51444020,
+          "dynArgs": [
+           20
+          ]
+         },
+         {
+          "id": 51444030,
+          "dynArgs": [
+           25
+          ]
+         },
+         {
+          "id": 51444040,
+          "dynArgs": [
+           30,
+           50
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 1757247596.450289,
+    "life0": 1757247596.450289,
+    "kill": 1757247596.450289,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 2016669306.302851,
+    "life0": 2016669306.302851,
+    "kill": 2016669306.302851,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4954.470866716912,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "unique",
+    "label": "Unique Last Words of Chaos in helmet",
+    "acquisition": true,
+    "costFE": 2.9747,
+    "minLevel": 82,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "helmet",
+      "item": {
+       "baseId": 3611,
+       "baseName": "Ranger's Broken Mask",
+       "itemId": "guide-unique-112203",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 580011,
+          "dynArgs": [
+           1920
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 51420320,
+          "dynArgs": [
+           110
+          ]
+         },
+         {
+          "id": 51420340,
+          "dynArgs": [
+           27.5
+          ]
+         },
+         {
+          "id": 51420350,
+          "dynArgs": [
+           10,
+           5,
+           150
+          ]
+         },
+         {
+          "id": 51420360,
+          "dynArgs": [
+           10,
+           1.25,
+           37.5
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 2016669306.302851,
+    "life0": 2016669306.302851,
+    "kill": 2016669306.302851,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 2133290357.588339,
+    "life0": 2133290357.588339,
+    "kill": 2133290357.588339,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 4957.445566716911,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "unique",
+    "label": "Unique Death's Touch in gloves",
+    "acquisition": true,
+    "costFE": 261.1755,
+    "minLevel": 82,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "gloves",
+      "item": {
+       "baseId": 3311,
+       "baseName": "Ranger's Rusted Gauntlets",
+       "itemId": "guide-unique-112346",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 580011,
+          "dynArgs": [
+           1920
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 51434610,
+          "dynArgs": [
+           395
+          ]
+         },
+         {
+          "id": 51434620,
+          "dynArgs": [
+           110
+          ]
+         },
+         {
+          "id": 51434630,
+          "dynArgs": [
+           50.5
+          ]
+         },
+         {
+          "id": 51434670,
+          "dynArgs": [
+           20.5
+          ]
+         },
+         {
+          "id": 51434640,
+          "dynArgs": [
+           200
+          ]
+         },
+         {
+          "id": 51434650,
+          "dynArgs": [
+           104,
+           127
+          ]
+         },
+         {
+          "id": 51434660,
+          "dynArgs": [
+           135
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 2133290357.588339,
+    "life0": 2133290357.588339,
+    "kill": 2133290357.588339,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 9025362345.709988,
+    "life0": 9025362345.709988,
+    "kill": 9025362345.709988,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 5218.621066716912,
+   "notes": [
+    "talent points assumed"
+   ]
+  },
+  {
+   "level": 90,
+   "move": {
+    "kind": "unique",
+    "label": "Unique Fool's Crown in helmet",
+    "acquisition": true,
+    "costFE": 111.755,
+    "minLevel": 82,
+    "changes": [
+     {
+      "kind": "gear",
+      "slot": "helmet",
+      "item": {
+       "baseId": 3611,
+       "baseName": "Ranger's Broken Mask",
+       "itemId": "guide-unique-112228",
+       "level": 90,
+       "modifiers": {
+        "baseAttr": [
+         {
+          "id": 580011,
+          "dynArgs": [
+           1920
+          ]
+         }
+        ],
+        "prefix": [
+         {
+          "id": 51422810,
+          "dynArgs": [
+           7200
+          ]
+         },
+         {
+          "id": 51422820,
+          "dynArgs": [
+           -50
+          ]
+         },
+         {
+          "id": 51422830,
+          "dynArgs": [
+           156.5,
+           204.5
+          ]
+         },
+         {
+          "id": 51422840,
+          "dynArgs": [
+           135
+          ]
+         },
+         {
+          "id": 51422850,
+          "dynArgs": [
+           5
+          ]
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "triggered": [],
+   "before": {
+    "life100": 9025362345.709988,
+    "life0": 9025362345.709988,
+    "kill": 9025362345.709988,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "after": {
+    "life100": 12250021746.898848,
+    "life0": 12250021746.898848,
+    "kill": 12250021746.898848,
+    "partial": [
+     "Bull's Rage (buff 10120) not carried: no row of this build casts stone 1230 (U2: nodes 2320 / 2322)",
+     "not calculable without a capture: the spawn action tag list [6300031] and the conditional tags 0x2dcae5 / 0x4c62ba of the cast request (W11: writer not located)",
+     "not calculable without a capture: the throw's trait class 7999301 (the node 2320 class of the hero trait)",
+     "not calculable without a capture: the hand mode (the weapon hand state; the training ground)",
+     "not in this figure: node 3030 (comp 0x69 / 0x12 (execute FUN_141aa50d0, c9b_nodes.c 4505-4738)) - affix class 905758 row 1 (hero 4001 spawn class 905758) - ticked at the grant",
+     "not in this figure: node 2215 (execute 0x1407d0580 `mov al, 1; ret`) - affix class 1010080264 row 1 (hero 4001 spawn class 1010080264) - ticked at the grant",
+     "not in this figure: node 626 ([inf] the owner's comp 0x12 buffs: a value from buff +0xc8 / +0x68 × +0xe8 / the +0xd0 +0x110 table and the node's +0x98..+0xb0 handed to the buff's +0x20 object (vt+0x10 — its target not identified, so \"no record\" is inferred); no direct comp 0xc / 0x25 call (execute FUN_141af35a0, c9b_trigexec.c 313-858)) - affix class 775414272 row 1 (hero 4001 spawn class 77541427",
+     "not in this figure: node 233 (comp 0x7e (execute FUN_141a9fe80, c9b_nodes.c 1455-1519)) - affix class 775414272 row 2 (hero 4001 spawn class 775414272) - fires on event 0xf42b8",
+     "not in this figure: node 1011 (adds a buff: comp 0x12 FUN_141bab400 (execute FUN_141a54c40, c9b_trigexec.c 859-1204)) - affix class 147709584 row 1 (hero 4001 spawn class 147709584) - fires on event 0xf425e",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 385021504 row 1 (hero 4001 spawn class 385021504) - fires on event 0xf46ce (x5)",
+     "not in this figure: node 627 (comps 5 / 0x1a / 0x26 via FUN_141e31100 → FUN_141e8de30, which adds to an f64 accumulator (hitdriver2.ann.c 6894-) (execute FUN_141af4140, c9b_trigexec.c 1205-1290; c9b_trig2.c 1-40)) - affix class 413647904 row 2 (hero 4001 spawn class 413647904) - fires on event 0xf4285",
+     "not in this figure: node 2320 (comp 0x82 / 0x91, triggers a skill (execute FUN_141a9df70, c9b_nodes.c 4093-4466)) - affix class 847438 row 1 (buff 10 class 847438) - ticked at the grant",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 245094144 row 3 (started by node 112, affix class 245094144 row 1 (trait 810001 tier 1)) - ticked at the grant",
+     "not in this figure: node 343 (queues an inflict request on each task-filter target's comp 0xf: FUN_141bacd50(comp 0xf, kind +0x78, id +0x7c, probability +0x80 (f64), count +0x88, tag lists +0x90 / +0xa0) - no attribute / char-field record (T3d: data vt 0x14524cb20, build FUN_141ad1060, execute FUN_141aad500 once per target, abort FUN_141ab5450; t3d_a.ann.c). The EffectNote carries the task: its ch",
+     "not in this figure: node 2402 (comp 0x40 +0x88 (execute FUN_141aa1bd0, c9b_nodes.c 4466-4505)) - affix class 326425984 row 1 (started by node 112, affix class 326425984 row 2 (trait 810021 tier 2)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 72818 row 1 (gem 7006 (skill 1110)) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7031 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 612 (comp 0x15 via FUN_141bfbe90 (execute FUN_141af21b0, c9_nodes_misc.c)) - affix class 420453504 row 2 (support 8009 (skill 71009) on gem 7130 modifier 771009001) - ticked at the grant",
+     "not in this figure: node 2322 (N5: casts the linked skill at the filter targets: comps 0x82 / 0x91 (FUN_141bc4eb0 / 141bc46d0 / 141e3ede0 / 141e32a70), the cast request into comp 0x7e map (FUN_141a95660 / 141ad96a0); runtime vt 0x1452661d8 (build FUN_141a931b0), execute slot 23 FUN_141a9ec10, abort FUN_141ab2850 (comp 0x7e FUN_141ad6d40, returns 1); no attribute / char-field call (n5_b.ann.c)) - a",
+     "not in this figure: node 2207 (execute 0x1407d0580) - affix class 1059163184 row 1 (map modifier class 1059163184) - ticked at the grant (x10)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060011 row 1 (map modifier class 122060011) - ticked at the grant (x4)",
+     "not in this figure: node 2206 (execute 0x1407d0580) - affix class 122060013 row 1 (map modifier class 122060013) - ticked at the grant (x10)"
+    ]
+   },
+   "cumFE": 5330.376066716912,
+   "notes": [
+    "talent points assumed"
+   ]
   }
  ],
  "notSearched": [
@@ -7660,7 +8985,12 @@
   "craft on mainHand: 11 tiers whose library text ranges differ from the catalog rolls",
   "point shifts beyond the best 60 of 940 (maxShifts)",
   "talent points at level 90: no level -> points table exists; 104 points assumed (round(108 x (L - 1) / 92) below 93, the value observed at 93-96 above; docs/talent-rules.md)",
-  "point shifts beyond the best 60 of 989 (maxShifts)"
+  "point shifts beyond the best 60 of 989 (maxShifts)",
+  "craft on mainHand: suffix side full (3); replacing an affix is not ported",
+  "craft on mainHand: prefix side full (3); replacing an affix is not ported",
+  "point shifts beyond the best 60 of 1238 (maxShifts)",
+  "craft on mainHand: 20 tiers whose library text ranges differ from the catalog rolls",
+  "talent points at level 100: no level -> points table exists; 108 points assumed (round(108 x (L - 1) / 92) below 93, the value observed at 93-96 above; docs/talent-rules.md)"
  ],
  "unpriced": [
   "L60 not on the market / unpriced: Unique Endless Night - Prototype in boots: +364.7 % if you get it",
@@ -7668,7 +8998,11 @@
   "L70 not on the market / unpriced: Unique Endless Night - Prototype in boots: +32.6 % if you get it",
   "L75 not on the market / unpriced: Unique Endless Night - Prototype in boots: +30.8 % if you get it",
   "L80 not on the market / unpriced: Unique Endless Night - Prototype in boots: +11.3 % if you get it",
-  "L85 not on the market / unpriced: Unique Howling Ring in ring1: +11.8 % if you get it"
+  "L85 not on the market / unpriced: Unique Howling Ring in ring1: +11.8 % if you get it",
+  "L90 not on the market / unpriced: Target: Sierra Reverberation Maul in mainHand: +2267.7 % if you get it",
+  "L95 not on the market / unpriced: Target: Sierra Reverberation Maul in mainHand: +2026.9 % if you get it",
+  "L100 not on the market / unpriced: Target: Sierra Reverberation Maul in mainHand: +2026.9 % if you get it",
+  "147 distinct acquisitions had no price; the best 1 per stage are listed above"
  ],
  "notCalculable": [
   "Craft T5 Reaps 0.03 s of Damage Over Time when inflicting Trauma. The effect has a 1 s Recovery Time against the same target (suffix) on belt: dropped not in this figure: node 631 (N2: 'Reap': for each task-filter target FUN_141e0bcd0(world service +0x1a8, the executor, the target, a hit descriptor FUN_141a4b8d0, reapTime +0x78 (f64, FUN_141980a40), tags +0x80, reapFromSelf +0x90, 0, 1.0, b38 flag +0x91 == 0, the id of the type-4 payload entry or -1) - the damage pipeline's reap of the target's damage-over-time; no attribute / char-field record ",
@@ -9143,7 +10477,21 @@
   "Replace socket 5 with Hardened: stopped: not ported: an uptime add on event 1000074 (32929472 row 1)",
   "Replace socket 5 with Hammer of Ash: Rekindle (Magnificent): dropped ailment 3 is inflicted by reaction_normal with chance 30% and its damage is not priced by dps (the tick and the registration snapshot are ported, ailtick.ts dotRecord / dotSnapshot; the application is not simulated, re/evidence/ail2_snapshot.md; ailment.ts ailmentBase gives the base range), ailment 3 is inflicted by reaction_enhance with chance 30% and its damage is not priced by dps (the tick and the registration snapshot are ported, ailtick.ts dotRecord / dotSnapshot; the application is not simulated, re/evidence/ail2_snapshot.md; ailment.ts ailmentBase gives the base range), ailment 3 is inflicted by reaction_enhance_extra_attack_bullet_hit with chance 30% and its damage is not priced by dps (the tick and the registration snapshot are ported, ailtick.ts dotRecord / dotSnapshot; the application is not simulated, re/evidence/ail2_snapshot.md; ailment.ts ailmentBase gives the base range)",
   "Target: Agony Darkness Ring in ring1: dropped 51512840",
-  "Target: Old King's Sabatons in boots: dropped item 3910: comp 0x23 rarity tag list (5000501..5000505; the source is not located)"
+  "Target: Old King's Sabatons in boots: dropped item 3910: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Double Rainbow in chest: dropped item 3101: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Blight in chest: stopped: not ported: concurrent layer count of the buff container (FUN_141bbfde0 + container +0xa8 + param_3) for label 3000122",
+  "Unique Silent Monologue in chest: stopped: not ported: roll space of 1355663670142 exceeds the enumeration budget and the price is not affine in the draw of type 4 (at 0.25: 1664754 against 1664754.375)",
+  "Unique Blind Vision in helmet: dropped item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Stray Bird's Return in gloves: dropped item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Machine Lord in helmet: dropped item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Hunting the Eye of the Kraken in helmet: dropped item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located), not in this figure: node 1003 (a hit that kills the target when its comp 0x6f life is at or below max life x 0.01 x f8: FUN_141e0c8d0 (execute FUN_141a52ea0, t3b_exec.ann.c 306-384)) - affix class 877987 row 1 (gear 3711 modifier 51423150) - fires on event 0xf424a, not in this figure: node 1003 (a hit that kills the target when its comp 0x6f life is at or below max life x 0.01 x f8: FUN_141e0c8d0 (execute FUN_141a52ea0, t3b_exec.ann.c 306-384)) - affix class 877987 row 2 (gear 3711 modifier 51423150) - fires on event 0xf424a, 51423140",
+  "Unique Legless Bird's Lament in helmet: dropped item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Hanging Two-Tone Mask in helmet: dropped item 3711: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Chaos Abyss in gloves: dropped item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located), 55431140, 51431160",
+  "Unique Thunder Manipulator in gloves: dropped item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located), not in this figure: node 306 (buff component 0x12 only (execute FUN_141aa6d60: mode +0x78 1/2/3 over the task-filter targets, GetComponent(0x12) and FUN_141bab400; u1_n306x.ann.c) - the buffs it adds grant through the captured buff list) - affix class 617084288 row 1 (gear 3411 modifier 51431550) - fires on event 0xf425e",
+  "Unique Ralph's Laws in gloves: dropped item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Unique Vajra Handguards in gloves: dropped item 3411: comp 0x23 rarity tag list (5000501..5000505; the source is not located)",
+  "Swap talent tree 51 for tree 41: dropped ailment 0 is inflicted by reaction_normal with chance 27% and its damage is not priced by dps (the tick and the registration snapshot are ported, ailtick.ts dotRecord / dotSnapshot; the application is not simulated, re/evidence/ail2_snapshot.md; ailment.ts ailmentBase gives the base range), ailment 0 is inflicted by reaction_enhance with chance 27% and its damage is not priced by dps (the tick and the registration snapshot are ported, ailtick.ts dotRecord / dotSnapshot; the application is not simulated, re/evidence/ail2_snapshot.md; ailment.ts ailmentBase gives the base range), ailment 0 is inflicted by reaction_enhance_extra_attack_bullet_hit with chance 27% and its damage is not priced by dps (the tick and the registration snapshot are ported, ailtick.ts dotRecord / dotSnapshot; the application is not simulated, re/evidence/ail2_snapshot.md; ailment.ts ailmentBase gives the base range)"
  ],
  "start": {
   "life100": 81901.04911237008,

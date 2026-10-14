@@ -9,10 +9,10 @@ import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
 import { slateMoves } from './candidates/slates';
 import { switchMoves } from './candidates/switch';
-import { talentMoves } from './candidates/talents';
+import { talentMoves, talentPointMoves } from './candidates/talents';
 import { traitMoves } from './candidates/traits';
 import { type EtorHistory, type EtorItems, historyBook, snapshotBook } from './pricing';
-import { DEFAULT_KNOBS, type Knobs, newMem, overBudget, path, rankable, step } from './search';
+import { DEFAULT_KNOBS, type Knobs, newMem, overBudget, path, rankableMove, spendFree, step } from './search';
 import { ICE_SHOT_INPUTS, idealStartNotes } from './start';
 import { setTalentPoints } from './talentRules';
 import type { Evaluator, Figure, GenCtx, Generator, GuideOut, Move, PriceBook, State, Step } from './types';
@@ -86,10 +86,14 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     s = { ...s, level, loadout: { ...s.loadout, skills } };
     f = (await ev.run(s.loadout, [], { level, skill: s.skill })).figure;
     if (f.stop) { const why = `L${level} ${s.skill} leg cannot be priced yet: ${f.stop}`; mem.notCalculable.add(why); notes.push(why); break; }
+    mem.scores.clear(); mem.since = 0;   // scores of the last stage are no upper bound on this one (new level, new points, new prices)
+    // the level-up's new talent points are spent at once, free and ungated: one point is worth less than the churn gate
+    const spent = await spendFree(s, ev, talentPointMoves, ctxOf(s), K, f, mem);
+    if (spent.taken.length) { notes.push(`L${level}: ${spent.taken.length} new talent point(s) spent`); s = spent.state; f = spent.figure; }
     for (let n = 0; n < K.stepsPerStage; n++) {
       if (overBudget(K, t0, ev)) { stopped = true; break; }
       const ctx = ctxOf(s);
-      const r = await step(s, f, ev, acq, recon, ctx, K, mem);
+      const r = await step(s, f, ev, acq, recon, ctx, K, mem, talentPointMoves);
       ctx.notSearched.forEach((x) => notSearched.add(x));
       if (!r) break;
       if (level < 93) r.step.notes = [...(r.step.notes ?? []), 'talent points assumed'];
@@ -103,7 +107,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     const evs = await Promise.all(cands.map((m) => ev.run(s.loadout, m.changes, { level, skill: m.skill ?? s.skill })));
     ctx.notSearched.forEach((x) => notSearched.add(x));
     cands.map((m, i) => ({ m, e: evs[i].figure }))
-      .filter(({ e }) => rankable(f, e) && e.kill > f.kill).sort((a, b) => b.e.kill - a.e.kill).slice(0, K.topK)
+      .filter(({ m, e }) => rankableMove(m, f, e) && e.kill > f.kill).sort((a, b) => b.e.kill - a.e.kill).slice(0, K.topK)
       .forEach(({ m, e }) => unpriced.push(`L${level} not on the market / unpriced: ${m.label}: ${pct(f, e)} if you get it`));
     onStep?.(snap({ partialRun: true }));
   }

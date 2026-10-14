@@ -18,7 +18,9 @@ const stubEv = (stop?: string, o: { runs?: { changes: unknown[]; level: number }
     o.runs?.push({ changes, level: ctx.level });
     if (o.stopFrom !== undefined && ctx.level >= o.stopFrom) stop = 'not ported: later stage';
     const n = ((lo as { __n?: number }).__n ?? 0) + changes.length, k = 100 + 10 * n;
-    return { loadout: { ...lo, __n: n }, dropped: [], inputs: { ground: 'stub-ground', elites: 0 },
+    const talents = { ...(lo as { talents?: Record<number, number> }).talents };   // talent changes land in the loadout, as dps-debug's applyChanges does
+    for (const c of changes as { kind: string; node: number; points: number }[]) if (c.kind === 'talent') talents[c.node] = c.points;
+    return { loadout: { ...lo, __n: n, talents }, dropped: [], inputs: { ground: 'stub-ground', elites: 0 },
       figure: stop ? { life100: 0, life0: 0, kill: 0, partial: [], stop } : { life100: k, life0: k, kill: k, partial: [] } };
   },
 });
@@ -101,6 +103,10 @@ describe('owned items as moves', () => {
 });
 
 describe('runIdeal', () => {
+  it('spends the level-up talent points at the stage start, free and ungated, and clears the lazy scores', async () => {
+    const out = await runIdeal(stubEv(), { ...small, stepsPerStage: 0, endLevel: 65 });
+    expect(out.startNotes).toContain(`L65: ${pointsAtLevel(65) - pointsAtLevel(60)} new talent point(s) spent`);
+  });
   it('writes an ideal GuideOut with pin, season, knobs, start notes and stated inputs', async () => {
     const out = await runIdeal(stubEv(), small);
     expect(out).toMatchObject({ mode: 'ideal', pin: 'stub', etor: { season: 'SS13' }, knobs: { stepsPerStage: 1, topK: 2, churn: 0.05, talentPoints: 108 } });

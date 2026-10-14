@@ -4,6 +4,7 @@
  * Everything else goes to ctx.notSearched with its reason.
  */
 import { pinRoot, table } from '../pin';
+import type { LoadoutPatch } from '../patches';
 import type { Change, Generator, Move, OwnedItem, State } from '../types';
 
 type Rows<T> = Record<string, T>;
@@ -32,13 +33,21 @@ const SHAPES: Record<number, [number, number][]> = {
 };
 const MEDIUM_TYPE = 48;   // config_talent +0x18; the server's talent-type 11 (prisms.md (a))
 
-export interface PrismPlan { shape: number; ext: { modifierId: number; dyn: number[] }[] }
+/** Shapes with a captured server resolution (both captured Haze placements are shape 3). The offsets of the others are documented
+ *  but no capture has confirmed a resolution with them, so they are not generated (Task 7b review ruling). */
+const CAPTURED_SHAPES = [3];
+
+export interface PrismPlan { shape: number; ext: { modifierId: number; dyn: number[] }[]; /** 10004: prism-wide ExtraAffix on the tree */ provide: { id: number; dyn: number[] }[] }
 export type Plan = PrismPlan | { skip: string };
 
 /** What a prism item's modifiers resolve to, or the first reason it does not (never a guess). */
 export function planPrism(item: Pick<OwnedItem, 'modifiers'>, c: Catalog = catalog()): Plan {
   let shape: number | undefined;
-  const ext: PrismPlan['ext'] = [];
+  const ext: PrismPlan['ext'] = [], provide: PrismPlan['provide'] = [];
+  const fixed = (mod: number, by: number) => {
+    const r = c.rolls[mod] ?? [];
+    return !r.length || r.some(([lo, hi]) => lo !== hi) ? { skip: `modifier ${mod} granted by ${by} has a rolled value; the DynArgs are not known` } : r.map(([lo]) => lo);
+  };
   for (const m of Object.values(item.modifiers).flat()) {
     const b = c.modifier[m.id]?.bindings?.[0] ?? '';   // b[0] only: the second string of a row belongs to the next row (prisms.md (d))
     const x = /^_mt4\d_(\d+)(?:_(\d+))?(?:_(\d+))?/.exec(b);
@@ -46,22 +55,27 @@ export function planPrism(item: Pick<OwnedItem, 'modifiers'>, c: Catalog = catal
     const [, aff, p1, p2] = x;
     if (aff === '10007') {
       if (p1 !== '11') return { skip: `server affix 10007 on talent type ${p1} (${m.id}): only type 11 (Medium Talent) is confirmed (prisms.md (a))` };
-      const mod = Number(p2), r = c.rolls[mod] ?? [];
-      if (!r.length || r.some(([lo, hi]) => lo !== hi)) return { skip: `modifier ${mod} granted by ${m.id} has a rolled value; the ExtAffix DynArgs are not known` };
-      ext.push({ modifierId: mod, dyn: r.map(([lo]) => lo) });
+      const mod = Number(p2), dyn = fixed(mod, m.id);
+      if ('skip' in dyn) return dyn;
+      ext.push({ modifierId: mod, dyn });
     } else if (aff === '10008') {
       if (shape !== undefined) return { skip: 'two server affixes 10008 (area expansions); their combination is not documented' };
       shape = Number(p1);
-      if (!SHAPES[shape]) return { skip: `area shape ${shape} (${m.id}): config_prism_influence_shape offsets are not documented` };
+      if (!CAPTURED_SHAPES.includes(shape)) return { skip: `area shape ${shape} (${m.id}): no captured server resolution uses it (only shape ${CAPTURED_SHAPES}); a capture of a prism with this shape settles it` };
     } else if (aff === '10009' || aff === '10025') continue;   // server-side mechanics with no attribute task (prisms.md, "Extra grants")
-    else if (aff === '10004') return { skip: `server affix 10004 (${m.id}) grants a prism-wide ExtraAffix on the tree; dps-debug's what-if has no change for prisms.provide` };
+    else if (aff === '10004') {   // `_mt42_10004_<p1>_<modifier>`: p1 (123456 on the Haze) is not documented and unused; both captured Haze placements agree
+      if (!p2) return { skip: `server affix 10004 (${m.id}) has no modifier suffix` };
+      const dyn = fixed(Number(p2), m.id);
+      if ('skip' in dyn) return dyn;
+      provide.push({ id: Number(p2), dyn });
+    }
     else if (aff === '10005') return { skip: `server affix 10005 (${m.id}) adds Points to nodes in the area; its cap/stacking rule is not documented` };
     else return { skip: `server affix ${aff} (${m.id}) has no documented resolution` };
   }
-  if (!ext.length) return { skip: 'no 10007 affix: nothing the what-if can express' };
+  if (!ext.length && !provide.length) return { skip: 'no 10007 or 10004 affix: nothing to place' };
   // a prism without 10008 keeps its base area; the base InfluenceId is not in OwnedItem, so that case is not generated
   if (shape === undefined) return { skip: 'no 10008 affix: the base area (item InfluenceId) is not in the export' };
-  return { shape, ext };
+  return { shape, ext, provide };
 }
 
 /** Medium-talent nodes (ids) of `tree` inside the prism area at `cell` for `shape`. */
@@ -78,6 +92,10 @@ export function placeChanges(plan: PrismPlan, cell: number, c: Catalog = catalog
     .flatMap(node => plan.ext.map(e => ({ kind: 'prism', action: 'add', node, modifierId: e.modifierId, dyn: e.dyn }) as Change));
 }
 
+/** The loadout patch that puts the prism's 10004 ExtraAffix on `tree` (none when the prism has no 10004). */
+export const providePatch = (plan: PrismPlan, tree: number): LoadoutPatch[] =>
+  plan.provide.length ? [{ kind: 'patch', op: 'prism-provide', tree, extraAffix: plan.provide }] : [];
+
 type Placed = Record<string, { geniusId?: number; item?: { Id?: string } }>;
 const pointOf = (l: State['loadout'], id: number): number => {
   const rt = (l.resolvedTalents as { talents: [number, number, string][] } | undefined)?.talents;
@@ -89,7 +107,7 @@ export const prismMoves: Generator = (s, ctx) => {
   const ns = ctx.notSearched;
   ns.add('prism: buying a prism (acquisition): the rolled values and base shape of an unowned prism are not known before purchase, so its resolution cannot be derived from the rules');
   ns.add('prism: moving a placed prism: the Point of the vacated and of the target cell on removal/placement is not documented');
-  ns.add('prism: Inverse Image mirror copies (10026): dps-debug has no change that adds a "-<id>" mapping entry');
+  ns.add('prism: Inverse Image placement (10026): applyPatch can write the mirror copies, but the one captured resolution is not reproducible from documented rules (docs/prism-rules.md), so none is generated');
   ns.add('prism: cell legality is not documented; cells offered are the node kinds the owner has placed prisms on (micro, legendary medium; never a core) with no allocated Point');
   const prisms = s.loadout.prisms as { provide?: Record<string, unknown>; placed?: Placed } | undefined;
   if (!prisms?.provide) { ns.add('prism: the loadout has no prisms section'); return []; }
@@ -105,10 +123,10 @@ export const prismMoves: Generator = (s, ctx) => {
       const seen = new Set<string>();
       for (const [id, r] of Object.entries(c.talent)) {
         if (Math.floor(Number(id) / 1e6) !== tree || r.i4 === 2 || (r.i18 !== 1 && r.i18 !== 82) || pointOf(s.loadout, Number(id))) continue;
-        const changes = placeChanges(plan, Number(id), c), key = JSON.stringify(changes);
+        const changes = [...placeChanges(plan, Number(id), c), ...providePatch(plan, tree)], key = JSON.stringify(changes);
         if (!changes.length || seen.has(key)) continue;   // same hosts = same figure
         seen.add(key);
-        const hosts = [...new Set(changes.map(x => (x as { node: number }).node))];
+        const hosts = [...new Set(changes.filter(x => x.kind === 'prism').map(x => (x as { node: number }).node))];
         moves.push({ kind: 'prism', acquisition: false, costFE: 0, minLevel: 0, changes, consumes: it.itemId,
           label: `Place prism ${it.baseName ?? it.baseId} on node ${id} in tree ${tree} (medium nodes ${hosts.join(', ')})` });
       }

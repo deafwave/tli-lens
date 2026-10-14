@@ -94,8 +94,8 @@ export const talentMovesWith = (opts: TalentOpts): Generator => (s, ctx) => {
     }
   }
 
-  // inverse images: dps-debug's what-if has no change that places or removes one
-  ctx.notSearched.add('inverse images: no dps-debug what-if change kind places an Inverse Image (the talent change keeps an existing one; the item is server-resolved, prisms.md (c)); none generated');
+  // inverse images: applyPatch (src/patches.ts) can write the copies, but the only captured resolution is not reproducible from documented rules
+  ctx.notSearched.add('inverse images: the captured resolution is not reproduced by the documented rules (a prerequisite-locked source node, 12040100, has Point 0 on the server but its copy carries 2-3 points; which sources are copied is also unexplained); none generated (docs/talent-rules.md)');
   if (pointsOutsideObserved(ctx.level)) ctx.notSearched.add(`talent points at level ${ctx.level}: no level -> points table exists; the nearest observed value (${budget}) is used, observed only at levels 93-96 (docs/talent-rules.md)`);
   ctx.notSearched.add('tree slot rule is inferred (one god tree k=0 + up to 3 distinct professions, from 9 observed tree sets); a build outside it is not offered');
   ctx.notSearched.add('core talent limits (count per build): not found; one per (tree, set) assumed');

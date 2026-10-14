@@ -93,6 +93,11 @@ describe('step', () => {
     expect(r!.step.after.kill).toBeCloseTo(300);
   });
 
+  test('an enabler whose own figure is under enablerFloor x the current kill is not re-solved', async () => {
+    const r = await step(state(), base, stub().ev, [fixed(mv('+20%'), mv('E', { enabler: true }))], [fixed(rc('R'))], ctx(), { ...K, topK: 1, enablerFloor: 1.01 });
+    expect(r!.step.move.label).toBe('+20%');
+  });
+
   test('unpriced is listed, never taken; non-rankable is reported, never taken', async () => {
     const mem = newMem();
     const bad = mv('bad', { changes: [ch('bad'), ch('+80%')] });

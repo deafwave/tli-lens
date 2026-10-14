@@ -3,15 +3,24 @@
 import type { Evaluated, Evaluator, Figure, GenCtx, Generator, Move, State, Step } from './types';
 
 export interface Knobs { churn: number; topK: number; maxRounds: number; refreshEvery: number; maxSteps: number; targetKill?: number; budgetFE?: number;
-  /** wall-clock minutes; once over, the run stops after the current step (knobs.stoppedBy = 'budget') */ budgetMinutes?: number }
+  /** wall-clock minutes; once over, the run stops after the current step (knobs.stoppedBy = 'budget') */ budgetMinutes?: number;
+  /** advise: once the FE is spent, steps still searched without the budget (each noted "beyond your FE") */ continueSteps: number }
 export const overBudget = (k: Knobs, t0: number, ev?: Evaluator) =>
   k.budgetMinutes !== undefined && Date.now() - t0 - (ev?.pausedMs?.() ?? 0) >= k.budgetMinutes * 60_000;
-export const DEFAULT_KNOBS: Knobs = { churn: 0.05, topK: 5, maxRounds: 10, refreshEvery: 10, maxSteps: 400 };
+export const DEFAULT_KNOBS: Knobs = { churn: 0.05, topK: 5, maxRounds: 10, refreshEvery: 10, maxSteps: 400, continueSteps: 10 };
 
 /** A figure is rankable only if it dropped no piece the baseline still had, and it computed. */
 export function rankable(before: Figure, after: Figure): boolean {
   return !after.stop && after.partial.every((p) => before.partial.includes(p));
 }
+
+/** A move's figure is rankable by `rankable`, except a skill switch: a different skill compiles different pieces, so its omissions need not be a subset
+ *  of the old skill's; it ranks when it computed, and the step says what differs (`switchNote`). */
+export const rankableMove = (m: Move, before: Figure, after: Figure): boolean => m.kind === 'switch' ? !after.stop : rankable(before, after);
+const switchNote = (b: Figure, a: Figure): string[] => {
+  const added = a.partial.filter((p) => !b.partial.includes(p)), removed = b.partial.filter((p) => !a.partial.includes(p));
+  return added.length || removed.length ? [`omissions differ across the skill switch: +${added.join(', ') || 'none'} / −${removed.join(', ') || 'none'}`] : [];
+};
 
 /** Search-wide bookkeeping owned by `path` (stale scores for lazy greedy, running FE, reported lists). */
 export interface Mem { scores: Map<string, number>; since: number; cumFE: number; unpriced: Set<string>; notCalculable: Set<string> }
@@ -61,7 +70,11 @@ export async function resolve(s: State, ev: Evaluator, gens: Generator[], ctx: G
   return { state: s, figure, taken };
 }
 
-async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem()):
+/** Spend what `spend` offers (free "+1 point" moves) while each one raises the kill average, with no churn gate: a single point is worth less than the gate. */
+export const spendFree = (s: State, ev: Evaluator, spend: Generator, ctx: GenCtx, k: Knobs, f: Figure, mem: Mem) =>
+  resolve(s, ev, [spend], ctx, { ...k, churn: 0, maxRounds: 1000 }, f, mem);
+
+async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem(), spend?: Generator):
   Promise<{ state: State; step: Step } | null> {
   const ev = memoEv(rawEv);
   if (mem.since >= k.refreshEvery) { mem.scores.clear(); mem.since = 0; }
@@ -88,7 +101,7 @@ async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[],
     const evs = await Promise.all(todo.map((m) => evalMove(s, m, ev)));
     todo.forEach((m, i) => {
       const e = evs[i];
-      if (!rankable(f, e.figure)) { mem.notCalculable.add(`${m.label}: ${why(f, e.figure)}`); mem.scores.set(key(m), -Infinity); fresh.set(key(m), { m, e, gain: -Infinity, score: -Infinity }); return; }
+      if (!rankableMove(m, f, e.figure)) { mem.notCalculable.add(`${m.label}: ${why(f, e.figure)}`); mem.scores.set(key(m), -Infinity); fresh.set(key(m), { m, e, gain: -Infinity, score: -Infinity }); return; }
       const gain = lnGain(f.kill, e.figure.kill), score = scoreOf(gain, m.costFE!);
       mem.scores.set(key(m), score); fresh.set(key(m), { m, e, gain, score });
     });
@@ -98,7 +111,8 @@ async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[],
   const picks = new Set([...all.sort(byScore).slice(0, k.topK), ...all.filter((r) => r.m.enabler)]);
   const solved = await Promise.all([...picks].map(async (r) => {
     const s1 = apply(s, r.m, r.e);
-    const res = await resolve(s1, ev, recon, ctx, k, r.e.figure, mem);
+    let res = await resolve(s1, ev, recon, ctx, k, r.e.figure, mem);
+    if (spend) { const sp = await spendFree(res.state, ev, spend, ctx, k, res.figure, mem); res = { ...sp, taken: [...res.taken, ...sp.taken] }; }   // e.g. a tree swap that left points unplaced
     const gain = lnGain(f.kill, res.figure.kill);
     return { r, res, gain, score: scoreOf(gain, r.m.costFE!) };
   }));
@@ -106,16 +120,17 @@ async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[],
   if (!win) return null;
   const cost = win.r.m.costFE!;
   mem.cumFE += cost; mem.scores.delete(key(win.r.m));
-  return { state: win.res.state, step: { level: s.level, move: win.r.m, triggered: win.res.taken, before: f, after: win.res.figure, cumFE: mem.cumFE } };
+  const notes = win.r.m.kind === 'switch' ? switchNote(f, win.res.figure) : [];
+  return { state: win.res.state, step: { level: s.level, move: win.r.m, triggered: win.res.taken, before: f, after: win.res.figure, cumFE: mem.cumFE, ...(notes.length ? { notes } : {}) } };
 }
 
 /** Lazy pass first; if it finds nothing, drop the stale scores and look at everything once before giving up. */
-export async function step(s: State, f: Figure, ev: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem()):
+export async function step(s: State, f: Figure, ev: Evaluator, acq: Generator[], recon: Generator[], ctx: GenCtx, k: Knobs, mem: Mem = newMem(), spend?: Generator):
   Promise<{ state: State; step: Step } | null> {
-  const r = await stepOnce(s, f, ev, acq, recon, ctx, k, mem);
+  const r = await stepOnce(s, f, ev, acq, recon, ctx, k, mem, spend);
   if (r || !mem.scores.size) return r;
   mem.scores.clear();
-  return stepOnce(s, f, ev, acq, recon, ctx, k, mem);
+  return stepOnce(s, f, ev, acq, recon, ctx, k, mem, spend);
 }
 
 export interface PathOut { start: Figure; steps: Step[]; notCalculable: string[]; unpriced: string[]; notSearched: string[]; stoppedBy?: 'budget' }
@@ -136,6 +151,21 @@ export async function path(s0: State, ev: Evaluator, acq: Generator[], recon: Ge
     if (!r) break;
     steps.push(r.step); s = r.state; f = r.step.after;
     onStep?.(snap());
+  }
+  // the FE is spent (or nothing affordable helps): keep going without the budget, each step marked
+  if (!stoppedBy && k.continueSteps > 0 && Number.isFinite(Math.min(s0.fe, k.budgetFE ?? Infinity))) {
+    const open: Knobs = { ...k, budgetFE: undefined };
+    s = { ...s, fe: Infinity };
+    for (let n = 0; n < k.continueSteps && steps.length < k.maxSteps && !(k.targetKill !== undefined && f.kill >= k.targetKill); n++) {
+      if (overBudget(k, t0, ev)) { stoppedBy = 'budget'; break; }
+      const ctx = ctxOf(s);
+      const r = await step(s, f, ev, acq, recon, ctx, open, mem);
+      ctx.notSearched.forEach((x) => notSearched.add(x));
+      if (!r) break;
+      r.step.notes = [...(r.step.notes ?? []), 'beyond your FE'];
+      steps.push(r.step); s = r.state; f = r.step.after;
+      onStep?.(snap());
+    }
   }
   return { ...snap(), ...(stoppedBy ? { stoppedBy } : {}) };
 }

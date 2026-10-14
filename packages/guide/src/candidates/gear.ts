@@ -62,6 +62,9 @@ export function basesFor(slot: string, level: number, skill: Skill, family?: num
   return out.sort((a, b) => a.level - b.level || a.baseId - b.baseId);
 }
 
+/** the catalog line (config_item_base i24: STR/DEX/INT armor, weapon group) of a base */
+export const familyOf = (baseId: number): number | undefined => cat().rows.get(baseId)?.family;
+
 /** a white base as a loadout gear item: its own attribute modifiers at mid rolls, no affixes (`market: 'drop'`: a bare base is found, not bought) */
 export function bareItem(slot: string, baseId: number) {
   const r = cat().rows.get(baseId);

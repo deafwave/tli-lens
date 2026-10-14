@@ -44,4 +44,7 @@ describe('affix-library tier ids (src/data/affix-ids.json)', () => {
     expect(ids.modifierMatch / ids.total, `mismatches: ${ids.mismatches.join(', ')}`).toBeGreaterThanOrEqual(0.99);
     expect(ids.rollMismatches.length).toBeGreaterThan(0);   // listed, and excluded from crafting
   });
+  it('records the pin by commit, not by a machine path', async () => {
+    expect((await import('../src/data/affix-ids.json')).default.pin).toMatch(/^[0-9a-f]{40}$/);
+  });
 });

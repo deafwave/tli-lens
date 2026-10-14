@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "guide": "tsx src/cli.ts",
-    "test": "vitest run",
+    "test": "tsc --noEmit && vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

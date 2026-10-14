@@ -3,7 +3,8 @@ import type { Change, Generator, Move, MoveKind } from '../types';
 import { type Copy, coreSet, copiesOf, nodeRow, pointsAtLevel, pointsOutsideObserved, treeCores, treeNodes, treeOf, treeSlotsAllowed, violations } from '../talentRules';
 
 type Pts = Record<number, number>;
-export interface TalentOpts { /** cap on "move a point" candidates (docs/talent-rules.md, Shift selection) */ maxShifts: number }
+export interface TalentOpts { /** cap on "move a point" candidates (docs/talent-rules.md, Shift selection) */ maxShifts: number;
+  /** only the "+1 point" moves (spending points a level-up made available) */ pointsOnly?: boolean }
 
 const sum = (t: Pts) => Object.values(t).reduce((a, b) => a + b, 0);
 const ofTree = (t: Pts, tr: number): Pts => Object.fromEntries(Object.entries(t).filter(([k, p]) => p > 0 && treeOf(+k) === tr));
@@ -50,6 +51,7 @@ export const talentMovesWith = (opts: TalentOpts): Generator => (s, ctx) => {
   const adds = nodes.filter(n => (talents[n.id] ?? 0) < n.max);
   const has = nodes.filter(n => (talents[n.id] ?? 0) > 0);
   if (spent < budget) for (const n of adds) push('talent', `Talent ${n.id} +1 point`, [setPts(n.id, (talents[n.id] ?? 0) + 1)], inc(n.id, 1), cores);
+  if (opts.pointsOnly) return out;
   for (const a of has) push('talent', `Talent ${a.id} -1 point`, [setPts(a.id, talents[a.id] - 1)], inc(a.id, -1), cores);
 
   // shifts (budget full): sources = held nodes whose removal breaks nothing, deepest row first; targets = nodes that accept the point,
@@ -103,3 +105,5 @@ export const talentMovesWith = (opts: TalentOpts): Generator => (s, ctx) => {
 };
 
 export const talentMoves: Generator = talentMovesWith({ maxShifts: 60 });
+/** the free "+1 point" moves alone: what the search spends new talent points with (no churn gate) */
+export const talentPointMoves: Generator = talentMovesWith({ maxShifts: 0, pointsOnly: true });

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import history from './fixtures/etor-history-mini.json';
 import items from './fixtures/etor-items-mini.json';
-import { fetchSnapshot, historyBook, snapshotBook, type EtorHistory, type EtorItems } from '../src/pricing';
+import live from './fixtures/etor-snapshot-live.json';
+import { fetchSeason, fetchSnapshot, historyBook, snapshotBook, type EtorHistory, type EtorItems } from '../src/pricing';
 
 const I = items as EtorItems, H = history as EtorHistory;
 const book = historyBook(I, H);
@@ -45,13 +46,35 @@ describe('snapshotBook', () => {
 });
 
 describe('fetchSnapshot', () => {
-  it('builds the URL and header', async () => {
-    const f = vi.fn(async () => new Response(JSON.stringify(I)));
-    expect(await fetchSnapshot(1501, f as unknown as typeof fetch)).toEqual(I);
-    expect(f).toHaveBeenCalledWith('https://etor-beta.710421059.xyz/etor-api/api/prices-snapshot/1501',
-      { headers: { 'x-frontend-version': '1.0.6.2' } });
+  const json = (b: unknown, status = 200) => vi.fn(async () => new Response(JSON.stringify(b), { status })) as unknown as typeof fetch;
+  it('overlays live prices by id onto the local names, in the real { data: [{ id, price }] } shape', async () => {
+    const f = json(live);
+    const out = await fetchSnapshot(1501, I, f, () => new Date('2026-10-14T00:00:00Z'));
+    expect(f).toHaveBeenCalledWith('https://etor-beta.710421059.xyz/etor-api/api/prices-snapshot/1501', { headers: { 'x-frontend-version': '1.0.6.2' } });
+    const b = snapshotBook(out);
+    expect(b.price('Arminius Guillotine', 60)).toBe(12.5);   // overlaid
+    expect(b.price(110104, 60)).toBe(snapshotBook(I).price(110104, 60));   // not in the live body: stored price
+    expect(out.items).toHaveLength(I.items.length);          // unknown live id 999999 has no name: dropped
+    expect(out.fetchedAt).toBe('2026-10-14T00:00:00.000Z');
+  });
+  it('throws a clear error on a wrong body, never a TypeError', async () => {
+    await expect(fetchSnapshot(1, I, json({ success: true }))).rejects.toThrow(/unexpected response/);
+    await expect(fetchSnapshot(1, I, json(null))).rejects.toThrow(/unexpected response/);
+    await expect(fetchSnapshot(1, I, json({ data: [null, { id: 1 }] }))).rejects.toThrow(/no usable/);
   });
   it('throws on HTTP error', async () => {
-    await expect(fetchSnapshot(1, (async () => new Response('', { status: 500 })) as unknown as typeof fetch)).rejects.toThrow('500');
+    await expect(fetchSnapshot(1, I, json({}, 500))).rejects.toThrow('500');
+  });
+});
+
+describe('fetchSeason', () => {
+  const json = (b: unknown, status = 200) => (async () => new Response(JSON.stringify(b), { status })) as unknown as typeof fetch;
+  it('reads currentSeasonId from /player/season-status', async () => {
+    expect(await fetchSeason(json({ currentSeasonId: '1501', activeSeasonIds: ['1531', '1501'] }))).toBe(1501);
+  });
+  it('throws clearly on a wrong body or HTTP error', async () => {
+    await expect(fetchSeason(json({}))).rejects.toThrow(/currentSeasonId/);
+    await expect(fetchSeason(json(null))).rejects.toThrow(/currentSeasonId/);
+    await expect(fetchSeason(json({}, 503))).rejects.toThrow('503');
   });
 });

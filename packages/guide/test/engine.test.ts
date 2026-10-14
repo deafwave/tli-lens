@@ -8,19 +8,19 @@ import { pinRoot } from '../src/pin';
 import { applyInOrder, figureDefaultFirst } from '../src/engine/apply';
 import { type Knobs, overBudget, rankable } from '../src/search';
 import { writeAtomic } from '../src/atomic';
-import { createEvaluator, DEFAULT_FIGHT, INFO, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
+import { createEvaluator, DEFAULT_FIGHT, INFO, type Fight, WorkerDied, type Job, type JobResult, type WorkerLike } from '../src/engine/pool';
 import type { Change } from '../src/types';
 import { realSkip } from './real';
 
 const fig = (life100: number, life0: number, extra: Partial<JobResult['fig']> = {}) => ({ life100, life0, left: [], needs: [], ...extra });
 /** stub worker: records jobs; `f` decides the figure (throwing = dps-debug throwing, reported as a rejection) */
-function stub(f: (j: Job) => JobResult['fig'] = () => fig(200, 100), delay = 0) {
+function stub(f: (j: Job) => JobResult['fig'] = () => fig(200, 100), delay = 0, dropped: string[] = []) {
   const jobs: Job[] = []; let active = 0, peak = 0;
   const factory = (): WorkerLike => ({
     ready: Promise.resolve(),
     async run(j) {
       jobs.push(j); peak = Math.max(peak, ++active);
-      try { await new Promise(r => setTimeout(r, delay)); return { loadout: j.loadout, dropped: ['x'], fig: f(j) }; } finally { active--; }
+      try { await new Promise(r => setTimeout(r, delay)); return { loadout: j.loadout, dropped, fig: f(j) }; } finally { active--; }
     },
     async close() {},
   });
@@ -31,11 +31,11 @@ const lo = { a: 1 };
 const ch = [{ kind: 'stub' }] as unknown as Change[];
 
 describe('evaluator (stub workers)', () => {
-  it('maps the figure: kill = killAverage, partial = left + needs, dropped passes through', async () => {
-    const s = stub(() => ({ life100: 200, life0: 100, left: ['L'], needs: ['N'] }));
+  it('maps the figure: kill = killAverage, partial = left + needs + dropped, dropped passes through', async () => {
+    const s = stub(() => ({ life100: 200, life0: 100, left: ['L'], needs: ['N'] }), 0, ['x']);
     const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p' });
     const r = await ev.run(lo, [], ctx);
-    expect(r.figure).toEqual({ life100: 200, life0: 100, kill: killAverage(200, 100), partial: ['L', 'N'] });
+    expect(r.figure).toEqual({ life100: 200, life0: 100, kill: killAverage(200, 100), partial: ['L', 'N', 'x'] });
     expect(r.dropped).toEqual(['x']);
   });
   it('informational price: notes are not omissions: figures differing only in them are rankable', async () => {
@@ -65,6 +65,20 @@ describe('evaluator (stub workers)', () => {
     await a.run({ a: 1, b: 2 }, ch, { level: 99, skill: 'hoa' });
     expect(s.jobs).toHaveLength(3);
   });
+  it('memo is bounded: settled results leave least-recently-used first; in-flight calls are always shared', async () => {
+    const s = stub(() => fig(200, 100), 5);
+    const ev = await createEvaluator({ factory: s.factory, workers: 1, pin: 'p', memoEntries: 2 });
+    const c = (n: number) => [{ kind: 'stub', n }] as unknown as Change[];
+    await Promise.all([ev.run(lo, c(1), ctx), ev.run(lo, c(1), ctx)]);   // in flight together: one job
+    expect(s.jobs).toHaveLength(1);
+    await ev.run(lo, c(2), ctx); await ev.run(lo, c(1), ctx);            // 1 touched: 2 is now the oldest
+    await ev.run(lo, c(3), ctx);                                           // evicts 2
+    expect(s.jobs).toHaveLength(3);
+    await ev.run(lo, c(1), ctx); await ev.run(lo, c(3), ctx);            // both still held
+    expect(s.jobs).toHaveLength(3);
+    await ev.run(lo, c(2), ctx);                                           // recomputed
+    expect(s.jobs).toHaveLength(4);
+  });
   it('disk memo is written for a clean pin and never for +dirty', async () => {
     for (const [pin, files] of [['abc', 1], ['abc+dirty', 0]] as const) {
       const dir = mkdtempSync(join(tmpdir(), 'memo-'));
@@ -82,7 +96,7 @@ describe('evaluator (stub workers)', () => {
   it('fight inputs: workers get them (default bombs 10); evaluators with different fight never share a memo entry', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
     const s = stub();
-    const mk = (fight?: { bombs?: number }) => createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir, ...(fight ? { fight } : {}) });
+    const mk = (fight?: Fight) => createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir, ...(fight ? { fight } : {}) });
     const [d, five, again] = [await mk(), await mk({ bombs: 5 }), await mk({ bombs: 5 })];
     await d.run(lo, [], ctx); await five.run(lo, [], ctx); await again.run(lo, [], ctx);
     expect(s.jobs.map(j => j.fight)).toEqual([DEFAULT_FIGHT, { bombs: 5 }]);
@@ -92,14 +106,14 @@ describe('evaluator (stub workers)', () => {
     await (await mk({ bombs: 5, inputs: { x: 1 } })).run(lo, [], ctx);
     expect(readdirSync(dir)).toHaveLength(3);
   });
-  it('roll budget: workers get it (default 1 << 23); different budgets never share a memo entry', async () => {
+  it('roll budget: workers get it (default 1 << 20); different budgets never share a memo entry', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
     const s = stub();
     const mk = (rollBudget?: number) => createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir, ...(rollBudget ? { rollBudget } : {}) });
     const [d, small] = [await mk(), await mk(1000)];
     await d.run(lo, [], ctx); await small.run(lo, [], ctx);
-    expect(s.jobs.map(j => j.rollBudget)).toEqual([1 << 23, 1000]);
-    expect(d.rollBudget).toBe(1 << 23);
+    expect(s.jobs.map(j => j.rollBudget)).toEqual([1 << 20, 1000]);
+    expect(d.rollBudget).toBe(1 << 20);
     expect(readdirSync(dir)).toHaveLength(2);
   });
   it('a throwing job returns figure.stop with the message; the pool stays alive', async () => {
@@ -370,18 +384,26 @@ describe('figureDefaultFirst', () => {
   const affine = (n: number, b: number) => `roll space of ${n} exceeds the enumeration budget ${b} and the price is not affine in the draw of type 3 (at 0.5: 1 against 2)`;
   it('re-prices at the big budget only on a not-affine stop', () => {
     const seen: (number | undefined)[] = [];
-    const r = figureDefaultFirst(o => { seen.push(o.rollBudget); return o.rollBudget ? { stop: undefined, v: 1 } : { stop: affine(9, 262144), v: 0 }; }, 1 << 23);
+    const r = figureDefaultFirst(o => { seen.push(o.rollBudget); return o.rollBudget ? { stop: undefined, v: 1 } : { stop: affine(9, 262144), v: 0 }; }, 1 << 20);
     expect(r.v).toBe(1);
-    expect(seen).toEqual([undefined, 1 << 23]);
+    expect(seen).toEqual([undefined, 1 << 20]);
   });
   it('matches the across-the-draws form too', () => {
     const seen: (number | undefined)[] = [];
-    figureDefaultFirst(o => { seen.push(o.rollBudget); return { stop: o.rollBudget ? undefined : "not ported: roll space of 9 exceeds the budget 262144 and the price is not affine across the draws (midpoint 1 against the corners' mean)" }; }, 1 << 23);
-    expect(seen).toEqual([undefined, 1 << 23]);
+    figureDefaultFirst(o => { seen.push(o.rollBudget); return { stop: o.rollBudget ? undefined : "not ported: roll space of 9 exceeds the budget 262144 and the price is not affine across the draws (midpoint 1 against the corners' mean)" }; }, 1 << 20);
+    expect(seen).toEqual([undefined, 1 << 20]);
+  });
+  it("matches the owner's main messages (no budget number)", () => {
+    for (const stop of ['not ported: roll space of 9 exceeds the enumeration budget and the price is not affine in the draw of type 3 (at 0.5: 1 against 2)',
+      'not ported: roll space of 9 exceeds the budget and the price is not affine across the draws (price at the mean fractions 1 against the corners interpolation 2)']) {
+      const seen: (number | undefined)[] = [];
+      figureDefaultFirst(o => { seen.push(o.rollBudget); return { stop: o.rollBudget ? undefined : stop }; }, 1 << 20);
+      expect(seen).toEqual([undefined, 1 << 20]);
+    }
   });
   it('prices once, without a budget, when the default computes', () => {
     const seen: unknown[] = [];
-    figureDefaultFirst(o => { seen.push(o); return { stop: undefined }; }, 1 << 23);
+    figureDefaultFirst(o => { seen.push(o); return { stop: undefined }; }, 1 << 20);
     expect(seen).toEqual([{}]);
   });
 });

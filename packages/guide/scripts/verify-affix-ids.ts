@@ -3,7 +3,7 @@
    rolls, and the config_affix group check from the brief (config_affix is keyed by another id space: informational). Run: tsx scripts/verify-affix-ids.ts */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { pinRoot, table } from '../src/pin';
+import { pinCommit, table } from '../src/pin';
 
 const rows = (f: string): Record<string, unknown> => table<{ rows: Record<string, unknown> }>(f).rows;
 const rolls = rows('config_modifier_rolls'), affix = rows('config_affix');
@@ -21,5 +21,5 @@ for (const a of lib) for (const t of a.tiers) {
   if (Math.floor(Number(id) / 100) in affix || id in affix) groupOk++;
 }
 writeFileSync(fileURLToPath(new URL('../src/data/affix-ids.json', import.meta.url)),
-  JSON.stringify({ pin: pinRoot(), total, modifierMatch: total - mismatches.length, groupMatch: groupOk, rollChecked, rollMatch: rollOk, mismatches, rollMismatches }) + '\n');
+  JSON.stringify({ pin: pinCommit(), total, modifierMatch: total - mismatches.length, groupMatch: groupOk, rollChecked, rollMatch: rollOk, mismatches, rollMismatches }) + '\n');
 console.log({ rollChecked, rollOk, total, modifierMatch: total - mismatches.length, groupMatch: groupOk, mismatches: mismatches.length });

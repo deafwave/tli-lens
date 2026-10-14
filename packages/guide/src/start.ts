@@ -1,7 +1,7 @@
 /** Start states: the ideal Bing1 character at map entry (spec §3.3) and a live character from a tli-lens export (dps-debug reader/export.py). */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { basesFor, bareItem } from './candidates/gear';
+import { basesFor, bareItem, familyOf } from './candidates/gear';
 import { fill } from './candidates/talents';
 import { gemLevelAt, mainSid } from './candidates/gems';
 import { pinRoot } from './pin';
@@ -17,19 +17,23 @@ type Dict = Record<string, any>;   // eslint-disable-line @typescript-eslint/no-
 const FE_BASES = new Set([100300, 101300]);
 
 /** The L94 Ice Shot loadout stripped by the ledger ruling; every strip step is a named note. */
-export function idealStartNotes(): { state: State; notes: string[] } {
+export function idealStartNotes(level = START_LEVEL): { state: State; notes: string[] } {
   const l: Dict = structuredClone(JSON.parse(readFileSync(join(pinRoot(), START_LOADOUT), 'utf8')));
   delete l._about; delete l._missing;
   const notes = [`base loadout: ${START_LOADOUT} (the owner's L94 Ice Shot character, dps-debug pin)`];
 
-  const slots = (l.gear as Dict[]).map(g => g.slot).filter(s => s !== 'mainHand');
-  const bow = basesFor('mainHand', START_LEVEL, 'iceShot').at(-1);
-  if (!bow) throw new Error(`no bow-family base at level ${START_LEVEL}`);
-  l.gear = [bareItem('mainHand', bow.baseId)];
-  notes.push(`gear: removed every slot but the main hand (${slots.join(', ')})`);
+  // every slot the loadout carries gets the best white base at the start level (armor in the line of the original piece; the weapon by the Bing1 rule), so crafts/upgrades/uniques reach every slot
+  const worn = (l.gear as Dict[]).map(g => g as { slot: string; baseId?: number });
+  const bases = worn.map(({ slot, baseId }) => {
+    const family = slot === 'mainHand' || baseId === undefined ? undefined : familyOf(baseId);
+    const b = basesFor(slot, level, 'iceShot', family).at(-1);
+    if (!b) throw new Error(`no ${slot} base at level ${level}`);
+    return b;
+  });
+  l.gear = worn.map(({ slot }, i) => bareItem(slot, bases[i].baseId));
+  notes.push(`gear: every slot of the L94 loadout (${worn.map(g => g.slot).join(', ')}) replaced by the best white base at level ${level}: ${bases.map(b => `${b.name} (item level ${b.level})`).join(', ')}; no affixes; market drop (0 FE)`);
   if (l.vorax?.length) { notes.push(`vorax: removed ${l.vorax.length} limb(s) (gear slots)`); }
   l.vorax = [];
-  notes.push(`main hand: replaced by ${bow.name} (item level ${bow.level}), the best bow-family white base at level ${START_LEVEL}; no affixes; market drop (0 FE)`);
   l.setCounters = {};
   notes.push('set counters: cleared (no set pieces left)');
 
@@ -48,7 +52,7 @@ export function idealStartNotes(): { state: State; notes: string[] } {
 
   // talents to 0, then the level-60 budget placed in node order over the trees the L94 character used (the generators only extend trees that hold a point)
   const trees = [...new Set(Object.keys(l.talents).map(k => treeOf(+k)))];
-  const budget = pointsAtLevel(START_LEVEL), talents: Record<number, number> = {};
+  const budget = pointsAtLevel(level), talents: Record<number, number> = {};
   let left = budget;
   trees.forEach((t, i) => {
     const got = fill(t, Math.ceil(left / (trees.length - i)));
@@ -56,23 +60,23 @@ export function idealStartNotes(): { state: State; notes: string[] } {
   });
   l.talents = talents; l.coreTalents = [];
   l.resolvedTalents = { talents: Object.entries(talents).map(([id, p]) => [+id, p, `talent:${id}`]), ext: [] };
-  notes.push(`talents: set to 0 and core talents removed; ${budget - left} of pointsAtLevel(${START_LEVEL}) = ${budget} points then placed in node order over trees ${trees.join(', ')} (seed for the search to re-solve); talent points assumed below level 93`);
+  notes.push(`talents: set to 0 and core talents removed; ${budget - left} of pointsAtLevel(${level}) = ${budget} points then placed in node order over trees ${trees.join(', ')} (seed for the search to re-solve); talent points assumed below level 93`);
 
   let lowered = 0; const dropped: string[] = [];
   l.skills = (l.skills as Dict[]).flatMap(g => {
-    const lv = gemLevelAt(g.sid, START_LEVEL, g.level);
+    const lv = gemLevelAt(g.sid, level, g.level);
     if (!lv) { dropped.push(String(g.sid)); return []; }
     if (lv !== g.level) lowered++;
     return [{ ...g, level: lv }];
   });
-  notes.push(`gems: set to the highest gem level the level-${START_LEVEL} hero can use (${lowered} lowered)${dropped.length ? `; ${dropped.length} not installable at ${START_LEVEL}, removed (sid ${dropped.join(', ')})` : ''}`);
+  notes.push(`gems: set to the highest gem level the level-${level} hero can use (${lowered} lowered)${dropped.length ? `; ${dropped.length} not installable at ${level}, removed (sid ${dropped.join(', ')})` : ''}`);
   notes.push(`traits: ${Object.keys(l.traits).join(', ')} kept (the Bing1 trait set of the L94 loadout, Firepower Coverage)`);
-  l.hero = { ...l.hero, level: START_LEVEL };
+  l.hero = { ...l.hero, level: level };
   notes.push(`hero memories kept as in the L94 loadout (the ruling does not strip them)`);
-  notes.push(`hero level ${START_LEVEL}, skill Ice Shot`);
-  return { state: { loadout: l, owned: [], fe: Infinity, level: START_LEVEL, skill: 'iceShot' }, notes };
+  notes.push(`hero level ${level}, skill Ice Shot`);
+  return { state: { loadout: l, owned: [], fe: Infinity, level: level, skill: 'iceShot' }, notes };
 }
-export const idealStart = (): State => idealStartNotes().state;
+export const idealStart = (level = START_LEVEL): State => idealStartNotes(level).state;
 
 /** Mode 2: a `tli-lens-export/1` file. Equipped items are already in `loadout`; every other item (bag, stash, board, pages) is owned and costs 0 FE once.
  *  `fe` typed on the command line wins over the export's; neither present = error (never assumed 0). */

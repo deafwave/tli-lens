@@ -182,7 +182,7 @@ describe('talent moves', () => {
           + copies.reduce((a, c) => a + (c.tree === treeOf(+id) && c.row < n.row ? c.point : 0), 0);
         if (p > 0) expect(above, `${f} ${id}`).toBeGreaterThanOrEqual(n.need);
       }
-      for (const c of (l.coreTalents ?? []).filter((x: number) => nodeRow(x))) expect(total(Object.fromEntries(Object.entries(l.talents).filter(([k]) => treeOf(+k) === treeOf(c)))) + copies.reduce((a, x) => a + (x.tree === treeOf(c) ? x.point : 0), 0), `${f} core ${c}`).toBeGreaterThanOrEqual(nodeRow(c)!.need);
+      for (const c of (l.coreTalents ?? []).filter((x: number) => nodeRow(x))) expect(total(Object.fromEntries(Object.entries(l.talents as Record<string, number>).filter(([k]) => treeOf(+k) === treeOf(c)))) + copies.reduce((a, x) => a + (x.tree === treeOf(c) ? x.point : 0), 0), `${f} core ${c}`).toBeGreaterThanOrEqual(nodeRow(c)!.need);
     }
     expect(withCopy).toBeGreaterThan(100);
   });

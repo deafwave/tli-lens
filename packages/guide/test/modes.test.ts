@@ -18,7 +18,9 @@ const stubEv = (stop?: string, o: { runs?: { changes: unknown[]; level: number }
     o.runs?.push({ changes, level: ctx.level });
     if (o.stopFrom !== undefined && ctx.level >= o.stopFrom) stop = 'not ported: later stage';
     const n = ((lo as { __n?: number }).__n ?? 0) + changes.length, k = 100 + 10 * n;
-    return { loadout: { ...lo, __n: n }, dropped: [], inputs: { ground: 'stub-ground', elites: 0 },
+    const talents = { ...(lo as { talents?: Record<number, number> }).talents };   // talent changes land in the loadout, as dps-debug's applyChanges does
+    for (const c of changes as { kind: string; node: number; points: number }[]) if (c.kind === 'talent') talents[c.node] = c.points;
+    return { loadout: { ...lo, __n: n, talents }, dropped: [], inputs: { ground: 'stub-ground', elites: 0 },
       figure: stop ? { life100: 0, life0: 0, kill: 0, partial: [], stop } : { life100: k, life0: k, kill: k, partial: [] } };
   },
 });
@@ -34,13 +36,28 @@ const exportOf = (o: Record<string, unknown> = {}) => ({
 
 describe('idealStart', () => {
   const s = idealStart();
-  it('is level 60, Ice Shot, with only a bow-family white base and no affixes', () => {
+  it('is level 60, Ice Shot, with a white drop base (no affixes) in every slot of the L94 loadout', () => {
     expect(s.level).toBe(60); expect(s.skill).toBe('iceShot');
-    const gear = s.loadout.gear as { slot: string; baseId: number; affixes: { list: string }[]; market: string }[];
-    expect(gear.map((g) => g.slot)).toEqual(['mainHand']);
-    expect(slotsOfBase(gear[0].baseId, 'iceShot').slots).toEqual(['mainHand']);
-    expect(gear[0].market).toBe('drop');
-    expect(gear[0].affixes.every((a) => a.list === 'BaseAttrInfoList')).toBe(true);
+    const gear = s.loadout.gear as { slot: string; baseId: number; level: number; affixes: { list: string }[]; market: string }[];
+    expect(gear.map((g) => g.slot).sort()).toEqual(['belt', 'boots', 'chest', 'gloves', 'helmet', 'mainHand', 'necklace', 'ring2']);
+    for (const g of gear) {
+      expect(slotsOfBase(g.baseId, 'iceShot').slots, g.slot).toContain(g.slot);
+      expect(g.level).toBeLessThanOrEqual(60);
+      expect(g.market).toBe('drop');
+      expect(g.affixes.every((a) => a.list === 'BaseAttrInfoList')).toBe(true);
+    }
+  });
+  it('gearMoves offers moves on every slot the start carries', () => {
+    const ctx = { prices: { season: 's', fetchedAt: 'x', price: () => 0.05 }, level: 60, notSearched: new Set<string>() };
+    const slots = new Set(gearMoves(s, ctx).map((m) => (m.changes[0] as { slot?: string }).slot));
+    for (const g of s.loadout.gear as { slot: string }[]) expect(slots.has(g.slot), g.slot).toBe(true);
+  });
+  it('honours the start level: bases and the talent budget follow it', () => {
+    const t = idealStart(70), gear = t.loadout.gear as { level: number }[];
+    expect(t.level).toBe(70);
+    expect(Math.max(...gear.map((g) => g.level))).toBeGreaterThanOrEqual(Math.max(...(s.loadout.gear as { level: number }[]).map((g) => g.level)));
+    expect((t.loadout.hero as { level: number }).level).toBe(70);
+    expect(Object.values(t.loadout.talents as Record<string, number>).reduce((a, b) => a + b, 0)).toBe(pointsAtLevel(70));
   });
   it('strips slates, pacts, kismets, prisms and seeds the level-60 talent budget', () => {
     const l = s.loadout as Record<string, any>;
@@ -86,11 +103,18 @@ describe('owned items as moves', () => {
 });
 
 describe('runIdeal', () => {
+  it('spends the level-up talent points at the stage start, free and ungated, and clears the lazy scores', async () => {
+    const out = await runIdeal(stubEv(), { ...small, stepsPerStage: 0, endLevel: 65 });
+    expect(out.startNotes).toContain(`L65: ${pointsAtLevel(65) - pointsAtLevel(60)} new talent point(s) spent`);
+  });
   it('writes an ideal GuideOut with pin, season, knobs, start notes and stated inputs', async () => {
     const out = await runIdeal(stubEv(), small);
     expect(out).toMatchObject({ mode: 'ideal', pin: 'stub', etor: { season: 'SS13' }, knobs: { stepsPerStage: 1, topK: 2, churn: 0.05, talentPoints: 108 } });
     expect(out.startNotes!.length).toBeGreaterThan(8);
     expect(out.inputs).toMatchObject({ ground: 'stub-ground', iceShot: ICE_SHOT_INPUTS });
+    // dps-debug's own iceShot inputs survive in the header; only the status is ours
+    const own = await runIdeal({ ...stubEv(), run: async (lo, c, x) => ({ ...(await stubEv().run(lo, c, x)), inputs: { ground: 'g', iceShot: { hitting: 7, dpsDebugKey: 'k', status: 'measured' } } }) }, { ...small, endLevel: 60 });
+    expect(own.inputs).toMatchObject({ iceShot: { hitting: 7, dpsDebugKey: 'k', returns: 1, status: 'unverified' } });
     expect(out.steps.length).toBeGreaterThan(0);
     expect(out.steps.every((s) => s.level >= 60 && s.level <= 65 && s.notes!.includes('talent points assumed'))).toBe(true);
     expect(parseAdvice(JSON.stringify({ ...out, mode: 'advise' })).steps).toHaveLength(out.steps.length);

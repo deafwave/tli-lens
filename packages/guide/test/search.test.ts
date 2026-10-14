@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_KNOBS, newMem, path, rankable, resolve, step } from '../src/search';
+import type { LoadoutPatch } from '../src/patches';
 import type { Change, Evaluator, Figure, GenCtx, Generator, Move, State } from '../src/types';
 
 // Stub: a loadout is { labels }; a change is { label }. Label "+x%" multiplies by 1+x/100; "E" + "R" together multiply by 3;
@@ -134,7 +135,7 @@ describe('step', () => {
 });
 
 test('a move carrying a loadout patch reaches the evaluator with the patch intact', async () => {
-  const patch = { kind: 'patch', op: 'prism-provide', tree: 51, extraAffix: [{ id: 1, dyn: [2, 2] }] } as const;
+  const patch = { kind: 'patch', op: 'prism-provide', tree: 51, extraAffix: [{ id: 1, dyn: [2, 2] }] } satisfies LoadoutPatch;
   const got: unknown[] = [];
   const { ev } = stub();
   const spy: Evaluator = { ...ev, run: (l, c, x) => { got.push(...c); return ev.run(l, c, x); } };
@@ -291,5 +292,42 @@ describe('batch size does not change the path', () => {
     };
     const [a, b] = [await synergy(1), await synergy(8)];
     expect(fin(b)).toBeGreaterThanOrEqual(fin(a) - 1e-9);
+  });
+});
+
+describe('new behaviours (final fix wave)', () => {
+  test('I2: free "+1 point" moves are spent with no churn gate, also after the resolve of a step', async () => {
+    const pt: Generator = (s) => ((s.loadout as L).labels.filter((l) => l === '+1%').length < 3 ? [rc('+1%')] : []);
+    const r = await step(state(), base, stub().ev, [fixed(mv('+10%'))], [], ctx(), K, newMem(), pt);
+    expect(r!.step.triggered.map((m) => m.label)).toEqual(['+1%', '+1%', '+1%']);
+    expect(r!.step.after.kill).toBeCloseTo(100 * 1.1 * 1.01 ** 3);
+    // without it the 1% moves sit under the 5% churn gate
+    expect((await step(state(), base, stub().ev, [fixed(mv('+10%'))], [fixed(rc('+1%'))], ctx(), K))!.step.triggered).toEqual([]);
+    // a point that does not raise the kill average is not taken, and the loop ends
+    const none = await step(state(), base, stub().ev, [fixed(mv('+10%'))], [], ctx(), K, newMem(), fixed(rc('+0%')));
+    expect(none!.step.triggered).toEqual([]);
+  });
+
+  test('I3: a skill switch ranks even though its omissions differ; the step says how', async () => {
+    const sw = mv('switch', { kind: 'switch', skill: 'hoa', changes: [ch('bad'), ch('+80%')] });
+    const mem = newMem();
+    const r = await step(state(), base, stub().ev, [fixed(sw, mv('+2%'))], [], ctx(), K, mem);
+    expect(r!.step.move.label).toBe('switch');
+    expect(r!.step.notes).toEqual(['omissions differ across the skill switch: +p / \u2212none']);
+    expect(r!.state.skill).toBe('hoa');
+    // another kind keeps the subset rule
+    const not = await step(state(), base, stub().ev, [fixed(mv('bad', { changes: [ch('bad'), ch('+80%')] }), mv('+2%'))], [], ctx(), K, newMem());
+    expect(not!.step.move.label).toBe('+2%');
+  });
+
+  test('I4: after the FE is spent the path goes on without the budget, marked, up to continueSteps', async () => {
+    const gen: Generator = (s) => ['+10%', '+20%', '+30%', '+40%'].filter((n) => !(s.loadout as L).labels.includes(n)).map((n) => mv(n, { costFE: n === '+10%' ? 1 : 100 }));
+    const run = (k: Partial<typeof K>) => path(state({ fe: 5 }), stub().ev, [gen], [], () => ctx(), { ...K, ...k });
+    const r = await run({});
+    expect(r.steps.map((s) => s.move.label)).toEqual(['+10%', '+40%', '+30%', '+20%']);
+    expect(r.steps.map((s) => s.notes ?? [])).toEqual([[], ['beyond your FE'], ['beyond your FE'], ['beyond your FE']]);
+    expect(r.steps.at(-1)!.cumFE).toBe(301);
+    expect((await run({ continueSteps: 1 })).steps).toHaveLength(2);
+    expect((await run({ continueSteps: 0 })).steps).toHaveLength(1);
   });
 });

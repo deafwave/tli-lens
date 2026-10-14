@@ -22,7 +22,7 @@ export function applyInOrder(lo: Loadout, changes: (Change | LoadoutPatch)[], a:
 }
 
 /** dps-debug's two "exceeds the budget … price is not affine" stops (calc.ts) */
-const NOT_AFFINE = /exceeds the (?:enumeration )?budget \d+ and the price is not affine/;
+const NOT_AFFINE = /exceeds the (?:enumeration )?budget(?: \d+)? and the price is not affine/;
 
 /** Prices at dps-debug's default roll budget; only a "not affine" stop is re-priced with the large `rollBudget`. */
 export function figureDefaultFirst<R extends { stop?: string }>(figure: (o: { rollBudget?: number }) => R, rollBudget: number): R {

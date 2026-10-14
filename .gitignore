@@ -10,3 +10,6 @@ docs/superpowers
 !/.claude/skills/
 Torchlight Sanity Retention.xlsx
 .env*
+
+# per-task worktrees (removed before the folder rename)
+.worktrees/

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { basesFor } from '../src/candidates/gear';
-import { mainSid, supportsFor } from '../src/candidates/gems';
+import { gemLevelAt, mainSid, supportsFor } from '../src/candidates/gems';
 import { table } from '../src/pin';
 import { switchMoves } from '../src/candidates/switch';
 import type { Skill } from '../src/types';
@@ -37,6 +37,19 @@ describe('switchMoves', () => {
   });
   it('main skill sids come from the pin loadouts: Ice Shot 1030 (l94), Hammer of Ash 1110 (target build)', () => {
     expect([mainSid('iceShot'), mainSid('hoa')]).toEqual([1030, 1110]);
+  });
+  it('hero-level gate: Hammer of Ash is installed at the gem level the ladder allows; at hero level 0 nothing is offered', () => {
+    const hero = 72;   // Hammer of Ash level 20 needs 73
+    expect(gemLevelAt(1110, hero, 20)).toBeLessThan(20);
+    const m = gen('iceShot', hero, all).moves[0], multi = m.changes[1] as { changes: { kind: string; gem: { level: number } }[] };
+    expect(multi.changes.find(c => c.kind === 'skill')!.gem.level).toBe(gemLevelAt(1110, hero, 20));
+    expect(gen('iceShot', 0, all).moves).toEqual([]);
+  });
+  it('an unpriced component is named in notSearched so the gap is visible', () => {
+    const r = gen('iceShot', 94, {});
+    expect(r.moves[0].costFE).toBeNull();
+    expect([...r.notSearched].join()).toMatch(/switch unpriced \(Hammer of Ash.*\): not ranked until Task 5b's drop pricing/);
+    expect([...gen('iceShot', 94, all).notSearched].some(n => /switch unpriced/.test(n))).toBe(false);
   });
   it('costs the sum of the skill, support and maul prices by name; any missing price makes it unpriced (null)', () => {
     expect(gen('iceShot', 94, all).moves[0].costFE).toBe(Object.values(all).reduce((a, b) => a + b, 0));

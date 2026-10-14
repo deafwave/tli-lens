@@ -23,13 +23,22 @@ export function mainSid(skill: Skill): number {
   return mainSids.get(skill)!;
 }
 
-/** hero level a gem needs: config_item_base i3c (the item level column gear.ts reads) of the gem item whose p5c[0] is the stone sid; every skill and support gem base has 0 */
-let gemLevels: Map<number, number> | undefined;
-export function gemLevel(sid: number): number {
-  gemLevels ??= new Map(Object.values(table<{ rows: Record<string, { i3c: number; p5c?: number[] }> }>('config_item_base').rows).filter(r => r.p5c?.[0]).map(r => [r.p5c![0], r.i3c]));
-  return gemLevels.get(sid) ?? 0;
+/** config_skill_stone a100 = [[gem level, hero level], ...]: the hero level a gem level needs is that of the first rung at or above it. Decoded against 2425 gems of the pin's
+ *  loadouts at hero 93 (every capture's pre/player.json cfg.level): no counter-example, tightest slack 3 (Blink 20 needs 90). The data holds only hero 93, so the lower bound is not pinned by it. */
+let ladders: Record<string, { a100?: [number, number][] }> | undefined;
+/** hero level gem level `gemLevel` of stone `sid` needs; Infinity above the last rung. An unknown sid is named in `ns` and never available. */
+export function gemRequires(sid: number, gemLevel: number, ns?: Set<string>): number {
+  ladders ??= table<{ rows: Record<string, { a100?: [number, number][] }> }>('config_skill_stone').rows;
+  const lad = ladders[sid]?.a100;
+  if (!lad) { ns?.add(`gem: stone ${sid} is not in config_skill_stone; its hero-level ladder is unknown, so it is not offered`); return Infinity; }
+  return Math.min(Infinity, ...lad.filter(([gl]) => gl >= gemLevel).map(([, hl]) => hl));
 }
-export interface Support { sid: number; item: number; name: string }
+/** the highest gem level <= maxGemLevel the hero can use; 0 = none (not installable) */
+export function gemLevelAt(sid: number, heroLevel: number, maxGemLevel: number, ns?: Set<string>): number {
+  for (let l = maxGemLevel; l >= 1; l--) if (gemRequires(sid, l, ns) <= heroLevel) return l;
+  return 0;
+}
+export interface Support { sid: number; name: string }
 export const supportsFor = (skill: Skill): Support[] => (sup1 as unknown as Record<Skill, Support[]>)[skill];
 const SOCKETS = [1, 2, 3, 4, 5];   // a six-stone group = the skill + five supports (loadout sockets 1..5)
 const GEM_LEVEL = 20;
@@ -37,7 +46,7 @@ type Gem = { sid: number; level: number; place: { kind: string; slot: number; ow
 
 export const gemMoves: Generator = (s, ctx) => {
   const ns = ctx.notSearched;
-  ns.add('support: a bought support is priced by its English name at gem level 20; its own rolled modifiers (Magnificent / Noble gems) are not modelled');
+  ns.add('support: a bought support is priced by its English name; installed at gem level 20 (or the replaced gem level), lowered to what the hero level allows; its own rolled modifiers (Magnificent / Noble gems) are not modelled');
   ns.add('support: supports on the non-damage skills (Blink, Timid, warcries, auras) and replacing a skill gem are not searched');
   const skills = (s.loadout.skills ?? []) as Gem[];
   const main = skills.find(g => g.place.kind === 'active' && g.place.slot === 0);
@@ -49,10 +58,11 @@ export const gemMoves: Generator = (s, ctx) => {
   for (const socket of SOCKETS) {
     const cur = sockets.find(g => g.place.slot === socket);
     for (const c of supportsFor(s.skill)) {
-      if (have.has(c.sid) || gemLevel(c.sid) > ctx.level) continue;
-      const gem = { sid: c.sid, level: cur?.level ?? GEM_LEVEL, name: c.name };
+      const level = gemLevelAt(c.sid, ctx.level, cur?.level ?? GEM_LEVEL, ns);
+      if (have.has(c.sid) || !level) continue;
+      const gem = { sid: c.sid, level, name: c.name };
       moves.push({
-        kind: 'support', label: `${cur ? 'Replace socket ' + socket : 'Install in socket ' + socket} with ${c.name}`, acquisition: true, costFE: ctx.prices.price(c.name, ctx.level), minLevel: gemLevel(c.sid),
+        kind: 'support', label: `${cur ? 'Replace socket ' + socket : 'Install in socket ' + socket} with ${c.name}`, acquisition: true, costFE: ctx.prices.price(c.name, ctx.level), minLevel: gemRequires(c.sid, 1),
         changes: [{ kind: 'support', action: cur ? 'replace' : 'install', owner, socket, gem }],
       });
     }

@@ -107,7 +107,11 @@ describe('owned items as moves', () => {
 describe('runIdeal', () => {
   it('spends the level-up talent points at the stage start, free and ungated, and clears the lazy scores', async () => {
     const out = await runIdeal(stubEv(), { ...small, stepsPerStage: 0, endLevel: 65 });
-    expect(out.startNotes).toContain(`L65: ${pointsAtLevel(65) - pointsAtLevel(60)} new talent point(s) spent`);
+    const note = out.startNotes!.find((n) => n.startsWith('L65: ') && n.includes('new talent point(s) spent'))!;
+    expect(note.startsWith(`L65: ${pointsAtLevel(65) - pointsAtLevel(60)} new talent point(s) spent on nodes `)).toBe(true);
+    const nodes = [...note.matchAll(/(\d+) \(\+(\d+)\)/g)];
+    expect(nodes.length).toBeGreaterThan(0);
+    expect(nodes.reduce((a, m) => a + +m[2], 0)).toBe(pointsAtLevel(65) - pointsAtLevel(60));   // every point is listed on a node
   });
   it('writes an ideal GuideOut with pin, season, knobs, start notes and stated inputs', async () => {
     const out = await runIdeal(stubEv(), small);

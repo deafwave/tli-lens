@@ -90,7 +90,9 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
     mem.scores.clear(); mem.since = 0;   // scores of the last stage are no upper bound on this one (new level, new points, new prices)
     // the level-up's new talent points are spent at once, free and ungated: one point is worth less than the churn gate
     const spent = await spendFree(s, ev, talentPointMoves, ctxOf(s), K, f, mem);
-    if (spent.taken.length) { notes.push(`L${level}: ${spent.taken.length} new talent point(s) spent`); s = spent.state; f = spent.figure; }
+    if (spent.taken.length) { const per = new Map<number, number>();
+      for (const m of spent.taken) for (const c of m.changes as { kind: string; node?: number }[]) if (c.kind === 'talent') per.set(c.node!, (per.get(c.node!) ?? 0) + 1);
+      notes.push(`L${level}: ${spent.taken.length} new talent point(s) spent on nodes ${[...per].map(([n, p]) => `${n} (+${p})`).join(', ')}`); s = spent.state; f = spent.figure; }
     for (let n = 0; n < K.stepsPerStage; n++) {
       if (overBudget(K, t0, ev)) { stopped = true; break; }
       const ctx = ctxOf(s);

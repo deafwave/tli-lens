@@ -65,9 +65,7 @@ Bonus ▼` bar to expand the per-category breakdown** (Base Value / Talent / Her
 **The sheet is static data only.** Its DPS (≈18M vs a real 484B) ignores buffs, procs, Deterioration,
 enemy-taken and conditional lines; "Additional Damage Bonus" lists only buffs live at that instant and
 hides "additional Base Damage" lines. Use it to check inputs, not outcomes: Strength, crit chance/damage,
-typed increased pools, attack speed, penetration, projectile count, knockback. Then
-`cd packages/dmg && npx tsx ../../.claude/skills/tli-game/sources.ts <build.json> '<path regex>'` lists the
-model sources behind a stat and its composed value, to diff against the breakdown categories.
+typed increased pools, attack speed, penetration, projectile count, knockback.
 
 Checked 2026-10-10 on DeafwaveB (`data/bing1/scraped/my-build-2026-10-10.json`): Strength 339, crit chance
 57.05%, crit damage 324 (150 base + 121 talent + 53 memory), physical 176, fire 48, erosion 247, attack

@@ -12,17 +12,21 @@ function figureOf(labels: string[]): Figure {
   if (labels.includes('E') && labels.includes('R')) v *= 3;
   return { life100: v, life0: v, kill: v, partial: labels.includes('bad') ? ['p'] : [] };
 }
-function stub() {
+function stub(parallelism?: number, delayMs = 0) {
   const calls: string[] = [];
+  let active = 0, peak = 0;
   const ev: Evaluator = {
-    pin: 'stub', async close() {},
+    pin: 'stub', ...(parallelism ? { parallelism } : {}), async close() {},
     async run(loadout, changes, ctx) {
       calls.push(JSON.stringify([(loadout as L).labels, changes, ctx]));
+      peak = Math.max(peak, ++active);
+      if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+      active--;
       const labels = [...(loadout as L).labels, ...changes.map((c) => (c as unknown as { label: string }).label)];
       return { loadout: { labels }, figure: figureOf(labels), dropped: [] };
     },
   };
-  return { ev, calls };
+  return { ev, calls, peak: () => peak };
 }
 const mv = (label: string, o: Partial<Move> = {}): Move => ({ kind: 'gear', label, acquisition: true, costFE: 1, minLevel: 0, changes: [ch(label)], ...o });
 const rc = (label: string): Move => mv(label, { acquisition: false, costFE: 0 });
@@ -167,9 +171,9 @@ describe('path', () => {
 });
 
 describe('lazy greedy edge cases', () => {
-  test('a candidate whose score rises after another move is taken, not left stale', async () => {
+  test.each([1, 8])('a synergy move is taken once its partner is owned (parallelism %i; not the retry path)', async (par) => {
     // "S" is worth +1% alone but +50% once "A" is owned (synergy, not flagged enabler)
-    const { ev } = stub();
+    const { ev } = stub(par);
     const wrapped: Evaluator = {
       ...ev, async run(l, c, x) {
         const r = await ev.run(l, c, x);
@@ -190,5 +194,95 @@ describe('lazy greedy edge cases', () => {
     const owned = [{ itemId: 'a' }, { itemId: 'b' }] as State['owned'];
     const r = await step(state({ owned }), base, stub().ev, [fixed(mv('+1%', { costFE: 0, consumes: 'a' }), mv('+9%', { costFE: 0, consumes: 'b' }))], [], ctx(), { ...K, topK: 1 });
     expect(r!.step.move.label).toBe('+9%');
+  });
+});
+
+test('a round evaluates unseen candidates at the parallelism', async () => {
+  const { ev, peak } = stub(8, 2);
+  const ms = Array.from({ length: 40 }, (_, i) => mv(`+${i + 1}%`));
+  await step(state(), base, ev, [fixed(...ms)], [], ctx(), { ...K, topK: 1 });
+  expect(peak()).toBeGreaterThanOrEqual(8);
+});
+
+describe('retry after a null lazy pass', () => {
+  // S is harmful alone, x3 once A is owned. In round 2 ten unseen fillers (x0.99) and N (offered only once A is owned) outrank S's stale score
+  // and fill the first batch at both widths, so S stays skipped, the lazy pass returns null, and step() clears the scores and retries.
+  test.each([[1, 1], [8, 1]])('parallelism %i: the retry runs %i time(s) and finds S', async (par, retries) => {
+    const base_ = stub(par).ev;
+    let sWithA = 0;
+    const ev: Evaluator = { ...base_, async run(l, c, x) {
+      const r = await base_.run(l, c, x);
+      const ls = (r.loadout as L).labels, f = figureOf(ls);
+      if (ls.includes('S')) { f.kill *= ls.includes('A') ? 3 : 0.5; if (ls.includes('A')) sWithA++; }
+      if (ls.includes('N')) f.kill *= 0.99;
+      f.kill *= 0.99 ** ls.filter((n) => /^F\d+$/.test(n)).length;
+      return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+    } };
+    const gen: Generator = (s) => {
+      const ls = (s.loadout as L).labels;
+      const fillers = ls.includes('A') ? Array.from({ length: 10 }, (_, i) => `F${i}`) : [];
+      return [['A', '+10%'], ['S', '+0%'], ...(ls.includes('A') ? [['N', '+0%']] : []), ...fillers.map((n) => [n, '+0%'])]
+        .filter(([n]) => !ls.includes(n)).map(([n, b]) => mv(n, { changes: [ch(n), ch(b)] }));
+    };
+    const k = { ...K, topK: 1, refreshEvery: 100 }, mem = newMem();
+    let clears = 0; const clear = mem.scores.clear.bind(mem.scores); mem.scores.clear = () => { clears++; clear(); };
+    const s1 = await step(state(), base, ev, [gen], [], ctx(), k, mem);
+    expect(s1!.step.move.label).toBe('A');
+    expect(sWithA).toBe(0);
+    const s2 = await step(s1!.state, s1!.step.after, ev, [gen], [], ctx(), k, mem);
+    expect(s2!.step.move.label).toBe('S');
+    expect(clears).toBe(retries);
+    expect(sWithA).toBe(1);   // S was first priced with A owned only by the retry
+  });
+
+  test('width 8 without fillers: S is in the first batch, no retry needed', async () => {
+    const mem = newMem(); let clears = 0; const clear = mem.scores.clear.bind(mem.scores); mem.scores.clear = () => { clears++; clear(); };
+    const base_ = stub(8).ev;
+    const ev: Evaluator = { ...base_, async run(l, c, x) {
+      const r = await base_.run(l, c, x), ls = (r.loadout as L).labels, f = figureOf(ls);
+      if (ls.includes('S')) f.kill *= ls.includes('A') ? 3 : 0.5;
+      if (ls.includes('N')) f.kill *= 0.99;
+      return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+    } };
+    const gen: Generator = (s) => { const ls = (s.loadout as L).labels;
+      return [['A', '+10%'], ['S', '+0%'], ...(ls.includes('A') ? [['N', '+0%']] : [])].filter(([n]) => !ls.includes(n)).map(([n, b]) => mv(n, { changes: [ch(n), ch(b)] })); };
+    const k = { ...K, topK: 1, refreshEvery: 100 };
+    const s1 = await step(state(), base, ev, [gen], [], ctx(), k, mem);
+    const s2 = await step(s1!.state, s1!.step.after, ev, [gen], [], ctx(), k, mem);
+    expect(s2!.step.move.label).toBe('S');
+    expect(clears).toBe(0);
+  });
+});
+
+describe('batch size does not change the path', () => {
+  const k = { ...K, topK: 1, refreshEvery: 100 };
+  const go = (gen: Generator, par: number) => path(state(), stub(par).ev, [gen], [], () => ctx(), k);
+  const labels = (r: Awaited<ReturnType<typeof path>>) => r.steps.map((x) => x.move.label);
+  const fin = (r: Awaited<ReturnType<typeof path>>) => r.steps.at(-1)!.after.kill;
+
+  test('independent gains: identical moves and final kill at parallelism 1 and 8', async () => {
+    const ms = Array.from({ length: 12 }, (_, i) => mv(`+${i + 2}%`, { costFE: i + 1 }));
+    const gen: Generator = (s) => ms.filter((m) => !(s.loadout as L).labels.includes(m.label));
+    const [a, b] = [await go(gen, 1), await go(gen, 8)];
+    expect(labels(a).length).toBeGreaterThan(3);
+    expect(labels(b)).toEqual(labels(a));
+    expect(fin(b)).toBeCloseTo(fin(a));
+  });
+
+  test('synergy (stale scores): the wider batch is never worse', async () => {
+    const synergy = (par: number) => {
+      const base_ = stub(par).ev;
+      const ev: Evaluator = { ...base_, async run(l, c, x) {
+        const r = await base_.run(l, c, x);
+        const ls = (r.loadout as L).labels, f = figureOf(ls);
+        if (ls.includes('S') && ls.includes('A')) f.kill *= 1.5;
+        return { ...r, figure: { ...f, life100: f.kill, life0: f.kill } };
+      } };
+      const defs: [string, string, number][] = [['X', '+10%', 1], ['A', '+5%', 1], ['S', '+1%', 2], ['Y', '+3%', 1]];
+      const gen: Generator = (s) => defs.filter(([n]) => !(s.loadout as L).labels.includes(n)).map(([n, b, c]) => mv(n, { costFE: c, changes: [ch(n), ch(b)] }));
+      return path(state(), ev, [gen], [], () => ctx(), k);
+    };
+    const [a, b] = [await synergy(1), await synergy(8)];
+    expect(fin(b)).toBeGreaterThanOrEqual(fin(a) - 1e-9);
   });
 });

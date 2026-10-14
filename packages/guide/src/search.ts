@@ -24,7 +24,7 @@ const why = (b: Figure, a: Figure) => a.stop ? `stopped: ${a.stop}` : `dropped $
 function memoEv(ev: Evaluator): Evaluator {
   const seen = new WeakMap<object, Map<string, Promise<Evaluated>>>();
   return {
-    pin: ev.pin, close: () => ev.close(),
+    pin: ev.pin, parallelism: ev.parallelism, close: () => ev.close(),
     run(loadout, changes, ctx) {
       let m = seen.get(loadout); if (!m) seen.set(loadout, m = new Map());
       const k = JSON.stringify([changes, ctx]);
@@ -80,7 +80,7 @@ async function stepOnce(s: State, f: Figure, rawEv: Evaluator, acq: Generator[],
   for (;;) {
     const bar = kth();
     const todo = cands.filter((m) => !fresh.has(key(m)) && (m.enabler || !mem.scores.has(key(m)) || stale(m) > bar))
-      .sort((a, b) => stale(b) - stale(a)).slice(0, Math.max(k.topK, cands.filter((m) => m.enabler && !fresh.has(key(m))).length));
+      .sort((a, b) => stale(b) - stale(a)).slice(0, Math.max(k.topK, ev.parallelism ?? 1, cands.filter((m) => m.enabler && !fresh.has(key(m))).length));
     if (!todo.length) break;
     const evs = await Promise.all(todo.map((m) => evalMove(s, m, ev)));
     todo.forEach((m, i) => {

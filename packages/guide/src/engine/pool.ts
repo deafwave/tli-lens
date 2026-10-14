@@ -149,7 +149,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
       });
 
   return {
-    pin, fight, fightNote: STILL_NOTE,
+    pin, fight, fightNote: STILL_NOTE, parallelism: n,
     /** ms spent paused on the busy file (a pause in progress included) */
     pausedMs: () => pausedTotal + (paused ? Date.now() - pausedSince : 0),
     run: (loadout, changes, ctx) => closed ? Promise.reject(new Error('evaluator closed'))

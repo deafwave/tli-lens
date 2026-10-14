@@ -314,7 +314,32 @@ describe('evaluator (real workers, pinned dps-debug)', () => {
       expect(r.figure.kill).toBe(killAverage(ref.life100, ref.life0));
       expect(ev.pin).toMatch(/^[0-9a-f]{40}(\+dirty)?$/);
       expect(p.loadout).toEqual(applyPatch(l, patch));
-      expect(ice.figure.stop).toMatch(/not ported/);
+      expect(ice.figure.stop).toMatch(/not ported|refused: skill \d+ is limited to the weapon rows/);
+    } finally { await ev.close(); }
+  }, 900_000);
+});
+
+describe('figure session reuse (real worker)', () => {
+  it.skipIf(!!skipReal)('one worker, same loadout twice plus a patched one: each equals a cold guideFigure', async () => {
+    const fx = await import('@dps/guide/figure');
+    const root = pinRoot(), read = (p: string) => JSON.parse(readFileSync(join(root, p), 'utf8'));
+    const l = read('re/evidence/loadout_probuild-hanshansi-bing.json');
+    const mine = new Set<number>(l.slates);
+    l.slateItems = read('re/evidence/t5_slate_v2_probuild.json').filter((v: any) => v.EffectTalentIds.every((t: number) => mine.has(t)))
+      .map((v: any) => ({ itemId: `probuild_${v.id}`, baseId: 0, talents: v.EffectTalentIds, influence: v }));
+    const patch: LoadoutPatch = { kind: 'patch', op: 'prism-provide', tree: 1, extraAffix: [] };
+    const cat = fx.openCatalog(), ground = { ...fx.GROUNDS.hoa, carry: { ...fx.GROUNDS.hoa.carry, fight: DEFAULT_FIGHT } };
+    const cold = (lo: unknown) => fx.guideFigure(cat, structuredClone(lo) as never, 'hoa', { heroLevel: 100, ground });
+    const ev = await createEvaluator({ workers: 1 });
+    try {
+      const a = await ev.run(l, [], ctx);
+      const b = await ev.run(structuredClone(l), [patch], ctx);
+      const a2 = await ev.run(structuredClone(l), [], ctx);
+      const refA = cold(l), refB = cold(applyPatch(l, patch));
+      for (const [r, ref] of [[a, refA], [a2, refA], [b, refB]] as const) {
+        expect(r.figure.life100).toBe(ref.life100);
+        expect(r.figure.life0).toBe(ref.life0);
+      }
     } finally { await ev.close(); }
   }, 900_000);
 });

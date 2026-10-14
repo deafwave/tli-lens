@@ -10,13 +10,14 @@ type Mods = Record<string, { id: number; dynArgs: number[] }[]>;
 interface Dump { baseId: number; baseName?: string; itemId: string; level: number; modifiers: Mods }
 interface GearItem { slot?: string; label: string; baseId?: number; level?: number; affixes: { id: number; dyn: number[]; list?: string }[] }
 export interface Base { baseId: number; name: string; level: number }
-interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; lib: string | null }
+interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; implicits: number[]; lib: string | null }
 
 const PIN = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const table = (f: string): Record<string, any> => JSON.parse(readFileSync(`${PIN}/catalog/0x6aa39847/${f}.json`, 'utf8')).rows;
 const library: LibraryAffix[] = JSON.parse(readFileSync(fileURLToPath(new URL('../../../../data/affix_library.json', import.meta.url)), 'utf8')).affixes;
-const VERIFIED = new Set(Object.keys(affixIds.map));
+// tiers whose id is not a catalog modifier or whose text ranges differ from the modifier's rolls are not crafted (see docs/gear-rules.md)
+const UNVERIFIED = new Set([...affixIds.mismatches, ...affixIds.rollMismatches]);
 
 /** Bing1 weapon rule (config_weapon row = config_item_base i24): iceShot = bow family, hoa = two-handed hammers/mauls. */
 const WEAPON_GROUPS: Record<number, string> = { 9: 'Bow', 29: 'Crossbow', 26: 'Pistol', 27: 'Musket', 28: 'Fire Cannon', 11: 'Two-Handed Hammer' };
@@ -43,7 +44,7 @@ function cat(): Cat {
   const rows = new Map<number, Row>();
   for (const [k, r] of Object.entries(base)) {
     const name = lang[`item_base|name|${k}`];
-    if (name) rows.set(Number(k), { name, slotType: r.i20, family: r.i24, level: r.i3c, attrs: r.a1b8 ?? [], lib: libType(r.i20, r.i24, r.a1b8 ?? []) });
+    if (name) rows.set(Number(k), { name, slotType: r.i20, family: r.i24, level: r.i3c, attrs: r.a1b8 ?? [], implicits: r.ae8 ?? [], lib: libType(r.i20, r.i24, r.a1b8 ?? []) });
   }
   return memo = { base, lang, gold, rolls, rows };
 }
@@ -60,9 +61,9 @@ export function basesFor(slot: string, level: number, skill: Skill, family?: num
   return out.sort((a, b) => a.level - b.level || a.baseId - b.baseId);
 }
 
-/** a modifier's rolls at the upper end of each range (the dynArgs of a top-rolled item) */
-const tops = (id: number): number[] | null => cat().rolls[id]?.map(r => r[1]) ?? null;
-const attrMods = (r: Row) => r.attrs.map(id => ({ id, dynArgs: tops(id) })).filter((m): m is { id: number; dynArgs: number[] } => !!m.dynArgs);
+/** a modifier's rolls at the midpoint of each range (expected value of a random roll) */
+const mids = (id: number): number[] | null => cat().rolls[id]?.map(r => (r[0] + r[1]) / 2) ?? null;
+const attrMods = (r: Row) => [...r.attrs, ...r.implicits].map(id => ({ id, dynArgs: mids(id) })).filter((m): m is { id: number; dynArgs: number[] } => !!m.dynArgs);
 
 function currentBase(it: GearItem): number | null {
   if (typeof it.baseId === 'number' && cat().rows.has(it.baseId)) return it.baseId;
@@ -84,6 +85,11 @@ function toDump(it: GearItem, baseId: number, name: string, level: number): Dump
 }
 
 const withMods = (d: Dump, patch: Mods, id: string): Dump => ({ ...d, itemId: id, modifiers: { ...d.modifiers, ...patch } });
+/** a base swap replaces the base's own lists (attributes and implicit) and keeps the crafted prefix/suffix */
+const withBase = (d: Dump, nb: Row, id: string): Dump => {
+  const { baseAttr: _a, baseAffix: _b, ...kept } = d.modifiers;
+  return { ...d, itemId: id, modifiers: { ...kept, baseAttr: attrMods(nb) } };
+};
 const swap = (slot: string, item: Dump): Change[] => [{ kind: 'gear', slot, item }];
 
 export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
@@ -98,17 +104,19 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     if (slot === 'mainHand' && !SKILL_GROUPS[s.skill].includes(base.family)) {
       ctx.notSearched.add(`gear mainHand: "${it.label}" is not a ${s.skill} weapon (Bing1 weapon rule); weapon moves not searched`); slots.delete(slot); continue;
     }
-    const dump = toDump(it, baseId, base.name, s.level);
+    const dump = toDump(it, baseId, base.name, ctx.level);
     if (!dump) { ctx.notSearched.add(`gear ${slot}: the loadout item carries no affix list; crafts not searched`); continue; }
 
     // ember crafts: add one affix to a side with room, never a second affix of a family the item has
     const have = new Set(Object.values(dump.modifiers).flat().map(m => Math.floor(m.id / 100)));
     const full = new Set<string>();
+    const skipped = new Set<string>();
     for (const o of craftOptions(library, base.lib, ctx.level)) {
-      if (!VERIFIED.has(o.tierAffixId) || have.has(Math.floor(Number(o.tierAffixId) / 100))) continue;
+      if (UNVERIFIED.has(o.tierAffixId)) skipped.add(o.tierAffixId);
+      if (UNVERIFIED.has(o.tierAffixId) || have.has(Math.floor(Number(o.tierAffixId) / 100))) continue;
       const side = o.side.toLowerCase();
       if ((dump.modifiers[side]?.length ?? 0) >= SIDE_MAX) { full.add(side); continue; }
-      const dynArgs = tops(Number(o.tierAffixId));
+      const dynArgs = mids(Number(o.tierAffixId));
       if (!dynArgs) continue;
       const price = ctx.prices.price(o.ember, ctx.level);
       moves.push({
@@ -118,6 +126,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
         enabler: ENABLER.test(o.text) || undefined,
       });
     }
+    if (skipped.size) ctx.notSearched.add(`craft on ${slot}: ${skipped.size} tiers whose library text ranges differ from the catalog rolls`);
     for (const side of full) ctx.notSearched.add(`craft on ${slot}: ${side} side full (${SIDE_MAX}); replacing an affix is not ported`);
 
     // base upgrade: the best rare base of the same line at the hero level (a white base costs ~nothing, as the Bing1 guide priced it)
@@ -126,7 +135,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
       const nb = c.rows.get(best.baseId)!;
       moves.push({
         kind: 'gear', label: `Rare base ${best.name} (item level ${best.level}) on ${slot}`, acquisition: true, costFE: 0, minLevel: best.level,
-        changes: [{ kind: 'gear', slot, item: { ...withMods(dump, { baseAttr: attrMods(nb) }, `guide-base-${best.baseId}`), baseId: best.baseId, baseName: best.name } }],
+        changes: [{ kind: 'gear', slot, item: { ...withBase(dump, nb, `guide-base-${best.baseId}`), baseId: best.baseId, baseName: best.name } }],
       });
     }
   }
@@ -138,14 +147,16 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     const targets = isWeapon(raw.i20, raw.i24, raw.a1b8 ?? []) ? (SKILL_GROUPS[s.skill].includes(raw.i24) ? ['mainHand'] : []) : TYPE_SLOTS[raw.i20] ?? [];
     const here = targets.filter(t => slots.has(t));
     if (!here.length) continue;
-    const mods: { id: number; dynArgs: number[] }[] = [];
+    const mods: { id: number; dynArgs: number[] }[] = [], lost: string[] = [];
     for (const key of ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168']) for (const grp of Object.keys(g[key] ?? {})) {
-      for (let d = 9; d >= 0; d--) { const dyn = tops(Number(grp) * 10 + d); if (dyn) { mods.push({ id: Number(grp) * 10 + d, dynArgs: dyn }); break; } }
+      const id = Number(grp) * 10, dyn = mids(id);   // tier digit 0 = best rolls (docs/gear-rules.md)
+      if (dyn) mods.push({ id, dynArgs: dyn }); else lost.push(grp);
     }
+    if (lost.length) { ctx.notSearched.add(`unique ${name}: modifier group(s) ${lost.join(', ')} not in the catalog; not offered`); continue; }
     if (!mods.length) continue;
     const price = ctx.prices.price(name, ctx.level);
     for (const slot of here) {
-      const item: Dump = { baseId: g.i8, baseName: name, itemId: `guide-unique-${gid}`, level: s.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
+      const item: Dump = { baseId: g.i8, baseName: name, itemId: `guide-unique-${gid}`, level: ctx.level, modifiers: { baseAttr: attrMods(nb), prefix: mods } };
       moves.push({ kind: 'unique', label: `Unique ${name} in ${slot}`, acquisition: true, costFE: price, minLevel: nb.level, changes: swap(slot, item) });
     }
   }

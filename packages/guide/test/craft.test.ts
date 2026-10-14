@@ -42,6 +42,6 @@ describe('affix-library tier ids (src/data/affix-ids.json)', () => {
   it('match dps-debug modifier ids for at least 99 percent of tiers', async () => {
     const ids = (await import('../src/data/affix-ids.json')).default;
     expect(ids.modifierMatch / ids.total, `mismatches: ${ids.mismatches.join(', ')}`).toBeGreaterThanOrEqual(0.99);
-    expect(Object.keys(ids.map).length).toBe(ids.modifierMatch);
+    expect(ids.rollMismatches.length).toBeGreaterThan(0);   // listed, and excluded from crafting
   });
 });

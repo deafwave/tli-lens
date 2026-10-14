@@ -22,6 +22,7 @@ const state = (skill: Skill, level: number, gear: object[]): State => ({ loadout
 const MAUL = item('mainHand', 1012, 'Vindicator Maul');   // 2H maul, item level 54
 const HELM = item('helmet', 3600, "Brute's Helm");        // STR helmet, item level 1
 const CHEST = item('chest', 3000, "Brute's Chestguard");
+const hoa100 = () => state('hoa', 100, [MAUL, HELM]);
 const hoa60 = () => state('hoa', 60, [MAUL, HELM]);
 const swapped = (m: { changes: any[] }) => m.changes[0].item;
 
@@ -101,5 +102,51 @@ describe('gearMoves', () => {
     const str = basesFor('helmet', 100, 'hoa', 70);
     expect(str.length).toBeGreaterThan(5);
     expect(basesFor('helmet', 100, 'hoa').length).toBeGreaterThan(str.length);
+  });
+
+  const ALL = () => state('hoa', 100, [item('helmet', 3600, 'h'), item('gloves', 3300, 'g'), item('boots', 5000, 'b'), CHEST,
+    item('necklace', 1, 'n'), item('belt', 1, 'b'), item('ring1', 1, 'r')]);
+  const goldAt100 = () => {
+    const gold = rows('config_item_gold'), lang = rows('lang_en'), base = rows('config_item_base'), rolls = rows('config_modifier_rolls');
+    const keys = ['m88', 'ma8', 'mc8', 'me8', 'm108', 'm128', 'm148', 'm168'];
+    return Object.entries<any>(gold).filter(([k, r]) => lang[`item_gold|name|${k}`] && base[r.i8]?.i3c <= 100 && [12, 13, 14, 15, 16, 17, 18].includes(base[r.i8].i20))
+      .map(([k, r]) => ({ name: lang[`item_gold|name|${k}`] as string, groups: keys.flatMap(x => Object.keys(r[x] ?? {})).map(Number), rolls }));
+  };
+
+  it('a unique uses tier digit 0 at the midpoint of its rolls', () => {
+    const u = goldAt100().find(g => g.groups.length && g.groups.every(x => g.rolls[x * 10]) && g.groups.some(x => g.rolls[x * 10 + 1]))!;
+    const m = gearMoves(ALL(), ctx(100)).find(x => x.kind === 'unique' && x.label.startsWith(`Unique ${u.name} `))!;
+    const mods = swapped(m).modifiers.prefix as { id: number; dynArgs: number[] }[];
+    expect(mods.map(x => x.id)).toEqual(u.groups.map(x => x * 10));
+    const x = u.groups.find(x => u.rolls[x * 10 + 1])!, got = mods.find(y => y.id === x * 10)!;
+    expect(got.dynArgs).toEqual(u.rolls[x * 10].map((r: number[]) => (r[0] + r[1]) / 2));
+  });
+
+  it('a unique with an unresolved modifier group is not offered and is named in notSearched', () => {
+    const u = goldAt100().find(g => g.groups.some(x => !g.rolls[x * 10]))!;
+    const c = ctx(100), ms = gearMoves(ALL(), c);
+    expect(ms.some(x => x.label.startsWith(`Unique ${u.name} `))).toBe(false);
+    expect([...c.notSearched].some(x => x.startsWith(`unique ${u.name}:`))).toBe(true);
+  });
+
+  it('crafts roll at the range midpoint and skip tiers whose library text disagrees with the catalog', async () => {
+    const ids = (await import('../src/data/affix-ids.json')).default, rolls = rows('config_modifier_rolls');
+    const c = ctx(100), ms = gearMoves(hoa100(), c).filter(m => m.kind === 'craft');
+    const bad = new Set([...ids.mismatches, ...ids.rollMismatches].map(Number));
+    for (const m of ms) {
+      const a = [...(swapped(m).modifiers.prefix ?? []), ...(swapped(m).modifiers.suffix ?? [])].at(-1);
+      expect(bad.has(a.id)).toBe(false);
+      expect(a.dynArgs).toEqual(rolls[a.id].map((r: number[]) => (r[0] + r[1]) / 2));
+    }
+    expect([...c.notSearched].some(x => /library text ranges differ/.test(x))).toBe(true);
+  });
+
+  it('a base swap replaces the base lists and keeps crafted lines', () => {
+    const st = state('hoa', 60, [{ ...MAUL, affixes: [{ id: 111, dyn: [1], list: 'BAffixInfoList' }, { id: 222, dyn: [2], list: 'PrefixInfoList' }, { id: 510002, dyn: [1], list: 'BaseAttrInfoList' }] }]);
+    const mh = swapped(gearMoves(st, ctx(60)).find(m => m.kind === 'gear')!);
+    expect(mh.modifiers.baseAffix).toBeUndefined();
+    expect(mh.modifiers.prefix).toEqual([{ id: 222, dynArgs: [2] }]);
+    expect(mh.modifiers.baseAttr.some((x: { id: number }) => x.id === 510002)).toBe(false);
+    expect(mh.level).toBe(60);
   });
 });

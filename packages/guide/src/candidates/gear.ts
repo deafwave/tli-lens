@@ -10,7 +10,7 @@ type Mods = Record<string, { id: number; dynArgs: number[] }[]>;
 interface Dump { baseId: number; baseName?: string; itemId: string; level: number; modifiers: Mods }
 interface GearItem { slot?: string; label: string; baseId?: number; level?: number; affixes: { id: number; dyn: number[]; list?: string }[] }
 export interface Base { baseId: number; name: string; level: number }
-interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; implicits: number[]; lib: string | null }
+interface Row { name: string; slotType: number; family: number; level: number; attrs: number[]; lib: string | null }
 
 const PIN = process.env.DPS_DEBUG_PIN ?? 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/guide-pin';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,7 +44,7 @@ function cat(): Cat {
   const rows = new Map<number, Row>();
   for (const [k, r] of Object.entries(base)) {
     const name = lang[`item_base|name|${k}`];
-    if (name) rows.set(Number(k), { name, slotType: r.i20, family: r.i24, level: r.i3c, attrs: r.a1b8 ?? [], implicits: r.ae8 ?? [], lib: libType(r.i20, r.i24, r.a1b8 ?? []) });
+    if (name) rows.set(Number(k), { name, slotType: r.i20, family: r.i24, level: r.i3c, attrs: r.a1b8 ?? [], lib: libType(r.i20, r.i24, r.a1b8 ?? []) });
   }
   return memo = { base, lang, gold, rolls, rows };
 }
@@ -63,7 +63,7 @@ export function basesFor(slot: string, level: number, skill: Skill, family?: num
 
 /** a modifier's rolls at the midpoint of each range (expected value of a random roll) */
 const mids = (id: number): number[] | null => cat().rolls[id]?.map(r => (r[0] + r[1]) / 2) ?? null;
-const attrMods = (r: Row) => [...r.attrs, ...r.implicits].map(id => ({ id, dynArgs: mids(id) })).filter((m): m is { id: number; dynArgs: number[] } => !!m.dynArgs);
+const attrMods = (r: Row) => r.attrs.map(id => ({ id, dynArgs: mids(id) })).filter((m): m is { id: number; dynArgs: number[] } => !!m.dynArgs);
 
 function currentBase(it: GearItem): number | null {
   if (typeof it.baseId === 'number' && cat().rows.has(it.baseId)) return it.baseId;
@@ -160,5 +160,6 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
       moves.push({ kind: 'unique', label: `Unique ${name} in ${slot}`, acquisition: true, costFE: price, minLevel: nb.level, changes: swap(slot, item) });
     }
   }
+  if (moves.length) ctx.notSearched.add('rolled base implicit (BAffixInfoList) not modelled: its pool is not decoded; crafted bases are priced without it');
   return moves;
 };

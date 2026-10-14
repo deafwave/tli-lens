@@ -149,4 +149,14 @@ describe('gearMoves', () => {
     expect(mh.modifiers.baseAttr.some((x: { id: number }) => x.id === 510002)).toBe(false);
     expect(mh.level).toBe(60);
   });
+
+  it('a swapped base carries exactly the base-attribute ids of a real bag dump (base 1019) and the implicit gap is named', () => {
+    const dump = JSON.parse(readFileSync(`${PIN}/game/bagdump-1019-20261013-061901-4.json`, 'utf8'));
+    const real = (dump.modifiers['baseAttr(BaseAttrAffix)'] ?? dump.modifiers.baseAttr).map((m: { id: number }) => m.id);
+    const c = ctx(100), mh = gearMoves(state('hoa', 100, [MAUL]), c).find(m => m.kind === 'gear' && m.changes[0].slot === 'mainHand')!;
+    expect(swapped(mh).baseId).toBe(1019);
+    expect(swapped(mh).modifiers.baseAttr.map((m: { id: number }) => m.id)).toEqual(real);
+    expect(swapped(mh).modifiers.baseAffix).toBeUndefined();
+    expect([...c.notSearched].some(x => /rolled base implicit \(BAffixInfoList\) not modelled/.test(x))).toBe(true);
+  });
 });

@@ -91,6 +91,9 @@ describe('runIdeal', () => {
     expect(out).toMatchObject({ mode: 'ideal', pin: 'stub', etor: { season: 'SS13' }, knobs: { stepsPerStage: 1, topK: 2, churn: 0.05, talentPoints: 108 } });
     expect(out.startNotes!.length).toBeGreaterThan(8);
     expect(out.inputs).toMatchObject({ ground: 'stub-ground', iceShot: ICE_SHOT_INPUTS });
+    // dps-debug's own iceShot inputs survive in the header; only the status is ours
+    const own = await runIdeal({ ...stubEv(), run: async (lo, c, x) => ({ ...(await stubEv().run(lo, c, x)), inputs: { ground: 'g', iceShot: { hitting: 7, dpsDebugKey: 'k', status: 'measured' } } }) }, { ...small, endLevel: 60 });
+    expect(own.inputs).toMatchObject({ iceShot: { hitting: 7, dpsDebugKey: 'k', returns: 1, status: 'unverified' } });
     expect(out.steps.length).toBeGreaterThan(0);
     expect(out.steps.every((s) => s.level >= 60 && s.level <= 65 && s.notes!.includes('talent points assumed'))).toBe(true);
     expect(parseAdvice(JSON.stringify({ ...out, mode: 'advise' })).steps).toHaveLength(out.steps.length);

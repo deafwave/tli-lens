@@ -68,7 +68,7 @@ async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | undefined
   }) as GuideOut;
 
   const first = await ev.run(s.loadout, [], { level: s.level, skill: s.skill });
-  const inputs = { ...first.inputs, ...(s.skill === 'iceShot' ? { iceShot: ICE_SHOT_INPUTS } : {}) };
+  const inputs = { ...first.inputs, ...(s.skill === 'iceShot' ? { iceShot: { ...ICE_SHOT_INPUTS, ...(first.inputs as Record<string, any> | undefined)?.iceShot, status: 'unverified' } } : {}) };   // eslint-disable-line @typescript-eslint/no-explicit-any
   if (first.figure.stop) {
     const why = `L${s.level} ${s.skill} leg cannot be priced yet: ${first.figure.stop}`;
     notes.push(why);

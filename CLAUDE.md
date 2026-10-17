@@ -13,7 +13,7 @@ Never edit dps-debug from here. Current pin and why: `git log -- CLAUDE.md` / th
 Refresh: `git -C <pin> checkout --detach main`, `npm ci` in `model/` if its lockfile moved, run tli-lens with `GUIDE_REAL=1` and pin only
 if green. dps-debug's own guide gates (`GUIDE_GATES=1`, `model/guide/`) were red on main at the last pin (season figures moved): re-baseline
 them before trusting a bit-equal claim. vitest reports one "Timeout calling onTaskUpdate" unhandled error on every run (its RPC, not a test) and so `pnpm test` exits 1:
-read the Tests line (2026-10-17: 309 passed, 4 skipped without `GUIDE_REAL`).
+read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 
 ## Layout
 

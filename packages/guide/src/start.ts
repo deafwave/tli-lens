@@ -95,6 +95,8 @@ export function fromExport(json: unknown, fe?: number): State {
   // against the observed full budget, not the scaled estimate below 93: a real low-level export may hold more than the estimate
   if (points > pointsAtLevel(93)) throw new Error(`export talents hold ${points} points, more than the ${pointsAtLevel(93)} a hero can have (two talent pages read); re-export`);
   const loadout = j.loadout as Dict, active = (loadout?.skills as Dict[] | undefined)?.find(g => g.place?.kind === 'active' && g.place.slot === 0);
+  // the read's own path: no figure reads it, and in the memo key it made every read of an unchanged character price every figure afresh
+  delete loadout._about;
   // the 2026-10-16 client pads a slate's talent list with empty 0 entries (32030100,34040100,0,0,0); dps-debug checks the list against EffectTalentIds
   for (const sl of (loadout.slateItems ?? []) as { talents?: number[] }[]) if (Array.isArray(sl.talents)) sl.talents = sl.talents.filter(t => t !== 0);
   // a worn legendary is named by its own name (the read labels it by its base: Old King's Sabatons is Boots of Devastation); `label` stays the base

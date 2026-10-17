@@ -88,6 +88,10 @@ describe('fromExport', () => {
     expect(skills.find((g) => g.sid === 10002010)?.name).toBe('Multiple Projectiles');
     expect(skills.every((g) => typeof g.name === 'string' && g.name.length > 0)).toBe(true);
   });
+  it("two reads of an unchanged character are one loadout (one memo key): the read's own path is left out", () => {
+    const read = (stamp: string) => fromExport(exportOf({ loadout: { ...structuredClone(exportOf().loadout), _about: { source: `game/exports/${stamp}/state` } } })).loadout;
+    expect(read('20261017-123634')).toEqual(read('20261017-124733'));
+  });
   it('rejects another schema', () => expect(() => fromExport(exportOf({ schema: 'x' }))).toThrow(/tli-lens export/));
 });
 

@@ -88,9 +88,11 @@ describe('fromExport', () => {
     expect(skills.find((g) => g.sid === 10002010)?.name).toBe('Multiple Projectiles');
     expect(skills.every((g) => typeof g.name === 'string' && g.name.length > 0)).toBe(true);
   });
-  it("two reads of an unchanged character are one loadout (one memo key): the read's own path is left out", () => {
-    const read = (stamp: string) => fromExport(exportOf({ loadout: { ...structuredClone(exportOf().loadout), _about: { source: `game/exports/${stamp}/state` } } })).loadout;
-    expect(read('20261017-123634')).toEqual(read('20261017-124733'));
+  it("two reads of an unchanged character are one loadout (one memo key): the read's own path and the instances' runtime ids are left out", () => {
+    const read = (stamp: string, id: number) => fromExport(exportOf({ loadout: { ...structuredClone(exportOf().loadout), _about: { source: `game/exports/${stamp}/state` },
+      contractInstances: { 101: [id] }, kismets: [{ modifierId: 1, servantId: null, node: 101, rolls: [12], instances: [id] }] } })).loadout;
+    expect(read('20261017-115010', 394)).toEqual(read('20261017-123634', 416));
+    expect((read('x', 1).kismets as unknown[])[0]).toEqual({ modifierId: 1, servantId: null, node: 101, rolls: [12] });
   });
   it('rejects another schema', () => expect(() => fromExport(exportOf({ schema: 'x' }))).toThrow(/tli-lens export/));
 });

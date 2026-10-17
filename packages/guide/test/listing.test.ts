@@ -64,4 +64,12 @@ describe('your worn pieces as listings (real workers)', () => {
       expect(got).toEqual(worn.map(([it]) => `${it.label} ${typeof it.slot === 'number' ? `memory ${it.slot}` : it.slot}: equal`));
     } finally { await ev.close(); }
   }, 600_000);
+  it.skipIf(!!skip)("the ids fromExport leaves out move no figure: the read as it is prices bit-equal (a pin that reads them fails here)", async () => {
+    const j = JSON.parse(readFileSync(newest!, 'utf8')), s = { ...fromExport(structuredClone(j), 0), target: 'traveler' }, ctx = ctxOfState(s);
+    const ev = await createEvaluator({ workers: 2 });
+    try {
+      const [a, b] = await Promise.all([ev.run(s.loadout, [], ctx), ev.run(j.loadout, [], ctx)]);
+      expect([b.figure.life100, b.figure.life0, b.figure.stop]).toEqual([a.figure.life100, a.figure.life0, a.figure.stop]);
+    } finally { await ev.close(); }
+  }, 600_000);
 });

@@ -1,8 +1,13 @@
 /** Evaluator: a worker_threads pool pricing loadouts with the pinned dps-debug figure entry. */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import os from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
+import { build } from 'esbuild';
+import { writeAtomic } from '../atomic';
 import { killSpeed } from '../kill';
 import { pinRoot as defaultPinRoot } from '../pin';
 import type { LoadoutPatch } from '../patches';
@@ -45,8 +50,10 @@ export const DEFAULT_TARGET = 'cube3';
 // Old King's Armor's input is stated only when a figure asks (apply.ts ON_ASK), so it moves no other figure's memo key
 export { RESOURCE1_KEY } from './apply';
 export const DEFAULT_FIGHT: Fight = { bombs: 10, inputs: { [STILL_KEY]: 0 } };   // Fighting Will (RESOURCE1_KEY): apply.ts ON_ASK
-export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight; rollBudget: number; /** a dps-debug BOSSES key (hoa) */ target?: string }
-export interface JobResult { loadout: Loadout; dropped: string[]; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown>;
+export interface Job { loadout: Loadout; changes: (Change | LoadoutPatch)[]; ctx: EvalCtx; fight: Fight; rollBudget: number; /** a dps-debug BOSSES key (hoa) */ target?: string;
+  /** the ON_ASK inputs figures on any worker asked so far (apply.ts withAsked): a fresh worker states them from its first figure, not after three that stop */
+  asked?: Record<string, number> }
+export interface JobResult { loadout: Loadout; dropped: string[]; /** the worker's asked inputs after the job */ asked?: Record<string, number>; fig: { life100: number; life0: number; left: string[]; needs: string[]; stop?: string; inputs?: Record<string, unknown>;
   /** the damage lock's ceiling, the build's cull on the target (CULL1), the boss's max Life */ lock?: number; cull?: { threshold: number; blocked: string[]; stop?: string }; lifeMax?: number; mana?: ManaFit; projectile?: { speedInc: number; areaInc: number } } }
 /** One worker: runs a job, rejects with the dps-debug error message when pricing throws. */
 export interface WorkerLike {
@@ -89,8 +96,20 @@ function gitPin(root: string): string {
   return git('rev-parse', 'HEAD') + (git('status', '--porcelain').length ? '+dirty' : '');
 }
 
-function threadWorker(root: string): WorkerLike {
-  const w = new Worker(new URL('./worker.ts', import.meta.url), { workerData: { pinRoot: root } });
+/** dps-debug's figure module as one ES module built from the pin (each file's import.meta.url kept its own), in .cache by content. tsx's per-file transform
+ *  keeps every function's name (an `__name` call per closure made, a fifth of a figure's CPU): 6 slate figures 28.8 -> 22.4 s CPU, bit-equal (2026-10-17). */
+async function bundleFigure(root: string): Promise<string> {
+  const r = await build({ entryPoints: [join(root, 'model', 'guide', 'figure.ts')], bundle: true, platform: 'node', format: 'esm', target: 'node24', write: false, logLevel: 'error',
+    plugins: [{ name: 'own-url', setup: (b) => { b.onLoad({ filter: /\.ts$/ }, (a) => ({ loader: 'ts', contents: readFileSync(a.path, 'utf8').replaceAll('import.meta.url', JSON.stringify(pathToFileURL(a.path).href)) })); } }] });
+  const text = r.outputFiles[0].text, dir = fileURLToPath(new URL('../../.cache/', import.meta.url)), file = join(dir, `figure-${createHash('sha1').update(text).digest('hex').slice(0, 16)}.mjs`);
+  // ponytail: one file per pin state, never pruned (750 kB each)
+  if (!existsSync(file)) { mkdirSync(dir, { recursive: true }); writeAtomic(file, text); }
+  if (!existsSync(file)) throw new Error(`could not write the figure bundle ${file}`);
+  return file;
+}
+
+function threadWorker(root: string, figure: string): WorkerLike {
+  const w = new Worker(new URL('./worker.ts', import.meta.url), { workerData: { pinRoot: root, figure } });
   const pending = new Map<number, { ok: (r: JobResult) => void; fail: (e: Error) => void }>();
   let next = 0, dead: Error | undefined;
   const ready = new Promise<void>((ok, fail) => {
@@ -123,7 +142,8 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   const n = Math.max(1, o.workers ?? Math.min(16, os.availableParallelism() - 4));
   if (!o.factory) os.setPriority(os.constants.priority.PRIORITY_BELOW_NORMAL);   // process-wide; the workers are threads of it
   let serial = 0;
-  const spawn = (): WorkerLike => (o.factory ?? (() => threadWorker(root)))(serial++);
+  const figure = o.factory ? '' : await bundleFigure(root);
+  const spawn = (): WorkerLike => (o.factory ?? (() => threadWorker(root, figure)))(serial++);
   const workers = Array.from({ length: n }, spawn);
   const all = new Set(workers);
   const closing = () => Promise.all([...all].map(w => w.close().catch(() => {})));
@@ -134,7 +154,7 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
   let closed = false;
   const fight = o.fight ?? DEFAULT_FIGHT, rollBudget = o.rollBudget ?? DEFAULT_ROLL_BUDGET, target = o.target === undefined ? DEFAULT_TARGET : o.target;
   const targetOf = (ctx: EvalCtx) => { const t = ctx.target === undefined ? target : ctx.target; return ctx.skill === 'hoa' && t ? t : undefined; };
-  const memo = createMemo<Evaluated>(pin, o.memoDir, o.memoEntries);
+  const memo = createMemo<Evaluated>(pin, o.memoDir, o.memoEntries), asked: Record<string, number> = {};
   // env GUIDE_TRACE=1: once a minute, how busy the pool is; a figure over 2 minutes is named
   let done = 0, workMs = 0;
   const trace = process.env.GUIDE_TRACE ? setInterval(() => console.log(new Date().toISOString(),
@@ -187,8 +207,9 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
     });
   };
   const price = (loadout: Loadout, changes: Job['changes'], ctx: EvalCtx): Promise<{ v: Evaluated; keep: boolean }> =>
-    schedule(w => timed(w, { loadout, changes, ctx, fight, rollBudget, ...(targetOf(ctx) ? { target: targetOf(ctx) } : {}) })).then(
-      ({ loadout: lo, dropped, fig }) => {
+    schedule(w => timed(w, { loadout, changes, ctx, fight, rollBudget, asked, ...(targetOf(ctx) ? { target: targetOf(ctx) } : {}) })).then(
+      ({ loadout: lo, dropped, fig, asked: a }) => {
+        Object.assign(asked, a);
         // the cull ends the kill only when nothing on the target blocks it and the port evaluated every source
         const c = fig.cull, cull = c && !c.blocked.length && !c.stop ? c.threshold : 0;
         const cullNote = c && c.threshold > 0 && !cull ? (c.stop ?? c.blocked.join('; ')) : undefined;

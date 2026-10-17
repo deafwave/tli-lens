@@ -89,7 +89,7 @@ function reread() {
     if (e) { note = ` (could not read your character: ${String(err || e.message).trim().split(/\r?\n/).at(-1)})`; return landed(); }
     const next = load(), old = character();
     note = next.key === old.key ? '' : ` (your character changed since ${basename(old.exp)}: priced again)`;
-    if (next.key === old.key) return landed();
+    if (next.key === old.key) { who = { ...old, exp: next.exp }; return landed(); }
     who = next; gen++; base = undefined; settled.clear(); asked.clear(); waiting.length = 0;
     void warm().then(rebase);
   });

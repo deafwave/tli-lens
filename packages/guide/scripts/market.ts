@@ -111,6 +111,10 @@ const versus = (f: Figure): number | string => (rankable(base!, f) ? f.kill / ba
 
 /** Figures as they land. `want` gives a key's gain once settled, else queues it once and gives undefined. The evaluator is handed no more than it runs at
  *  once and the page on screen goes first, so a page flipped past never holds up the one shown; `landed` redraws. */
+/** gains on disk by pin, character (load's key) and figure (a dead worker's is not kept): a listing seen by an earlier run prints without starting the evaluator */
+const GAINS = `${root}packages/guide/.cache/market-gains.json`, pin = pinCommit().slice(0, 8);
+const gains: Record<string, number | string> = existsSync(GAINS) ? JSON.parse(readFileSync(GAINS, 'utf8')) : {};
+let unsaved = false;
 const settled = new Map<string, number | string>(), asked = new Set<string>(), waiting: { page: number; k: string; changes: Change[] }[] = [];
 let page = 0, running = 0, landed = () => {};
 function pump() {
@@ -122,7 +126,9 @@ function pump() {
   }
 }
 function want(k: string, changes: () => Change[]): number | string | undefined {
-  if (settled.has(k)) return settled.get(k);
+  const disk = `${pin}|${character().key}|${k}`;
+  if (disk in gains) return gains[disk];
+  if (settled.has(k)) { const g = settled.get(k)!; if (!/figure worker|evaluator closed/.test(String(g))) { gains[disk] = g; unsaved = true; } return g; }
   if (!asked.has(k)) { asked.add(k); waiting.push({ page, k, changes: changes() }); void warm(); pump(); }
   else { const w = waiting.find((x) => x.k === k); if (w) w.page = page; }
   return undefined;
@@ -130,21 +136,10 @@ function want(k: string, changes: () => Change[]): number | string | undefined {
 /** a row's gain for sorting: pending rows last, partial ones just above them */
 const num = (g: number | string | undefined) => (typeof g === 'number' ? g : g === undefined ? -Infinity : -1e300);
 
-/** gear gains on disk by pin, character (load's key) and change: a listing seen by an earlier run prints without starting the evaluator */
-const GAINS = `${root}packages/guide/.cache/market-gains.json`;
-const gains: Record<string, number | string> = existsSync(GAINS) ? JSON.parse(readFileSync(GAINS, 'utf8')) : {};
-let unsaved = false;
 
 /** A gear, vorax limb or hero memory search: each listing in place of what you wear (places), by the model's kill-speed gain per FE. */
 function rankWorn(listings: Listing[]): Ranked {
-  const { exp, state, key } = character(), pin = pinCommit().slice(0, 8);
-  const gain = (change: Change) => {
-    const k = `${pin}|${key}|${createHash('sha1').update(JSON.stringify(change)).digest('hex').slice(0, 16)}`;
-    if (k in gains) return gains[k];
-    const g = want(k, () => [change]);
-    if (g !== undefined) { gains[k] = g; unsaved = true; }
-    return g;
-  };
+  const { exp, state } = character(), gain = (change: Change) => want(createHash('sha1').update(JSON.stringify(change)).digest('hex').slice(0, 16), () => [change]);
   const rows = listings.map((l) => {
     const ps = l.priceType === FE ? places(l, state) : `priced in item ${l.priceType}, not Flame Elementium`;
     if (typeof ps === 'string') return { l, g: ps as number | string | undefined, slot: '' };
@@ -152,7 +147,6 @@ function rankWorn(listings: Listing[]): Ranked {
     return gs.some((r) => r.g === undefined) ? { l, g: undefined, slot: '' } : gs.sort((a, b) => num(b.g) - num(a.g))[0];
   });
   const pending = rows.filter((r) => r.g === undefined).length;
-  if (!pending && unsaved) { writeAtomic(GAINS, JSON.stringify(gains)); unsaved = false; }
   // a gain per FE; a loss below every gain, by how much it loses (per FE it would rank the dearest loss first)
   const per = (r: { l: Listing; g?: number | string }) => (num(r.g) > 0 ? num(r.g) / Math.max(r.l.price, 1) : num(r.g) - 1);
   const lines = [`${listings.length} listings${pending ? ` (${pending} pricing)` : ''}; ranked by kill-speed gain vs ${state.target} per FE, each in place of what you wear, on ${exp}`];
@@ -201,7 +195,9 @@ const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;
 async function rank(listings: Listing[]): Promise<Ranked> {
   if (!listings.length) return { lines: ['no market search result on screen (open a search in the auction house first)'], pending: 0 };
   const slates = listings.filter((l) => l.talents?.length);
-  return slates.length ? rankSlates(slates) : has('craft') ? rankGear(listings) : rankWorn(listings);
+  const r = slates.length ? rankSlates(slates) : has('craft') ? await rankGear(listings) : rankWorn(listings);
+  if (!r.pending && unsaved) { writeAtomic(GAINS, JSON.stringify(gains)); unsaved = false; }
+  return r;
 }
 const parse = (text: string): Listing[] => JSON.parse(text).map((l: Listing, i: number) => ({ ...l, n: l.n ?? i + 1 }));
 

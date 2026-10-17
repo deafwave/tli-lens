@@ -154,9 +154,9 @@ function rankWorn(listings: Listing[]): Ranked {
   for (const r of rows.sort((a, b) => per(b) - per(a)).slice(0, top)) {
     const tiers = r.l.affixes.filter((a) => a.list === 'PrefixInfoList' || a.list === 'SuffixInfoList').map((a) => `T${a.tier}`).join(' ');
     lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(6)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? `  partial | not ranked: ${r.g.slice(0, 160)}`
-      : `${pct(r.g).padStart(8)}  ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE | ${r.slot} | ${tiers}${r === best ? ' | best outright' : ''}`}`);
+      : `${pct(r.g).padStart(8)}  ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE | ${r.slot} | ${tiers}${r === best && r.g > 0 ? ' | best outright' : ''}`}`);
   }
-  if (!rows.slice(0, top).includes(best) && typeof best.g === 'number') lines.push(`best outright: #${best.l.n} ${best.l.price} FE ${pct(best.g)}`);
+  if (!rows.slice(0, top).includes(best) && typeof best.g === 'number' && best.g > 0) lines.push(`best outright: #${best.l.n} ${best.l.price} FE ${pct(best.g)}`);
   return { lines, pending };
 }
 

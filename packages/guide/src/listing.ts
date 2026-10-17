@@ -29,8 +29,10 @@ export function places(l: Listing, state: State): { slot: string; change: Change
       ...l.awaken!.affixes.map((a) => ({ label: 'awaken', slot, affixes: [{ id: a.id, dyn: a.dyn, text: 'awaken' }] }))]));
     return [{ slot: `memory ${slot}`, change: { kind: 'patch', op: 'memories', items } as never }];
   }
-  if (l.type === 41) return (TYPE_SLOTS[rows<{ i20: number }>('config_item_base')[l.baseId]?.i20] ?? []).map((slot) => ({ slot, change: { kind: 'patch', op: 'vorax',
-    items: [...lo.vorax.filter((v) => v.slot !== slot), { label, slot, baseId: l.baseId, itemId, level: l.level, affixes }] } as never }));
+  // one Vorax Gear at a time (tlidb, every limb base: "You can only equip 1 Vorax Gear"): yours comes out; one worn in another slot leaves that slot empty
+  if (l.type === 41) return (TYPE_SLOTS[rows<{ i20: number }>('config_item_base')[l.baseId]?.i20] ?? []).map((slot) => ({
+    slot: [slot, ...lo.vorax.filter((v) => v.slot !== slot).map((v) => `${v.slot} left empty`)].join(', '),
+    change: { kind: 'patch', op: 'vorax', items: [{ label, slot, baseId: l.baseId, itemId, level: l.level, affixes }] } as never }));
   const slots = slotsOfBase(l.baseId, state.skill).slots, modifiers: Record<string, { id: number; dynArgs: number[] }[]> = {};
   if (!slots.length) return `not worn by ${state.skill} (${label})`;
   for (const a of l.affixes) (modifiers[GEAR_KEY[a.list] ?? a.list] ??= []).push({ id: a.id, dynArgs: a.dyn });

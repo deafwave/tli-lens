@@ -33,11 +33,12 @@ describe('a listing on your character (places)', () => {
     expect(items.change.items[2].awakenBaseAttrBoost).toBe(30);
     expect(places(listing({ baseId: 71002, type: 34, awaken: { boost: 0, affixes: [] } }), state)).toMatch(/no Memory of Discipline/);
   });
-  it("a vorax limb goes in its slot type's slots, in place of the limb or gear there", () => {
-    const ps = places(listing({ baseId: 380009, type: 41, affixes: [aff(8, 'PrefixInfoList')] }), state) as unknown as { slot: string; change: { op: string; items: { slot: string; affixes: { id: number }[] }[] } }[];
-    expect(ps.map((p) => p.slot)).toEqual(['ring1', 'ring2']);
-    expect(ps[0].change.items.map((v) => [v.slot, v.affixes.map((a) => a.id)])).toEqual([['ring1', [8]]]);
-    expect(ps[1].change.items.map((v) => v.slot)).toEqual(['ring1', 'ring2']);
+  it("a vorax limb goes in its slot type's slots in place of the gear there, and of your limb: one Vorax Gear at a time (tlidb)", () => {
+    type P = { slot: string; change: { op: string; items: { slot: string; affixes: { id: number }[] }[] } }[];
+    const ps = places(listing({ baseId: 380009, type: 41, affixes: [aff(8, 'PrefixInfoList')] }), state) as unknown as P;
+    expect(ps.map((p) => p.slot)).toEqual(['ring1', 'ring2, ring1 left empty']);
+    expect(ps.map((p) => p.change.items.map((v) => [v.slot, v.affixes.map((a) => a.id)]))).toEqual([[['ring1', [8]]], [['ring2', [8]]]]);
+    expect((places(listing({ baseId: 380001, type: 41 }), state) as unknown as P).map((p) => p.slot)).toEqual(['gloves, ring1 left empty']);
   });
 });
 

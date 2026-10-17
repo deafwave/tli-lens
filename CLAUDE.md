@@ -19,7 +19,7 @@ read the Tests line (2026-10-17: 309 passed, 4 skipped without `GUIDE_REAL`).
 
 | Path | What |
 |---|---|
-| `packages/guide/src` | `types` shared interfaces, `pin`, `pricing` + `priceOf` (etor), `candidates/*` (gear gems kismets memories pacts prisms slates switch talents target traits), `craft`, `patches`, `search`, `kill`, `engine/{pool,worker,apply,memo}`, `modes` (ideal/advise), `plan` (your character to a damage goal, cheapest first), `start` (start states, export import), `talentRules` (talent legality, `trimPage`), `names`, `sheet`, `cli`, `atomic`, `data/` |
+| `packages/guide/src` | `types` shared interfaces, `pin`, `pricing` + `priceOf` (etor), `candidates/*` (gear gems kismets memories pacts prisms slates switch talents target traits), `craft`, `patches`, `search`, `kill`, `engine/{pool,worker,apply,memo}` (the workers run dps-debug's figure module bundled by esbuild into `.cache/figure-<hash>.mjs`), `modes` (ideal/advise), `plan` (your character to a damage goal, cheapest first), `start` (start states, export import), `talentRules` (talent legality, `trimPage`), `listing` (a market listing worn in place of yours), `names`, `sheet`, `cli`, `atomic`, `data/` |
 | `packages/guide/scripts` | `market.ts` (`pnpm guide:market`, the market skill), `owned-pacts`, `support-census`, `verify-affix-ids` |
 | `packages/guide/docs` | gear / prism / talent rules the candidates use, with sources |
 | `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/advice.json` |

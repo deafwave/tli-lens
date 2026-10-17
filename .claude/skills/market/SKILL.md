@@ -1,6 +1,6 @@
 ---
 name: market
-description: "Rank the auction house search the player has open in Torchlight: Infinite by what each listing costs to finish: price + expected crafting to get every wanted mod to T1 (market-targets.json); a Divinity Slate search by the model's % damage gain on your character. Reads the listings from game memory, no screenshots, ~3 s (slates ~15 s for a page; --watch keeps it warm and re-ranks on every change). Use when the user asks which market item is the best deal, the best base to craft on, or says /market."
+description: "Rank the auction house search the player has open in Torchlight: Infinite by the model's % damage gain on your character: gear, vorax limbs and hero memories in place of what you wear (per FE), Divinity Slates in place of one of your slates; --craft ranks gear by price + expected crafting to every wanted T1 mod (market-targets.json). Reads the listings from game memory, no screenshots (a read takes ~30 ms; --watch keeps the workers warm, reads your character fresh and re-ranks on every change). Use when the user asks which market item is the best deal, the best base to craft on, or says /market."
 ---
 
 # market
@@ -12,30 +12,33 @@ description: "Rank the auction house search the player has open in Torchlight: I
    ```
 
    - It reads the open search result from memory: `scripts/market_listings.py`, which uses dps-debug's reader through `DPS_DEBUG`, by default the sibling `../dps-debug`.
+     A listing is read as dps-debug's `reader/loadout.py` reads an item you own: every AffixList list (a ring's, necklace's or belt's implicit is `FixedBaseAffix`), a hero memory's awaken data.
    - "no market search result on screen" means the auction house search isn't open. Ask the user to open it and run the command again.
    - Never click, type or press keys in the game.
 
-2. Report the top listings in one short table:
-   - listing number (`#n`, the order on screen) and price;
-   - the T1 mods it already has;
-   - the expected crafting cost, and the total.
+2. Report the top listings in one short table: `#n` (the order on screen), the price, the % damage gain (kill speed vs the target), the %/100 FE and what it replaces
+   (the slot, `memory n`, or your slate n). Recommend the best gain per FE, and also the best gain outright if it costs more. A `partial` row is a piece the model
+   cannot price (it names what it dropped). It is never ranked, so say it is unknown, not zero.
 
-   Say which one to buy and why: usually the one with the most wanted T1 mods per FE.
+   - Gear: each listing in place of what you wear in its slot (a ring: the better ring slot).
+   - Vorax limb: in its slot type's slot (Digits: ring1 or ring2), in place of the limb or gear there.
+   - Hero memory: in place of yours of its kind (Origin, Discipline, Progress), its awaken affixes with it.
+   - Your character: the newest `dps-debug/game/exports/<stamp>/export-<stamp>.json` (`--export <file>` overrides it). `--watch` reads it again from the game at
+     start (~16 s, alongside): unchanged, nothing is priced again; changed, every row is priced again against the new read.
 
-   A **Divinity Slate** search (the listings carry talents) is ranked by the model instead. Each listing replaces one of your slates (`replaceSlate`, see "Slate searches"),
-   using the newest `dps-debug/game/exports/<stamp>/export-<stamp>.json` (`--export <file>` overrides it; a newer read dir with no export file is skipped silently). Report `#n`, the price, the % damage gain (kill speed vs
-   the target), the %/100 FE and the two talents. Recommend the best gain per FE, and also the best gain outright if it costs more. A `partial` row is a
-   piece the model cannot price (it names what it dropped). It is never ranked, so say it is unknown, not zero.
-
-3. If a gear base has no entry in `market-targets.json`, ask the user which T1 mods they want. Add them, using T1 ids from `data/affix_library.json` (`tiers[0].tierAffixId` of the item's slot library), then run again.
+3. `--craft` (gear): ranked by price + expected crafting to every wanted T1 mod instead. If a gear base has no entry in `market-targets.json`, ask the user which
+   T1 mods they want. Add them, using T1 ids from `data/affix_library.json` (`tiers[0].tierAffixId` of the item's slot library), then run again.
+   - Crafting cost is `craftStep`'s expected embers to roll that exact T1, at live etor ember prices. A two-handed weapon spends 2 embers per craft.
+   - Max 2 advanced affixes per item. A listing with an advanced T1 mod outside the target (for example T1 Strength on a maul) can be a cheaper alternative. Mention it.
 
 Notes:
-- Crafting cost is `craftStep`'s expected embers to roll that exact T1, at live etor ember prices.
-- A two-handed weapon spends 2 embers per craft.
-- Max 2 advanced affixes per item. A listing with an advanced T1 mod outside the target (for example T1 Strength on a maul) can be a cheaper alternative. Mention it.
 - To test without the game: `pnpm -s guide:market --file <saved listings.json>`.
-- `--watch` keeps running: one reader stays attached to the game and reads the screen 4 times a second; a new page shows at once and its rows fill in as each figure lands (the page on screen is priced first, a page flipped past waits; workers start at once and stay warm; Ctrl+C to stop). A page seen before ranks in under a second. etor prices are cached in `packages/guide/.cache/etor-snapshot.json` and fetched again every 30 minutes.
-- Slates use 8 workers (about 1.4 GB each; `--workers N`). A listing is priced in place of your weakest slate and of any slate that shares one of its talents; `--exact` tries every slate you hold (one figure per slate).
+- `--watch` keeps running: one reader stays attached to the game and reads the screen 10 times a second; a new page shows at once and its rows fill in as each
+  figure lands (the page on screen is priced first, a page flipped past waits; workers start at once and stay warm, your slates' own worth is priced before a
+  slate search opens; Ctrl+C to stop). A page seen before ranks in under a second, also in a later run on the same character (figures are kept on disk).
+  A reader that dies (the game restarted) is started again. etor prices are cached in `packages/guide/.cache/etor-snapshot.json` and fetched again every 30 minutes.
+- 8 workers (about 1.4 GB each; `--workers N`): 12 or 16 price no more figures a second. A figure takes about 2 s of one core.
+- Slates: a listing is priced in place of your weakest slate and of any slate that shares one of its talents; `--exact` tries every slate you hold (one figure per slate).
 
 ## Slate searches
 
@@ -43,4 +46,4 @@ Notes:
 - A Divinity Slate search is ranked by the model's damage gain of each listing **in place of one of your slates** (the best one named; `--same-shape` only lets it replace a slate of its own shape: your board is full,
   a slate only fits where one of its shape sits), on the Traveler (the plan's target; `--target <boss>` to change). The row names which of your slates it replaces.
 - With `--same-shape`, a listing whose shape matches none of your slates is listed as not ranked.
-- The reader sees the listings on screen: run it again for each page of the search.
+- The reader sees the listings the client holds for the search: run it again (or keep `--watch` running) for each page.

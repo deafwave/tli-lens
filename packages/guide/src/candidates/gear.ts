@@ -25,7 +25,7 @@ const WEAPON_GROUPS: Record<number, string> = { 9: 'Bow', 29: 'Crossbow', 26: 'P
 const SKILL_GROUPS: Record<Skill, number[]> = { iceShot: [9, 29, 26, 27, 28], hoa: [11] };
 /** loadout slot -> config_item_base i20 (slot type); the catalog's helmets are 15 (11 is the shield) */
 const SLOT_TYPE: Record<string, number> = { helmet: 15, gloves: 12, boots: 13, chest: 14, necklace: 16, belt: 17, ring1: 18, ring2: 18 };
-const TYPE_SLOTS: Record<number, string[]> = { 15: ['helmet'], 12: ['gloves'], 13: ['boots'], 14: ['chest'], 16: ['necklace'], 17: ['belt'], 18: ['ring1', 'ring2'] };
+export const TYPE_SLOTS: Record<number, string[]> = { 15: ['helmet'], 12: ['gloves'], 13: ['boots'], 14: ['chest'], 16: ['necklace'], 17: ['belt'], 18: ['ring1', 'ring2'] };
 const ARMOR_LIB: Record<string, string> = { '16/20': 'Necklace', '17/23': 'Belt', '18/21': 'Ring', '18/90': 'Spirit Ring' };
 for (const [t, first, name] of [[15, 70, 'Helmet'], [12, 40, 'Gloves'], [13, 50, 'Boots'], [14, 60, 'Chest Armor']] as const)
   ['STR', 'DEX', 'INT'].forEach((f, i) => { ARMOR_LIB[`${t}/${first + i}`] = `${f} ${name}`; });
@@ -34,7 +34,7 @@ const isWeapon = (i20: number, i24: number, attrs: number[]) => attrs.length > 0
 const libType = (i20: number, i24: number, attrs: number[]) => isWeapon(i20, i24, attrs) ? WEAPON_GROUPS[i24] : ARMOR_LIB[`${i20}/${i24}`] ?? null;
 
 const ENABLER = /Reservation|Support Skill.*Level|\+\d+ to .*Skill Level|Core Talent|talent/i;
-const LIST_KEY: Record<string, string> = { BAffixInfoList: 'baseAffix', BaseAttrInfoList: 'baseAttr', PrefixInfoList: 'prefix', SuffixInfoList: 'suffix', FixedBaseAffix: 'fixed', ChipAffixList: 'chip' };
+export const LIST_KEY: Record<string, string> = { BAffixInfoList: 'baseAffix', BaseAttrInfoList: 'baseAttr', PrefixInfoList: 'prefix', SuffixInfoList: 'suffix', FixedBaseAffix: 'fixed', ChipAffixList: 'chip' };
 const SIDE_MAX = 3;
 
 interface Cat { base: Record<string, any>; lang: Record<string, string>; gold: Record<string, any>; rolls: Record<string, number[][]>; rows: Map<number, Row> }

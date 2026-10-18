@@ -328,6 +328,8 @@ function slateCard(g: GuideOut): string {
 /** your path to the goal: one row per step, what it costs and the damage per second after it */
 function planCard(g: GuideOut): string {
   const p = g.plan!, boss = esc(bossName(p.target)), end = p.steps.at(-1)?.figure ?? p.start.figure, reached = end.kill >= p.goal;
+  // the Traveler is priced as the dummy's DPS capped at 15 trillion (guide search.ts rankedOn): its full-Life figure is the dummy's
+  const on = p.target === 'traveler' ? 'the training dummy' : boss;
   const t = (f: Figure) => (f.lifeMax && f.kill > 0 ? fmtTime(f.lifeMax / f.kill) : '—');
   const cost = (x: Plan['steps'][number]) => (/\(time\)/.test(x.label) ? 'time' : x.costFE === 0 ? 'free' : `${fmtFE(x.costFE)} FE`);
   let prev = p.start.figure;
@@ -337,10 +339,10 @@ function planCard(g: GuideOut): string {
   const refused = g.notCalculable.length ? `<details><summary>Left out although they would gain (${g.notCalculable.length}): the model cannot price them whole, or they unseal an aura</summary><ul>${g.notCalculable.slice(0, 40).map((n) => `<li>${esc(n)}</li>`).join('')}</ul></details>` : '';
   const build = p.build?.length ? `<details class="gl-build"><summary>Your build after the last step: skills, talent trees, pactspirits, gear</summary>${p.build.map(sectionView).join('')}</details>` : '';
   return `<div class="gl-final"><b>${p.goalSeconds ? `Your path to ${boss} dead in under ${p.goalSeconds} s (${fmtDps(p.goal)} per second)` : `Your path to ${fmtDps(p.goal)} per second on ${boss}`}</b>`
-    + `<p>Now: ${p.start.dummy !== undefined ? `<b>${fmtDps(p.start.dummy)}</b>/s on the training dummy, ` : ''}<b>${fmtDps(p.start.figure.life100)}</b>/s at full Life on ${boss} (the model's figures), ${boss} in ${t(p.start.figure)}. ${g.knobs?.partialRun ? `<span class="warn">Still computing</span>: ${p.steps.length} steps so far, at ${fmtDps(end.kill)}/s.` : reached ? `Goal reached after ${p.steps.length} steps for <b>${fmtFE(p.steps.at(-1)?.totalFE ?? 0)} FE</b>: ${fmtDps(end.kill)}/s.` : `<span class="warn">Not reached</span>: the steps below end at ${fmtDps(end.kill)}/s.`}</p>`
+    + `<p>Now: ${p.start.dummy !== undefined ? `<b>${fmtDps(p.start.dummy)}</b>/s on the training dummy, ` : ''}<b>${fmtDps(p.start.figure.life100)}</b>/s at full Life on ${on} (the model's figures), ${boss} in ${t(p.start.figure)}. ${g.knobs?.partialRun ? `<span class="warn">Still computing</span>: ${p.steps.length} steps so far, at ${fmtDps(end.kill)}/s.` : reached ? `Goal reached after ${p.steps.length} steps for <b>${fmtFE(p.steps.at(-1)?.totalFE ?? 0)} FE</b>: ${fmtDps(end.kill)}/s.` : `<span class="warn">Not reached</span>: the steps below end at ${fmtDps(end.kill)}/s.`}</p>`
     + (Number.isFinite(fe) ? `<p>Your FE: <b>${fmtFE(fe)}</b>${p.steps.some((x) => x.totalFE > fe) ? ` - the greyed steps are past it (step ${p.steps.findIndex((x) => x.totalFE > fe) + 1} on)` : ': the whole path fits'}.</p>` : '')
     + `<p class="bnote">Do the steps in order and check each on the training dummy: its number should go up by about the Gain. Each is priced on your build after the ones above it, and the next one is always the most damage per FE (free ones first). Read from your game and priced ${esc(p.at.slice(0, 16).replace('T', ' '))} UTC (model numbers, live etor prices).</p>`
-    + `<table class="gl-plan-steps"><tr><th>#</th><th>Do this</th><th>Cost</th><th>Total</th><th>Gain</th><th title="damage per second at full Life on the boss (the training dummy reads higher)">Full Life on ${boss}</th><th title="kill speed: the damage averaged from full Life to 0 on the boss">${boss} kill speed</th><th>${boss} dies in</th></tr>${rows}</table>`
+    + `<table class="gl-plan-steps"><tr><th>#</th><th>Do this</th><th>Cost</th><th>Total</th><th>Gain</th><th title="damage per second at full Life (the model's)">Full Life on ${on}</th><th title="what the plan ranks by: the DPS at full Life; on the Traveler, the dummy's capped at 15 trillion">Ranked on ${boss}</th><th>${boss} dies in</th></tr>${rows}</table>`
     + (notes ? `<ul class="bnote">${notes}</ul>` : '') + refused + build + '</div>';
 }
 /** a slate board as the game lays it out: each slate's cells in its colour and number; hover a slate for its lines and where it comes from */

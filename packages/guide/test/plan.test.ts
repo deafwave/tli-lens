@@ -209,19 +209,19 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
 
 describe('runPlan: no step raises the projectile speed (owner, 2026-10-16: Precise Projectiles, Wind Projectiles cost embers in game)', () => {
   it('a change that speeds the embers up is refused with why, however much it gains; the goal can be a kill time', async () => {
-    const fig = (k: number, speedInc: number) => ({ life100: k, life0: k, kill: k, partial: [], target: 'cube2', lifeMax: 1.6e13, projectile: { speedInc, areaInc: 200 } });
+    const fig = (k: number, speedInc: number) => ({ life100: k, life0: k, kill: k, partial: [], target: 'cube3', lifeMax: 1.6e13, projectile: { speedInc, areaInc: 200 } });
     const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
       run: async (loadout, changes) => { const j = JSON.stringify(changes);
         return { loadout, dropped: [], figure: /"name":"Critical Strike Damage Increase"/.test(j) ? fig(5e10, 51) : /"name":"Multiple Projectiles"/.test(j) ? fig(1.2e10, 40) : fig(1e10, 40) }; } };
-    const r = await runPlan(ev, s, ctx.prices, { target: 'cube2', goalSeconds: 10, maxSteps: 3 });
+    const r = await runPlan(ev, s, ctx.prices, { target: 'cube3', goalSeconds: 10, maxSteps: 3 });
     expect(r.plan!.goal).toBe(1.6e12);
     expect(r.plan!.steps.some((x) => /Critical Strike Damage Increase/.test(x.label))).toBe(false);
     expect(r.notCalculable.some((n) => /Critical Strike Damage Increase.*raises projectile speed/.test(n))).toBe(true);
   }, 300_000);
 });
 
-describe('runPlan: a step must raise the damage at full Life too (owner, 2026-10-16: Passivation -> Wind Projectiles, +8.6 % kill speed, -25 % on the dummy)', () => {
-  it('a change that raises the kill speed but lowers full-Life damage is refused, named with why; one that raises both is taken', async () => {
+describe('runPlan: a step is ranked on the damage at full Life, never a kill speed (owner, 2026-10-16: Passivation -> Wind Projectiles, +8.6 % kill speed, -25 % on the dummy; 2026-10-18)', () => {
+  it('a change that would raise a kill speed but lowers full-Life damage is not taken; one that raises the damage is', async () => {
     const fig = (life100: number, kill: number) => ({ life100, life0: kill, kill, partial: [], target: 'traveler', lifeMax: 1.6e12 });
     const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
       run: async (loadout, changes) => { const j = JSON.stringify(changes);
@@ -229,7 +229,6 @@ describe('runPlan: a step must raise the damage at full Life too (owner, 2026-10
     const r = await runPlan(ev, s, ctx.prices, { goal: 1e12, maxSteps: 3 });
     expect(r.plan!.steps.some((x) => /Critical Strike Damage Increase/.test(x.label))).toBe(false);
     expect(r.plan!.steps.some((x) => /Multiple Projectiles/.test(x.label))).toBe(true);
-    expect(r.notCalculable.some((n) => /Critical Strike Damage Increase.*lowers your damage at full Life/.test(n))).toBe(true);
   }, 300_000);
 });
 

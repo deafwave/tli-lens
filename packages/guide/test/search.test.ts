@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DEFAULT_KNOBS, newMem, path, rankable, rankedOn, resolve, step } from '../src/search';
+import { ctxOfState, DEFAULT_KNOBS, newMem, path, rankable, rankedOn, resolve, step } from '../src/search';
 import type { LoadoutPatch } from '../src/patches';
 import type { Change, Evaluator, Figure, GenCtx, Generator, Move, State } from '../src/types';
 
@@ -359,8 +359,10 @@ describe('new behaviours (final fix wave)', () => {
   });
 });
 
-test('on the dummy a figure ranks by its damage at full Life, not the lock-capped kill speed (the market ranked a 40T dummy goal under the 15T lock)', async () => {
-  const ev = { pin: 'stub', async close() {}, run: async () => ({ loadout: {}, figure: { life100: 3, life0: 2, kill: 1, partial: [] } }) } as unknown as Evaluator;
-  expect((await rankedOn(ev, 'dummy').run({} as never, [], { level: 90, skill: 'hoa' })).figure.kill).toBe(3);
-  expect((await rankedOn(ev, 'traveler').run({} as never, [], { level: 90, skill: 'hoa' })).figure.kill).toBe(1);
+test('a figure ranks by its raw DPS at full Life on the dummy or Cube 3; the Traveler is the dummy capped at 15T; nothing else (owner, 2026-10-18)', async () => {
+  const at = (life100: number) => ({ pin: 'stub', async close() {}, run: async () => ({ loadout: {}, figure: { life100, life0: 2, kill: 1, partial: [] } }) }) as unknown as Evaluator;
+  const kill = async (t: string, life100: number) => (await rankedOn(at(life100), t).run({} as never, [], { level: 90, skill: 'hoa' })).figure.kill;
+  expect([await kill('dummy', 19e12), await kill('cube3', 19e12), await kill('traveler', 19e12), await kill('traveler', 3e12)]).toEqual([19e12, 19e12, 15e12, 3e12]);
+  expect(() => rankedOn(at(1), 'keegan2')).toThrow(/dummy, cube3, or traveler/);
+  expect(ctxOfState({ loadout: {}, owned: [], fe: 0, level: 90, skill: 'hoa', target: 'traveler' }).target).toBeNull();
 });

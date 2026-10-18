@@ -1,4 +1,4 @@
-/** The market search on screen ranked by the model: a gear search by each listing's kill-speed gain per FE in place of what you wear in its slot.
+/** The market search on screen ranked by the model: a gear search by each listing's DPS gain per FE in place of what you wear in its slot.
  *  --craft ranks gear instead by price + the expected crafting left to have every wanted mod at T1 (market-targets.json at the repository root, by base
  *  name; each missing T1 at craftStep's expected embers at etor prices, cached 30 minutes). No damage figures.
  *  A slate search (listings with talents) is ranked instead by the model's damage gain of the listing's talents in place of one of your slates (the best one
@@ -111,10 +111,10 @@ async function rebase() {
   if (watch) ((state.loadout.slateItems ?? []) as unknown[]).forEach((_, i) => { slate(i, []); dropDamage(i); });
   pump(); landed();
 }
-/** a figure against your character's: the kill-speed gain, or what a partial figure dropped / why it stopped (never ranked) */
+/** a figure against your character's: the gain in what it ranks by (rankedOn: raw DPS; the Traveler's capped at 15T), or what a partial figure dropped / why it stopped (never ranked) */
 const versus = (f: Figure): number | string => (rankable(base!, f) ? f.kill / base!.kill - 1 : f.stop ?? f.partial.filter((p) => !base!.partial.includes(p)).join('; '));
-/** the same, the damage at full Life: what the slate screen multiplies. Kill speed does not multiply where the damage lock binds (owner's 2026-10-18 11:27 read:
- *  1.90e13 against a 1.50e13 lock; a listing screened at -0.72 % is +3.17 % exact) */
+/** the same, the uncapped damage at full Life: what the slate screen multiplies. A capped figure does not multiply (owner's 2026-10-18 11:27 read: 1.90e13 against
+ *  the 1.50e13 lock; a listing screened at -0.72 % was +3.17 % exact) */
 const damageVs = (f: Figure): number | string => (rankable(base!, f) ? f.life100 / base!.life100 - 1 : versus(f));
 
 /** Figures as they land. `want` gives a key's gain once settled, else queues it once and gives undefined. The evaluator is handed no more than it runs at
@@ -157,7 +157,7 @@ function want(k: string, changes: () => Change[], damage = false): number | stri
 const num = (g: number | string | undefined) => (typeof g === 'number' ? g : g === undefined ? -Infinity : -1e300);
 
 
-/** A gear, vorax limb or hero memory search: each listing in place of what you wear (places), by the model's kill-speed gain per FE. */
+/** A gear, vorax limb or hero memory search: each listing in place of what you wear (places), by the model's DPS gain per FE. */
 function rankWorn(listings: Listing[]): Ranked {
   const { exp, state } = character(), gain = (change: Change) => want(createHash('sha1').update(JSON.stringify(change)).digest('hex').slice(0, 16), () => [change]);
   const rows = listings.map((l) => {
@@ -169,7 +169,7 @@ function rankWorn(listings: Listing[]): Ranked {
   const pending = rows.filter((r) => r.g === undefined).length;
   // a gain per FE; a loss below every gain, by how much it loses (per FE it would rank the dearest loss first)
   const per = (r: { l: Listing; g?: number | string }) => (num(r.g) > 0 ? num(r.g) / Math.max(r.l.price, 1) : num(r.g) - 1);
-  const lines = [`${listings.length} listings${pending ? ` (${pending} pricing)` : ''}; ranked by kill-speed gain vs ${state.target} per FE, each in place of what you wear, on ${exp}`];
+  const lines = [`${listings.length} listings${pending ? ` (${pending} pricing)` : ''}; ranked by DPS gain on ${state.target} per FE, each in place of what you wear, on ${exp}`];
   const best = rows.reduce((a, b) => (num(b.g) > num(a.g) ? b : a));
   for (const r of rows.sort((a, b) => per(b) - per(a)).slice(0, top)) {
     const tiers = r.l.affixes.filter((a) => a.list === 'PrefixInfoList' || a.list === 'SuffixInfoList').map((a) => `T${a.tier}`).join(' ');
@@ -221,8 +221,8 @@ function rankSlates(slates: Listing[]): Ranked {
   // every listing screened from its lines (one figure a line, shared by every listing that carries it: screenSlate) in place of each slate it fits; only the page's
   // best screens get their exact figures (owner, 2026-10-18: 8,942 slates read, 21 priced, the snipes sold first); --exact prices every listing
   const line = (t: number) => want(`dmg|line|${t}`, () => [withSlate(state, [t])!], true), dropD = mine.map((_, i) => dropDamage(i));
-  // the screen is damage (it multiplies); its rows are kill speed only on the dummy (rankedOn), else they rank below the priced ones and stay off the lists
-  const sameUnit = state.target === 'dummy';
+  // the screen is uncapped damage (it multiplies): the ranking's own unit except on the Traveler (capped), where its rows rank below the priced ones and stay off the lists
+  const sameUnit = state.target !== 'traveler';
   const screen = (l: Listing): { e?: number; slot?: number } => {
     const fits = l.priceType === FE ? replaceable(mine, l.baseId).filter((i) => (!same || mine[i].shapeId === l.shapeId) && typeof dropD[i] === 'number') : [];
     const gs = new Map(l.talents!.map((t) => [t, line(t)]));
@@ -233,7 +233,7 @@ function rankSlates(slates: Listing[]): Ranked {
   const est = slates.map((l) => ({ l, ...screen(l) })), ok = est.filter((x) => x.e !== undefined && x.e > 0.005);
   const pick = new Set([...[...ok].sort((a, b) => b.e! / Math.max(b.l.price, 1) - a.e! / Math.max(a.l.price, 1)).slice(0, 3), ...[...ok].sort((a, b) => b.e! - a.e!).slice(0, 2)].map((x) => x.l));
   const rows = est.map(({ l, e, slot }) => (exact || pick.has(l) || e === undefined ? { l, ...gain(l) } : { l, g: e, slot, est: true, free: undefined })), pending = rows.filter((r) => r.g === undefined).length;
-  const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ~ = screened from its lines: damage at full Life, not priced${sameUnit ? '' : ` (listed below the priced ones, which are kill speed vs ${state.target})`}; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
+  const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ~ = screened from its lines: damage at full Life, not priced${sameUnit ? '' : ` (listed below the priced ones, which are capped at 15T)`}; ranked by DPS gain on ${state.target} in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
   const rankOf = (r: { g?: number | string }) => ('est' in r && !sameUnit ? -1e9 : 0) + num(r.g);
   for (const r of rows.sort((a, b) => rankOf(b) - rankOf(a)).slice(0, top))
     lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${('est' in r ? '~' : '') + pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
@@ -303,24 +303,25 @@ try {
           if (keptGen !== gen) { kept.clear(); done.clear(); keptGen = gen; }
           let lines = r.lines, head = `${at}${base || !warmRun ? '' : ' (the evaluator is starting)'}${note}`;
           if (r.rows) {
-            const m = kept.get(r.kind!) ?? new Map<string, Row>();
-            kept.set(r.kind!, m);
-            for (const row of r.rows) m.set(row.id, row);
-            // the pages flipped past, as their figures land (every 2 s: ~10k listings take a while to rank); a page all priced is merged once
+            const into = (kind: string, rows: Row[]) => { const m = kept.get(kind) ?? new Map<string, Row>(); kept.set(kind, m); for (const row of rows) m.set(row.id, row); };
+            into(r.kind!, r.rows);
+            // every page flipped past, of any search, as its figures land (every 2 s: ~10k listings take a while to rank): a search you moved on from keeps
+            // pricing and keeps its list (owner, 2026-10-18: "make it so I can move on once things are in the queue"); a page all priced is merged once
             if (Date.now() - backAt > 2000) {
               backAt = Date.now(); peek = true;
               try {
                 for (const [t, ls] of pages) {
-                  if (done.has(t) || ls === shown || kindOf(ls) !== r.kind) continue;
+                  if (done.has(t) || ls === shown) continue;
                   const b = await rank(ls);
-                  for (const row of b.rows ?? []) m.set(row.id, row);
+                  into(b.kind ?? kindOf(ls), b.rows ?? []);
                   if (!b.pending) done.add(t);
                 }
               } finally { peek = false; }
             }
-            const list = (by: 'gain' | 'per') => [...m.values()].sort((a, b) => b[by] - a[by]).slice(0, top).map((x) => x.text);
-            lines = ['by gain:', ...list('gain'), 'by gain per FE:', ...list('per')];
-            head = `${at} ${r.kind} vs ${character().state.target}: best of ${m.size}${waiting.length ? `, ${waiting.length} figures queued` : ''}${head.slice(at.length)}`;
+            const list = (m: Map<string, Row>, by: 'gain' | 'per') => [...m.values()].sort((a, b) => b[by] - a[by]).slice(0, top).map((x) => x.text);
+            lines = [...kept].sort(([a]) => (a === r.kind ? -1 : 1))
+              .flatMap(([kind, m]) => [`${kind}: best of ${m.size}`, '  by gain:', ...list(m, 'gain'), '  by gain per FE:', ...list(m, 'per')]);
+            head = `${at} ${r.kind} on screen, vs ${character().state.target}${waiting.length ? `: ${waiting.length} figures queued` : ''}${head.slice(at.length)}`;
           }
           const out = [head, ...lines].map(cut).join('\n');
           if (tty) process.stdout.write(`\x1b[H\x1b[J${out}\n`);

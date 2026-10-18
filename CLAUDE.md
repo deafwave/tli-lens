@@ -30,7 +30,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 ## Commands
 
 - `pnpm guide plan [export.json]` — your character (read fresh from the running game via dps-debug `reader/export.py` when no file is given)
-  to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `traveler`; `dummy`: ranked by and aimed at the damage at full Life, what the dummy shows), `--goal` (default 2e11),
+  to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `dummy`: the raw DPS at full Life the dummy shows; `cube3`: the DPS on Cube 3; `traveler`: the dummy's DPS capped at 15T), `--goal` (default 2e11),
   `--budget N` (FE; stops when nothing fits), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--dps-debug <dir>`.
 - `pnpm guide advise <export.json> [--fe N] [--season N] [--steps N] [--hoa]` — next-buys list (`--steps N` adds a path; `--hoa`: an Ice Shot
   character planned as switched now); `--budget-minutes` defaults to 30. Writes `./advice.json` (cwd) and copies it to the clipboard.
@@ -66,9 +66,10 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 - Churn gate 5 % (0 on ideal's switch / respec / spend-free paths). Talent points: a live character's are the points it holds (Path of Progression
   grants points too, and its progress is not read): `plan` and `advise` never add one. Ideal assumes `round(108 x (L-1)/92)` below L93
   (`talentRules.ts`, Path of Progression taken as done), noted on the step.
-- Target: the evaluator default is Cube 3, `plan` and market default to `traveler` (`--target`: a dps-debug `BOSSES` key, `dummy` = the
-  ground's dummy); Ice Shot, the levelling leg, is priced on its dummy. Kill speed (`kill.ts`) = Life per second from 100 % down to the model's
-  cull (0 when blocked), DPS capped at the model's damage lock; time to kill = max Life / kill speed. Defense is not modelled.
+- Damage (owner, 2026-10-18): `plan` and market rank on the raw DPS at full Life, never a kill speed (`search.ts rankedOn`, the only targets): `dummy`
+  (default), `cube3`, or `traveler` = the dummy's DPS capped at 15T (nothing is priced against the Traveler itself). Ice Shot, the levelling leg, is
+  priced on its dummy. `advise` / `ideal` still go boss by boss on the kill speed (`kill.ts`: Life per second from 100 % down to the model's cull, DPS
+  capped at the model's damage lock). Defense is not modelled.
 - One enabler per step is re-solved: the best own figure, when it reaches `enablerFloor` (0.25) x the current kill average.
 - Ideal prices: last season's etor history, day 1 for Ice Shot and days 1-3 for Hammer of Ash (`LEG_WINDOWS`); `--live`: etor's live snapshot.
 - Ideal runs L60 to L90 (`DEFAULT_IDEAL`). Hammer of Ash goes boss by boss (`BOSS_ORDER`: Cube 1, Keegan 2, Cube 2, Cube 3): a leg moves on

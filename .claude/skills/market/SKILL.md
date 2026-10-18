@@ -16,7 +16,7 @@ description: "Rank the auction house search the player has open in Torchlight: I
    - "no market search result on screen" means the auction house search isn't open. Ask the user to open it and run the command again.
    - Never click, type or press keys in the game.
 
-2. Report the top listings in one short table: `#n` (the order on screen), the price, the % damage gain (kill speed vs the target), the %/100 FE and what it replaces
+2. Report the top listings in one short table: `#n` (the order on screen), the price, the % DPS gain (on the target: raw dummy DPS by default), the %/100 FE and what it replaces
    (the slot, `memory n`, or your slate n). Recommend the best gain per FE, and also the best gain outright if it costs more. A `partial` row is a piece the model
    cannot price (it names what it dropped). It is never ranked, so say it is unknown, not zero.
 
@@ -48,6 +48,6 @@ Notes:
 
 - A listing only replaces a slate the board's caps allow (`SLATE_CAP`, `replaceable`): a **Pedigree only ever replaces your Pedigree**, a fourth Corner of Divinity only one of your three.
 - A Divinity Slate search is ranked by the model's damage gain of each listing **in place of one of your slates** (the best one named; `--same-shape` only lets it replace a slate of its own shape: your board is full,
-  a slate only fits where one of its shape sits), on the Traveler (the plan's target; `--target <boss>` to change). The row names which of your slates it replaces.
+  a slate only fits where one of its shape sits), on the plan's target (raw dummy DPS by default; `--target cube3`, or `traveler` = the dummy's capped at 15T). The row names which of your slates it replaces.
 - With `--same-shape`, a listing whose shape matches none of your slates is listed as not ranked.
 - The reader sees the listings the client holds for the search: run it again (or keep `--watch` running) for each page.

@@ -62,12 +62,17 @@ function memoEv(ev: Evaluator): Evaluator {
 }
 
 /** the evaluation context of a state: its level, skill and boss */
-/** `target` 'dummy' is the training ground's dummy: dps-debug's null target */
-export const ctxOfState = (s: State, skill = s.skill): EvalCtx => ({ level: s.level, skill, ...(s.target !== undefined ? { target: s.target === 'dummy' ? null : s.target } : {}) });
-/** the training dummy never dies: what it shows is the damage at full Life, so that is what a figure on it ranks by and reaches, not the lock-capped kill
- *  speed (owner, 2026-10-18: 40 trillion dummy) */
-export const rankedOn = (ev: Evaluator, target: string | undefined): Evaluator => target !== 'dummy' ? ev
-  : { ...ev, run: async (...a) => { const e = await ev.run(...a); return { ...e, figure: { ...e.figure, kill: e.figure.life100 } }; } };
+/** `target` 'dummy' is the training ground's dummy: dps-debug's null target; 'traveler' is priced on the dummy too (rankedOn) */
+export const ctxOfState = (s: State, skill = s.skill): EvalCtx => ({ level: s.level, skill, ...(s.target !== undefined ? { target: s.target === 'dummy' || s.target === 'traveler' ? null : s.target } : {}) });
+/** the damage the Traveler can take per second: the dummy's DPS above it does not count there */
+export const TRAVELER_CAP = 15e12;
+/** What a figure ranks by (owner, 2026-10-18: "Nothing should calculate damage against traveler", "always use raw dummy dps or cube3 dps", "damage to traveler:
+ *  raw dummy dps capped at 15 trillion"): the raw DPS at full Life on the dummy or on Cube 3, never a kill speed; 'traveler' is the dummy's capped at TRAVELER_CAP. */
+export const rankedOn = (ev: Evaluator, target: string | undefined): Evaluator => {
+  if (target !== 'dummy' && target !== 'cube3' && target !== 'traveler') throw new Error(`target ${target}: damage is ranked on the dummy, cube3, or traveler (the dummy's DPS capped at 15T) (owner, 2026-10-18)`);
+  const cap = target === 'traveler' ? TRAVELER_CAP : Infinity;
+  return { ...ev, run: async (...a) => { const e = await ev.run(...a); return { ...e, figure: { ...e.figure, kill: Math.min(e.figure.life100, cap) } }; } };
+};
 const evalMove = (s: State, m: Move, ev: Evaluator) => ev.run(s.loadout, m.changes, ctxOfState(s, m.skill ?? s.skill));
 const apply = (s: State, m: Move, e: Evaluated): State => ({
   ...s, loadout: e.loadout, fe: s.fe - (m.costFE ?? 0), skill: m.skill ?? s.skill,

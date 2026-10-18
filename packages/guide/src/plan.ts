@@ -35,7 +35,7 @@ export interface PlanOpts { target: string; goal: number; /** your FE: an option
   /** Inverse Image listings (inverse-images.json, read from the market: listing number, reflected Medium Talent effect %, FE): bought as listed, the roll fixed */
   inverseImages?: { n: number; medium: number; fe: number }[];
   /** the skill places another skill is tried in: the weakest active and aura places (set by runPlan; absent = none) */ skillSlots?: { kind: string; slot: number }[] }
-export const DEFAULT_PLAN: PlanOpts = { target: 'traveler', goal: 2e11, maxSteps: 60, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
+export const DEFAULT_PLAN: PlanOpts = { target: 'dummy', goal: 2e11, maxSteps: 60, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
 
 /** the owner's rules the candidates must keep (2026-10-16) */
 const RULES = [
@@ -44,7 +44,7 @@ const RULES = [
   'A legendary you wear or own is never bought.',
   'A change that seals more Mana than you have (MANA2) is priced with each active aura switched off; the best that fits is offered, naming the aura (owner, 2026-10-18).',
   'Projectile speed is never raised (any aura, support, slate line or item that adds it is refused); Wind Projectiles is not offered and Slow Projectile is never taken out. The model overrates faster projectiles (your dummy, 2026-10-16: Passivation -> Wind Projectiles measured 22.5 B -> 16.9 B where the model said -8 %).',
-  'Every step raises both the Traveler kill speed and your damage at full Life (the number the training dummy shows, the "Dummy" column): check each step there.',
+  "Damage is the raw DPS at full Life on the training dummy (the number it shows) or on Cube 3, never a kill speed; on the Traveler it is the dummy's capped at 15 trillion (owner, 2026-10-18).",
   'Talent points are only moved (a respec is free at level 90 and below), never added: the plan does not assume a point you do not have.',
   'A slate line already on your board is not offered on another slate.',
   'Hero memories: each is levelled to its rarity cap (Rare 30, Epic 40), its random affixes rerolled one slot at a time until each lands (no keep: a reroll replaces the affix in the slot) at the game odds of Affliction Effect for every affix (1.46 % an Epic roll); a higher rarity is a new memory bought, priced from market listings only.',

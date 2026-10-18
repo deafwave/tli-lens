@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { kismetMoves, pointName, pointProbes } from '../src/candidates/kismets';
+import { DESTINY_CAP, kismetMoves, pointName, pointProbes } from '../src/candidates/kismets';
+import { table } from '../src/pin';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
 const l100 = loadout(L100);   // kismets on 103 104 108 305 307, Undetermined Fates on 111 [1,1] and 211 [2]; 311 is a free Fate slot
@@ -20,6 +21,16 @@ describe('pointName', () => {
 });
 
 describe('kismetMoves', () => {
+  it('a size at its Destiny cap is offered no socket, only replacements (owner, 2026-10-18: Medium Destiny 4/4, the plan socketed three more Kismet: Giant)', () => {
+    const cp = table<{ rows: Record<string, { i10?: number }> }>('config_contract_point').rows, mid = (n: number) => cp[n]?.i10 === 2;
+    const kis = l100.kismets as K[], free = (l100.contractKeys as number[]).filter((n) => mid(n) && !kis.some((k) => k.node === n));
+    const fill = free.slice(0, DESTINY_CAP[2] - kis.filter((k) => mid(k.node)).length).map((node) => ({ modifierId: 100350305, servantId: null, node, rolls: [34] }));
+    const sock = (l: Record<string, unknown>) => run(l).moves.filter((m) => plain(m, 'socket') && mid(ch(m).point));
+    expect(sock(l100).length).toBeGreaterThan(0);
+    const full = { ...l100, kismets: [...kis, ...fill] }, { moves } = run(full);
+    expect(sock(full)).toEqual([]);
+    expect(moves.some((m) => plain(m, 'replace') && mid(ch(m).point))).toBe(true);
+  });
   const { moves, notSearched } = run(l100, { 'Micro Fate: Fire Resistance': 7, 'Undetermined Fate': 50 });
   it('labels a point by its pact and place, never its id', () => {
     expect(moves.every((m) => !/contract point \d/.test(m.label) && / \d-\d\b/.test(m.label))).toBe(true);

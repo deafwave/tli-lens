@@ -14,6 +14,8 @@ import type { Change, GenCtx, Generator, Move, State } from '../types';
 const rows = (f: string) => table<{ rows: Record<string, any> }>(f).rows;   // eslint-disable-line @typescript-eslint/no-explicit-any
 type K = { modifierId: number | null; servantId: number | null; node: number; rolls: number[]; baseId?: number; extraContractPoints?: number[] };
 const SMALL = 1, MIDDLE = 2, SLOT = 4, FATE_TYPE = 500;
+/** kismets a page holds at most by size (owner's pact page, 2026-10-18: Micro Destiny 5/9, Medium Destiny 4/4); a socket past it is a replacement */
+export const DESTINY_CAP: Record<number, number> = { [SMALL]: 9, [MIDDLE]: 4 };
 let pointsCat: Catalog | undefined;
 const catalog = (): Catalog => pointsCat ??= { pe: '0x6aa39847', tables: { config_contract_point: rows('config_contract_point') } } as unknown as Catalog;
 
@@ -78,17 +80,18 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   });
   for (const t of Object.values(rows('lua_config_item_tattoo'))) if (t.TattooType !== FATE_TYPE && !offered(t, rows('config_modifier')) && lang[`item_base|name|${t.Id}`])
     ns.add(`kismet: ${lang[`item_base|name|${t.Id}`]} is not offered (${t.Modifier?.length ? `item_tattoo type ${t.TattooType}: its placement rule is not read` : 'no modifier in the catalog'})`);
+  const room = (kind: number) => DESTINY_CAP[kind] - l.kismets!.filter(k => kindOf(k.node) === kind).length;
   for (const c of candidates().filter(x => x.level <= ctx.level)) {
     const short = c.need - l.kismets.filter(k => k.modifierId === c.modifierId).length;
     if (short <= 0 && c.need > 1) continue;   // the set is complete: another copy adds nothing (config_set_items has no higher count)
     if (short > 1) {
       const ps = allFree.filter(n => kindOf(n) === c.kind).slice(0, short), each = price(c.baseId);
-      if (ps.length < short) { ns.add(`kismet: ${c.name} needs ${short} free points of its size (sockets only; replacing kismets for a set is not searched)`); continue; }
+      if (ps.length < short || room(c.kind) < short) { ns.add(`kismet: ${c.name} needs ${short} free points of its size and room under its Destiny cap (sockets only; replacing kismets for a set is not searched)`); continue; }
       moves.push({ kind: 'kismet', label: `${short} x ${c.name} on ${ps.map(p => pt(p)).join(' and ')} (a set: one copy alone grants nothing)`, acquisition: true,
         costFE: each === null ? null : short * each, minLevel: c.level, like: [`kismetset|${c.name}`], changes: ps.map(p => socketChange(c, p, 'socket')) });
       continue;
     }
-    for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on ${pt(p)}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'socket')] });
+    if (room(c.kind) > 0) for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on ${pt(p)}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'socket')] });
     for (const p of occupied) if (c.kind === kindOf(p) && at.get(p)!.modifierId !== c.modifierId)
       moves.push({ kind: 'kismet', label: `Replace the kismet on ${pt(p)} with ${c.name}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'replace')] });
   }

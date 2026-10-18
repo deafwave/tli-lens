@@ -18,9 +18,10 @@ export const DEFAULT_MEMO_ENTRIES = 20000;
 /** `max`: settled results kept in memory (least recently used leave first; in-flight computations are always kept) */
 export function createMemo<T>(pin: string, dir?: string, max = DEFAULT_MEMO_ENTRIES) {
   const inflight = new Map<string, Promise<T>>(), settled = new Map<string, Promise<T>>();
-  // a +dirty pin names no fixed tree: never persisted. One subdirectory per pin; the other pins' entries can never hit again, so they go.
+  // a +dirty pin names no fixed tree: never persisted. One subdirectory per pin; the other pins' entries can never hit again, so they go
+  // (best effort: a process still on an older pin may be writing there, so that folder goes on a later start).
   const disk = dir && !pin.endsWith('+dirty') ? join(dir, pin) : undefined;
-  if (disk && existsSync(dir!)) for (const d of readdirSync(dir!)) if (d !== pin) void rm(join(dir!, d), { recursive: true, force: true });
+  if (disk && existsSync(dir!)) for (const d of readdirSync(dir!)) if (d !== pin) rm(join(dir!, d), { recursive: true, force: true }).catch(() => {});
   const file = (hash: string) => join(disk!, `${hash}.json`);
   return {
     /** the memoised value for `key`, else `compute()` (concurrent callers share one computation). `keep: false` = answer the caller, cache nowhere. */

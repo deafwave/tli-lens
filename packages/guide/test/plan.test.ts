@@ -152,10 +152,15 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     const ii = c.find((x) => x.key === 'inverse|16')!;
     expect(ii.costFE).toBe(3399);
     expect(ii.label).toMatch(/Inverse Image.*\+39% reflected Medium/);
-    const p = ii.changes[0] as unknown as { op: string; copies: { ee: number }[]; ext: unknown[] };
+    const p = ii.changes[0] as unknown as Parameters<typeof applyPatch>[1] & { op: 'inverse' };
     expect(p.op).toBe('inverse');
-    expect(p.copies.every((x) => x.ee === 39)).toBe(true);
-    expect(p.ext).toEqual([]);
+    // placed like the example build's on your page: each copy at your points on its source; your originals and your prisms' affixes stay (re/evidence/prisms.md (c):
+    // the example build's 12040100 is at Point 0 only because its prerequisite has 1 of 3; the owner's has 3 of 3)
+    expect(p.copies).toEqual([12040100, 12060200, 12060100].map((node) => ({ node, points: 3, ee: 39 })));
+    const mine = { ...live.loadout, resolvedTalents: { ...live.loadout.resolvedTalents, ext: [[1204400061, [10, 10], 'prism-ext:54060400']] } };
+    const out = applyPatch(mine, p) as typeof mine;
+    expect(out.resolvedTalents.ext).toEqual(mine.resolvedTalents.ext);
+    expect(out.resolvedTalents.talents).toContainEqual([12040100, 3, 'talent:12040100']);
   });
   it('a slate on the board is never offered as one you own (owner, 2026-10-16: the read lists board slates among the items)', () => {
     const b = live.loadout.slateItems[0];

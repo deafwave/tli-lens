@@ -11,7 +11,7 @@ import { prismMoves } from './candidates/prisms';
 import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateCost, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
 import { applyPatch } from './patches';
 import { talentMovesWith } from './candidates/talents';
-import { targetMoves } from './candidates/target';
+import { inverseImage, targetMoves } from './candidates/target';
 import { bossName, ownedGear, ownedUniques } from './modes';
 import { ctxOfState, pieceKey, rankable, rankedOn } from './search';
 import { talentName } from './names';
@@ -216,10 +216,10 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   for (const m of targetMoves(s, ctx)) {
     // the example build's skill groups are not offered: they replace a whole group at a cost they do not carry (a socket's gem is gemMoves', priced)
     if (!/talent prism/.test(m.label)) continue;
-    const pr = m.changes[0] as unknown as { op: string; copies: { ee: number }[] };
+    const pr = m.changes[0] as unknown as { op: string };
     // an Inverse Image's rolls cannot be changed once bought (owner, 2026-10-17): each listing as listed, reflecting the example build's Medium talents
     if (o.inverseImages?.length && pr.op === 'inverse') for (const x of o.inverseImages) out.push({ key: `inverse|${x.n}`, group: 'inverse', kind: 'prism', costFE: x.fe,
-      note: "placed like the example build's; the roll is fixed once bought", changes: [{ ...pr, ext: [], copies: pr.copies.map((c) => ({ ...c, ee: x.medium })) } as never],
+      note: "placed like the example build's; the roll is fixed once bought", changes: [inverseImage(s.loadout as never, x.medium) as never],
       label: `Buy the Inverse Image listed #${x.n} (${x.medium >= 0 ? '+' : ''}${x.medium}% reflected Medium Talent effects) for ${x.fe} FE: it reflects the Onslaughter crit and two-handed Medium talents, as the example build's` });
     else add({ ...m, costFE: o.prismFE }, "An Inverse Image talent prism like the example build (it reflects the Onslaughter crit and two-handed Medium talents; with the example build's +17.5 Strength on three Medium talents) at your price");
   }

@@ -23,6 +23,7 @@ description: "Rank the auction house search the player has open in Torchlight: I
    - Gear: each listing in place of what you wear in its slot (a ring: the better ring slot).
    - Vorax limb: in its slot type's slot (Digits: ring1 or ring2), in place of the gear there and of your limb: one Vorax Gear at a time (tlidb); a limb you wear in another slot leaves it empty (named in the row).
    - Hero memory: in place of yours of its kind (Origin, Discipline, Progress), its awaken affixes with it.
+   - Inverse Image: placed like the example build's (its three reflected Medium talents) at the listing's Medium roll, each copy at your points on its source, your originals and other prisms kept. Its Micro roll (the area's micro talent) is not priced: a row naming it is a lower bound. Medium -100 % or no reflect lines read: unknown.
    - Your character: the newest `dps-debug/game/exports/<stamp>/export-<stamp>.json` (`--export <file>` overrides it). `--watch` reads it again from the game at
      start (~16 s, alongside): unchanged, nothing is priced again; changed, every row is priced again against the new read.
 

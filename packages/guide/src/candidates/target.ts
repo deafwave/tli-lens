@@ -30,6 +30,14 @@ const rows = (f: string): Record<string, any> => table<{ rows: Record<string, an
 let target: Target | undefined;
 const loadTarget = (): Target => target ??= JSON.parse(readFileSync(join(pinRoot(), 're/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
 
+/** An Inverse Image at reflected Medium Talent effect `medium` %, placed like the target's (its three Medium copies) on your page: each copy at your points on
+ *  its source, your originals and your prisms' affixes kept (re/evidence/prisms.md (c): the target's 12040100 is at Point 0, its points on the copy, only
+ *  because its prerequisite has 1 of 3). ponytail: an original whose prerequisite you have not met is priced as if met; the area's micro copy is not priced. */
+export function inverseImage(lo: { resolvedTalents?: { talents?: [number, number, string][] } }, medium: number): Extract<LoadoutPatch, { op: 'inverse' }> {
+  const rt = lo.resolvedTalents?.talents ?? [], pts = (n: number) => rt.find(([, , tag]) => tag === `talent:${n}`)?.[1] ?? 0;
+  return { kind: 'patch', op: 'inverse', copies: prismOf(loadTarget() as never)!.copies.flatMap((c) => (pts(c.node) ? [{ node: c.node, points: pts(c.node), ee: medium }] : [])) };
+}
+
 /** The target's slates as the server's resolved influence tables, assembled exactly as dps-debug's target.test.ts / guide/figure.ts do: the V2 file filtered to
  *  the slates whose talents the target holds. */
 let board: Extract<LoadoutPatch, { op: 'slate-board' }>['items'] | undefined;

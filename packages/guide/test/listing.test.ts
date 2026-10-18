@@ -40,6 +40,18 @@ describe('a listing on your character (places)', () => {
     expect(ps.map((p) => p.change.items.map((v) => [v.slot, v.affixes.map((a) => a.id)]))).toEqual([[['ring1', [8]]], [['ring2', [8]]]]);
     expect((places(listing({ baseId: 380001, type: 41 }), state) as unknown as P).map((p) => p.slot)).toEqual(['gloves, ring1 left empty']);
   });
+  it("an Inverse Image is placed like the example build's at its reflected Medium roll; a Micro roll it does not price is named; no Medium line, nowhere", () => {
+    const page = { ...state, loadout: { ...state.loadout, resolvedTalents: { talents: [12040100, 12050100, 12060100, 12060200].map((n) => [n, 3, `talent:${n}`]), ext: [] } } } as unknown as State;
+    type P = { slot: string; change: { op: string; copies: { ee: number }[] } }[];
+    const ii = (affixes: Listing['affixes']) => places(listing({ baseId: 360701, type: 39, affixes }), page);
+    const [p] = ii([aff(1224626011, 'FixedBaseAffix', [58]), aff(1224626031, 'FixedBaseAffix', [-100])]) as unknown as P;
+    expect([p.change.op, ...p.change.copies.map((c) => c.ee)]).toEqual(['inverse', 58, 58, 58]);
+    expect(p.slot).not.toMatch(/Micro/);
+    expect((ii([aff(1224626011, 'FixedBaseAffix', [10]), aff(1224626001, 'FixedBaseAffix', [32])]) as unknown as P)[0].slot).toMatch(/Micro \+32% .*not priced/);
+    // a copy at -100 % weighs 0 (dps-debug refuses it): nothing priced is reflected
+    expect(ii([aff(1224626041, 'FixedBaseAffix', [-100]), aff(1224626001, 'FixedBaseAffix', [130])])).toMatch(/Medium -100%.*Micro \+130% .*not priced/);
+    expect(ii([aff(1204509011, 'BaseAttrInfoList', [])])).toMatch(/no reflected Medium Talent line/);
+  });
 });
 
 // the owner's newest read (dps-debug game/exports): every piece you wear, as the market reader reads a listing, prices at exactly your figure

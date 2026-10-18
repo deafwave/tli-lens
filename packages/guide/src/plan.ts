@@ -8,7 +8,7 @@ import { costOf } from './priceOf';
 import { kismetMoves, pointProbes } from './candidates/kismets';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
-import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
+import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, screenSlate, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
 import { applyPatch } from './patches';
 import { talentMovesWith } from './candidates/talents';
 import { inverseImage, targetMoves } from './candidates/target';
@@ -294,10 +294,9 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   // a slate listing the market read: its lines, base, shape and price, in place of one of your slates its type may take, or added where the board, re-laid out
   // (moving and rotating a slate costs next to nothing: owner, 2026-10-16), has room; never a slate made up from lines (owner, 2026-10-18: three plan slates no
   // market had, one priced from a Pedigree). Screened by its lines' gains (one more slate line each) x what emptying your slate keeps (1 when it carries all of
-  // that slate's lines); the best few per place priced.
-  // ponytail: lines multiply in the screen; a pair that pays only together screens low (raise TOP, or price every listing: ~4 figures/s)
-  const gainOf = new Map(lines.map((x) => [x.id, x.gain ?? 1])), seen = o.slateListings ?? [];
-  const screen = (l: SeenSlate) => l.talents.reduce((p, t) => p * (gainOf.get(t) ?? 1), 1);
+  // that slate's lines: screenSlate); the best few per place priced.
+  const gainOf = new Map(lines.map((x) => [x.id, x.gain ?? 1])), seen = o.slateListings ?? [], g = (t: number) => gainOf.get(t) ?? 1;
+  const screen = (l: SeenSlate) => screenSlate(l.talents, g, 1, []);
   const best = (xs: { l: SeenSlate; e: number }[]) => { const TOP = 6, ok = xs.filter((x) => x.e > 1.005);
     return [...new Set([...[...ok].sort((a, b) => (b.e - 1) / Math.max(b.l.price, 1) - (a.e - 1) / Math.max(a.l.price, 1)).slice(0, TOP), ...[...ok].sort((a, b) => b.e - a.e).slice(0, TOP / 2)])]; };
   const listed = (l: SeenSlate) => `the ${SLATE_KIND[l.baseId] ?? 'slate'} listed at ${l.price} FE (seen ${new Date(l.at).toLocaleTimeString()}: ${l.talents.map(talentName).join(', ')})`;
@@ -306,7 +305,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   slates.forEach((it, i) => {
     const keep = o.slateKeep?.[i];
     if (keep === undefined) return;
-    for (const { l } of best(seen.filter((x) => replaceable(slates, x.baseId).includes(i)).map((x) => ({ l: x, e: screen(x) * (it.talents.every((t) => x.talents.includes(t)) ? 1 : keep) })))) {
+    for (const { l } of best(seen.filter((x) => replaceable(slates, x.baseId).includes(i)).map((x) => ({ l: x, e: screenSlate(x.talents, g, keep, it.talents) })))) {
       const change = replaceSlate(s, i, l.talents, { baseId: l.baseId, shapeId: l.shapeId });
       if (fitsLayout(applyPatch(s.loadout, change as never), s.level, added))
         out.push({ key: `${listing(l)}|${i}`, group: listing(l), kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there',

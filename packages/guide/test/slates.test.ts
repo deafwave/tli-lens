@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { freed, redundant, replaceable, slateMoves } from '../src/candidates/slates';
+import { freed, redundant, replaceable, screenSlate, slateMoves } from '../src/candidates/slates';
 import { table } from '../src/pin';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
@@ -65,4 +65,10 @@ describe('redundant', () => {
   it('frees a slate when the one it replaces is redundant too (a consolidation)', () => expect(freed(mine, 0, [1, 2], [0, 1, 2, 3])).toEqual([1]));
   it('frees none in place of an unrelated slate it could put in place of the redundant one instead', () => expect(freed(mine, 2, [1, 2], [0, 1, 2, 3])).toEqual([]));
   it('frees them in place of an unrelated slate when a cap keeps it out of a redundant one', () => expect(freed(mine, 2, [1, 2], [2, 3])).toEqual([0, 1]));
+});
+
+describe('screenSlate: a listing estimated from its lines before any figure of it (owner, 2026-10-18: 8,942 slates read, 21 priced)', () => {
+  const g = (t: number) => ({ 1: 1.1, 2: 1.05 } as Record<number, number>)[t] ?? 1;
+  it('its lines multiplied, times what emptying your slate keeps', () => expect(screenSlate([1, 2, 9], g, 0.9, [7])).toBeCloseTo(1.1 * 1.05 * 0.9));
+  it('nothing lost when it carries every line of the slate it replaces', () => expect(screenSlate([1, 7], g, 0.9, [7])).toBeCloseTo(1.1));
 });

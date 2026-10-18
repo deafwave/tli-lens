@@ -134,6 +134,10 @@ export const freed = (items: { talents: number[] }[], index: number, talents: nu
 
 /** a slate listing the market has read (market.ts keeps them in .cache/slate-listings.json; its base and shape are in the key) */
 export type SeenSlate = { talents: number[]; price: number; at: string; baseId: number; shapeId: number };
+/** a slate listing's screen in place of your slate holding `replaced`: its lines' gains (one more slate line each, as a ratio) multiplied, times what emptying your
+ *  slate keeps (1 when the listing carries all that slate's lines). ponytail: lines multiply; a pair that pays only together screens low (the exact figure decides) */
+export const screenSlate = (talents: number[], gainOf: (t: number) => number, keep: number, replaced: number[]) =>
+  talents.reduce((p, t) => p * gainOf(t), 1) * (replaced.every((t) => talents.includes(t)) ? 1 : keep);
 
 /** Slate talents to look for (user, 2026-10-16: "we need more buckets"): every talent the game shows (any tree, cores too; one per distinct effect) priced as one
  *  more slate talent on the character, the gains above 0.5 % best first. A core the build already holds adds nothing (CT1). Which slate can roll which talent

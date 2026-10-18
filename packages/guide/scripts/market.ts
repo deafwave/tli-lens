@@ -23,7 +23,7 @@ import { places, type Listing } from '../src/listing';
 import { localItems } from '../src/modes';
 import { fetchSeason, fetchSnapshot, snapshotBook, type EtorItems } from '../src/pricing';
 import { pinCommit, table } from '../src/pin';
-import { freed, replaceable, replaceSlate, type SeenSlate } from '../src/candidates/slates';
+import { freed, replaceable, replaceSlate, screenSlate, withSlate, type SeenSlate } from '../src/candidates/slates';
 import { createEvaluator } from '../src/engine/pool';
 import { canonical } from '../src/engine/memo';
 import { talentName } from '../src/names';
@@ -126,7 +126,7 @@ const seen: Record<string, SeenSlate> = existsSync(SEEN) ? JSON.parse(readFileSy
 function remember(slates: Listing[]) {
   const fresh = slates.filter((l) => l.priceType === FE && !(rowId(l) in seen));
   if (!fresh.length || file) return;
-  for (const l of fresh) seen[rowId(l)] = { talents: l.talents!, price: l.price, at: new Date().toISOString() };
+  for (const l of fresh) seen[rowId(l)] = { talents: l.talents!, price: l.price, at: new Date().toISOString(), baseId: l.baseId, shapeId: l.shapeId! };
   for (const [k, v] of Object.entries(seen)) if (Date.now() - Date.parse(v.at) > 7 * 864e5) delete seen[k];
   writeAtomic(SEEN, JSON.stringify(seen));
 }
@@ -192,7 +192,7 @@ function rankSlates(slates: Listing[]): Ranked {
   const drop = mine.map((_, i) => slate(i, []));
   // ponytail: the weakest slate (+ any sharing a talent) stands in for every slate - exact when talents multiply; a listing that interacts with another
   // slate some other way is ranked low. --exact prices every slot.
-  const gain = (l: Listing): { g?: number | string; slot?: number } => {
+  const gain = (l: Listing): { g?: number | string; gc?: number | string; slot?: number; free?: number[] } => {
     if (l.priceType !== FE) return { g: `priced in item ${l.priceType}, not Flame Elementium` };
     const fits = replaceable(mine, l.baseId).filter((i) => !same || mine[i].shapeId === l.shapeId);
     if (!fits.length) return { g: `no slate on your board it can go in place of (${same ? `shape ${l.shapeId}, ` : ''}base ${l.baseId}: SLATE_CAP)` };
@@ -213,12 +213,24 @@ function rankSlates(slates: Listing[]): Ranked {
   };
   const freeing = (r: { g?: number | string; gc?: number | string; free?: number[] }) => (r.free && typeof r.g === 'number'
     ? `, freeing your slate${r.free.length > 1 ? 's' : ''} ${r.free.map((j) => j + 1).join(' + ')} (${pct(r.gc as number)} with ${r.free.length > 1 ? 'them' : 'it'} empty, + ${pct(r.g - (r.gc as number))}: each place at your weakest slate of its type)` : '');
-  const rows = slates.map((l) => ({ l, ...gain(l) })), pending = rows.filter((r) => r.g === undefined).length;
-  const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
+  // every listing screened from its lines (one figure a line, shared by every listing that carries it: screenSlate) in place of each slate it fits; only the page's
+  // best screens get their exact figures (owner, 2026-10-18: 8,942 slates read, 21 priced, the snipes sold first); --exact prices every listing
+  const line = (t: number) => want(`line|${t}`, () => [withSlate(state, [t])!]);
+  const screen = (l: Listing): { e?: number; slot?: number } => {
+    const fits = l.priceType === FE ? replaceable(mine, l.baseId).filter((i) => (!same || mine[i].shapeId === l.shapeId) && typeof drop[i] === 'number') : [];
+    const gs = new Map(l.talents!.map((t) => [t, line(t)]));
+    if (!fits.length || [...gs.values()].includes(undefined)) return {};
+    const g = (t: number) => { const x = gs.get(t); return typeof x === 'number' ? 1 + x : 1; };
+    return fits.map((i) => ({ e: screenSlate(l.talents!, g, 1 + (drop[i] as number), mine[i].talents) - 1, slot: i })).sort((a, b) => b.e - a.e)[0];
+  };
+  const est = slates.map((l) => ({ l, ...screen(l) })), ok = est.filter((x) => x.e !== undefined && x.e > 0.005);
+  const pick = new Set([...[...ok].sort((a, b) => b.e! / Math.max(b.l.price, 1) - a.e! / Math.max(a.l.price, 1)).slice(0, 3), ...[...ok].sort((a, b) => b.e! - a.e!).slice(0, 2)].map((x) => x.l));
+  const rows = est.map(({ l, e, slot }) => (exact || pick.has(l) || e === undefined ? { l, ...gain(l) } : { l, g: e, slot, est: true, free: undefined })), pending = rows.filter((r) => r.g === undefined).length;
+  const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ~ = screened from its lines, not priced; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
   for (const r of rows.sort((a, b) => num(b.g) - num(a.g)).slice(0, top))
-    lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
+    lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${('est' in r ? '~' : '') + pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
   const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), gain: r.g, per: r.g > 0 ? r.g / Math.max(r.l.price, 1) : r.g - 1,
-    text: `${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  slate ${r.slot! + 1}${r.free ? ` (frees ${r.free.map((j) => j + 1).join('+')})` : ''}: ${r.l.talents!.map(talentName).join(' + ')}` }] : []));
+    text: `${'est' in r ? '~' : ' '}${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  slate ${r.slot! + 1}${r.free ? ` (frees ${r.free.map((j) => j + 1).join('+')})` : ''}: ${r.l.talents!.map(talentName).join(' + ')}` }] : []));
   return { lines, pending, rows: short };
 }
 const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;

@@ -2,6 +2,8 @@
  * Kismet candidates on the pactspirit page: socket on a free point, replace, remove, and Undetermined Fate install / remove (UF1).
  * Kismets: item_tattoo rows with one Modifier; a kismet's size is TattooSize 1 = a kind-1 (small) point, absent = kind 2 (middle) (UF1 [data], 12 of 12 on the Pro Build).
  * Roll = the midpoint of each catalog range. A Fate's rolled ExtraContractPoints are the server's: only lists the owner's loadout already shows are offered.
+ * Dual Kismets (ActiveNum 2) are set counters (dps-debug build.ts setRecs, config_set_items): one copy grants nothing, the second grants the set's modifiers.
+ * The copies a build lacks are socketed as one move; a copy that cannot complete the set is not offered.
  */
 import { fateExtraPoints } from '@dps/src/core/fate';
 import type { Catalog } from '@dps/src/types';
@@ -21,14 +23,14 @@ export const pointName = (n: number, pact?: string): string => {
   return `${pact ? `${pact} ` : ''}${Math.floor(i / 3) + 1}-${(i % 3) + 1}`;
 };
 
-interface Cand { level: number; baseId: number; name: string; kind: number; modifierId: number; rolls: number[] }
+interface Cand { level: number; baseId: number; name: string; kind: number; modifierId: number; rolls: number[]; /** copies the set needs (ActiveNum) */ need: number }
 function candidates(): Cand[] {
   const base = rows('config_item_base'), tat = rows('lua_config_item_tattoo'), mod = rows('config_modifier'), rolls = rows('config_modifier_rolls'), lang = rows('lang_en');
   const seen = new Set<number>();   // one candidate per modifier (several bases can carry the same one), in catalog order
   return Object.values(tat).filter(t => t.TattooType === undefined && t.Modifier?.length === 1 && mod[t.Modifier[0]] && lang[`item_base|name|${t.Id}`])
     .filter(t => !seen.has(t.Modifier[0]) && seen.add(t.Modifier[0]))
     .map(t => ({ level: (base[t.Id]?.i3c ?? 0) as number, baseId: t.Id, name: lang[`item_base|name|${t.Id}`] as string, kind: t.TattooSize === 1 ? SMALL : MIDDLE, modifierId: t.Modifier[0] as number,
-      rolls: ((rolls[t.Modifier[0]] ?? []) as number[][]).map(r => (r[0] + r[1]) / 2) }));
+      rolls: ((rolls[t.Modifier[0]] ?? []) as number[][]).map(r => (r[0] + r[1]) / 2), need: (t.ActiveNum ?? 1) as number }));
 }
 
 export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
@@ -53,7 +55,18 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     const g = `${Math.floor(n / 100)}/${kindOf(n)}`;
     return seenFree.has(g) ? false : (seenFree.add(g), true);
   });
+  for (const t of Object.values(rows('lua_config_item_tattoo'))) if (t.ActiveNum > 1 && !t.Modifier?.length && lang[`item_base|name|${t.Id}`])
+    ns.add(`kismet: ${lang[`item_base|name|${t.Id}`]} has no modifier in the catalog (not priced)`);
   for (const c of candidates().filter(x => x.level <= ctx.level)) {
+    const short = c.need - l.kismets.filter(k => k.modifierId === c.modifierId).length;
+    if (short <= 0 && c.need > 1) continue;   // the set is complete: another copy adds nothing (config_set_items has no higher count)
+    if (short > 1) {
+      const ps = onPage.filter(n => !at.has(n) && kindOf(n) === c.kind).slice(0, short), each = price(c.baseId);
+      if (ps.length < short) { ns.add(`kismet: ${c.name} needs ${short} free points of its size (sockets only; replacing kismets for a set is not searched)`); continue; }
+      moves.push({ kind: 'kismet', label: `${short} x ${c.name} on ${ps.map(p => pt(p)).join(' and ')} (a set: one copy alone grants nothing)`, acquisition: true,
+        costFE: each === null ? null : short * each, minLevel: c.level, like: [`kismetset|${c.name}`], changes: ps.map(p => socketChange(c, p, 'socket')) });
+      continue;
+    }
     for (const p of free) if (c.kind === kindOf(p)) moves.push({ kind: 'kismet', label: `Socket ${c.name} on ${pt(p)}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'socket')] });
     for (const p of occupied) if (c.kind === kindOf(p) && at.get(p)!.modifierId !== c.modifierId)
       moves.push({ kind: 'kismet', label: `Replace the kismet on ${pt(p)} with ${c.name}`, acquisition: true, costFE: price(c.baseId), minLevel: c.level, changes: [socketChange(c, p, 'replace')] });

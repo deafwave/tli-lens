@@ -71,6 +71,25 @@ describe('kismetMoves', () => {
     const l = { ...l100, kismets: [...(l100.kismets as object[]), { modifierId: 100350007, servantId: null, node: 112, rolls: [13] }] };
     expect(run(l).moves.filter(m => ch(m).kind === 'fate' && ch(m).action === 'remove').map(m => ch(m).point)).toEqual([211]);
   });
+  it('Dual Kismets are sets (ActiveNum 2): a missing pair is one move of two sockets at twice the price; a complete pair gets no third copy', () => {
+    const MIGHTY = 100350734, SPINDLE = 100350742, adds = (m: { changes: unknown[] }, id: number) => m.changes.some(c => (c as { modifierId?: number }).modifierId === id);
+    const { moves: ms } = run(l100, { 'Dual Kismet: Spindle': 30 });
+    const spindle = ms.filter(m => adds(m, SPINDLE));
+    expect(spindle).toHaveLength(1);
+    const pts = spindle[0].changes.map(c => (c as { point: number }).point);
+    expect([spindle[0].changes.length, new Set(pts).size, spindle[0].costFE]).toEqual([2, 2, 60]);
+    expect(pts.every(p => !(l100.kismets as K[]).some(k => k.node === p))).toBe(true);
+    expect(ms.some(m => adds(m, MIGHTY))).toBe(false);   // 108 + 307 hold the pair
+    const at = (l: Record<string, unknown>, p: number) => (l.kismets as K[]).find(k => k.node === p)?.modifierId;
+    const done = applyAll(l100, spindle[0], GROUND.hoa);
+    expect(pts.map(p => at(done, p))).toEqual([SPINDLE, SPINDLE]);
+  });
+  it('with one copy of a Dual Kismet held, the second is a single socket or replace (it completes the set)', () => {
+    const one = { ...l100, kismets: (l100.kismets as K[]).filter(k => k.node !== 307) };
+    const mighty = run(one).moves.filter(m => m.changes.some(c => (c as { modifierId?: number }).modifierId === 100350734));
+    expect(mighty.length).toBeGreaterThan(0);
+    expect(mighty.every(m => m.changes.length === 1 && /^(Socket|Replace)/.test(m.label))).toBe(true);
+  });
   it('the planner-file schema (servant page nodes) is not searched', () => {
     const r = run(loadout('re/evidence/loadout_probuild-hanshansi-bing.json'));
     expect(r.moves).toEqual([]);

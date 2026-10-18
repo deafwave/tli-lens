@@ -8,7 +8,7 @@ import { costOf } from './priceOf';
 import { kismetMoves, pointProbes } from './candidates/kismets';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
-import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, screenSlate, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
+import { addSlate, boardView, copiedFrom, copyPlaces, fitsInPlace, influenceText, overCap, packBoard, positional, replaceable, replaceSlate, screenSlate, slateMoves, slateName, slateWants, type SeenSlate } from './candidates/slates';
 import { applyPatch } from './patches';
 import { talentMovesWith } from './candidates/talents';
 import { inverseImage, targetMoves } from './candidates/target';
@@ -162,11 +162,12 @@ export function lineText(id: number, dyn: number[]): string {
 }
 /** packBoard, remembered per board and shape list (a search that fails can take seconds) */
 const packed = new Map<string, boolean>();
-/** the board `l` (its slates, the added ones as `extra` shapes) packs, and no capped type (SLATE_CAP: at most 3) is over */
+/** the board `l` (its slates, the added ones as `extra` shapes) packs, and no capped type (SLATE_CAP: at most 3) is over; a positional board (a Sparks of Moth Fire on
+ *  it) as its slates sit, never re-laid out */
 function fitsLayout(l: Record<string, unknown>, level: number, extra: number[]): boolean {
-  const items = (l.slateItems ?? []) as { itemId: string; baseId: number; shapeId?: number; link?: unknown; direction?: number }[];
-  const k = JSON.stringify([items.filter((x) => !x.itemId.startsWith('guide-add-')).map((x) => [x.baseId, x.shapeId, x.link, x.direction, x.itemId.startsWith('guide-')]), extra, level]);
-  if (!packed.has(k)) packed.set(k, !overCap(items) && packBoard(l, level, extra) !== null);
+  const items = (l.slateItems ?? []) as { itemId: string; baseId: number; shapeId?: number; link?: unknown; direction?: number; influenceId?: number }[];
+  const k = JSON.stringify([items.filter((x) => !x.itemId.startsWith('guide-add-')).map((x) => [x.baseId, x.shapeId, x.link, x.direction, x.itemId.startsWith('guide-'), x.influenceId]), extra, level]);
+  if (!packed.has(k)) packed.set(k, !overCap(items) && (positional(items) ? fitsInPlace(l, level) : packBoard(l, level, extra) !== null));
   return packed.get(k)!;
 }
 /** the skill gems one can hold (config_item_base p5c -> config_skill_stone) of a kind (config_skill_stone i4: 1 active, 3 aura), named */
@@ -180,7 +181,7 @@ function skillPool(kind: number): { sid: number; name: string }[] {
   }
   return pools.get(kind) ?? [];
 }
-type Cand = { key: string; /** taken once per group */ group?: string;
+type Cand = { key: string; /** taken once per group */ group?: string; /** the board slate a slate step fills (the slate viewer) */ boardAt?: number;
   /** the option as the one before a step (a kismet on the next free point of its size, or in place of the one a step socketed; a memory slot or an item's mod
    *  rerolled / crafted to the same line): a new candidate takes the lowest last score of the ones it shares a name with as its bound, as a stale score is (a gain
    *  shrinks as the build grows), and is priced only when it could win */ like?: string[];
@@ -301,22 +302,35 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
     return [...new Set([...[...ok].sort((a, b) => (b.e - 1) / Math.max(b.l.price, 1) - (a.e - 1) / Math.max(a.l.price, 1)).slice(0, TOP), ...[...ok].sort((a, b) => b.e - a.e).slice(0, TOP / 2)])]; };
   const listed = (l: SeenSlate) => `the ${SLATE_KIND[l.baseId] ?? 'slate'} listed at ${l.price} FE (seen ${new Date(l.at).toLocaleTimeString()}: ${l.talents.map(talentName).join(', ')})`;
   const listing = (l: SeenSlate) => `listing|${l.baseId}|${l.shapeId}|${l.price}|${l.talents.join('-')}`;
-  const slates = (L.slateItems ?? []) as unknown as { talents: number[]; baseId: number }[];
+  const slates = (L.slateItems ?? []) as unknown as { talents: number[]; baseId: number }[], copied = copiedFrom(slates as never), lined = seen.filter((x) => x.talents.length);
   slates.forEach((it, i) => {
     const keep = o.slateKeep?.[i];
     if (keep === undefined) return;
-    for (const { l } of best(seen.filter((x) => replaceable(slates, x.baseId).includes(i)).map((x) => ({ l: x, e: screenSlate(x.talents, g, keep, it.talents) })))) {
+    for (const { l } of best(lined.filter((x) => replaceable(slates, x.baseId).includes(i)).map((x) => ({ l: x, e: screenSlate(x.talents, g, keep, it.talents, copied[i]) })))) {
       const change = replaceSlate(s, i, l.talents, { baseId: l.baseId, shapeId: l.shapeId });
       if (fitsLayout(applyPatch(s.loadout, change as never), s.level, added))
-        out.push({ key: `${listing(l)}|${i}`, group: listing(l), kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there',
+        out.push({ key: `${listing(l)}|${i}`, group: listing(l), boardAt: i, kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there',
           label: `Buy ${listed(l)} in place of your slate ${i + 1} (${it.talents.map(talentName).join(', ')})`, changes: [change] });
     }
   });
-  for (const shape of [...new Set(seen.map((x) => x.shapeId))]) {
-    const one = seen.find((x) => x.shapeId === shape)!;
+  // a Sparks of Moth Fire listing (no lines: it copies the last line of the slate on the side it rolled) where it sits on your board as it is, on a free cell or in place
+  // of a slate, screened by the lines it copies there x what the slate it replaces keeps; per side the 3 cheapest (SLATE_CAP: 3 a board)
+  const bare = seen.filter((x) => !x.talents.length && x.influenceId).sort((a, b) => a.price - b.price);
+  const copiers = bare.filter((x, i) => bare.slice(0, i).filter((y) => y.shapeId === x.shapeId && y.influenceId === x.influenceId).length < 3).flatMap((l) => copyPlaces(s, l)
+    .filter((p) => p.replaced === undefined || o.slateKeep?.[p.replaced] !== undefined).map((p) => ({ l, p, e: p.copies.reduce((q, t) => q * g(t), p.replaced === undefined ? 1 : o.slateKeep![p.replaced]) })));
+  for (const { l, p } of best(copiers) as typeof copiers) {
+    const name = slateName(l.shapeId) ?? `slate ${l.baseId}`, mine = p.replaced === undefined ? undefined : slates[p.replaced];
+    out.push({ key: `sparks|${listing(l)}|${l.influenceId}|${p.replaced ?? 'free'}|${p.at}`, group: `${listing(l)}|${l.influenceId}|${l.at}`, boardAt: p.replaced ?? slates.length, kind: 'slate', costFE: l.price,
+      note: 'a listing the market read: check it is still there; what it copies is the last line of the slate on its side, so it goes where the step says',
+      label: `Buy the ${name} listed at ${l.price} FE (seen ${new Date(l.at).toLocaleTimeString()}; ${influenceText(l.influenceId!)}) and place it at column ${p.at[0]}, row ${p.at[1]}${mine ? `, in place of your slate ${p.replaced! + 1} (${mine.talents.length ? mine.talents.map(talentName).join(', ') : name})` : ''}: it copies ${p.copies.map(talentName).join(', ')}`,
+      changes: [{ kind: 'patch', op: 'slate-board', items: p.items } as never] });
+  }
+  if (positional(slates as never)) { ctx.notSearched.add('slate: a listing added to your board: a Sparks of Moth Fire on it copies by where the slates sit, so the board is not re-laid out to make room (a slate goes in place of one, or on a free cell)'); return out; }
+  for (const shape of [...new Set(lined.map((x) => x.shapeId))]) {
+    const one = lined.find((x) => x.shapeId === shape)!;
     if (!fitsLayout(applyPatch(s.loadout, addSlate(s, shape, [], one.baseId) as never), s.level, [...added, shape])) continue;
-    for (const { l } of best(seen.filter((x) => x.shapeId === shape).map((x) => ({ l: x, e: screen(x) }))))
-      out.push({ key: `${listing(l)}|add`, group: listing(l), kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there; the board re-laid out to fit it (the slate board shows where each goes)',
+    for (const { l } of best(lined.filter((x) => x.shapeId === shape).map((x) => ({ l: x, e: screen(x) }))))
+      out.push({ key: `${listing(l)}|add`, group: listing(l), boardAt: slates.length, kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there; the board re-laid out to fit it (the slate board shows where each goes)',
         label: `Buy ${listed(l)} and add it to your board`, changes: [addSlate(s, shape, l.talents, l.baseId)] });
   }
   return out;
@@ -388,8 +402,8 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
   // the board after the steps so far, in every write (a stopped plan keeps its slate viewer): as packBoard lays it out when slates were added (each placed
   // slate moved or rotated where it shows), else as it is
   const board = (): GuideOut['board'] => {
-    const items = (s.loadout.slateItems ?? []) as { itemId: string; shapeId?: number }[], extra = items.filter((x) => x.itemId.startsWith('guide-add-'));
-    const reshaped = items.some((x) => x.itemId.startsWith('guide-slate-')), lay = extra.length || reshaped ? packBoard(s.loadout, s.level, extra.map((x) => x.shapeId!)) : null, nowCells = boardView(s.loadout).slates.map((x) => JSON.stringify(x.cells));
+    const items = (s.loadout.slateItems ?? []) as { itemId: string; shapeId?: number; influenceId?: number }[], extra = items.filter((x) => x.itemId.startsWith('guide-add-'));
+    const reshaped = items.some((x) => x.itemId.startsWith('guide-slate-')), lay = !positional(items) && (extra.length || reshaped) ? packBoard(s.loadout, s.level, extra.map((x) => x.shapeId!)) : null, nowCells = boardView(s.loadout).slates.map((x) => JSON.stringify(x.cells));
     return { now: boardView(s0.loadout), after: boardView(s.loadout, (i) => (slateFrom[i] ? { source: slateFrom[i], changed: true }
       : lay && JSON.stringify(lay[i]) !== nowCells[i] ? { source: 'on your board: move or rotate it to where it shows', changed: true } : { source: 'on your board', changed: false }), lay ?? undefined) };
   };
@@ -441,10 +455,9 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
     }
     if (!w) continue;
     // the board slot a slate step fills, and where that slate comes from (the slate viewer)
-    const own = /^ownslate\|(.+)\|(\d+)$/.exec(w.c.key), buy = /^slate\|(\d+)\|/.exec(w.c.key);
+    const own = /^ownslate\|(.+)\|(\d+)$/.exec(w.c.key);
     if (own) { const o = s0.owned.find((x) => x.itemId === own[1]); slateFrom[+own[2]] = `from your ${placeOf(o?.where)}${o && o.where !== 'stash' ? `, slot ${o.slot}` : ''} (free, step ${steps.length + 1})`; }
-    if (buy) slateFrom[+buy[1]] = `buy (about ${Math.round(w.c.costFE)} FE, price assumed: check /market; step ${steps.length + 1})`;
-    if (w.c.key.startsWith('add|')) slateFrom[((s.loadout.slateItems ?? []) as unknown[]).length] = `buy and add (about ${Math.round(w.c.costFE)} FE, price assumed: check /market; step ${steps.length + 1})`;
+    else if (w.c.boardAt !== undefined) slateFrom[w.c.boardAt] = `buy: a listing the market read at ${Math.round(w.c.costFE)} FE (step ${steps.length + 1})`;
     s = { ...s, loadout: w.e.loadout }; spent += w.c.costFE; taken.add(w.c.key); if (w.c.group) taken.add(w.c.group);
     steps.push({ label: w.c.label, costFE: w.c.costFE, totalFE: spent, figure: w.e.figure, ...(w.c.note ? { note: w.c.note } : {}) });
     f = w.e.figure;
@@ -452,7 +465,7 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
     console.log(`step ${steps.length}: ${w.c.label.slice(0, 120)} | ${w.c.costFE} FE (total ${spent}) -> ${f.kill.toExponential(3)}/s`);
     onStep?.(out(true));
     // the build changed: new moves (a socket's new neighbours, a slot's new item) are priced, the rest keep their stale score
-    if (/^(own)?slate\||^add\|/.test(w.c.key)) await weakest();
+    if (w.c.kind === 'slate') await weakest();
     if (w.c.key.startsWith('skill|')) await weakSkills();
     const seen = new Set(cands.map((c) => c.key)), next = candidates(s, ctx, o, lines, keep).filter(fitsFE);
     for (const c of next) { const b = seen.has(c.key) ? undefined : boundOf(c, cands); if (b !== undefined) { score.set(c.key, b); seen.add(c.key); } }

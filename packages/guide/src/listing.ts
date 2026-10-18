@@ -9,7 +9,7 @@ import type { Change, State } from './types';
 export type Aff = { id: number; tier: number; text: string; dyn: number[]; list: string };
 /** `type` = the item's Type1 (1 gear, 26 slate, 34 hero memory, 39 talent prism, 41 vorax limb); `awaken` = a hero memory's AwakenData */
 export type Listing = { n: number; price: number; priceType: number; baseId: number; level: number; type: number; affixes: Aff[]; awaken?: { boost: number; affixes: Aff[] };
-  talents?: number[]; shapeId?: number };
+  talents?: number[]; shapeId?: number; /** a slate's influence row (a Sparks of Moth Fire: the side it copies) */ influenceId?: number };
 
 const rows = <T>(f: string) => table<{ rows: Record<string, T> }>(f).rows;
 // the what-if takes no Enchant key: a gear affix compiles alike in any list (only a hero memory's list is read, dps-debug loadout.ts memoryEntry), and chip's

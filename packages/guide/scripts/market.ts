@@ -23,7 +23,7 @@ import { places, type Listing } from '../src/listing';
 import { localItems } from '../src/modes';
 import { fetchSeason, fetchSnapshot, snapshotBook, type EtorItems } from '../src/pricing';
 import { pinCommit, table } from '../src/pin';
-import { freed, replaceable, replaceSlate, screenSlate, withSlate, type SeenSlate } from '../src/candidates/slates';
+import { copiedFrom, copyPlaces, freed, influenceText, replaceable, replaceSlate, screenSlate, slateName, withSlate, type SeenSlate } from '../src/candidates/slates';
 import { createEvaluator } from '../src/engine/pool';
 import { canonical } from '../src/engine/memo';
 import { talentName } from '../src/names';
@@ -129,7 +129,7 @@ const seen: Record<string, SeenSlate> = existsSync(SEEN) ? JSON.parse(readFileSy
 function remember(slates: Listing[]) {
   const fresh = slates.filter((l) => l.priceType === FE && !(rowId(l) in seen));
   if (!fresh.length || file) return;
-  for (const l of fresh) seen[rowId(l)] = { talents: l.talents!, price: l.price, at: new Date().toISOString(), baseId: l.baseId, shapeId: l.shapeId! };
+  for (const l of fresh) seen[rowId(l)] = { talents: l.talents ?? [], price: l.price, at: new Date().toISOString(), baseId: l.baseId, shapeId: l.shapeId!, ...(l.influenceId ? { influenceId: l.influenceId } : {}) };
   for (const [k, v] of Object.entries(seen)) if (Date.now() - Date.parse(v.at) > 7 * 864e5) delete seen[k];
   writeAtomic(SEEN, JSON.stringify(seen));
 }
@@ -216,29 +216,47 @@ function rankSlates(slates: Listing[]): Ranked {
     });
     return gs.some((x) => x.g === undefined) ? {} : gs.sort((a, b) => num(b.g) - num(a.g))[0];
   };
+  // a Sparks of Moth Fire (no lines: it copies the last line of the slate on the side it rolled) where it sits on your board as it is (copyPlaces), screened by the lines it
+  // copies there x what the slate it replaces keeps; its best 3 places priced, each figure shared by every listing of that side
+  const copier = (l: Listing) => !l.talents?.length && !!l.influenceId;
+  const where = (l: Listing, p: ReturnType<typeof copyPlaces>[number]) => `${slateName(l.shapeId!) ?? `slate ${l.baseId}`} (${influenceText(l.influenceId!).split('.')[0]}) at column ${p.at[0]}, row ${p.at[1]}${p.replaced === undefined ? '' : ` in place of your slate ${p.replaced + 1}`}: copies ${p.copies.map(talentName).join(' + ')}`;
+  const copyScreen = (l: Listing) => copyPlaces(state, { baseId: l.baseId, shapeId: l.shapeId!, influenceId: l.influenceId }).map((p) => {
+    const gs = p.copies.map((t) => line(t)), keep = p.replaced === undefined ? 0 : dropD[p.replaced];
+    return { p, e: gs.includes(undefined) || keep === undefined ? undefined : gs.reduce((q: number, x) => q * (typeof x === 'number' ? 1 + x : 1), 1) * (1 + (typeof keep === 'number' ? keep : 0)) - 1 };
+  });
+  const copyGain = (l: Listing): { g?: number | string; slot?: number; where?: string } => {
+    const ps = copyScreen(l);
+    if (ps.some((x) => x.e === undefined)) return {};
+    if (!ps.length) return { g: 'it copies no line in any place on your board' };
+    const gs = ps.sort((a, b) => b.e! - a.e!).slice(0, 3).map(({ p }) => ({ g: want(`copy|${l.shapeId}|${l.influenceId}|${p.replaced ?? 'free'}|${p.at}`, () => [{ kind: 'patch', op: 'slate-board', items: p.items } as never]), slot: p.replaced, where: where(l, p) }));
+    return gs.some((x) => x.g === undefined) ? {} : gs.sort((a, b) => num(b.g) - num(a.g))[0];
+  };
   const freeing = (r: { g?: number | string; gc?: number | string; free?: number[] }) => (r.free && typeof r.g === 'number'
     ? `, freeing your slate${r.free.length > 1 ? 's' : ''} ${r.free.map((j) => j + 1).join(' + ')} (${pct(r.gc as number)} with ${r.free.length > 1 ? 'them' : 'it'} empty, + ${pct(r.g - (r.gc as number))}: each place at your weakest slate of its type)` : '');
   // every listing screened from its lines (one figure a line, shared by every listing that carries it: screenSlate) in place of each slate it fits; only the page's
   // best screens get their exact figures (owner, 2026-10-18: 8,942 slates read, 21 priced, the snipes sold first); --exact prices every listing
-  const line = (t: number) => want(`dmg|line|${t}`, () => [withSlate(state, [t])!], true), dropD = mine.map((_, i) => dropDamage(i));
+  const line = (t: number) => want(`dmg|line|${t}`, () => [withSlate(state, [t])!], true), dropD = mine.map((_, i) => dropDamage(i)), copied = copiedFrom(mine as never);
   // the screen is uncapped damage (it multiplies): the ranking's own unit except on the Traveler (capped), where its rows rank below the priced ones and stay off the lists
   const sameUnit = state.target !== 'traveler';
-  const screen = (l: Listing): { e?: number; slot?: number } => {
+  const screen = (l: Listing): { e?: number; slot?: number; where?: string } => {
+    if (copier(l)) { const ps = copyScreen(l); if (ps.some((x) => x.e === undefined)) return {}; const b = ps.sort((a, c) => c.e! - a.e!)[0]; return b ? { e: b.e, slot: b.p.replaced, where: where(l, b.p) } : { e: -1 }; }
     const fits = l.priceType === FE ? replaceable(mine, l.baseId).filter((i) => (!same || mine[i].shapeId === l.shapeId) && typeof dropD[i] === 'number') : [];
     const gs = new Map(l.talents!.map((t) => [t, line(t)]));
     if (!fits.length || [...gs.values()].includes(undefined)) return {};
     const g = (t: number) => { const x = gs.get(t); return typeof x === 'number' ? 1 + x : 1; };
-    return fits.map((i) => ({ e: screenSlate(l.talents!, g, 1 + (dropD[i] as number), mine[i].talents) - 1, slot: i })).sort((a, b) => b.e - a.e)[0];
+    return fits.map((i) => ({ e: screenSlate(l.talents!, g, 1 + (dropD[i] as number), mine[i].talents, copied[i]) - 1, slot: i })).sort((a, b) => b.e - a.e)[0];
   };
   const est = slates.map((l) => ({ l, ...screen(l) })), ok = est.filter((x) => x.e !== undefined && x.e > 0.005);
   const pick = new Set([...[...ok].sort((a, b) => b.e! / Math.max(b.l.price, 1) - a.e! / Math.max(a.l.price, 1)).slice(0, 3), ...[...ok].sort((a, b) => b.e! - a.e!).slice(0, 2)].map((x) => x.l));
-  const rows = est.map(({ l, e, slot }) => (exact || pick.has(l) || e === undefined ? { l, ...gain(l) } : { l, g: e, slot, est: true, free: undefined })), pending = rows.filter((r) => r.g === undefined).length;
+  const rows = est.map(({ l, e, slot, where }) => (exact || pick.has(l) || e === undefined ? { l, ...(copier(l) ? copyGain(l) : gain(l)) } : { l, g: e, slot, where, est: true, free: undefined })) as
+    { l: Listing; g?: number | string; gc?: number | string; slot?: number; free?: number[]; where?: string; est?: boolean }[], pending = rows.filter((r) => r.g === undefined).length;
+  const what = (r: (typeof rows)[number]) => r.where ?? r.l.talents!.map(talentName).join(' + ');
   const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ~ = screened from its lines: damage at full Life, not priced${sameUnit ? '' : ` (listed below the priced ones, which are capped at 15T)`}; ranked by DPS gain on ${state.target} in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
   const rankOf = (r: { g?: number | string }) => ('est' in r && !sameUnit ? -1e9 : 0) + num(r.g);
   for (const r of rows.sort((a, b) => rankOf(b) - rankOf(a)).slice(0, top))
-    lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${('est' in r ? '~' : '') + pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
+    lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${('est' in r ? '~' : '') + pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${what(r)}${r.slot !== undefined && !r.where && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
   const short = rows.flatMap((r) => (typeof r.g === 'number' && (sameUnit || !('est' in r)) ? [{ id: rowId(r.l), gain: r.g, per: r.g > 0 ? r.g / Math.max(r.l.price, 1) : r.g - 1,
-    text: `${'est' in r ? '~' : ' '}${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  slate ${r.slot! + 1}${r.free ? ` (frees ${r.free.map((j) => j + 1).join('+')})` : ''}: ${r.l.talents!.map(talentName).join(' + ')}` }] : []));
+    text: `${'est' in r ? '~' : ' '}${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  ${r.where ?? `slate ${r.slot! + 1}${r.free ? ` (frees ${r.free.map((j) => j + 1).join('+')})` : ''}: ${what(r)}`}` }] : []));
   return { lines, pending, rows: short };
 }
 const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;
@@ -246,7 +264,7 @@ const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;
 /** the listings ranked from the figures landed so far */
 async function rank(listings: Listing[]): Promise<Ranked> {
   if (!listings.length) return { lines: ['no market search result on screen (open a search in the auction house first)'], pending: 0 };
-  const slates = listings.filter((l) => l.talents?.length);
+  const slates = listings.filter((l) => l.type === 26 || l.talents?.length);
   remember(slates);
   const r = { kind: slates.length ? 'slates' : 'gear', ...(slates.length ? rankSlates(slates) : has('craft') ? await rankGear(listings) : rankWorn(listings)) };
   if (!r.pending && unsaved) { writeAtomic(GAINS, JSON.stringify(gains)); unsaved = false; }
@@ -289,7 +307,7 @@ try {
     const tty = process.stdout.isTTY, read = file ? async () => readFileSync(file, 'utf8') : reader();
     let shown: Listing[] | undefined, at = '', printed = '', drawing = false, again = false, keptGen = gen;
     const kept = new Map<string, Map<string, Row>>(), pages = new Map<string, Listing[]>(), done = new Set<string>();
-    const kindOf = (ls: Listing[]) => (ls.some((l) => l.talents?.length) ? 'slates' : 'gear');
+    const kindOf = (ls: Listing[]) => (ls.some((l) => l.type === 26 || l.talents?.length) ? 'slates' : 'gear');
     // the slate listings read in the last 6 hours (slate-listings.json, keyed by the listing itself) are queued again, behind the page on screen: a restart
     // keeps the queue (owner, 2026-10-18)
     const recent = Object.entries(seen).filter(([, v]) => Date.now() - Date.parse(v.at) < 6 * 36e5).map(([k]) => JSON.parse(k) as Listing);

@@ -18,6 +18,7 @@ let cat: Catalog | undefined;
 /** the four tables slate.ts reads, as a Catalog stand-in */
 const catalog = (): Catalog => cat ??= { pe: '0x6aa39847', tables: Object.fromEntries(TABLES.map(f => [f, rows(f)])) } as unknown as Catalog;
 const CORE = 2;   // config_talent i4 kind 2 = core talent
+const list = <T>(x: unknown): T[] => (Array.isArray(x) ? x : []);
 
 const cellKey = (c: number, r: number) => `${c},${r}`;
 /** board cell -> hero level it opens at (lua_config_talent_block_board Level, none = open). Row 1180 has no Location in the catalog; the cells placed slates already
@@ -45,7 +46,48 @@ export function boardView(l: Record<string, unknown>, from: (i: number) => { sou
   const at = (it: SlateItem, i = items.indexOf(it)): [number, number][] => cellsAt?.[i] ?? (shapes[it.shapeId!]?.Shape ? cellsOf(it) : []);
   const held = new Set(items.filter((it) => !it.itemId.startsWith('guide-add-')).flatMap((it) => cellsOf(it).map(([x, y]) => cellKey(x, y))));
   return { cells: [...board(held)].map(([k, level]) => { const [x, y] = k.split(',').map(Number); return { x, y, level }; }),
-    slates: items.map((it, i) => ({ cells: at(it), lines: it.talents.map(talentName), ...from(i) })) };
+    slates: items.map((it, i) => ({ cells: at(it), lines: it.talents.length ? it.talents.map(talentName) : list<number>(it.influence?.TalentIdCopy).map((t) => `copies ${talentName(t)}`), ...from(i) })) };
+}
+
+/** A board one of whose slates rolled an influence row (TalentDatas.InfluenceId: a Sparks of Moth Fire copies the last line of the slate on its side) grants by where
+ *  its slates sit: it is resolved in place (dps-debug reboard) after every change and never re-laid out. */
+export const positional = (items: { influenceId?: number }[]) => items.some((x) => x.influenceId);
+/** the board resolved in place when positional; one that does not resolve (slates overlapping, a row dps-debug does not port) as given: fitsInPlace refuses it */
+const settle = (items: SlateItem[]) => { if (!positional(items)) return items; try { return reboard(catalog(), items); } catch { return items; } };
+/** a positional board as its slates sit: every cell open at `level`, none shared, and it resolves */
+export function fitsInPlace(l: Record<string, unknown>, level: number): boolean {
+  const items = (l.slateItems ?? []) as SlateItem[];
+  const open = new Set([...board(new Set(items.filter((it) => !it.itemId.startsWith('guide-')).flatMap((it) => cellsOf(it).map(([x, y]) => cellKey(x, y)))))].filter(([, lv]) => lv <= level).map(([k]) => k));
+  if (!items.every((it) => cellsOf(it).every(([x, y]) => open.has(cellKey(x, y))))) return false;
+  try { reboard(catalog(), items); return true; } catch { return false; }
+}
+/** by board slate: the copies of its last line the board holds (those lost when it is emptied); all 0 on a board that is not positional */
+export function copiedFrom(items: SlateItem[]): number[] {
+  const n = (its: SlateItem[]) => { try { return reboard(catalog(), its).reduce((t, x) => t + list(x.influence.TalentIdCopy).length, 0); } catch { return NaN; } };
+  const all = positional(items) ? n(items) : NaN;
+  return items.map((_, i) => { const d = all - n(items.map((x, j) => (j === i ? { ...x, talents: [] } : x))); return Number.isFinite(d) ? d : 0; });
+}
+/** the name the game gives a slate (item_gold by the gold row of its shape, the row dps-debug's slate.ts reads) and what an influence row does */
+export const slateName = (shapeId: number) => { const g = Object.values(rows('lua_config_item_talent_block_gold')).find((r) => r.TalentBlockShapeIds && String(shapeId) in r.TalentBlockShapeIds);
+  return (g && rows('lang_en')[`item_gold|name|${g.Id}`]) as string | undefined; };
+export const influenceText = (id: number) => String(rows('lang_en')[`talent_block_influence|description|${id}`] ?? `influence row ${id}`).replace(/<[^>]+>/g, '');
+/** A slate with no lines of its own that copies (a Sparks of Moth Fire listing, its side as listed: influenceId) on your board as it sits: on each free open cell, and on
+ *  each cell of a slate it may go in place of (SLATE_CAP), that slate out; each place where it copies a line, with the board resolved there (reboard). */
+export function copyPlaces(s: State, l: { baseId: number; shapeId: number; influenceId?: number }): { at: [number, number]; replaced?: number; items: SlateItem[]; copies: number[] }[] {
+  const items = (s.loadout.slateItems ?? []) as SlateItem[], held = new Set(items.flatMap((it) => cellsOf(it).map(([x, y]) => cellKey(x, y))));
+  const out: ReturnType<typeof copyPlaces> = [];
+  const at = (cell: [number, number], replaced?: number) => {
+    const me: SlateItem = { itemId: `guide-copy-${replaced ?? 'free'}-${cell.join('-')}`, baseId: l.baseId, shapeId: l.shapeId, direction: 0, link: { PageId: -4, SlotId: cell[0] * 10 + cell[1] }, talents: [], influence: {}, influenceId: l.influenceId };
+    const its = replaced === undefined ? [...items, me] : items.map((x, j) => (j === replaced ? me : x));
+    if (overCap(its)) return;
+    let r: SlateItem[];
+    try { r = reboard(catalog(), its); } catch { return; }
+    const copies = list<number>(r.find((x) => x.itemId === me.itemId)!.influence.TalentIdCopy);
+    if (copies.length) out.push({ at: cell, ...(replaced === undefined ? {} : { replaced }), items: r, copies });
+  };
+  for (const [k, lv] of board(held)) if (lv <= s.level && !held.has(k)) at(k.split(',').map(Number) as [number, number]);
+  items.forEach((it, i) => cellsOf(it).forEach((c) => at(c, i)));
+  return out;
 }
 
 /** The board re-laid out (owner, 2026-10-16: moving and rotating a slate costs next to nothing): every placed slate and the `extra` new ones (shape ids) packed
@@ -53,7 +95,7 @@ export function boardView(l: Record<string, unknown>, from: (i: number) => { sou
  *  slate (4 cells) takes the square / L / Z shapes in any rotation, a Corner of Divinity or Fallen Starlight (the 2- and 3-cell shapes) any rotation. Null when
  *  they do not all fit; else each slate's cells, the placed ones first in board order, then the extras. */
 /** slate types the game allows a few of on a board (owner, 2026-10-16/17: at most 3 Corners of Divinity and 3 Fallen Starlight - the 2- and 3-cell bases - and 1 Pedigree) */
-export const SLATE_CAP: Record<number, number> = { 261003: 3, 261005: 3, 261010: 1 };
+export const SLATE_CAP: Record<number, number> = { 261003: 3, 261005: 3, 261010: 1, 261001: 3 };   // Sparks of Moth Fire: lua_config_item_talent_block_gold 1001 Limit 3
 export const overCap = (items: { baseId: number }[]) => Object.entries(SLATE_CAP).some(([b, n]) => items.filter((x) => x.baseId === +b).length > n);
 /** the board indexes a slate of `baseId` can go in place of, the board staying within SLATE_CAP (a Pedigree: only your Pedigree) */
 export const replaceable = (items: { baseId: number }[], baseId: number) =>
@@ -105,19 +147,21 @@ export function withSlate(s: State, talents: number[]): Change | undefined {
 /** one more slate of `shapeId` carrying `talents` (a copy of a placed slate of that shape, else the first; its place on the board is packBoard's to find) */
 export function addSlate(s: State, shapeId: number, talents: number[], baseId?: number): Change {
   const items = (s.loadout.slateItems ?? []) as SlateItem[], tmpl = items.find((x) => x.shapeId === shapeId) ?? items[0];
-  return { kind: 'patch', op: 'slate-board', items: [...items, { ...tmpl, shapeId, ...(baseId === undefined ? {} : { baseId }), itemId: `guide-add-${items.length}-${talents.join('-')}`, talents,
+  return { kind: 'patch', op: 'slate-board', items: [...items, { ...tmpl, influenceId: undefined, shapeId, ...(baseId === undefined ? {} : { baseId }), itemId: `guide-add-${items.length}-${talents.join('-')}`, talents,
     influence: { ...(tmpl.influence as object), EffectTalentIds: talents, TalentIdDevour: talents.map(() => false), TalentIdInfluence: talents.map(() => 0), TalentIdCopyInfluence: {},
       TalentIdCopy: {}, DevilProjectionTalentIds: {}, DevilProjectionInfluence: {}, DevilLineBoostInfluence: {}, DevilLineBoostTalentIds: {} } }] } as never;
 }
 
 /** your slate `index` replaced by one of the same shape and place carrying `talents` (nothing devoured or copied): the only way a slate fits a full board;
- *  the `freed` slates are emptied (their place left for another slate) */
+ *  the `freed` slates are emptied (their place left for another slate); a positional board resolved again in place */
 export function replaceSlate(s: State, index: number, talents: number[], as?: { baseId: number; shapeId?: number }, freed: number[] = []): Change {
   const items = (s.loadout.slateItems ?? []) as SlateItem[];
-  const put = (x: SlateItem, j: number, t: number[]) => ({ ...x, ...(j === index && as ? { baseId: as.baseId, shapeId: as.shapeId ?? x.shapeId } : {}), itemId: `guide-slate-${j}-${t.join('-')}`, talents: t,
+  const put = (x: SlateItem, j: number, t: number[]) => ({ ...x, ...(j === index && as ? { baseId: as.baseId, shapeId: as.shapeId ?? x.shapeId, influenceId: undefined } : {}), itemId: `guide-slate-${j}-${t.join('-')}`, talents: t,
     influence: { ...(x.influence as object), EffectTalentIds: t, TalentIdDevour: t.map(() => false), TalentIdInfluence: t.map(() => 0), TalentIdCopyInfluence: {},
       TalentIdCopy: {}, DevilProjectionTalentIds: {}, DevilProjectionInfluence: {}, DevilLineBoostInfluence: {}, DevilLineBoostTalentIds: {} } });
-  return { kind: 'patch', op: 'slate-board', items: items.map((x, j) => (j === index ? put(x, j, talents) : freed.includes(j) ? put(x, j, []) : x)) } as never;
+  // a copier (no lines: what it gives is its copies) emptied is out
+  const out = !talents.length && !as && items[index]?.influenceId;
+  return { kind: 'patch', op: 'slate-board', items: settle(items.flatMap((x, j) => (j === index ? (out ? [] : [put(x, j, talents)]) : freed.includes(j) ? [put(x, j, [])] : [x]))) } as never;
 }
 
 /** the other slates a slate carrying `talents` makes redundant once it goes in place of your slate `index`: each whose talents it all carries (owner, 2026-10-18:
@@ -132,12 +176,14 @@ export const freed = (items: { talents: number[] }[], index: number, talents: nu
   return redundant(items, -1, talents).includes(index) || free.some((j) => !fits.includes(j)) ? free : [];
 };
 
-/** a slate listing the market has read (market.ts keeps them in .cache/slate-listings.json; its base and shape are in the key) */
-export type SeenSlate = { talents: number[]; price: number; at: string; baseId: number; shapeId: number };
-/** a slate listing's screen in place of your slate holding `replaced`: its lines' gains (one more slate line each, as a ratio) multiplied, times what emptying your
- *  slate keeps (1 when the listing carries all that slate's lines). ponytail: lines multiply; a pair that pays only together screens low (the exact figure decides) */
-export const screenSlate = (talents: number[], gainOf: (t: number) => number, keep: number, replaced: number[]) =>
-  talents.reduce((p, t) => p * gainOf(t), 1) * (replaced.every((t) => talents.includes(t)) ? 1 : keep);
+/** a slate listing the market has read (market.ts keeps them in .cache/slate-listings.json; its base and shape are in the key); `influenceId`: the influence row it
+ *  rolled (a Sparks of Moth Fire: the side it copies) */
+export type SeenSlate = { talents: number[]; price: number; at: string; baseId: number; shapeId: number; influenceId?: number };
+/** a slate listing's screen in place of your slate holding `replaced`: its lines' gains (one more slate line each, as a ratio) multiplied, its last line once more for
+ *  each of the `copied` copies the board's Sparks of Moth Fire make of that slate's (copiedFrom), times what emptying your slate keeps (1 when the listing carries
+ *  all that slate's lines). ponytail: lines multiply; a pair that pays only together screens low (the exact figure decides) */
+export const screenSlate = (talents: number[], gainOf: (t: number) => number, keep: number, replaced: number[], copied = 0) =>
+  talents.reduce((p, t) => p * gainOf(t), 1) * (copied && talents.length ? gainOf(talents[talents.length - 1]) ** copied : 1) * (replaced.every((t) => talents.includes(t)) ? 1 : keep);
 
 /** Slate talents to look for (user, 2026-10-16: "we need more buckets"): every talent the game shows (any tree, cores too; one per distinct effect) priced as one
  *  more slate talent on the character, the gains above 0.5 % best first. A core the build already holds adds nothing (CT1). Which slate can roll which talent

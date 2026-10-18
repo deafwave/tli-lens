@@ -50,4 +50,6 @@ Notes:
 - A Divinity Slate search is ranked by the model's damage gain of each listing **in place of one of your slates** (the best one named; `--same-shape` only lets it replace a slate of its own shape: your board is full,
   a slate only fits where one of its shape sits), on the plan's target (raw dummy DPS by default; `--target cube3`, or `traveler` = the dummy's capped at 15T). The row names which of your slates it replaces.
 - With `--same-shape`, a listing whose shape matches none of your slates is listed as not ranked.
+- A Sparks of Moth Fire listing (no lines; it copies the last line of the slate on the side it rolled, named on the row) is ranked where it sits on your board as it is:
+  on a free cell or in place of a slate, wherever it copies a line (`copyPlaces`); its best 3 places get exact figures, shared by every listing of that side.
 - The reader sees the listings the client holds for the search: run it again (or keep `--watch` running) for each page.

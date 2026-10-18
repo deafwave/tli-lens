@@ -27,7 +27,7 @@ def fast(L):
     return lambda tv: dict(L.items(tv)) if tv else {}
 
 def item(L, T, it):
-    """An item record (ItemData._Raw_Data / ItemMgr.Items[id]._Raw_Data) -> {baseId, level, type, affixes, [awaken], [talents, shapeId]}."""
+    """An item record (ItemData._Raw_Data / ItemMgr.Items[id]._Raw_Data) -> {baseId, level, type, affixes, [awaken], [talents, shapeId, influenceId]}."""
     val = lambda tv: tv and L.val(tv)
     r, al = T(it), T(T(it).get('AffixList'))
     def aff(a):
@@ -39,9 +39,9 @@ def item(L, T, it):
     aw = T(r.get('AwakenData'))
     if out['type'] == 34:   # a hero memory: what loadout.py's heroMemories entry carries beside the affixes
         out['awaken'] = {'boost': float(val(aw.get('BaseAttrBoostValue')) or 0), 'affixes': [aff(a) for _, a in sorted(T(aw.get('AwakenAffix')).items())]}
-    td = T(r.get('TalentDatas'))   # a slate (Pedigree of Gods, divinity slates): its talents and shape
-    if td.get('BaseTalentList'):
-        out.update(talents=[val(x) for _, x in sorted(T(td['BaseTalentList']).items())], shapeId=val(td.get('ShapeId')))
+    td = T(r.get('TalentDatas'))   # a slate (Pedigree of Gods, divinity slates): its talents, shape and the influence row it rolled (a Sparks of Moth Fire: no talents)
+    if out['type'] == 26 or td.get('BaseTalentList'):
+        out.update(talents=[val(x) for _, x in sorted(T(td.get('BaseTalentList')).items())], shapeId=val(td.get('ShapeId')), influenceId=val(td.get('InfluenceId')) or 0)
     return out
 
 def listings(L):

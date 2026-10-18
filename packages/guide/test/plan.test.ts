@@ -23,6 +23,63 @@ describe('a worn legendary is named by its own name, not its base (owner, 2026-1
   });
 });
 
+// the owner's board of 2026-10-18 11:57 with two Sparks of Moth Fire on the Attack Skill Level slate (dps-debug game/slates-sparks-20261018-115710.json: the Lua
+// slates read, the server's arrays), on the live character
+const sparksLua = JSON.parse(readFileSync(join(pinRoot(), 'game/slates-sparks-20261018-115710.json'), 'utf8'));
+const listOf = (x: unknown): number[] => (Array.isArray(x) ? x : []);
+type Item = { itemId: string; baseId: number; shapeId: number; link: { SlotId: number }; talents: number[]; influenceId?: number; influence: { TalentIdCopy?: unknown } };
+const sparksBoard: Item[] = Object.values(sparksLua.placed as Record<string, { ItemId: string; ConfigBaseId: number; LinkData: { SlotId: number }; TalentDatas: Record<string, never> }>).map((r) => ({
+  itemId: r.ItemId, baseId: r.ConfigBaseId, shapeId: r.TalentDatas.ShapeId, direction: r.TalentDatas.Direction, link: r.LinkData, influenceId: r.TalentDatas.InfluenceId,
+  talents: [...listOf(r.TalentDatas.BaseTalentList), ...listOf(r.TalentDatas.EnchantTalentList)], influence: sparksLua.InfluceV2Datas[r.ItemId] }));
+const sp: State = { ...s, loadout: { ...live.loadout, slateItems: sparksBoard } };
+const ASL = 10070100, asl = sparksBoard.findIndex((x) => x.talents.at(-1) === ASL);
+const itemsOf = (c: unknown) => (c as { items: Item[] }).items;
+const copiesIn = (items: Item[]) => items.filter((x) => x.baseId === 261001 && !x.itemId.startsWith('guide-')).map((x) => listOf(x.influence.TalentIdCopy));
+
+describe('Sparks of Moth Fire copies the last line of the slate on its side: a board holding one is priced where its slates sit (owner, 2026-10-18: two on the Attack Skill Level slate, +20 %)', () => {
+  it('a slate change re-resolves what each copies: your Attack Skill Level slate replaced or emptied takes its copies with it', async () => {
+    const { replaceSlate, copiedFrom } = await import('../src/candidates/slates');
+    expect(copiesIn(sparksBoard)).toEqual([[ASL], [ASL]]);
+    expect(copiesIn(itemsOf(replaceSlate(sp, asl, [21020400, 10050400])))).toEqual([[10050400], [10050400]]);
+    expect(copiesIn(itemsOf(replaceSlate(sp, asl, [])))).toEqual([[], []]);
+    expect(copiedFrom(sparksBoard as never)).toEqual(sparksBoard.map((_, i) => (i === asl ? 2 : 0)));
+    // a Sparks has no lines: emptied (what each slate is worth: the listings' screen) it is out, its copies with it
+    const one = sparksBoard.findIndex((x) => x.baseId === 261001);
+    expect(itemsOf(replaceSlate(sp, one, [])).filter((x) => x.baseId === 261001).map((x) => listOf(x.influence.TalentIdCopy))).toEqual([[ASL]]);
+  });
+  it('a Sparks listing goes where the slate on its side has a wanted last line (on your full board: in place of a slate), within the cap of 3 a board', () => {
+    const want = [{ id: ASL, name: 'God of Might: Attack Skill Level', gain: 1.1 }], keep = sparksBoard.map(() => 0.99);
+    const below = { talents: [], price: 460, at: new Date().toISOString(), baseId: 261001, shapeId: 2010, influenceId: 1003 };
+    const c = candidates(sp, ctx, { ...DEFAULT_PLAN, slateListings: [below], slateKeep: keep }, want).filter((x) => x.key.startsWith('sparks|'));
+    expect(c.length).toBeGreaterThan(0);
+    for (const x of c) expect(itemsOf(x.changes[0]).filter((i) => i.baseId === 261001).length).toBeLessThanOrEqual(3);
+    // below the cell (3, 4) of slate 24 sits the Attack Skill Level slate (cells (3, 5), (3, 6))
+    const best = c.find((x) => /copies God of Might: Attack Skill Level$/.test(x.label))!;
+    expect(best.costFE).toBe(460);
+    expect(best.label).toMatch(/^Buy the Sparks of Moth Fire listed at 460 FE \(seen .+; Copies the last Talent on the adjacent slate below this slate\..*\) and place it at column 3, row 4, in place of your slate \d \(/);
+    expect(itemsOf(best.changes[0]).find((i) => i.itemId.startsWith('guide-'))).toMatchObject({ baseId: 261001, link: { SlotId: 34 }, influenceId: 1003, influence: { TalentIdCopy: [ASL] } });
+  });
+  it('a listing in place of a slate a Sparks copies screens its last line once more per copy', async () => {
+    const { screenSlate } = await import('../src/candidates/slates');
+    const g = (t: number) => ({ 1: 1.1, 2: 1.05 } as Record<number, number>)[t] ?? 1;
+    expect(screenSlate([1, 2], g, 0.9, [7], 2)).toBeCloseTo(1.1 * 1.05 ** 3 * 0.9);
+  });
+  it('with a Sparks on the board no slate is added by re-laying the board out (what it copies hangs on where the slates sit): named; one of your shape in place of yours is', () => {
+    const corner = { talents: [43040200], price: 20, at: new Date().toISOString(), baseId: 261003, shapeId: 2020 }, n = { ...ctx, notSearched: new Set<string>() };
+    const c = candidates(sp, n, { ...DEFAULT_PLAN, slateListings: [corner], slateKeep: sparksBoard.map(() => 0.99) }, [{ id: 43040200, name: 'x', gain: 1.1 }]);
+    expect(c.filter((x) => x.key.endsWith('|add'))).toEqual([]);
+    expect([...n.notSearched].some((x) => /Sparks of Moth Fire/.test(x))).toBe(true);
+    const own = { ...sp, owned: [{ itemId: 'o', baseId: 261003, baseName: null, level: 86, where: 'stash', page: 0, slot: 1, count: 1, modifiers: {}, talents: [21020400, 10050400], shapeId: 2020 }] };
+    const put = candidates(own, ctx, DEFAULT_PLAN, lines).find((x) => x.key === `ownslate|o|${asl}`)!;
+    expect(copiesIn(itemsOf(put.changes[0]))).toEqual([[10050400], [10050400]]);
+  });
+  it('at most 3 Sparks of Moth Fire a board (lua_config_item_talent_block_gold 1001 Limit 3)', async () => {
+    const { overCap } = await import('../src/candidates/slates');
+    expect(overCap([0, 1, 2].map(() => ({ baseId: 261001 })))).toBe(false);
+    expect(overCap([0, 1, 2, 3].map(() => ({ baseId: 261001 })))).toBe(true);
+  });
+});
+
 describe('packBoard: the board re-laid out by each slate type rule (owner, 2026-10-16)', () => {
   it('every placed slate fits again; the Pedigree only flipped across the vertical axis; a slate too many does not fit', async () => {
     const { packBoard } = await import('../src/candidates/slates');

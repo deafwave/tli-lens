@@ -31,7 +31,10 @@ import { fromExport } from '../src/start';
 import { DEFAULT_PLAN } from '../src/plan';
 import type { Change, EvalCtx, Evaluator, Figure, State } from '../src/types';
 
-type Ranked = { lines: string[]; pending: number };
+/** rows: the ranked listings for --watch's list kept across pages (id: the listing without its place on the page; key: its rank, higher first) */
+type Row = { id: string; key: number; text: string };
+type Ranked = { lines: string[]; pending: number; kind?: string; rows?: Row[] };
+const rowId = (l: Listing) => JSON.stringify({ ...l, n: 0 });
 const FE = 100300;   // item_base|name|100300 Flame Elementium: a listing's PriceType
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const argv = process.argv, has = (f: string) => argv.includes(`--${f}`), arg = (f: string) => (has(f) ? argv[argv.indexOf(`--${f}`) + 1] : undefined);
@@ -157,7 +160,9 @@ function rankWorn(listings: Listing[]): Ranked {
       : `${pct(r.g).padStart(8)}  ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE | ${r.slot} | ${tiers}${r === best && r.g > 0 ? ' | best outright' : ''}`}`);
   }
   if (!rows.slice(0, top).includes(best) && typeof best.g === 'number' && best.g > 0) lines.push(`best outright: #${best.l.n} ${best.l.price} FE ${pct(best.g)}`);
-  return { lines, pending };
+  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), key: per(r),
+    text: `${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  ${lang[`item_base|name|${r.l.baseId}`] ?? r.l.baseId}` }] : []));
+  return { lines, pending, rows: short };
 }
 
 /** your slate i holding talents `t` (the same talents in another order: one figure) on the listing's base (its shape stays: the board is rebuilt around it) */
@@ -187,7 +192,9 @@ function rankSlates(slates: Listing[]): Ranked {
   const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''}, on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
   for (const r of rows.sort((a, b) => num(b.g) - num(a.g)).slice(0, top))
     lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
-  return { lines, pending };
+  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), key: r.g,
+    text: `${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  slate ${r.slot! + 1}: ${r.l.talents!.map(talentName).join(' + ')}` }] : []));
+  return { lines, pending, rows: short };
 }
 const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;
 
@@ -195,7 +202,7 @@ const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;
 async function rank(listings: Listing[]): Promise<Ranked> {
   if (!listings.length) return { lines: ['no market search result on screen (open a search in the auction house first)'], pending: 0 };
   const slates = listings.filter((l) => l.talents?.length);
-  const r = slates.length ? rankSlates(slates) : has('craft') ? await rankGear(listings) : rankWorn(listings);
+  const r = { kind: slates.length ? 'slates' : 'gear', ...(slates.length ? rankSlates(slates) : has('craft') ? await rankGear(listings) : rankWorn(listings)) };
   if (!r.pending && unsaved) { writeAtomic(GAINS, JSON.stringify(gains)); unsaved = false; }
   return r;
 }
@@ -231,9 +238,12 @@ try {
       if (landings === seen) await new Promise<void>((ok) => (wake = ok));
     }
   } else {
-    // a terminal: the page redrawn as each figure lands; a pipe: printed once ranked
+    // a terminal: the list redrawn as each figure lands; a pipe: printed once ranked. The list is the best of every page seen (by search kind) for this
+    // character, one line each, cut to the terminal's width
     const tty = process.stdout.isTTY, read = file ? async () => readFileSync(file, 'utf8') : reader();
-    let shown: Listing[] | undefined, at = '', printed = '', drawing = false, again = false;
+    let shown: Listing[] | undefined, at = '', printed = '', drawing = false, again = false, keptGen = gen;
+    const kept = new Map<string, Map<string, Row>>();
+    const cut = (s: string) => { const w = (process.stdout.columns || 120) - 1; return s.length > w ? `${s.slice(0, w - 1)}…` : s; };
     const draw = async () => {
       if (drawing) return void (again = true);
       drawing = true;
@@ -241,9 +251,19 @@ try {
         do {
           again = false;
           if (!shown) continue;
-          const p = page, r = await rank(shown), head = `${at}${base || !warmRun ? '' : ' (the evaluator is starting)'}${note}`, p2 = `${p}|${gen}`;
-          if (tty) process.stdout.write(`\x1b[H\x1b[J${head}\n${r.lines.join('\n')}\n`);
-          else if (!r.pending && printed !== p2) { printed = p2; console.log(`\n${head}\n${r.lines.join('\n')}`); }
+          const p = page, r = await rank(shown), p2 = `${p}|${gen}`;
+          if (keptGen !== gen) { kept.clear(); keptGen = gen; }
+          let lines = r.lines, head = `${at}${base || !warmRun ? '' : ' (the evaluator is starting)'}${note}`;
+          if (r.rows) {
+            const m = kept.get(r.kind!) ?? new Map<string, Row>();
+            kept.set(r.kind!, m);
+            for (const row of r.rows) m.set(row.id, row);
+            lines = [...m.values()].sort((a, b) => b.key - a.key).slice(0, top).map((x) => x.text);
+            head = `${at} ${r.kind} vs ${character().state.target}: best of ${m.size}${r.pending ? `, ${r.pending} pricing` : ''}${head.slice(at.length)}`;
+          }
+          const out = [head, ...lines].map(cut).join('\n');
+          if (tty) process.stdout.write(`\x1b[H\x1b[J${out}\n`);
+          else if (!r.pending && printed !== p2) { printed = p2; console.log(`\n${out}`); }
         } while (again);
       } catch (e) { console.warn(`market: ${(e as Error).message}`); } finally { drawing = false; }
     };

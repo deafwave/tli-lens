@@ -221,7 +221,8 @@ export async function createEvaluator(o: EvaluatorOpts = {}): Promise<Evaluator>
       },
       (e: Error) => {
         if (e.message === 'evaluator closed') throw e;
-        return { keep: !(e instanceof WorkerDied), v: { loadout, dropped: [], figure: { life100: 0, life0: 0, kill: 0, partial: [], stop: e.message } } };
+        // a subprocess the figure ran that failed (node's "Command failed: git ...", killed with the run at 18:44 on 2026-10-17) says nothing about the build: never cached
+        return { keep: !(e instanceof WorkerDied) && !e.message.startsWith('Command failed:'), v: { loadout, dropped: [], figure: { life100: 0, life0: 0, kill: 0, partial: [], stop: e.message } } };
       });
 
   return {

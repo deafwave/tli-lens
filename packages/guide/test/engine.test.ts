@@ -332,6 +332,17 @@ describe('worker death, startup, close', () => {
     expect((await ev.run(lo, [], ctx)).figure.stop).toBeUndefined();
     expect(runs).toBe(3);
   });
+  it("a subprocess that failed under the figure (a killed git) is no verdict: returned, never cached nor written (2026-10-17: 415 such stops cached at 18:44 hid every slate line)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    let failing = true, runs = 0;
+    const ev = await createEvaluator({ workers: 1, pin: 'abc', memoDir: dir, factory: () => ({ ready: Promise.resolve(), close: async () => {},
+      run: async j => { runs++; if (failing) throw new Error('Command failed: git -c safe.directory=* rev-parse HEAD'); return { loadout: j.loadout, dropped: [], fig: fig(200, 100) }; } }) });
+    expect((await ev.run(lo, [], ctx)).figure.stop).toMatch(/^Command failed/);
+    expect(readdirSync(dir)).toHaveLength(0);
+    failing = false;
+    expect((await ev.run(lo, [], ctx)).figure.stop).toBeUndefined();
+    expect(runs).toBe(2);
+  });
   it('a crash stop is not written to disk', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
     const ev = await createEvaluator({ workers: 1, pin: 'abc', memoDir: dir, factory: () => ({ ready: Promise.resolve(), close: async () => {}, run: async () => { throw new WorkerDied('x'); } }) });

@@ -50,6 +50,7 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 - The owner's plan comes from `pnpm guide plan` (or advise), never a one-off script writing advice.json: it must be rerunnable and carry no
   hand-typed assumptions.
 - Read the character fresh before every plan (`plan` does). A plan from an old read is wrong advice.
+- Every plan / replan's `advice.json` is committed and pushed to `main` as soon as it is written, and so is every code change (owner, 2026-10-17: "ALWAYS make the replan push to main").
 - A rule of the game the owner states becomes code with a test (`plan.ts` RULES, `test/plan.test.ts`), not a chat promise.
 - Stopping a background shell on Windows can leave its node process running: check for `cli.ts` processes before a new run and kill the
   tree (`taskkill //F //T //PID n`).

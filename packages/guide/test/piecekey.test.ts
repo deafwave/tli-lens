@@ -22,4 +22,7 @@ describe('pieceKey / rankable (dps-debug coordinator, 2026-10-16)', () => {
     expect(isPiece("the build's buff 10320 (s_miaozhun) slows the auto-throw from 20 to 22 frames while held (AIM1): the figure is its held state (83.75 %, the steady rules at 22 frames) and its not-held state (at 20) priced apart and weighted")).toBe(false);
     expect(isPiece("the build's Activation Medium: Boss skill 1234 adds no buff the figure derives (no battlecry action 0xc2f0d, no AddBuff 0x68a7a, no carried row): not in this figure")).toBe(true);
   });
+  it("GAP1's derived Bull's Rage on Activation Medium: Demolisher is a statement: +1 skill level changes its text, not what is priced (dps-debug figure.ts 526, the 2026-10-18 Cube 3 plan refused Lich: All Skills' Levels on it)", () => {
+    expect(isPiece("the build's buff 10120 (s_gongsuhefanwei) from skill 1230's AddBuff on Activation Medium: Demolisher (GAP1): level 22, 6 s (the AddBuff's literal) x duration modifiers = 8.10000 s = 243 frames present each cast, cooldown 8.00000 s, cast on the first gain after it (every 248.278 frames): held 97.87 % of the time")).toBe(false);
+  });
 });

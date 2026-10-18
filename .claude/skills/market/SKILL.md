@@ -38,7 +38,7 @@ Notes:
   slate search opens; Ctrl+C to stop). A page seen before ranks in under a second, also in a later run on the same character (figures are kept on disk).
   A reader that dies (the game restarted) is started again. etor prices are cached in `packages/guide/.cache/etor-snapshot.json` and fetched again every 30 minutes.
 - 8 workers (about 1.4 GB each; `--workers N`): 12 or 16 price no more figures a second. A figure takes about 2 s of one core.
-- Slates: a listing is priced in place of your weakest slate and of any slate that shares one of its talents; `--exact` tries every slate you hold (one figure per slate).
+- Slates: a listing is priced in place of your weakest slate and of any slate that shares one of its talents; `--exact` tries every slate you hold (one figure per slate). Each try also empties your slates whose talents the listing all carries (a 2-line Corner of Divinity holding two of your 1-line ones frees one place), each freed place valued at your weakest slate of its type, the line naming the slates freed.
 
 ## Slate searches
 

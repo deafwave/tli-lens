@@ -110,13 +110,20 @@ export function addSlate(s: State, shapeId: number, talents: number[]): Change {
       TalentIdCopy: {}, DevilProjectionTalentIds: {}, DevilProjectionInfluence: {}, DevilLineBoostInfluence: {}, DevilLineBoostTalentIds: {} } }] } as never;
 }
 
-/** your slate `index` replaced by one of the same shape and place carrying `talents` (nothing devoured or copied): the only way a slate fits a full board */
-export function replaceSlate(s: State, index: number, talents: number[], as?: { baseId: number; shapeId?: number }): Change {
+/** your slate `index` replaced by one of the same shape and place carrying `talents` (nothing devoured or copied): the only way a slate fits a full board;
+ *  the `freed` slates are emptied (their place left for another slate) */
+export function replaceSlate(s: State, index: number, talents: number[], as?: { baseId: number; shapeId?: number }, freed: number[] = []): Change {
   const items = (s.loadout.slateItems ?? []) as SlateItem[];
-  return { kind: 'patch', op: 'slate-board', items: items.map((x, j) => (j !== index ? x : { ...x, ...(as ? { baseId: as.baseId, shapeId: as.shapeId ?? x.shapeId } : {}), itemId: `guide-slate-${index}-${talents.join('-')}`, talents,
-    influence: { ...(x.influence as object), EffectTalentIds: talents, TalentIdDevour: talents.map(() => false), TalentIdInfluence: talents.map(() => 0), TalentIdCopyInfluence: {},
-      TalentIdCopy: {}, DevilProjectionTalentIds: {}, DevilProjectionInfluence: {}, DevilLineBoostInfluence: {}, DevilLineBoostTalentIds: {} } })) } as never;
+  const put = (x: SlateItem, j: number, t: number[]) => ({ ...x, ...(j === index && as ? { baseId: as.baseId, shapeId: as.shapeId ?? x.shapeId } : {}), itemId: `guide-slate-${j}-${t.join('-')}`, talents: t,
+    influence: { ...(x.influence as object), EffectTalentIds: t, TalentIdDevour: t.map(() => false), TalentIdInfluence: t.map(() => 0), TalentIdCopyInfluence: {},
+      TalentIdCopy: {}, DevilProjectionTalentIds: {}, DevilProjectionInfluence: {}, DevilLineBoostInfluence: {}, DevilLineBoostTalentIds: {} } });
+  return { kind: 'patch', op: 'slate-board', items: items.map((x, j) => (j === index ? put(x, j, talents) : freed.includes(j) ? put(x, j, []) : x)) } as never;
 }
+
+/** the other slates a slate carrying `talents` makes redundant once it goes in place of your slate `index`: each whose talents it all carries (owner, 2026-10-18:
+ *  a 2-line Corner of Divinity holding the lines of two of your 1-line ones frees one's place; a line capped at one copy (config_talent i8) adds nothing twice) */
+export const redundant = (items: { talents: number[] }[], index: number, talents: number[]) =>
+  items.map((_, j) => j).filter((j) => j !== index && items[j].talents.length > 0 && items[j].talents.every((t) => talents.includes(t)));
 
 /** Slate talents to look for (user, 2026-10-16: "we need more buckets"): every talent the game shows (any tree, cores too; one per distinct effect) priced as one
  *  more slate talent on the character, the gains above 0.5 % best first. A core the build already holds adds nothing (CT1). Which slate can roll which talent

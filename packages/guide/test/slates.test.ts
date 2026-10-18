@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { replaceable, slateMoves } from '../src/candidates/slates';
+import { redundant, replaceable, slateMoves } from '../src/candidates/slates';
 import { table } from '../src/pin';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
@@ -55,4 +55,11 @@ describe('replaceable', () => {
   it('a Pedigree replaces only the Pedigree (owner: at most one on a board)', () => expect(replaceable(board, 261010)).toEqual([3]));
   it('a fourth Corner of Divinity replaces only one of the three', () => expect(replaceable(board, 261005)).toEqual([0, 4, 5]));
   it('a base with no cap replaces any slate', () => expect(replaceable(board, 260504)).toEqual([0, 1, 2, 3, 4, 5, 6]));
+});
+
+describe('redundant', () => {
+  // your corners: X, Y, X+Z, and an empty one; a listing X+Y
+  const mine = [{ talents: [1] }, { talents: [2] }, { talents: [1, 3] }, { talents: [] }];
+  it('in place of the X corner it frees the Y corner (owner, 2026-10-18: work around a 2-line Corner of Divinity)', () => expect(redundant(mine, 0, [1, 2])).toEqual([1]));
+  it('in place of another slate it frees both 1-line corners, never one carrying a line it lacks or an empty one', () => expect(redundant(mine, 2, [1, 2])).toEqual([0, 1]));
 });

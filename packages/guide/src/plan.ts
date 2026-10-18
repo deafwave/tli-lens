@@ -52,7 +52,10 @@ const RULES = [
   'Your Paralysis and Sealed Mana Compensation talent points stay, and so do points on a node the model prices at exactly 0 (it cannot judge them).',
 ];
 /** where an item you own is: the read's 'stash' is item page 0: My Booth, what you list on the trade house (owner, 2026-10-17: your stash is empty; page 0 holds your 28 listed slates) */
-const placeOf = (where?: string) => (where === 'stash' ? 'booth' : where ?? 'bag');
+// the read's page 0 is the stash the Trade House's My Booth opens (owner, 2026-10-17 / 18): every stash tab, so its slot numbers repeat and are not named
+const placeOf = (where?: string) => (where === 'stash' ? 'stash (Trade House > My Booth > Stash)' : where ?? 'bag');
+/** a slate base the player can tell apart by name (slates.ts SLATE_CAP: 261010 is the Pedigree, 7 cells) */
+const SLATE_KIND: Record<number, string> = { 261010: 'Pedigree' };
 const KEPT = /Paralysis|Sealed Mana Compensation/;
 const CONVERSION = /Converts? .*Physical Damage to (Cold|Lightning|Fire)|Physical .*->.*(Cold|Lightning|Fire)/i;
 
@@ -302,7 +305,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
     const where = placeOf(own.where), may = replaceable(board, own.baseId);
     board.forEach((it, i) => !may.includes(i)
       || !fitsLayout(applyPatch(s.loadout, replaceSlate(s, i, own.talents!, { baseId: own.baseId, shapeId: own.shapeId }) as never), s.level, added) || out.push({ key: `ownslate|${own.itemId}|${i}`, group: `ownslate|${own.itemId}`, kind: 'slate', costFE: 0,
-      label: `Put your ${where} slate (slot ${own.slot}: ${own.talents!.map(talentName).join(', ')}) in place of board slate ${i + 1} (${it.talents.map(talentName).join(', ')})`, changes: [replaceSlate(s, i, own.talents!, { baseId: own.baseId, shapeId: own.shapeId })] }));
+      label: `Put your ${SLATE_KIND[own.baseId] ?? 'slate'} (level ${own.level}: ${own.talents!.map(talentName).join(', ')}) from your ${where}${own.where === 'stash' ? '' : `, slot ${own.slot}`} in place of board slate ${i + 1} (${it.talents.map(talentName).join(', ')})`, changes: [replaceSlate(s, i, own.talents!, { baseId: own.baseId, shapeId: own.shapeId })] }));
   }
   // a slate in place of one of yours, same shape (so it fits the board), carrying one or two wanted lines (its other lines priced as nothing)
   const slates = L.slateItems ?? [], price = (n: string) => o.slatePrices.find(([r]) => r.test(n))?.[1] ?? o.slateFE;
@@ -449,7 +452,7 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
     }
     // the board slot a slate step fills, and where that slate comes from (the slate viewer)
     const own = /^ownslate\|(.+)\|(\d+)$/.exec(w.c.key), buy = /^slate\|(\d+)\|/.exec(w.c.key);
-    if (own) { const o = s0.owned.find((x) => x.itemId === own[1]); slateFrom[+own[2]] = `from your ${placeOf(o?.where)}${o ? `, slot ${o.slot}` : ''} (free, step ${steps.length + 1})`; }
+    if (own) { const o = s0.owned.find((x) => x.itemId === own[1]); slateFrom[+own[2]] = `from your ${placeOf(o?.where)}${o && o.where !== 'stash' ? `, slot ${o.slot}` : ''} (free, step ${steps.length + 1})`; }
     if (buy) slateFrom[+buy[1]] = `buy (about ${Math.round(w.c.costFE)} FE, price assumed: check /market; step ${steps.length + 1})`;
     if (w.c.key.startsWith('add|')) slateFrom[((s.loadout.slateItems ?? []) as unknown[]).length] = `buy and add (about ${Math.round(w.c.costFE)} FE, price assumed: check /market; step ${steps.length + 1})`;
     s = { ...s, loadout: w.e.loadout }; spent += w.c.costFE; taken.add(w.c.key); if (w.c.group) taken.add(w.c.group);

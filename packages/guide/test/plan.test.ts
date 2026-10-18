@@ -99,7 +99,14 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     const c = candidates(own, ctx, DEFAULT_PLAN, lines).filter((x) => x.key.startsWith('ownslate|'));
     expect(c.length).toBe(live.loadout.slateItems.length);
     expect(c[0].costFE).toBe(0);
-    expect(c[0].label).toMatch(/^Put your booth slate \(slot 1: Ranger: chance to gain Agility Blessing on Critical Strike\) in place of board slate 1 /);
+    expect(c[0].label).toMatch(/^Put your slate \(level 86: Ranger: chance to gain Agility Blessing on Critical Strike\) from your stash \(Trade House > My Booth > Stash\) in place of board slate 1 /);
+  });
+  it("an owned slate is named so it can be found (owner, 2026-10-18: \"I don't know what booth slate slot 86 is\"): a Pedigree by its type; no stash slot (the read's page 0 is every stash tab, its slot numbers repeat)", () => {
+    const own = { ...s, owned: [{ itemId: 'p', baseId: 261010, baseName: null, level: 82, where: 'stash', page: 0, slot: 86, count: 1, modifiers: {}, talents: [43040200], shapeId: 2090 }] };
+    const c = candidates(own, ctx, DEFAULT_PLAN, lines).filter((x) => x.key.startsWith('ownslate|'));
+    expect(c.length).toBeGreaterThan(0);
+    for (const x of c) expect(x.label).toMatch(/^Put your Pedigree \(level 82: .+\) from your stash \(Trade House > My Booth > Stash\) in place of board slate \d/);
+    for (const x of c) expect(x.label).not.toMatch(/slot 86/);
   });
   it('a slate you own is tried in every board slot its type may take, not only the weakest (owner, 2026-10-17: free slates in the bag and booth were never offered)', () => {
     const own = { ...s, owned: [{ itemId: 'ped', baseId: 261010, baseName: null, level: 86, where: 'stash', page: 0, slot: 1, count: 1, modifiers: {}, talents: [43040200], shapeId: 2090 }] };

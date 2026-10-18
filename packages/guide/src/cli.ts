@@ -112,10 +112,15 @@ async function main() {
     const state = fromExport(readJson(file), num('fe')), mine = yours(), book = mine.wrap(await liveBook());
     const out = flag('out') ?? fileURLToPath(new URL('../../page/src/data/advice.json', import.meta.url));
     const ev = await evaluator();
+    // the last plan's option scores on this pin and target (the warm start); --fresh prices every option again
+    const scoresFile = fileURLToPath(new URL('../.cache/plan-scores.json', import.meta.url)), target = flag('target') ?? 'dummy';
+    const last = existsSync(scoresFile) ? readJson(scoresFile) as { pin: string; target: string; at: string; scores: Record<string, number | null> } : undefined;
+    const prior = !args.includes('--fresh') && last?.pin === ev.pin && last.target === target ? { prior: { at: last.at, scores: last.scores } } : {};
+    const at = new Date().toLocaleString(), saveScores = (scores: Record<string, number | null>) => { writeAtomic(scoresFile, JSON.stringify({ pin: ev.pin, target, at, scores })); };
     try {
       final(out, dump(await runPlan(ev, state, book, { ...(flag('target') ? { target: flag('target')! } : {}), ...(num('goal') ? { goal: num('goal')! } : {}), ...(num('kill-seconds') ? { goalSeconds: num('kill-seconds')! } : {}), ...(num('steps') ? { maxSteps: num('steps')! } : {}), ...(num('budget') ? { budget: num('budget')! } : {}),
         ...(num('prism-fe') ? { prismFE: num('prism-fe')! } : {}),
-        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages'), ...rootJson('dream-gear.json', 'dreams'), ...seenSlates() }, (o) => writeAtomic(out, dump(o)))));
+        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages'), ...rootJson('dream-gear.json', 'dreams'), ...seenSlates(), ...prior, saveScores }, (o) => writeAtomic(out, dump(o)))));
     } finally { await ev.close(); }
     console.log(`wrote ${out}`);
   } else if (cmd === 'advise') {

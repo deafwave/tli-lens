@@ -35,7 +35,9 @@ export interface PlanOpts { target: string; goal: number; /** your FE: an option
   /** Inverse Image listings (inverse-images.json, read from the market: listing number, reflected Medium Talent effect %, FE): bought as listed, the roll fixed */
   inverseImages?: { n: number; medium: number; fe: number }[];
   /** rares you mean to make (dream-gear.json): each priced whole, base and crafts, in place of what you wear in its slot */ dreams?: Dream[];
-  /** the skill places another skill is tried in: the weakest active and aura places (set by runPlan; absent = none) */ skillSlots?: { kind: string; slot: number }[] }
+  /** the skill places another skill is tried in: the weakest active and aura places (set by runPlan; absent = none) */ skillSlots?: { kind: string; slot: number }[];
+  /** a warm start: the last plan's scores by option key (null: no gain or refused) and when it ran */ prior?: { at: string; scores: Record<string, number | null> };
+  /** called with every option's score after the first round and after each step (the next plan's warm start) */ saveScores?: (scores: Record<string, number | null>) => void }
 export const DEFAULT_PLAN: PlanOpts = { target: 'dummy', goal: 2e11, maxSteps: 60, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
 
 /** the owner's rules the candidates must keep (2026-10-16) */
@@ -449,11 +451,18 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
     const b = from.filter((x) => x !== c && score.has(x.key) && (x.like ?? []).some((n) => names.has(n))).map((x) => score.get(x.key)!);
     return b.length ? Math.min(...b) : undefined;
   };
+  // a warm start (owner, 2026-10-18: "recalc this partly after making some changes ... a fraction of the time"): an option the last plan priced takes its last score as
+  // its bound, as a stale score within a run does (a gain shrinks as the build grows), and is priced only when it could win; one it found no gain in stays out
+  const seeded = new Set(o.prior ? cands.filter((c) => c.key in o.prior!.scores).map((c) => c.key) : []);
+  for (const k of seeded) score.set(k, o.prior!.scores[k] ?? -Infinity);
+  if (o.prior) notes.push(`Warm start: ${seeded.size} options took their score from the plan of ${o.prior.at} as a bound (priced again only when one could win); ${cands.length - seeded.size} were priced fresh. An option that plan found no gain in is not priced again: --fresh prices every option.`);
+  const save = () => o.saveScores?.(Object.fromEntries([...score].map(([k, v]) => [k, Number.isFinite(v) ? v : null])));
   // what is not bounded by an option first; the rest take their bound from those
-  const later = cands.filter((c) => c.under?.length);
-  await Promise.all(cands.filter((c) => !later.includes(c)).map(rate));
+  const later = cands.filter((c) => c.under?.length && !seeded.has(c.key));
+  await Promise.all(cands.filter((c) => !later.includes(c) && !seeded.has(c.key)).map(rate));
   await Promise.all(later.filter((c) => { const b = boundOf(c, cands); if (b !== undefined) score.set(c.key, b); return b === undefined; }).map(rate));
-  lap(`first round (${cands.length} options)`);
+  lap(`first round (${cands.length} options, ${seeded.size} from the last plan)`);
+  save();
   while (steps.length < o.maxSteps && f.kill < o.goal) {
     const open = cands.filter((c) => fitsFE(c) && !taken.has(c.key) && !(c.group && taken.has(c.group)) && (score.get(c.key) ?? 0) > -Infinity).sort((a, b) => score.get(b.key)! - score.get(a.key)!);
     if (!open.length) break;
@@ -478,6 +487,7 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
     lap(`step ${steps.length + 1} chosen`);
     console.log(`step ${steps.length}: ${w.c.label.slice(0, 120)} | ${w.c.costFE} FE (total ${spent}) -> ${f.kill.toExponential(3)}/s`);
     onStep?.(out(true));
+    save();
     // the build changed: new moves (a socket's new neighbours, a slot's new item) are priced, the rest keep their stale score
     if (w.c.kind === 'slate') await weakest();
     if (w.c.key.startsWith('skill|')) await weakSkills();

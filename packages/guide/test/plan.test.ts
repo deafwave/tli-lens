@@ -330,6 +330,23 @@ describe('runPlan: a step is ranked on the damage at full Life, never a kill spe
   }, 300_000);
 });
 
+describe('runPlan: a warm start from the last plan\'s scores (owner, 2026-10-18: "recalc this partly after making some changes ... a fraction of the time")', () => {
+  it("an option the last plan priced takes its last score as its bound and is priced only when it could win; the steps are the same; the scores are saved", async () => {
+    const fig = (life100: number) => ({ life100, life0: life100, kill: life100, partial: [], target: 'traveler', lifeMax: 1.6e12 });
+    let calls = 0;
+    const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
+      run: async (loadout, changes) => { calls++; const j = JSON.stringify(changes);
+        return { loadout, dropped: [], figure: /"name":"Multiple Projectiles"/.test(j) ? fig(1.1e10) : /"name":"Critical Strike Damage Increase"/.test(j) ? fig(1.05e10) : fig(1e10) }; } };
+    let saved: Record<string, number | null> | undefined;
+    const first = await runPlan(ev, s, ctx.prices, { goal: 1e12, maxSteps: 2, saveScores: (x) => { saved = x; } });
+    const cold = calls; calls = 0;
+    const warm = await runPlan(ev, s, ctx.prices, { goal: 1e12, maxSteps: 2, prior: { at: 'then', scores: saved! } });
+    expect(warm.plan!.steps.map((x) => x.label)).toEqual(first.plan!.steps.map((x) => x.label));
+    expect(calls).toBeLessThan(cold / 5);
+    expect(warm.startNotes!.some((n) => /^Warm start: \d+ options took their score from the plan of then as a bound/.test(n))).toBe(true);
+  }, 300_000);
+});
+
 describe('runPlan: your free Mana never shrinks (owner, 2026-10-17: Precise: Malleable sealed 485 of 485 and Sentry could not be cast, 500 B)', () => {
   it('a change that seals more Mana than is free at the read is refused, named with why; one that seals Life instead is taken', async () => {
     const mana = (reserved: number, life = 1729) => ({ reserved, capacity: 485, margin: 485 - reserved, fits: true, life: { reserved: life, capacity: 2161, margin: 2161 - life } });

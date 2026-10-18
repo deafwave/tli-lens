@@ -23,11 +23,14 @@ export const pointName = (n: number, pact?: string): string => {
   return `${pact ? `${pact} ` : ''}${Math.floor(i / 3) + 1}-${(i % 3) + 1}`;
 };
 
+/** a kismet the generator can socket: no special type (Fates are offered below) and one modifier the catalog has */
+const offered = (t: Record<string, any>, mod: Record<string, unknown>): boolean => t.TattooType === undefined && t.Modifier?.length === 1 && !!mod[t.Modifier[0]];   // eslint-disable-line @typescript-eslint/no-explicit-any
+
 interface Cand { level: number; baseId: number; name: string; kind: number; modifierId: number; rolls: number[]; /** copies the set needs (ActiveNum) */ need: number }
 function candidates(): Cand[] {
   const base = rows('config_item_base'), tat = rows('lua_config_item_tattoo'), mod = rows('config_modifier'), rolls = rows('config_modifier_rolls'), lang = rows('lang_en');
   const seen = new Set<number>();   // one candidate per modifier (several bases can carry the same one), in catalog order
-  return Object.values(tat).filter(t => t.TattooType === undefined && t.Modifier?.length === 1 && mod[t.Modifier[0]] && lang[`item_base|name|${t.Id}`])
+  return Object.values(tat).filter(t => offered(t, mod) && lang[`item_base|name|${t.Id}`])
     .filter(t => !seen.has(t.Modifier[0]) && seen.add(t.Modifier[0]))
     .map(t => ({ level: (base[t.Id]?.i3c ?? 0) as number, baseId: t.Id, name: lang[`item_base|name|${t.Id}`] as string, kind: t.TattooSize === 1 ? SMALL : MIDDLE, modifierId: t.Modifier[0] as number,
       rolls: ((rolls[t.Modifier[0]] ?? []) as number[][]).map(r => (r[0] + r[1]) / 2), need: (t.ActiveNum ?? 1) as number }));
@@ -55,8 +58,8 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     const g = `${Math.floor(n / 100)}/${kindOf(n)}`;
     return seenFree.has(g) ? false : (seenFree.add(g), true);
   });
-  for (const t of Object.values(rows('lua_config_item_tattoo'))) if (t.ActiveNum > 1 && !t.Modifier?.length && lang[`item_base|name|${t.Id}`])
-    ns.add(`kismet: ${lang[`item_base|name|${t.Id}`]} has no modifier in the catalog (not priced)`);
+  for (const t of Object.values(rows('lua_config_item_tattoo'))) if (t.TattooType !== FATE_TYPE && !offered(t, rows('config_modifier')) && lang[`item_base|name|${t.Id}`])
+    ns.add(`kismet: ${lang[`item_base|name|${t.Id}`]} is not offered (${t.Modifier?.length ? `item_tattoo type ${t.TattooType}: its placement rule is not read` : 'no modifier in the catalog'})`);
   for (const c of candidates().filter(x => x.level <= ctx.level)) {
     const short = c.need - l.kismets.filter(k => k.modifierId === c.modifierId).length;
     if (short <= 0 && c.need > 1) continue;   // the set is complete: another copy adds nothing (config_set_items has no higher count)

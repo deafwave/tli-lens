@@ -43,6 +43,11 @@ describe('inverse patch', () => {
     const out = applyPatch(lo, { kind: 'patch', op: 'inverse', copies: [], remove: [12060100] }) as any;
     expect(out.resolvedTalents.talents.filter(([i]: number[]) => i === 12060100).map(([, , t]: string[]) => t)).toEqual(['talent:-12060100@49%']);
   });
+  it('a copy replaces the mirror of its node at any roll: an Inverse Image bought in place of yours is one prism, not two (2026-10-18: a -65 % listing over the owner -16 % priced +8.4 %)', () => {
+    const out = applyPatch(lo, { kind: 'patch', op: 'inverse', copies: copies.map(([node]) => ({ node, points: 3, ee: -65 })) }) as any;
+    const mirrors = (out.resolvedTalents.talents as [number, number, string][]).filter(([, , t]) => t.startsWith('talent:-'));
+    expect(mirrors.map(([, , t]) => t).sort()).toEqual(copies.map(([node]) => `talent:-${node}@35%`).sort());
+  });
   it('isPatch tells patches from what-if changes', () => {
     expect(isPatch({ kind: 'patch', op: 'inverse', copies: [] })).toBe(true);
     expect(isPatch({ kind: 'talent', node: 1, points: 1 })).toBe(false);

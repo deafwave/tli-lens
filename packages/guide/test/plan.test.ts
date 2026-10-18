@@ -162,6 +162,12 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     expect(out.resolvedTalents.ext).toEqual(mine.resolvedTalents.ext);
     expect(out.resolvedTalents.talents).toContainEqual([12040100, 3, 'talent:12040100']);
   });
+  it('an Inverse Image listing in place of yours keeps your copies (cells and points, as the server resolved them) and changes only the roll', () => {
+    const rt = live.loadout.resolvedTalents.talents as [number, number, string][];
+    const mine = { ...s, loadout: { ...live.loadout, resolvedTalents: { ...live.loadout.resolvedTalents, talents: [...rt, [12040100, 2.52, 'talent:-12040100@84%'], [12060200, 2.52, 'talent:-12060200@84%']] } } };
+    const p = candidates(mine, ctx, { ...DEFAULT_PLAN, inverseImages: [{ n: 6, medium: -65, fe: 888 }] }, lines).find((x) => x.key === 'inverse|6')!.changes[0] as unknown as { copies: unknown[] };
+    expect(p.copies).toEqual([{ node: 12040100, points: 3, ee: -65 }, { node: 12060200, points: 3, ee: -65 }]);
+  });
   it('a slate on the board is never offered as one you own (owner, 2026-10-16: the read lists board slates among the items)', () => {
     const b = live.loadout.slateItems[0];
     const own = { ...s, owned: [{ itemId: b.itemId, baseId: b.baseId, baseName: null, level: 86, where: 'board', page: -4, slot: 1, count: 1, modifiers: {}, talents: b.talents, shapeId: b.shapeId },

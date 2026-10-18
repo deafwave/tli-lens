@@ -34,6 +34,9 @@ const loadTarget = (): Target => target ??= JSON.parse(readFileSync(join(pinRoot
  *  its source, your originals and your prisms' affixes kept (re/evidence/prisms.md (c): the target's 12040100 is at Point 0, its points on the copy, only
  *  because its prerequisite has 1 of 3). ponytail: an original whose prerequisite you have not met is priced as if met; the area's micro copy is not priced. */
 export function inverseImage(lo: { resolvedTalents?: { talents?: [number, number, string][] } }, medium: number): Extract<LoadoutPatch, { op: 'inverse' }> {
+  // in place of the Inverse Image you hold: your copies as the server resolved them (2026-10-18: the owner's 12040100 copy holds 3, its original 1), at the listing's roll
+  const mine = prismOf(lo as never)?.copies;
+  if (mine?.length) return { kind: 'patch', op: 'inverse', copies: mine.map((c) => ({ ...c, ee: medium })) };
   const rt = lo.resolvedTalents?.talents ?? [], pts = (n: number) => rt.find(([, , tag]) => tag === `talent:${n}`)?.[1] ?? 0;
   return { kind: 'patch', op: 'inverse', copies: prismOf(loadTarget() as never)!.copies.flatMap((c) => (pts(c.node) ? [{ node: c.node, points: pts(c.node), ee: medium }] : [])) };
 }

@@ -71,7 +71,7 @@ export function applyPatch(lo: Loadout, p: LoadoutPatch): Loadout {
   const rt: Rt[] = l.resolvedTalents?.talents ?? Object.entries(l.talents ?? {}).map(([id, pt]) => [Number(id), pt as number, `talent:${id}`] as Rt);
   const gone = new Set(p.remove ?? []);
   l.resolvedTalents = { ...l.resolvedTalents, talents: [
-    ...rt.filter(([id, , tag]) => (tag.startsWith('talent:-') ? !p.copies.some(c => tag === `talent:-${c.node}@${100 + c.ee}%`) : !gone.has(id))),   // a copy replaces its own mirror
+    ...rt.filter(([id, , tag]) => (tag.startsWith('talent:-') ? !p.copies.some(c => tag.startsWith(`talent:-${c.node}@`)) : !gone.has(id))),   // a copy replaces its node's mirror at any roll
     ...p.copies.map(c => [c.node, c.points * (1 + c.ee / 100), `talent:-${c.node}@${100 + c.ee}%`] as Rt),
   ] };
   l.resolvedTalents.ext = p.ext ? structuredClone(p.ext) : l.resolvedTalents.ext ?? [];

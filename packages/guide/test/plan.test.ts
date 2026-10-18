@@ -92,6 +92,26 @@ describe('Sparks of Moth Fire copies the last line of the slate on its side: a b
   });
 });
 
+describe('a rare you mean to make (dream-gear.json; owner, 2026-10-18: the Lucky implicit moved onto a fresh +60% main-hand Advanced Sequence base, every line crafted)', () => {
+  const dream = { slot: 'mainHand', baseId: 1019, baseFE: 12500, note: 'the +60% main-hand Advanced Sequence base with the Lucky implicit moved onto it', implicit: 1501119, sequence: 160517011,
+    lines: [107110001, 140110901, 140111901, 111110401, 110110001, 140111401] };
+  it("priced whole: your base price + each line's expected embers at T1; the implicit and lines at the midpoint of their rolls, the sequence on the item", async () => {
+    const { craftStep } = await import('../src/candidates/gear');
+    const c = candidates(s, ctx, { ...DEFAULT_PLAN, dreams: [dream] }, lines).filter((x) => /^Make your dream Sierra Reverberation Maul/.test(x.label));
+    expect(c.length).toBe(1);
+    expect(c[0].costFE).toBeCloseTo(12500 + dream.lines.reduce((t, id) => t + craftStep(1019, id, ctx)!.costFE!, 0));
+    const mods = (c[0].changes[0] as unknown as { item: { modifiers: Record<string, { id: number; dynArgs: number[] }[]> } }).item.modifiers;
+    expect(mods.baseAffix).toEqual([{ id: 1501119, dynArgs: [-45] }]);
+    expect(mods.chip.map((m) => m.id)).toEqual([160517011]);
+    expect([mods.prefix.length, mods.suffix.length]).toEqual([3, 3]);
+  });
+  it('a dream that breaks a rule of the game (3 Ultimate lines) is named, not offered', () => {
+    const n = { ...ctx, notSearched: new Set<string>() }, three = { ...dream, lines: [140110901, 140111901, 115110501, 111110401, 110110001, 140111401] };
+    expect(candidates(s, n, { ...DEFAULT_PLAN, dreams: [three] }, lines).filter((x) => /^Make your dream/.test(x.label))).toEqual([]);
+    expect([...n.notSearched].some((x) => /dream Sierra Reverberation Maul: 3 Ultimate lines/.test(x))).toBe(true);
+  });
+});
+
 describe('packBoard: the board re-laid out by each slate type rule (owner, 2026-10-16)', () => {
   it('every placed slate fits again; the Pedigree only flipped across the vertical axis; a slate too many does not fit', async () => {
     const { packBoard } = await import('../src/candidates/slates');

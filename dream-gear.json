@@ -1,0 +1,6 @@
+[
+ { "slot": "mainHand", "baseId": 1019, "baseFE": 12500,
+   "note": "the +60% additional damage for Main-Hand Weapons Advanced Sequence base (8000 FE) with a Lucky Critical Strike implicit moved onto it (a Lucky base 2500 + 2000 FE to move it; owner, 2026-10-18)",
+   "implicit": 1501119, "sequence": 160517011,
+   "lines": [107110001, 140110901, 140111901, 111110401, 110110001, 140111401] }
+]

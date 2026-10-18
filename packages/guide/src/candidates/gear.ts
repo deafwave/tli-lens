@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { table as catalogTable } from '../pin';
-import { craftOptions, EMBER_FOR_GRADE, embersPerCraft, topRoll, type LibraryAffix } from '../craft';
+import { craftOptions, EMBER_FOR_GRADE, embersPerCraft, topRoll, type CraftOption, type LibraryAffix } from '../craft';
 import affixIds from '../data/affix-ids.json';
 import { costOf, priceOfGold } from '../priceOf';
 import type { Change, GenCtx, Generator, Move, Skill, State } from '../types';
@@ -226,7 +226,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     if (!dump) { ctx.notSearched.add(`gear ${slot}: the loadout item carries no affix list; crafts not searched`); continue; }
 
     // ember crafts on the slot you pick (owner, 2026-10-17): an empty one of a side with room, else in place of each mod of the full side; never a second affix
-    // of a family the item has, at most 2 Advanced on the item
+    // of a family the item has, at most 2 lines of each grade on the item (GRADE_MAX)
     const have = new Set(Object.values(dump.modifiers).flat().map(m => Math.floor(m.id / 100)));
     const skipped = new Set<string>();
     for (const o of craftOptions(library, base.lib, ctx.level)) {
@@ -238,7 +238,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
       const price = ctx.prices.price(o.ember, ctx.level), add = { id: Number(o.tierAffixId), dynArgs };
       for (const v of list.length < SIDE_MAX ? [undefined] : list) {
         const next = v ? list.map(m => (m === v ? add : m)) : [...list, add];
-        if (o.grade === 'Advanced' && Object.values({ ...dump.modifiers, [side]: next }).flat().filter(m => gradeOf(m.id) === 'Advanced').length > ADVANCED_MAX) continue;
+        if (Object.values({ ...dump.modifiers, [side]: next }).flat().filter(m => gradeOf(m.id) === o.grade).length > GRADE_MAX) continue;
         moves.push({
           kind: 'craft', label: `Craft ${o.tier} ${o.text.replace(/\n/g, ' / ')} (${side}) on ${slot}${v ? ` in place of your ${gradeTextOf(v.id)}` : ''}`, acquisition: true,
           costFE: price === null ? null : o.expectedEmbers * price, buy: { name: o.ember, qty: o.expectedEmbers }, minLevel: o.requiredLevel,
@@ -310,12 +310,36 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   return moves;
 };
 
+/** A rare you mean to make (dream-gear.json, owner 2026-10-18): a fresh base you buy with its implicit and sequence for `baseFE` (your prices), every line then
+ *  crafted at T1 (expected embers at the book's price), priced whole in place of what you wear in `slot`; the implicit and lines at the midpoint of their rolls
+ *  (docs/gear-rules.md). One that breaks a rule of the game (a line outside the base's pool, a family twice, more than SIDE_MAX a side, GRADE_MAX of a grade) is named. */
+export interface Dream { slot: string; baseId: number; baseFE: number; note: string; implicit: number; sequence?: number; lines: number[] }
+export function dreamMoves(ctx: GenCtx, dreams: Dream[]): Move[] {
+  return dreams.flatMap((d): Move[] => {
+    const r = cat().rows.get(d.baseId), why = (w: string) => { ctx.notSearched.add(`dream ${r?.name ?? `base ${d.baseId}`}: ${w}`); return []; };
+    if (!r?.lib) return why('not a catalog base with a craft pool');
+    const t1 = new Map(craftOptions(library, r.lib, 100).filter(o => o.tier === 'T1').map(o => [Number(o.tierAffixId), o])), os = d.lines.map(id => t1.get(id));
+    if (os.some(o => !o)) return why(`lines ${d.lines.filter((_, i) => !os[i]).join(', ')} are not T1 crafts of a ${r.lib}`);
+    const lines = os as CraftOption[];
+    for (const g of ['Basic', 'Advanced', 'Ultimate']) { const n = lines.filter(o => o.grade === g).length; if (n > GRADE_MAX) return why(`${n} ${g} lines (at most ${GRADE_MAX} an item)`); }
+    for (const sd of ['Prefix', 'Suffix']) if (lines.filter(o => o.side === sd).length > SIDE_MAX) return why(`more than ${SIDE_MAX} ${sd.toLowerCase()} lines`);
+    if (new Set(d.lines.map(id => Math.floor(id / 100))).size < d.lines.length) return why('an affix family twice');
+    const at = (id: number) => ({ id, dynArgs: mids(id) ?? [] }), side = (sd: string) => lines.filter(o => o.side === sd).map(o => at(Number(o.tierAffixId)));
+    const craft = lines.reduce<number | null>((t, o) => { const p = ctx.prices.price(o.ember, ctx.level); return t === null || p === null ? null : t + o.expectedEmbers * p; }, 0);
+    const item: Dump = { baseId: d.baseId, baseName: r.name, itemId: `guide-dream-${d.baseId}`, level: 100,
+      modifiers: { baseAttr: attrMods(r), baseAffix: [at(d.implicit)], ...(d.sequence ? { chip: [at(d.sequence)] } : {}), prefix: side('Prefix'), suffix: side('Suffix') } };
+    return [{ kind: 'gear', acquisition: true, minLevel: r.level, costFE: craft === null ? null : d.baseFE + craft, changes: swap(d.slot, item),
+      label: `Make your dream ${r.name}: ${d.note} (${d.baseFE} FE: your prices), then craft ${lines.map(o => `${o.tier} ${o.text.replace(/\n/g, ' / ')}`).join(', ')} (about ${craft === null ? '?' : Math.round(craft)} FE in embers)` }];
+  });
+}
+
 /** One craft rolls a random affix of the ember's grade and the picked slot's side for the gear type (affix weight) at a random tier the item level allows
  *  (tier weight); the owner keeps it or the old mod (owner, 2026-10-16 / 10-17: you pick the slot, 1-3 prefix, 4-6 suffix). A plan per item, ember and slot
  *  (an empty one of a side with room, else each mod of the full side), every outcome with its chance per craft. An affix family the item has on another
- *  slot is not an outcome; at most 2 Advanced on the item. */
+ *  slot is not an outcome; at most GRADE_MAX lines of a grade on the item. */
 export interface RollOutcome { p: number; label: string; changes: Change[] }
-const ADVANCED_MAX = 2;
+/** lines of one grade (Basic, Advanced, Ultimate) an item holds at most (owner: 2 Advanced, 2026-10-17; every grade, "Game rule, all gear", 2026-10-18) */
+const GRADE_MAX = 2;
 let grades: Map<number, { grade: string; text: string }> | undefined;
 const gradeIndex = () => grades ??= new Map(library.flatMap(a => a.tiers.map(t => [Number(t.tierAffixId), { grade: a.grade, text: `${t.tier} ${topRoll(t.text).replace(/\n/g, ' / ')}` }] as const)));
 const gradeOf = (id: number) => gradeIndex().get(id)?.grade;
@@ -336,7 +360,7 @@ export function rollPlans(s: State, ctx: GenCtx): RollPlan[] {
       if (!gw) continue;
       for (const victim of list.length < SIDE_MAX ? [undefined] : list) {
         const others = Object.values({ ...dump.modifiers, [side]: list.filter(m => m !== victim) }).flat();
-        if (grade === 'Advanced' && others.filter(m => gradeOf(m.id) === 'Advanced').length >= ADVANCED_MAX) continue;
+        if (others.filter(m => gradeOf(m.id) === grade).length >= GRADE_MAX) continue;
         const have = new Set(others.map(m => Math.floor(m.id / 100))), outcomes: RollOutcome[] = [];
         for (const a of g) {
           const tiers = a.tiers.filter(t => t.requiredLevel <= dump.level), tw = tiers.reduce((t, x) => t + x.weight, 0);

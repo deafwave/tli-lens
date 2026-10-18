@@ -20,7 +20,7 @@ const flag = (name: string) => { const i = args.indexOf(`--${name}`); const v = 
 const positional = at(args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')));
 const num = (name: string) => { const v = flag(name); if (v !== undefined && !Number.isFinite(Number(v))) throw new Error(`--${name} needs a number`); return v === undefined ? undefined : Number(v); };
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
-/** a file at the repository root, when it exists, as plan option `key` (roll-prices.json, vorax-grafts.json, inverse-images.json) */
+/** a file at the repository root, when it exists, as plan option `key` (roll-prices.json, vorax-grafts.json, inverse-images.json, dream-gear.json) */
 const rootJson = (file: string, key: string) => { const f = fileURLToPath(new URL(`../../../${file}`, import.meta.url)); return existsSync(f) ? { [key]: readJson(f) } : {}; };
 /** the slate listings the market has read (market.ts) in the last week, as plan option slateListings */
 const seenSlates = () => { const f = fileURLToPath(new URL('../.cache/slate-listings.json', import.meta.url));
@@ -115,7 +115,7 @@ async function main() {
     try {
       final(out, dump(await runPlan(ev, state, book, { ...(flag('target') ? { target: flag('target')! } : {}), ...(num('goal') ? { goal: num('goal')! } : {}), ...(num('kill-seconds') ? { goalSeconds: num('kill-seconds')! } : {}), ...(num('steps') ? { maxSteps: num('steps')! } : {}), ...(num('budget') ? { budget: num('budget')! } : {}),
         ...(num('prism-fe') ? { prismFE: num('prism-fe')! } : {}),
-        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages'), ...seenSlates() }, (o) => writeAtomic(out, dump(o)))));
+        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages'), ...rootJson('dream-gear.json', 'dreams'), ...seenSlates() }, (o) => writeAtomic(out, dump(o)))));
     } finally { await ev.close(); }
     console.log(`wrote ${out}`);
   } else if (cmd === 'advise') {

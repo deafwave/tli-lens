@@ -249,6 +249,22 @@ describe('whiteBaseMoves', () => {
     }
     expect([...c.notSearched].some(n => /side full/.test(n))).toBe(false);
   });
+
+  it('at most 2 lines of each grade on an item (owner, 2026-10-18: "Game rule, all gear"): on a 2 Ultimate / 2 Advanced / 2 Basic maul a craft only swaps a line for one of its grade', async () => {
+    const { rollPlans } = await import('../src/candidates/gear');
+    const grade = new Map(library.flatMap(a => a.tiers.map(t => [Number(t.tierAffixId), a.grade] as const)));
+    const lines = [[107110001, 'Prefix'], [140110901, 'Prefix'], [140111901, 'Prefix'], [111110401, 'Suffix'], [110110001, 'Suffix'], [140111401, 'Suffix']] as const;
+    const full = { ...item('mainHand', 1019, 'Sierra Reverberation Maul'), level: 100, affixes: lines.map(([id, side]) => ({ id, dyn: [1], list: `${side}InfoList` })) };
+    const s = state('hoa', 100, [full, HELM]), moves = gearMoves(s, ctx(100, { 'Precious Ember': 0.06, 'Matchless Ember': 0.27, 'Ultimate Ember': 20 }))
+      .filter(m => m.kind === 'craft' && (m.changes[0] as { slot: string }).slot === 'mainHand');
+    const count = (mods: { id: number }[], g: string) => mods.filter(x => grade.get(x.id) === g).length;
+    expect(moves.some(m => m.buy?.name === 'Ultimate Ember')).toBe(true);   // an Ultimate in place of an Ultimate
+    const capped = (m: { changes: any[] }) => { const mods = [...(swapped(m).modifiers.prefix ?? []), ...(swapped(m).modifiers.suffix ?? [])]; for (const g of ['Basic', 'Advanced', 'Ultimate']) expect(count(mods, g)).toBeLessThanOrEqual(2); };
+    moves.forEach(capped);
+    const outcomes = rollPlans(s, ctx(100)).filter(p => p.slot === 'mainHand').flatMap(p => p.outcomes);
+    expect(outcomes.length).toBeGreaterThan(0);
+    outcomes.forEach(capped);
+  });
 });
 
 describe('what you buy (Move.buy)', () => {

@@ -23,7 +23,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 | `packages/guide/docs` | gear / prism / talent rules the candidates use, with sources |
 | `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/advice.json` |
 | `data/`, `scripts/` | etor price history, affix library; fetch/build helpers; `scripts/blend_recipes.py` reads the belt blend recipes and your unlocked ones from the client into `packages/guide/src/data/blends.json` (open the blend window once first) |
-| root | `prices.json` (your prices), `roll-prices.json` (read by `plan`), `market-targets.json` (market skill) |
+| root | `prices.json` (your prices), `roll-prices.json` and `dream-gear.json` (read by `plan`), `market-targets.json` (market skill) |
 | `docs/` | `etor-api.md`: the etor price API (reverse-engineered; `pricing.ts` and `scripts/fetch_etor_history.py` use it) |
 | `.claude/skills/` | `tli-game` (writes its measurements to `.cache/tli-game/`), `market`, `tlidb-lookup` |
 
@@ -97,6 +97,9 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
   holding one is priced where its slates sit after every change (`positional`, `fitsInPlace`), never re-laid out, so no slate is added to it. A Sparks listing
   goes on a free cell or in place of a slate, wherever it copies a line (`copyPlaces`), at most 3 a board; a listing's last line screens once more per copy of it.
   A side no listing was read for is offered at your price for the name (`pricedCopiers`, prices.json; owner, 2026-10-18: single-sided Sparks about 500 FE).
+- Gear: an item holds at most 2 lines of each grade, Basic, Advanced and Ultimate (`GRADE_MAX`, `gear.ts`; owner, 2026-10-18: a rule of the game on all gear).
+  A rare you mean to make (`dream-gear.json`: base, implicit, sequence, lines, and your price for the base with its implicit and sequence) is priced whole
+  (`dreamMoves`): that price + each line's expected embers at T1, implicit and lines at the midpoint of their rolls; one breaking a rule of the game is named.
 - Kismets: a page holds at most 9 Micro and 4 Medium Destinies (`DESTINY_CAP`, owner's pact page 2026-10-18); at the cap a kismet only replaces one.
 - Belt blends (`blendCands`, `plan.ts`): every recipe the game's window shows that you unlocked and that grants one affix, on the belt you wear, at its spices' etor price;
   random-outcome recipes and unlocked ones the read had no row for are named in `notSearched`.

@@ -2,7 +2,7 @@
  *  cheapest manner possible"). Each round every candidate is priced on the build as it stands after the steps before it; the step taken is the one with the
  *  most damage per FE (a free one first). A candidate is refused when the model cannot price it whole (a new omission), when no aura switched off makes it fit (MANA2:
  *  the auras' Sealed Mana no longer fits), or when it breaks a rule of the game the generators do not know (listed in GuideOut.startNotes). */
-import { gearMoves, whiteBaseMoves } from './candidates/gear';
+import { dreamMoves, gearMoves, whiteBaseMoves, type Dream } from './candidates/gear';
 import { gemLevelAt, gemMoves, gemsHeld } from './candidates/gems';
 import { costOf } from './priceOf';
 import { kismetMoves, pointProbes } from './candidates/kismets';
@@ -34,6 +34,7 @@ export interface PlanOpts { target: string; goal: number; /** your FE: an option
   grafts?: { organ: string; group: number; fe: number; odds: [number, number][] }[];
   /** Inverse Image listings (inverse-images.json, read from the market: listing number, reflected Medium Talent effect %, FE): bought as listed, the roll fixed */
   inverseImages?: { n: number; medium: number; fe: number }[];
+  /** rares you mean to make (dream-gear.json): each priced whole, base and crafts, in place of what you wear in its slot */ dreams?: Dream[];
   /** the skill places another skill is tried in: the weakest active and aura places (set by runPlan; absent = none) */ skillSlots?: { kind: string; slot: number }[] }
 export const DEFAULT_PLAN: PlanOpts = { target: 'dummy', goal: 2e11, maxSteps: 60, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
 
@@ -47,6 +48,7 @@ const RULES = [
   "Damage is the raw DPS at full Life on the training dummy (the number it shows) or on Cube 3, never a kill speed; on the Traveler it is the dummy's capped at 15 trillion (owner, 2026-10-18).",
   'Talent points are only moved (a respec is free at level 90 and below), never added: the plan does not assume a point you do not have.',
   'A slate line already on your board is not offered on another slate.',
+  'An item holds at most 2 lines of each grade: Basic, Advanced and Ultimate (owner, 2026-10-18: a rule of the game on all gear).',
   'Hero memories: each is levelled to its rarity cap (Rare 30, Epic 40), its random affixes rerolled one slot at a time until each lands (no keep: a reroll replaces the affix in the slot) at the game odds of Affliction Effect for every affix (1.46 % an Epic roll); a higher rarity is a new memory bought, priced from market listings only.',
   'No step seals Mana you have free now: the model does not price what a cast costs, and with none free Sentry is not cast (Precise: Malleable sealed 485 of 485: 500 B in game, 2026-10-17).',
   'Your Paralysis and Sealed Mana Compensation talent points stay, and so do points on a node the model prices at exactly 0 (it cannot judge them).',
@@ -213,6 +215,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   // Wind Projectiles: the model's figure is off against the owner's dummy (RULES)
   const MEASURED_WRONG = /Wind Projectiles|Slow Projectile -> /;
   for (const g of [ownedGear, gearMoves, gemMoves, kismetMoves, pactMoves, prismMoves, slateMoves, talentMovesWith({ maxShifts: 60, locked: o.locked, budget: o.points }), whiteBaseMoves]) for (const m of g(s, ctx)) add(m);
+  for (const m of dreamMoves(ctx, o.dreams ?? [])) add(m);
   for (const m of targetMoves(s, ctx)) {
     // the example build's skill groups are not offered: they replace a whole group at a cost they do not carry (a socket's gem is gemMoves', priced)
     if (!/talent prism/.test(m.label)) continue;

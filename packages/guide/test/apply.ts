@@ -1,8 +1,8 @@
 /** Applies a move's changes to a loadout through dps-debug's own applyGearChange / applyOtherChange (the catalog parse is ~168 MB: it is loaded once per test file). */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { loadCatalog } from '@dps/test/core/catalog';
-import { applyGearChange, applyOtherChange } from '@dps/test/unit/whatif-lib';
+import { loadCatalog } from '@dps/src/harness/catalog';
+import { applyGearChange, applyOtherChange } from '@dps/src/harness/whatif';
 import { pinRoot } from '../src/pin';
 import type { Move, PriceBook } from '../src/types';
 

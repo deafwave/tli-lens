@@ -147,7 +147,9 @@ function skillPool(kind: number): { sid: number; name: string }[] {
 type Cand = { key: string; /** taken once per group */ group?: string;
   /** the option as the one before a step (a kismet on the next free point of its size, or in place of the one a step socketed; a memory slot or an item's mod
    *  rerolled / crafted to the same line): a new candidate takes the lowest last score of the ones it shares a name with as its bound, as a stale score is (a gain
-   *  shrinks as the build grows), and is priced only when it could win */ like?: string[]; /** a better roll of a worn legendary: the lowest roll with the same figure is found when taken */ roll?: { slot: string; id: number; now: number[]; best: number[]; range: [number, number][] }; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
+   *  shrinks as the build grows), and is priced only when it could win */ like?: string[];
+  /** options this one gives at most, by name (a kismet in place of yours at most what it gives on a free point, while yours is not worse than none: `unless` the
+   *  key of the move that takes yours out, priced and not raising the kill), a bound as `like` is, also in the first round */ under?: { by: string; unless: string }[]; /** a better roll of a worn legendary: the lowest roll with the same figure is found when taken */ roll?: { slot: string; id: number; now: number[]; best: number[]; range: [number, number][] }; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
 const fits = (f: Figure) => !f.mana || 'stop' in f.mana || f.mana.fits;
 
 export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: number; name: string }[], held = heldUniques(s)): Cand[] {
@@ -164,7 +166,9 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
     // a kismet socketed on a point is what replacing the kismet a step put there with it is
     const at = m.kind === 'kismet' ? (/^Socket (.+) on (.+ \d-\d)$/.exec(label)?.slice(1) ?? /^Replace the kismet on (.+ \d-\d) with (.+)$/.exec(label)?.slice(1).reverse()) : undefined;
     const like = fate ? [`kismet|${fate}`, `kismet|${at![1]}|${fate}`] : at ? [`kismet|${at[1]}|${at[0]}`] : m.like;
-    out.push({ key: `${m.kind}|${label}`, label: t ? `${label} (${t.note})` : label, costFE: cost, kind: m.kind, changes: t ? t.changes : m.changes, ...(like ? { like } : {}) });
+    // the same kismet in place of yours: what it adds less what yours gave (at the same price)
+    const under = at && !fate ? [{ by: `kismet|${at[0]}`, unless: `kismet|Remove the kismet on ${at[1]}` }] : undefined;
+    out.push({ key: `${m.kind}|${label}`, label: t ? `${label} (${t.note})` : label, costFE: cost, kind: m.kind, changes: t ? t.changes : m.changes, ...(like ? { like } : {}), ...(under ? { under } : {}) });
   };
   // Wind Projectiles: the model's figure is off against the owner's dummy (RULES)
   const MEASURED_WRONG = /Wind Projectiles|Slow Projectile -> /;
@@ -299,6 +303,8 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
   o.locked = new Set(held.filter((n, i) => zero[i] || KEPT.test(talentName(n))));
   const notes = [...RULES, ...(first.mana && !('stop' in first.mana) ? [`Sealed Mana now: ${first.mana.reserved} of ${first.mana.capacity} (${first.mana.margin} free); Life sealed ${first.mana.life.reserved} of ${first.mana.life.capacity}.`] : [`Sealed Mana: not calculated (${first.mana && 'stop' in first.mana ? first.mana.stop : 'no figure'}); changes are not checked against it.`])];
   const steps: NonNullable<GuideOut['plan']>['steps'] = [], refused = new Map<string, string>(), score = new Map<string, number>(), taken = new Set<string>();
+  /** the kill after / before of each priced candidate, when it was priced */
+  const ratio = new Map<string, number>();
   let f = first, spent = 0;
   const slateFrom: Record<number, string> = {};
   // the model does not price a skill's cast cost: the Mana free at the read is what is known to cast Sentry (owner, 2026-10-17: Precise: Malleable sealed 485 of 485, 500 B)
@@ -321,7 +327,7 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
       : g.mana && 'margin' in g.mana && g.mana.margin < freeMana ? `seals Mana you cast with (free Mana ${freeMana} -> ${g.mana.margin})` : undefined;
     if (why && g.kill > f.kill * 1.01) refused.set(c.label, `${why} (+${((g.kill / f.kill - 1) * 100).toFixed(0)} % if it were)`);
     const v = g.stop || why || !(g.kill > f.kill * 1.005) ? -Infinity : Math.log(g.kill / f.kill) / Math.max(c.costFE, 1);
-    score.set(c.key, v);
+    score.set(c.key, v); ratio.set(c.key, g.stop ? 0 : g.kill / f.kill);
     return { c, e, v };
   };
   // the board after the steps so far, in every write (a stopped plan keeps its slate viewer): as packBoard lays it out when slates were added (each placed
@@ -355,7 +361,16 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
   let cands = candidates(s, ctx, o, lines, keep).filter(fitsFE);
   console.log(`start: ${first.kill.toExponential(3)}/s on ${o.target}; ${cands.length} candidates; ${lines.length} slate lines`);
   lap('slate lines and talent checks');
-  await Promise.all(cands.map(rate));
+  // Cand.like / under: the lowest last score of the options `c` repeats or gives at most, from the scored candidates `from`; undefined = none (c is priced)
+  const boundOf = (c: Cand, from: Cand[]) => {
+    const names = new Set([...(c.like ?? []), ...(c.under ?? []).filter((u) => (ratio.get(u.unless) ?? Infinity) <= 1).map((u) => u.by)]);
+    const b = from.filter((x) => x !== c && score.has(x.key) && (x.like ?? []).some((n) => names.has(n))).map((x) => score.get(x.key)!);
+    return b.length ? Math.min(...b) : undefined;
+  };
+  // what is not bounded by an option first; the rest take their bound from those
+  const later = cands.filter((c) => c.under?.length);
+  await Promise.all(cands.filter((c) => !later.includes(c)).map(rate));
+  await Promise.all(later.filter((c) => { const b = boundOf(c, cands); if (b !== undefined) score.set(c.key, b); return b === undefined; }).map(rate));
   lap(`first round (${cands.length} options)`);
   while (steps.length < o.maxSteps && f.kill < o.goal) {
     const open = cands.filter((c) => fitsFE(c) && !taken.has(c.key) && !(c.group && taken.has(c.group)) && (score.get(c.key) ?? 0) > -Infinity).sort((a, b) => score.get(b.key)! - score.get(a.key)!);
@@ -395,10 +410,7 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
     if (/^(own)?slate\||^add\|/.test(w.c.key)) await weakest();
     if (w.c.key.startsWith('skill|')) await weakSkills();
     const seen = new Set(cands.map((c) => c.key)), next = candidates(s, ctx, o, lines, keep).filter(fitsFE);
-    const was = new Map<string, number>();
-    for (const c of cands) if (score.has(c.key)) for (const n of c.like ?? []) was.set(n, Math.min(was.get(n) ?? Infinity, score.get(c.key)!));
-    for (const c of next) { const b = seen.has(c.key) ? undefined : (c.like ?? []).filter((n) => was.has(n)).map((n) => was.get(n)!);
-      if (b?.length) { score.set(c.key, Math.min(...b)); seen.add(c.key); } }
+    for (const c of next) { const b = seen.has(c.key) ? undefined : boundOf(c, cands); if (b !== undefined) { score.set(c.key, b); seen.add(c.key); } }
     await Promise.all(next.filter((c) => !seen.has(c.key)).map(rate));
     cands = next;
   }

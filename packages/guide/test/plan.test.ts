@@ -252,7 +252,7 @@ describe('runPlan: every write carries the slate board (owner, 2026-10-17: a sto
 describe('runPlan: an option at another place starts from its own score as its bound (a kismet on the next free point, a memory slot rerolled again)', () => {
   type Lo = Record<string, any>;   // eslint-disable-line @typescript-eslint/no-explicit-any
   /** a stub that applies the moves (kismets socketed, patches) and prices the loadout by what it holds, `gain(lo)` x 1e10; `priced[i]`: the figures after step i */
-  const run = async (gain: (lo: Lo) => number, steps: number, prices = ctx.prices) => {
+  const run = async (gain: (lo: Lo) => number, steps: number, prices = ctx.prices, st: State = s) => {
     let after = 0;
     const priced: string[][] = [[]];
     const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
@@ -260,15 +260,35 @@ describe('runPlan: an option at another place starts from its own score as its b
         let lo = loadout as Lo;
         for (const c of changes as Lo[]) {
           if (c.kind === 'patch') lo = applyPatch(lo, c as never);
-          else if (c.kind === 'kismet' && c.action === 'socket') lo = { ...lo, kismets: [...lo.kismets, { node: c.point, modifierId: c.modifierId, servantId: null, rolls: c.rolls }] };
+          else if (c.kind === 'kismet') lo = { ...lo, kismets: [...(lo.kismets as { node: number }[]).filter((k) => k.node !== c.point), ...(c.action === 'remove' ? [] : [{ node: c.point, modifierId: c.modifierId, servantId: null, rolls: c.rolls }])] };
         }
         (priced[after] ??= []).push(JSON.stringify(changes));
         const k = 1e10 * gain(lo);
         return { loadout: lo, dropped: [], figure: { life100: k, life0: k, kill: k, partial: [], target: 'traveler', lifeMax: 1.6e12 } };
       } };
-    const r = await runPlan(ev, s, prices, { goal: 1e14, maxSteps: steps }, () => { after++; });
+    const r = await runPlan(ev, st, prices, { goal: 1e14, maxSteps: steps }, () => { after++; });
     return { r, priced };
   };
+  // your Micro Fate: Fire Resistance on Kitty Express 1-1; Cold Resistance the one kismet worth having
+  const socketed = (() => {
+    const c = candidates(s, ctx, DEFAULT_PLAN, lines).find((x) => /^Socket Micro Fate: Fire Resistance on /.test(x.label))!, ch = c.changes[0] as unknown as { point: number; modifierId: number; rolls: number[] };
+    return { st: { ...s, loadout: { ...live.loadout, kismets: [...live.loadout.kismets, { node: ch.point, modifierId: ch.modifierId, servantId: null, rolls: ch.rolls }] } }, fire: ch.modifierId, point: c.label.replace(/.* on /, '') };
+  })();
+  const cold = (candidates(s, ctx, DEFAULT_PLAN, lines).find((x) => /^Socket Micro Fate: Cold Resistance on /.test(x.label))!.changes[0] as unknown as { modifierId: number }).modifierId;
+  const kismetGain = (g: Record<number, number>) => (lo: Lo) => [...new Set((lo.kismets as { modifierId: number }[]).map((k) => k.modifierId))].reduce((t, m) => t * (g[m] ?? 1), 1);
+  const replaced = (p: string[]) => new Set(p.filter((j) => /"kind":"kismet","action":"replace"/.test(j))).size;
+  it('a kismet in place of yours is priced in the first round only when its bound, the same kismet on a free point, could win', async () => {
+    const all = candidates(socketed.st, ctx, DEFAULT_PLAN, lines).filter((c) => c.label.startsWith(`Replace the kismet on ${socketed.point} with `));
+    expect(all.length).toBeGreaterThan(20);
+    const { r, priced } = await run(kismetGain({ [socketed.fire]: 1.1, [cold]: 1.2 }), 1, ctx.prices, socketed.st);
+    expect(r.plan!.steps[0].label).toMatch(/^Socket Micro Fate: Cold Resistance on /);
+    expect(replaced(priced[0])).toBeLessThan(5);
+  }, 300_000);
+  it('yours worse than none (taking it out raises the kill): every kismet in its place is priced', async () => {
+    const all = candidates(socketed.st, ctx, DEFAULT_PLAN, lines).filter((c) => c.label.startsWith(`Replace the kismet on ${socketed.point} with `));
+    const { priced } = await run(kismetGain({ [socketed.fire]: 0.99, [cold]: 1.2 }), 1, ctx.prices, socketed.st);
+    expect(replaced(priced[0])).toBe(all.length);
+  }, 300_000);
   it('a kismet socketed on a free point: the others of its size move to the next free point and are priced only when their score could win', async () => {
     const all = candidates(s, ctx, DEFAULT_PLAN, lines).filter((c) => /^Socket Micro Fate: (Fire|Cold) Resistance on /.test(c.label));
     const mod = (c: (typeof all)[number]) => (c.changes[0] as unknown as { modifierId: number }).modifierId;

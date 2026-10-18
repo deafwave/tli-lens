@@ -126,6 +126,27 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     expect(put).toBeDefined();
     expect((put!.changes[0] as unknown as { items: { baseId: number; shapeId: number }[] }).items.some((x) => x.baseId === 261005 && x.shapeId === 2030)).toBe(true);
   });
+  it('a vorax Ultimate line is re-grafted until a better tier lands: your FE per graft / the chance of that tier or better (owner, 2026-10-17: a graft always replaces the line; 80.01 / 14.99 / 5 %)', () => {
+    const odds: [number, number][] = [[0, 5], [1, 14.99], [2, 80.01]];
+    const vx = { ...s, loadout: { ...live.loadout, vorax: [{ label: 'Vorax Limb: Digits', slot: 'ring1', affixes: [{ id: 252182002, dyn: [18], list: 'SuffixInfoList' }] }] } };
+    const c = candidates(vx, ctx, { ...DEFAULT_PLAN, grafts: [{ organ: 'Flawless Eyes: Sinister', group: 2521820, fe: 630, odds }] }, lines).filter((x) => x.key.startsWith('graft|'));
+    expect(c.map((x) => [x.key, Math.round(x.costFE)])).toEqual([['graft|2521820|0', 630 / 0.05], ['graft|2521820|1', Math.round(630 / 0.1999)]]);
+    const items = (c[1].changes[0] as unknown as { op: string; items: { affixes: { id: number; dyn: number[] }[] }[] });
+    expect(items.op).toBe('vorax');
+    expect(items.items[0].affixes[0]).toMatchObject({ id: 252182001, dyn: [28] });   // T1 (23-32) at its middle
+    expect(c[1].label).toMatch(/Flawless Eyes: Sinister/);
+  });
+  it('an Inverse Image is bought as listed, its reflected Medium roll fixed (owner, 2026-10-17); no made-up prism price once there are listings', () => {
+    const c = candidates(s, ctx, { ...DEFAULT_PLAN, inverseImages: [{ n: 16, medium: 39, fe: 3399 }] }, lines);
+    expect(c.some((x) => x.costFE === DEFAULT_PLAN.prismFE && /prism/.test(x.label))).toBe(false);
+    const ii = c.find((x) => x.key === 'inverse|16')!;
+    expect(ii.costFE).toBe(3399);
+    expect(ii.label).toMatch(/Inverse Image.*\+39% reflected Medium/);
+    const p = ii.changes[0] as unknown as { op: string; copies: { ee: number }[]; ext: unknown[] };
+    expect(p.op).toBe('inverse');
+    expect(p.copies.every((x) => x.ee === 39)).toBe(true);
+    expect(p.ext).toEqual([]);
+  });
   it('a slate on the board is never offered as one you own (owner, 2026-10-16: the read lists board slates among the items)', () => {
     const b = live.loadout.slateItems[0];
     const own = { ...s, owned: [{ itemId: b.itemId, baseId: b.baseId, baseName: null, level: 86, where: 'board', page: -4, slot: 1, count: 1, modifiers: {}, talents: b.talents, shapeId: b.shapeId },

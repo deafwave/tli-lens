@@ -29,6 +29,10 @@ export interface PlanOpts { target: string; goal: number; /** your FE: an option
   /** the board slates a new slate is tried in place of: the weakest (set by runPlan; absent = every one) */ slateSlots?: number[];
   /** your prices for a legendary at a roll of one line (roll-prices.json: { item, line: its modifier id, rolls: [[value, FE]] }); the item's other lines as yours */
   rollPrices?: { item: string; line: number; rolls: [number, number][] }[];
+  /** vorax Ultimate re-grafts (vorax-grafts.json, the owner's: the organ, the line's modifier group, FE per graft, [tier, %] odds): a graft always replaces the line */
+  grafts?: { organ: string; group: number; fe: number; odds: [number, number][] }[];
+  /** Inverse Image listings (inverse-images.json, read from the market: listing number, reflected Medium Talent effect %, FE): bought as listed, the roll fixed */
+  inverseImages?: { n: number; medium: number; fe: number }[];
   /** the skill places another skill is tried in: the weakest active and aura places (set by runPlan; absent = none) */ skillSlots?: { kind: string; slot: number }[] }
 export const DEFAULT_PLAN: PlanOpts = { target: 'traveler', goal: 2e11, maxSteps: 60, slatePrices: [[/Agility Blessing on Critical Strike/, 100], [/All Skills' Levels/, 270]], slateFE: 100, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
 
@@ -161,7 +165,13 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   for (const g of [ownedGear, gearMoves, gemMoves, kismetMoves, pactMoves, prismMoves, slateMoves, talentMovesWith({ maxShifts: 60, locked: o.locked, budget: o.points }), whiteBaseMoves]) for (const m of g(s, ctx)) add(m);
   for (const m of targetMoves(s, ctx)) {
     // the example build's skill groups are not offered: they replace a whole group at a cost they do not carry (a socket's gem is gemMoves', priced)
-    if (/talent prism/.test(m.label)) add({ ...m, costFE: o.prismFE }, "An Inverse Image talent prism like the example build (it reflects the Onslaughter crit and two-handed Medium talents; with the example build's +17.5 Strength on three Medium talents) at your price");
+    if (!/talent prism/.test(m.label)) continue;
+    const pr = m.changes[0] as unknown as { op: string; copies: { ee: number }[] };
+    // an Inverse Image's rolls cannot be changed once bought (owner, 2026-10-17): each listing as listed, reflecting the example build's Medium talents
+    if (o.inverseImages?.length && pr.op === 'inverse') for (const x of o.inverseImages) out.push({ key: `inverse|${x.n}`, group: 'inverse', kind: 'prism', costFE: x.fe,
+      note: "placed like the example build's; the roll is fixed once bought", changes: [{ ...pr, ext: [], copies: pr.copies.map((c) => ({ ...c, ee: x.medium })) } as never],
+      label: `Buy the Inverse Image listed #${x.n} (${x.medium >= 0 ? '+' : ''}${x.medium}% reflected Medium Talent effects) for ${x.fe} FE: it reflects the Onslaughter crit and two-handed Medium talents, as the example build's` });
+    else add({ ...m, costFE: o.prismFE }, "An Inverse Image talent prism like the example build (it reflects the Onslaughter crit and two-handed Medium talents; with the example build's +17.5 Strength on three Medium talents) at your price");
   }
   // another copy of a legendary you wear, bought with one line at its best roll (user, 2026-10-16: a Ruinous Star with Deterioration Duration 28+ is a breakpoint);
   // the lowest roll that gives the same figure is found once the step is taken (runPlan)
@@ -188,6 +198,15 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
       out.push({ key: `roll|${slot}|${a.id}`, group: `roll|${slot}`, kind: 'unique', costFE: fe, roll: { slot, id: a.id, now: a.dyn, best, range: r },
         label: `Buy another ${name} with ${lineText(a.id, best)} (yours: ${a.dyn.join(' / ')}); replace yours`, changes: [{ kind: 'patch', op: 'gear-roll', slot, id: a.id, dyn: best } as never] });
     }
+  }
+  // a vorax Ultimate line re-grafted until tier T or better lands (owner, 2026-10-17: a graft always replaces the line, its tier drawn at the odds): FE per graft / P(T or better),
+  // at T's middle roll
+  const vorax = (s.loadout.vorax ?? []) as { label: string; affixes: { id: number; dyn: number[] }[] }[];
+  for (const v of vorax) for (const a of v.affixes) for (const gr of (o.grafts ?? []).filter((x) => x.group === Math.floor(a.id / 100))) for (const [tier] of gr.odds.filter(([x]) => x < a.id % 100)) {
+    const p = gr.odds.filter(([x]) => x <= tier).reduce((q, [, w]) => q + w, 0) / 100, id = gr.group * 100 + tier, dyn = (rolls[id] ?? []).map(([lo, hi]) => Math.round((lo + hi) / 2));
+    out.push({ key: `graft|${gr.group}|${tier}`, group: `graft|${gr.group}`, kind: 'craft', costFE: gr.fe / p, note: `about ${(1 / p).toFixed(1)} grafts of ${gr.fe} FE`,
+      label: `Re-graft ${gr.organ} on your ${v.label} until T${tier} or better lands: ${lineText(id, dyn)} (yours: ${lineText(a.id, a.dyn)})`,
+      changes: [{ kind: 'patch', op: 'vorax', items: vorax.map((x) => (x !== v ? x : { ...x, affixes: x.affixes.map((y) => (y === a ? { ...y, id, dyn } : y)) })) } as never] });
   }
   // a worn hero memory levelled (MEM1: base attr = group x 100 + BaseAttrTier) and its random affixes rerolled. A higher rarity is a new memory bought
   // (owner, 2026-10-16): its base from the market, not here

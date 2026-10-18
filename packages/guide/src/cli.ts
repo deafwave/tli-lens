@@ -19,6 +19,8 @@ const flag = (name: string) => { const i = args.indexOf(`--${name}`); const v = 
 const positional = at(args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')));
 const num = (name: string) => { const v = flag(name); if (v !== undefined && !Number.isFinite(Number(v))) throw new Error(`--${name} needs a number`); return v === undefined ? undefined : Number(v); };
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
+/** a file at the repository root, when it exists, as plan option `key` (roll-prices.json, vorax-grafts.json, inverse-images.json) */
+const rootJson = (file: string, key: string) => { const f = fileURLToPath(new URL(`../../../${file}`, import.meta.url)); return existsSync(f) ? { [key]: readJson(f) } : {}; };
 const bombs = num('bombs');
 const rollBudget = num('roll-budget');
 const budgetMinutes = num('budget-minutes');
@@ -107,7 +109,7 @@ async function main() {
     try {
       final(out, dump(await runPlan(ev, state, book, { ...(flag('target') ? { target: flag('target')! } : {}), ...(num('goal') ? { goal: num('goal')! } : {}), ...(num('kill-seconds') ? { goalSeconds: num('kill-seconds')! } : {}), ...(num('steps') ? { maxSteps: num('steps')! } : {}), ...(num('budget') ? { budget: num('budget')! } : {}),
         ...(num('slate-fe') ? { slateFE: num('slate-fe')! } : {}), ...(num('prism-fe') ? { prismFE: num('prism-fe')! } : {}),
-        ...(existsSync(fileURLToPath(new URL('../../../roll-prices.json', import.meta.url))) ? { rollPrices: readJson(fileURLToPath(new URL('../../../roll-prices.json', import.meta.url))) } : {}) }, (o) => writeAtomic(out, dump(o)))));
+        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages') }, (o) => writeAtomic(out, dump(o)))));
     } finally { await ev.close(); }
     console.log(`wrote ${out}`);
   } else if (cmd === 'advise') {

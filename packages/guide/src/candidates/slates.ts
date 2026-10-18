@@ -70,6 +70,12 @@ export function copiedFrom(items: SlateItem[]): number[] {
 /** the name the game gives a slate (item_gold by the gold row of its shape, the row dps-debug's slate.ts reads) and what an influence row does */
 export const slateName = (shapeId: number) => { const g = Object.values(rows('lua_config_item_talent_block_gold')).find((r) => r.TalentBlockShapeIds && String(shapeId) in r.TalentBlockShapeIds);
   return (g && rows('lang_en')[`item_gold|name|${g.Id}`]) as string | undefined; };
+/** the slates that roll one influence row of several (a single-sided Sparks of Moth Fire: gold row 1001's four sides), each row at the book's price for the slate's
+ *  name; none without a price */
+export const pricedCopiers = (price: (name: string) => number | null) => Object.values(rows('lua_config_item_talent_block_gold')).flatMap((g) => {
+  const pool = Object.keys(g.Influence ?? {}), name = rows('lang_en')[`item_gold|name|${g.Id}`] as string | undefined, p = name ? price(name) : null;
+  return pool.length < 2 || !p || !g.TalentBlockShapeIds ? [] : Object.keys(g.TalentBlockShapeIds).flatMap((shape) => pool.map((id) => ({ shapeId: +shape, influenceId: +id, price: p })));
+});
 export const influenceText = (id: number) => String(rows('lang_en')[`talent_block_influence|description|${id}`] ?? `influence row ${id}`).replace(/<[^>]+>/g, '');
 /** A slate with no lines of its own that copies (a Sparks of Moth Fire listing, its side as listed: influenceId) on your board as it sits: on each free open cell, and on
  *  each cell of a slate it may go in place of (SLATE_CAP), that slate out; each place where it copies a line, with the board resolved there (reboard). */

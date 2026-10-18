@@ -59,6 +59,18 @@ describe('Sparks of Moth Fire copies the last line of the slate on its side: a b
     expect(best.label).toMatch(/^Buy the Sparks of Moth Fire listed at 460 FE \(seen .+; Copies the last Talent on the adjacent slate below this slate\..*\) and place it at column 3, row 4, in place of your slate \d \(/);
     expect(itemsOf(best.changes[0]).find((i) => i.itemId.startsWith('guide-'))).toMatchObject({ baseId: 261001, link: { SlotId: 34 }, influenceId: 1003, influence: { TalentIdCopy: [ASL] } });
   });
+  it('with no listing read, a single-sided Sparks of each side at your price for its name (owner, 2026-10-18: "Single-sided Sparks are approximately 500 FE"); a listing read for a side replaces it', () => {
+    const want = [{ id: ASL, name: 'God of Might: Attack Skill Level', gain: 1.1 }], keep = sparksBoard.map(() => 0.99);
+    const mine = { ...ctx, prices: withPrices(ctx.prices, { 'Sparks of Moth Fire': 500 }).book };
+    const c = candidates(sp, mine, { ...DEFAULT_PLAN, slateKeep: keep }, want).filter((x) => x.key.startsWith('sparks|'));
+    const below = c.find((x) => /below this slate.*column 3, row 4.*copies God of Might: Attack Skill Level$/.test(x.label))!;
+    expect(below.costFE).toBe(500);
+    expect(below.label).toMatch(/^Buy a Sparks of Moth Fire that rolled: Copies the last Talent on the adjacent slate below this slate\..* \(about 500 FE: your price\) and place it at column 3, row 4/);
+    expect(candidates(sp, ctx, { ...DEFAULT_PLAN, slateKeep: keep }, want).filter((x) => x.key.startsWith('sparks|'))).toEqual([]);   // no price, no listing: none
+    const listed = { talents: [], price: 460, at: new Date().toISOString(), baseId: 261001, shapeId: 2010, influenceId: 1003 };
+    const both = candidates(sp, mine, { ...DEFAULT_PLAN, slateListings: [listed], slateKeep: keep }, want).filter((x) => x.key.startsWith('sparks|') && /below this slate/.test(x.label));
+    expect(both.map((x) => x.costFE)).toEqual(both.map(() => 460));
+  });
   it('a listing in place of a slate a Sparks copies screens its last line once more per copy', async () => {
     const { screenSlate } = await import('../src/candidates/slates');
     const g = (t: number) => ({ 1: 1.1, 2: 1.05 } as Record<number, number>)[t] ?? 1;

@@ -96,6 +96,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
   A Sparks of Moth Fire copies the last line of the slate on the one side its item rolled (`TalentDatas.InfluenceId`, resolved by dps-debug `slate.ts`): a board
   holding one is priced where its slates sit after every change (`positional`, `fitsInPlace`), never re-laid out, so no slate is added to it. A Sparks listing
   goes on a free cell or in place of a slate, wherever it copies a line (`copyPlaces`), at most 3 a board; a listing's last line screens once more per copy of it.
+  A side no listing was read for is offered at your price for the name (`pricedCopiers`, prices.json; owner, 2026-10-18: single-sided Sparks about 500 FE).
 - Kismets: a page holds at most 9 Micro and 4 Medium Destinies (`DESTINY_CAP`, owner's pact page 2026-10-18); at the cap a kismet only replaces one.
 - Belt blends (`blendCands`, `plan.ts`): every recipe the game's window shows that you unlocked and that grants one affix, on the belt you wear, at its spices' etor price;
   random-outcome recipes and unlocked ones the read had no row for are named in `notSearched`.

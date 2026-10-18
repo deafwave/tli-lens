@@ -8,7 +8,7 @@ import { costOf } from './priceOf';
 import { kismetMoves, pointProbes } from './candidates/kismets';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
-import { addSlate, boardView, copiedFrom, copyPlaces, fitsInPlace, influenceText, overCap, packBoard, positional, replaceable, replaceSlate, screenSlate, slateMoves, slateName, slateWants, type SeenSlate } from './candidates/slates';
+import { addSlate, boardView, copiedFrom, copyPlaces, fitsInPlace, influenceText, overCap, packBoard, positional, pricedCopiers, replaceable, replaceSlate, screenSlate, slateMoves, slateName, slateWants, type SeenSlate } from './candidates/slates';
 import { applyPatch } from './patches';
 import { talentMovesWith } from './candidates/talents';
 import { inverseImage, targetMoves } from './candidates/target';
@@ -316,14 +316,25 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   // a Sparks of Moth Fire listing (no lines: it copies the last line of the slate on the side it rolled) where it sits on your board as it is, on a free cell or in place
   // of a slate, screened by the lines it copies there x what the slate it replaces keeps; per side the 3 cheapest (SLATE_CAP: 3 a board)
   const bare = seen.filter((x) => !x.talents.length && x.influenceId).sort((a, b) => a.price - b.price);
-  const copiers = bare.filter((x, i) => bare.slice(0, i).filter((y) => y.shapeId === x.shapeId && y.influenceId === x.influenceId).length < 3).flatMap((l) => copyPlaces(s, l)
+  // a side no listing was read for: a single-sided slate (one side of its pool) at your price for its name (prices.json; owner, 2026-10-18: "Single-sided Sparks are
+  // approximately 500 FE"), its base as a slate of that shape on your board or listed has it
+  const shaped = [...(L.slateItems ?? []) as { shapeId?: number; baseId: number }[], ...seen];
+  const priced = pricedCopiers((n) => ctx.prices.price(n, s.level)).flatMap((c) => {
+    const baseId = shaped.find((x) => x.shapeId === c.shapeId)?.baseId;
+    return baseId === undefined || bare.some((l) => l.shapeId === c.shapeId && l.influenceId === c.influenceId) ? [] : [{ ...c, baseId, talents: [] as number[] }];
+  });
+  const onBoardN = (x: { shapeId: number; influenceId?: number }) => ((L.slateItems ?? []) as { shapeId?: number; influenceId?: number }[]).filter((y) => y.shapeId === x.shapeId && y.influenceId === x.influenceId).length;
+  const copiers = [...bare.filter((x, i) => bare.slice(0, i).filter((y) => y.shapeId === x.shapeId && y.influenceId === x.influenceId).length < 3), ...priced].flatMap((l) => copyPlaces(s, l)
     .filter((p) => p.replaced === undefined || o.slateKeep?.[p.replaced] !== undefined).map((p) => ({ l, p, e: p.copies.reduce((q, t) => q * g(t), p.replaced === undefined ? 1 : o.slateKeep![p.replaced]) })));
-  for (const { l, p } of best(copiers) as typeof copiers) {
-    const name = slateName(l.shapeId) ?? `slate ${l.baseId}`, mine = p.replaced === undefined ? undefined : slates[p.replaced];
-    out.push({ key: `sparks|${listing(l)}|${l.influenceId}|${p.replaced ?? 'free'}|${p.at}`, group: `${listing(l)}|${l.influenceId}|${l.at}`, boardAt: p.replaced ?? slates.length, kind: 'slate', costFE: l.price,
+  for (const { l, p } of best(copiers as never) as unknown as typeof copiers) {
+    const name = slateName(l.shapeId) ?? `slate ${l.baseId}`, mine = p.replaced === undefined ? undefined : slates[p.replaced], at = 'at' in l ? l.at : undefined;
+    const where = `place it at column ${p.at[0]}, row ${p.at[1]}${mine ? `, in place of your slate ${p.replaced! + 1} (${mine.talents.length ? mine.talents.map(talentName).join(', ') : name})` : ''}: it copies ${p.copies.map(talentName).join(', ')}`;
+    out.push(at ? { key: `sparks|${listing(l as SeenSlate)}|${l.influenceId}|${p.replaced ?? 'free'}|${p.at}`, group: `${listing(l as SeenSlate)}|${l.influenceId}|${at}`, boardAt: p.replaced ?? slates.length, kind: 'slate', costFE: l.price,
       note: 'a listing the market read: check it is still there; what it copies is the last line of the slate on its side, so it goes where the step says',
-      label: `Buy the ${name} listed at ${l.price} FE (seen ${new Date(l.at).toLocaleTimeString()}; ${influenceText(l.influenceId!)}) and place it at column ${p.at[0]}, row ${p.at[1]}${mine ? `, in place of your slate ${p.replaced! + 1} (${mine.talents.length ? mine.talents.map(talentName).join(', ') : name})` : ''}: it copies ${p.copies.map(talentName).join(', ')}`,
-      changes: [{ kind: 'patch', op: 'slate-board', items: p.items } as never] });
+      label: `Buy the ${name} listed at ${l.price} FE (seen ${new Date(at).toLocaleTimeString()}; ${influenceText(l.influenceId!)}) and ${where}`, changes: [{ kind: 'patch', op: 'slate-board', items: p.items } as never] }
+      : { key: `sparks|priced|${l.shapeId}|${l.influenceId}|${p.replaced ?? 'free'}|${p.at}`, group: `sparks|priced|${l.shapeId}|${l.influenceId}|${onBoardN(l)}`, boardAt: p.replaced ?? slates.length, kind: 'slate', costFE: l.price,
+        note: 'at your price (prices.json): no listing of this side read; what it copies is the last line of the slate on its side, so it goes where the step says',
+        label: `Buy a ${name} that rolled: ${influenceText(l.influenceId!)} (about ${l.price} FE: your price) and ${where}`, changes: [{ kind: 'patch', op: 'slate-board', items: p.items } as never] });
   }
   if (positional(slates as never)) { ctx.notSearched.add('slate: a listing added to your board: a Sparks of Moth Fire on it copies by where the slates sit, so the board is not re-laid out to make room (a slate goes in place of one, or on a free cell)'); return out; }
   for (const shape of [...new Set(lined.map((x) => x.shapeId))]) {

@@ -90,11 +90,16 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     expect(lv?.costFE).toBeGreaterThan((1 / (0.0146 * 2 / 9) - 1) * (10 * 0.1 + 1));
     expect(lv?.label).toMatch(/^Level your Memory of Discipline 13 -> 20/);
   });
-  it('a line already on a board slate is never offered on another slate (owner, 2026-10-17: "Add a 3-cell slate with Ranger: additional damage taken by enemies in Proximity" - we already have one)', () => {
-    const onBoard = live.loadout.slateItems[1].talents[0], ids = (k: string) => k.split('|').at(-1)!.split('-');
-    const c = candidates(s, ctx, DEFAULT_PLAN, [{ id: onBoard, name: 'on the board' }, ...lines]).filter((x) => /^(add|slate)\|/.test(x.key) && ids(x.key).includes(String(onBoard)));
-    expect(c.length).toBeGreaterThan(0);   // the slate that has it: replaced by one with it
-    for (const x of c) expect(x.key).toMatch(/^slate\|1\|/);
+  it('a slate step is a listing the market read: its lines, base, shape and price, only where its type may go; none made up from lines (owner, 2026-10-18: three plan slates no market had, one priced from a Pedigree)', () => {
+    const want = lines.map((x, i) => ({ ...x, gain: 1.1 + i / 100 })), at = new Date().toISOString(), keep = live.loadout.slateItems.map(() => 0.99);
+    const ped = { talents: [want[1].id, 10070100], price: 350, at, baseId: 261010, shapeId: 2090 }, corner = { talents: [want[0].id], price: 20, at, baseId: 261003, shapeId: 2020 };
+    const c = candidates(s, ctx, { ...DEFAULT_PLAN, slateListings: [ped, corner], slateKeep: keep }, want).filter((x) => x.key.startsWith('listing|'));
+    expect(c.filter((x) => x.costFE === 350).map((x) => x.key.split('|').at(-1))).toEqual(['0']);   // a Pedigree: only in place of your Pedigree
+    expect(c.filter((x) => x.costFE === 20).map((x) => x.key.split('|').at(-1))).toEqual(expect.arrayContaining(['1', '3', 'add']));   // a Corner: wherever the caps and the board allow
+    const items = (c.find((x) => x.costFE === 350)!.changes[0] as unknown as { items: { baseId: number; shapeId: number; talents: number[] }[] }).items;
+    expect(items[0]).toMatchObject({ baseId: 261010, shapeId: 2090, talents: ped.talents });
+    expect(c[0].label).toMatch(/^Buy the (Pedigree|slate) listed at \d+ FE \(seen /);
+    expect(candidates(s, ctx, { ...DEFAULT_PLAN, slateKeep: keep }, want).some((x) => /^(slate\|\d+\||add\||listing\|)/.test(x.key))).toBe(false);   // no listings read: no slate to buy
   });
   it('a slate you own (bag, booth: the read\'s page 0 is My Booth, owner 2026-10-17) is a free step in place of each board slate, its slot named', () => {
     const own = { ...s, owned: [{ itemId: 'x', baseId: 261003, baseName: null, level: 86, where: 'stash', page: 0, slot: 1, count: 1, modifiers: {}, talents: [43040200], shapeId: 2020 }] };
@@ -112,7 +117,7 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
   });
   it('a slate you own is tried in every board slot its type may take, not only the weakest (owner, 2026-10-17: free slates in the bag and booth were never offered)', () => {
     const own = { ...s, owned: [{ itemId: 'ped', baseId: 261010, baseName: null, level: 86, where: 'stash', page: 0, slot: 1, count: 1, modifiers: {}, talents: [43040200], shapeId: 2090 }] };
-    const c = candidates(own, ctx, { ...DEFAULT_PLAN, slateSlots: [1, 3] }, lines).filter((x) => x.key.startsWith('ownslate|'));
+    const c = candidates(own, ctx, DEFAULT_PLAN, lines).filter((x) => x.key.startsWith('ownslate|'));
     expect(c.map((x) => x.key)).toEqual(['ownslate|ped|0']);   // a Pedigree: only in place of your Pedigree (board slate 1)
   });
   it("another skill in a weak place: an active for an active place, an aura for an aura place, its supports kept (owner: Fixate for Bull's Rage)", () => {
@@ -180,16 +185,6 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     const c = candidates(s2, ctx, { ...DEFAULT_PLAN, rollPrices: [{ item: 'Kaleidoscope', line: 51512841, rolls: [[56, 168], [65, 368]] }] }, lines).filter((x) => x.key.startsWith('rollp|ring2|'));
     expect(c.map((x) => x.costFE)).toEqual([168, 368]);
     expect(c[0].changes[0]).toEqual({ kind: 'patch', op: 'gear-roll', slot: 'ring2', id: kal.id, dyn: [56, 8], newId: 51512840 });
-  });
-  it('a slate takes the place of one of yours (same shape and cell, so it fits the board), priced at your price', () => {
-    const sl = cs.filter((c) => c.label.startsWith('Replace your slate'));
-    expect(sl.length).toBe(live.loadout.slateItems.length * 3);   // 2 lines alone + the pair, per slate
-    const items = (sl[0].changes[0] as unknown as { items: { link: unknown; shapeId: number; talents: number[] }[] }).items;
-    expect(items).toHaveLength(live.loadout.slateItems.length);
-    expect(items[0].link).toEqual(live.loadout.slateItems[0].link);
-    expect(items[0].shapeId).toBe(live.loadout.slateItems[0].shapeId);
-    expect(sl.find((c) => c.label.endsWith('with Ranger: chance to gain Agility Blessing on Critical Strike'))!.costFE).toBe(100);
-    expect(sl.find((c) => /Agility Blessing.* \+ Lich/.test(c.label))!.costFE).toBe(370);
   });
   it("a blend on your belt (owner, 2026-10-18: +1 Attack Skill Level on Dawn Break): every shown recipe you unlocked that grants one affix, at its spices' price (src/data/blends.json, read from the client)", () => {
     const c = cs.filter((x) => x.key.startsWith('blend|'));

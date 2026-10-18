@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { freed, redundant, replaceable, slateCost, slateMoves } from '../src/candidates/slates';
+import { freed, redundant, replaceable, slateMoves } from '../src/candidates/slates';
 import { table } from '../src/pin';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
@@ -65,15 +65,4 @@ describe('redundant', () => {
   it('frees a slate when the one it replaces is redundant too (a consolidation)', () => expect(freed(mine, 0, [1, 2], [0, 1, 2, 3])).toEqual([1]));
   it('frees none in place of an unrelated slate it could put in place of the redundant one instead', () => expect(freed(mine, 2, [1, 2], [0, 1, 2, 3])).toEqual([]));
   it('frees them in place of an unrelated slate when a cap keeps it out of a redundant one', () => expect(freed(mine, 2, [1, 2], [2, 3])).toEqual([0, 1]));
-});
-
-describe('slateCost: a slate priced from the market listings seen (owner, 2026-10-18: a 2-line Lich: All Skills\' Levels slate sells for 1,650-2,000 FE, the plan had 370)', () => {
-  const A = { id: 1, name: 'A' }, B = { id: 2, name: 'B' }, guess = () => 100;
-  const seen = [{ talents: [1, 3], price: 1650, at: '' }, { talents: [1, 3], price: 2000, at: '' }, { talents: [2, 4, 5, 6], price: 3688, at: '' }, { talents: [1, 2, 7], price: 5000, at: '' }];
-  it('the cheapest listing seen carrying all its lines', () => expect(slateCost([A, B], seen, guess).fe).toBe(5000));
-  it('else its dearest line, each at the cheapest listing seen carrying it', () => expect(slateCost([A, B], seen.slice(0, 3), guess).fe).toBe(3688));
-  it('a line never seen at the guess: lines never seen summed, as before', () => {
-    expect(slateCost([A, { id: 9, name: 'C' }], seen, guess).fe).toBe(1650);
-    expect(slateCost([{ id: 8, name: 'D' }, { id: 9, name: 'C' }], seen, guess)).toEqual({ fe: 200, from: 'slate price assumed (no listing with its lines seen): check /market' });
-  });
 });

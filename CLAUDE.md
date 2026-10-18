@@ -31,7 +31,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 
 - `pnpm guide plan [export.json]` — your character (read fresh from the running game via dps-debug `reader/export.py` when no file is given)
   to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `traveler`; `dummy`: ranked by and aimed at the damage at full Life, what the dummy shows), `--goal` (default 2e11),
-  `--budget N` (FE; stops when nothing fits), `--slate-fe` (100), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--dps-debug <dir>`.
+  `--budget N` (FE; stops when nothing fits), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--dps-debug <dir>`.
 - `pnpm guide advise <export.json> [--fe N] [--season N] [--steps N] [--hoa]` — next-buys list (`--steps N` adds a path; `--hoa`: an Ice Shot
   character planned as switched now); `--budget-minutes` defaults to 30. Writes `./advice.json` (cwd) and copies it to the clipboard.
 - `pnpm guide ideal [--live]` — writes `guide.json`. `live [--every M]` (default 60) reruns it and commits + pushes `guide.json`.
@@ -89,6 +89,10 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
   unlocks a socket is not read) through dps-debug's tag gate. A step that takes out a piece the model does not price (Grudge's paralysis) is refused, named with its gain.
 - Advise prices every acquisition first (`nextBuys`: exact gain, `buy` = item x quantity) and writes it before the path; the page ranks it by
   the player's typed prices (etor's by default, kept in the browser, exported as `prices.json`).
+- Slates (`candidates`, `plan.ts`): a slate step is a listing the market read (`packages/guide/.cache/slate-listings.json`, the last week): its lines, base,
+  shape and price and when it was seen, in place of a slate its type may take (a Pedigree only for your Pedigree) or added, where the board packs. Never a slate made
+  up from lines (owner, 2026-10-18). Every listing is screened by its lines' gains x what emptying your slate keeps; the best few per place are priced.
+- Kismets: a page holds at most 9 Micro and 4 Medium Destinies (`DESTINY_CAP`, owner's pact page 2026-10-18); at the cap a kismet only replaces one.
 - Belt blends (`blendCands`, `plan.ts`): every recipe the game's window shows that you unlocked and that grants one affix, on the belt you wear, at its spices' etor price;
   random-outcome recipes and unlocked ones the read had no row for are named in `notSearched`.
 - A change that seals more Mana than you have is priced with each active aura switched off (`aura-off`, the server's switch); the best that fits is offered,

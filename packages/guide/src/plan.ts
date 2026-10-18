@@ -8,7 +8,7 @@ import { costOf } from './priceOf';
 import { kismetMoves, pointProbes } from './candidates/kismets';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
-import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateCost, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
+import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
 import { applyPatch } from './patches';
 import { talentMovesWith } from './candidates/talents';
 import { inverseImage, targetMoves } from './candidates/target';
@@ -23,12 +23,11 @@ import blends from './data/blends.json';
 import type { Evaluator, Figure, GenCtx, GuideOut, Move, PriceBook, State } from './types';
 
 export interface PlanOpts { target: string; goal: number; /** your FE: an option dearer than the FE left is not priced; the plan stops when none fits */ budget?: number; /** the goal as a time to kill the target (s): goal = its max Life / goalSeconds */ goalSeconds?: number; maxSteps: number;
-  /** FE of a slate carrying one wanted line, by line (the owner's prices); others `slateFE`: a line no market listing seen carries (slateCost) */ slatePrices: [RegExp, number][]; slateFE: number;
   /** the slate listings the market has read in the last week (.cache/slate-listings.json) */ slateListings?: SeenSlate[];
   /** FE of the talent prism like the example build's (the owner's price) */ prismFE: number;
   /** talent nodes whose points never move (set by runPlan) */ locked?: Set<number>;
   /** the character's talent points: the points it has spent at the start (set by runPlan) */ points?: number;
-  /** the board slates a new slate is tried in place of: the weakest (set by runPlan; absent = every one) */ slateSlots?: number[];
+  /** by board slate: your kill speed with it emptied over yours (set by runPlan; absent = no listing is tried in place of it) */ slateKeep?: number[];
   /** your prices for a legendary at a roll of one line (roll-prices.json: { item, line: its modifier id, rolls: [[value, FE]] }); the item's other lines as yours */
   rollPrices?: { item: string; line: number; rolls: [number, number][] }[];
   /** vorax Ultimate re-grafts (vorax-grafts.json, the owner's: the organ, the line's modifier group, FE per graft, [tier, %] odds): a graft always replaces the line */
@@ -36,7 +35,7 @@ export interface PlanOpts { target: string; goal: number; /** your FE: an option
   /** Inverse Image listings (inverse-images.json, read from the market: listing number, reflected Medium Talent effect %, FE): bought as listed, the roll fixed */
   inverseImages?: { n: number; medium: number; fe: number }[];
   /** the skill places another skill is tried in: the weakest active and aura places (set by runPlan; absent = none) */ skillSlots?: { kind: string; slot: number }[] }
-export const DEFAULT_PLAN: PlanOpts = { target: 'traveler', goal: 2e11, maxSteps: 60, slatePrices: [[/Agility Blessing on Critical Strike/, 100], [/All Skills' Levels/, 270]], slateFE: 100, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
+export const DEFAULT_PLAN: PlanOpts = { target: 'traveler', goal: 2e11, maxSteps: 60, prismFE: 4000 };   // the target's prism is an Inverse Image (market 2026-10-17: Medium +39 % for 3,399 FE, +89 % for 7,900 FE)
 
 /** the owner's rules the candidates must keep (2026-10-16) */
 const RULES = [
@@ -192,7 +191,7 @@ const fits = (f: Figure) => !f.mana || 'stop' in f.mana || f.mana.fits;
 const auraPlaces = (s: State) => ((s.loadout.skills ?? []) as { place: { kind: string; slot?: number }; switch?: { pendingDeactivate?: boolean; activated?: boolean } }[])
   .filter((x) => x.place.kind === 'passive' && x.switch?.pendingDeactivate !== true && x.switch?.activated !== false).map((x) => x.place.slot!);
 
-export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: number; name: string }[], held = heldUniques(s)): Cand[] {
+export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: number; name: string; gain?: number }[], held = heldUniques(s)): Cand[] {
   const L = s.loadout as { skills: { name: string; level: number; sid: number; place: { kind: string; slot?: number; ownerKind?: string; ownerSlot?: number } }[]; slateItems?: Record<string, unknown>[] };
   const out: Cand[] = [], fates = new Set<string>();
   const add = (m: Move, label = m.label) => {
@@ -280,22 +279,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
       label: `Replace ${head.name} with ${k.name} (${p.kind === 'passive' ? 'aura' : 'active'} slot ${p.slot}; its supports kept)`,
       changes: [{ kind: 'patch', op: 'skill-group', place: p, items: group.map((x) => (x === head ? { ...x, sid: k.sid, name: k.name, level, itemId: `guide-skill-${k.sid}`, mods: [] } : x)) } as never] });
   }
-  // one more slate where the board, re-laid out (moving and rotating a slate costs next to nothing: owner, 2026-10-16), still has room: packBoard
   const added = ((s.loadout.slateItems ?? []) as { itemId: string; shapeId?: number }[]).filter((x) => x.itemId.startsWith('guide-add-')).map((x) => x.shapeId!);
-  // a line already on a board slate is never offered on another (owner, 2026-10-17: an added slate with the Proximity line the board has)
-  const guess = (n: string) => o.slatePrices.find(([r]) => r.test(n))?.[1] ?? o.slateFE;
-  const elsewhere = (skip?: number) => new Set(((s.loadout.slateItems ?? []) as { talents: number[] }[]).flatMap((x, j) => (j === skip ? [] : x.talents)));
-  const kinds: [number, string][] = [[2020, 'a 2-cell slate (the type of your 2-cell slates)'], [2030, 'a 3-cell slate (the type of your 3-cell slate)']];
-  for (const [shape, what] of kinds) {
-    if (!fitsLayout(applyPatch(s.loadout, addSlate(s, shape, []) as never), s.level, [...added, shape])) continue;
-    for (const set of [...lines.slice(0, 10).map((a) => [a]), ...lines.slice(0, 6).flatMap((a, i) => lines.slice(i + 1, 6).map((b) => [a, b]))]) {
-      if (set.some((x) => elsewhere().has(x.id))) continue;
-      const names = set.map((x) => x.name), cost = slateCost(set, o.slateListings ?? [], guess);
-      out.push({ key: `add|${added.length}|${shape}|${set.map((x) => x.id).join('-')}`, group: `add|${added.length}`, kind: 'slate', costFE: cost.fe,
-        note: `${cost.from}; the board re-laid out to fit it (the slate board shows where each goes)`,
-        label: `Add ${what} with ${names.join(' + ')}`, changes: [addSlate(s, shape, set.map((x) => x.id))] });
-    }
-  }
   // a slate you own (bag, booth) in place of one on the board: free
   // not one already on the board: the read lists board slates among the items (where 'board'), and a board slate's own lines may be read in part
   const onBoard = new Set(((s.loadout.slateItems ?? []) as { itemId: string; talents: number[] }[]).flatMap((x) => [x.itemId, JSON.stringify([...x.talents].sort())]));
@@ -307,21 +291,35 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
       || !fitsLayout(applyPatch(s.loadout, replaceSlate(s, i, own.talents!, { baseId: own.baseId, shapeId: own.shapeId }) as never), s.level, added) || out.push({ key: `ownslate|${own.itemId}|${i}`, group: `ownslate|${own.itemId}`, kind: 'slate', costFE: 0,
       label: `Put your ${SLATE_KIND[own.baseId] ?? 'slate'} (level ${own.level}: ${own.talents!.map(talentName).join(', ')}) from your ${where}${own.where === 'stash' ? '' : `, slot ${own.slot}`} in place of board slate ${i + 1} (${it.talents.map(talentName).join(', ')})`, changes: [replaceSlate(s, i, own.talents!, { baseId: own.baseId, shapeId: own.shapeId })] }));
   }
-  // a slate in place of one of yours, same shape (so it fits the board), carrying one or two wanted lines (its other lines priced as nothing)
-  const slates = L.slateItems ?? [];
-  const sets = [...lines.slice(0, 10).map((a) => [a]), ...lines.slice(0, 6).flatMap((a, i) => lines.slice(i + 1, 6).map((b) => [a, b]))];
+  // a slate listing the market read: its lines, base, shape and price, in place of one of your slates its type may take, or added where the board, re-laid out
+  // (moving and rotating a slate costs next to nothing: owner, 2026-10-16), has room; never a slate made up from lines (owner, 2026-10-18: three plan slates no
+  // market had, one priced from a Pedigree). Screened by its lines' gains (one more slate line each) x what emptying your slate keeps (1 when it carries all of
+  // that slate's lines); the best few per place priced.
+  // ponytail: lines multiply in the screen; a pair that pays only together screens low (raise TOP, or price every listing: ~4 figures/s)
+  const gainOf = new Map(lines.map((x) => [x.id, x.gain ?? 1])), seen = o.slateListings ?? [];
+  const screen = (l: SeenSlate) => l.talents.reduce((p, t) => p * (gainOf.get(t) ?? 1), 1);
+  const best = (xs: { l: SeenSlate; e: number }[]) => { const TOP = 6, ok = xs.filter((x) => x.e > 1.005);
+    return [...new Set([...[...ok].sort((a, b) => (b.e - 1) / Math.max(b.l.price, 1) - (a.e - 1) / Math.max(a.l.price, 1)).slice(0, TOP), ...[...ok].sort((a, b) => b.e - a.e).slice(0, TOP / 2)])]; };
+  const listed = (l: SeenSlate) => `the ${SLATE_KIND[l.baseId] ?? 'slate'} listed at ${l.price} FE (seen ${new Date(l.at).toLocaleTimeString()}: ${l.talents.map(talentName).join(', ')})`;
+  const listing = (l: SeenSlate) => `listing|${l.baseId}|${l.shapeId}|${l.price}|${l.talents.join('-')}`;
+  const slates = (L.slateItems ?? []) as unknown as { talents: number[]; baseId: number }[];
   slates.forEach((it, i) => {
-    if (o.slateSlots && !o.slateSlots.includes(i)) return;
-    const was = (it.talents as number[]).map(talentName).join(', '), there = elsewhere(i);
-    for (const set of sets) {
-      if (set.some((x) => there.has(x.id))) continue;
-      const ids = set.map((x) => x.id), names = set.map((x) => x.name);
-
-      const cost = slateCost(set, o.slateListings ?? [], guess);
-      out.push({ key: `slate|${i}|${ids.join('-')}`, kind: 'slate', costFE: cost.fe, note: cost.from,
-        label: `Replace your slate ${i + 1} (${was}) with a slate of the same shape with ${names.join(' + ')}`, changes: [replaceSlate(s, i, ids)] });
+    const keep = o.slateKeep?.[i];
+    if (keep === undefined) return;
+    for (const { l } of best(seen.filter((x) => replaceable(slates, x.baseId).includes(i)).map((x) => ({ l: x, e: screen(x) * (it.talents.every((t) => x.talents.includes(t)) ? 1 : keep) })))) {
+      const change = replaceSlate(s, i, l.talents, { baseId: l.baseId, shapeId: l.shapeId });
+      if (fitsLayout(applyPatch(s.loadout, change as never), s.level, added))
+        out.push({ key: `${listing(l)}|${i}`, group: listing(l), kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there',
+          label: `Buy ${listed(l)} in place of your slate ${i + 1} (${it.talents.map(talentName).join(', ')})`, changes: [change] });
     }
   });
+  for (const shape of [...new Set(seen.map((x) => x.shapeId))]) {
+    const one = seen.find((x) => x.shapeId === shape)!;
+    if (!fitsLayout(applyPatch(s.loadout, addSlate(s, shape, [], one.baseId) as never), s.level, [...added, shape])) continue;
+    for (const { l } of best(seen.filter((x) => x.shapeId === shape).map((x) => ({ l: x, e: screen(x) }))))
+      out.push({ key: `${listing(l)}|add`, group: listing(l), kind: 'slate', costFE: l.price, note: 'a listing the market read: check it is still there; the board re-laid out to fit it (the slate board shows where each goes)',
+        label: `Buy ${listed(l)} and add it to your board`, changes: [addSlate(s, shape, l.talents, l.baseId)] });
+  }
   return out;
 }
 
@@ -397,16 +395,15 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
       : lay && JSON.stringify(lay[i]) !== nowCells[i] ? { source: 'on your board: move or rotate it to where it shows', changed: true } : { source: 'on your board', changed: false }), lay ?? undefined) };
   };
   const out = (partialRun: boolean): GuideOut => ({ mode: 'advise', board: board(), pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt },
-    knobs: { plan: { ...o, slatePrices: o.slatePrices.map(([r, v]) => `${r.source}: ${v}`), slateListings: o.slateListings?.length ?? 0 }, fight: ev.fight, rollBudget: ev.rollBudget, target: o.target, partialRun },
+    knobs: { plan: { ...o, slateListings: o.slateListings?.length ?? 0 }, fight: ev.fight, rollBudget: ev.rollBudget, target: o.target, partialRun },
     character: { level: s0.level, skill: 'hoa', fe: s0.fe, owned: s0.owned.length, gear: ((s0.loadout.gear ?? []) as { slot?: string; label: string; name?: string }[]).map((g) => ({ slot: g.slot ?? '', label: g.name ?? g.label })) },
     start: first, startNotes: notes, steps: [], notSearched: [...ctx.notSearched], unpriced: [], notCalculable: [...refused].map(([l, w]) => `${l}: ${w}`),
     slates: lines.slice(0, 25), plan: { target: o.target, goal: o.goal, ...(o.goalSeconds ? { goalSeconds: o.goalSeconds } : {}), at: new Date().toISOString(), start: { label: 'your character as read from the game', figure: first, dummy }, steps,
       build: buildSheet(s.loadout) } });
   const keep = heldUniques(s0);
-  // the weakest board slates (the least lost when emptied): a new slate is tried in place of these 2 only (6 figures, again after a slate step)
-  const weakest = async () => { const n = ((s.loadout.slateItems ?? []) as unknown[]).length;
-    const loss = await Promise.all(Array.from({ length: n }, async (_, i) => ({ i, k: (await ev.run(s.loadout, [replaceSlate(s, i, [])], C)).figure.kill })));
-    o.slateSlots = loss.sort((a, b) => b.k - a.k).slice(0, 2).map((x) => x.i); };
+  // what each board slate is worth (its emptied figure over yours): the listings' screen (one figure a slate, again after a slate step)
+  const weakest = async () => { const n = ((s.loadout.slateItems ?? []) as unknown[]).length, now = (await ev.run(s.loadout, [], C)).figure.kill;
+    o.slateKeep = await Promise.all(Array.from({ length: n }, async (_, i) => (await ev.run(s.loadout, [replaceSlate(s, i, [])], C)).figure.kill / now)); };
   await weakest();
   // the weakest skill places (the least lost when the place is emptied): 2 active (never the main skill or Blink: movement, which the figure does not price), 2 aura
   const weakSkills = async () => { const sk = ((s.loadout.skills ?? []) as { name?: string; place: { kind: string; slot?: number; ownerKind?: string; ownerSlot?: number } }[]);

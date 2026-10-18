@@ -103,9 +103,9 @@ export function withSlate(s: State, talents: number[]): Change | undefined {
 }
 
 /** one more slate of `shapeId` carrying `talents` (a copy of a placed slate of that shape, else the first; its place on the board is packBoard's to find) */
-export function addSlate(s: State, shapeId: number, talents: number[]): Change {
+export function addSlate(s: State, shapeId: number, talents: number[], baseId?: number): Change {
   const items = (s.loadout.slateItems ?? []) as SlateItem[], tmpl = items.find((x) => x.shapeId === shapeId) ?? items[0];
-  return { kind: 'patch', op: 'slate-board', items: [...items, { ...tmpl, shapeId, itemId: `guide-add-${items.length}-${talents.join('-')}`, talents,
+  return { kind: 'patch', op: 'slate-board', items: [...items, { ...tmpl, shapeId, ...(baseId === undefined ? {} : { baseId }), itemId: `guide-add-${items.length}-${talents.join('-')}`, talents,
     influence: { ...(tmpl.influence as object), EffectTalentIds: talents, TalentIdDevour: talents.map(() => false), TalentIdInfluence: talents.map(() => 0), TalentIdCopyInfluence: {},
       TalentIdCopy: {}, DevilProjectionTalentIds: {}, DevilProjectionInfluence: {}, DevilLineBoostInfluence: {}, DevilLineBoostTalentIds: {} } }] } as never;
 }
@@ -132,20 +132,8 @@ export const freed = (items: { talents: number[] }[], index: number, talents: nu
   return redundant(items, -1, talents).includes(index) || free.some((j) => !fits.includes(j)) ? free : [];
 };
 
-/** a slate listing the market has read (market.ts keeps them in .cache/slate-listings.json) */
-export type SeenSlate = { talents: number[]; price: number; at: string };
-/** a slate carrying `lines`: the cheapest listing seen carrying them all, else at least its dearest line at the cheapest listing seen carrying it and at
- *  least the `guess`es of the lines never seen, summed (owner, 2026-10-18: a 2-line Lich: All Skills' Levels slate sells for 1,650-2,000 FE)
- *  ponytail: a line seen only on a 4-line slate is priced at that slate; more pages seen lower it */
-export function slateCost(lines: { id: number; name: string }[], seen: SeenSlate[], guess: (name: string) => number): { fe: number; from: string } {
-  const cheapest = (ids: number[]) => Math.min(...seen.filter((s) => ids.every((t) => s.talents.includes(t))).map((s) => s.price));
-  const all = cheapest(lines.map((x) => x.id));
-  if (Number.isFinite(all)) return { fe: all, from: 'the cheapest market listing seen with its lines' };
-  const each = lines.map((x) => cheapest([x.id])), dearest = Math.max(0, ...each.filter(Number.isFinite));
-  const guessed = lines.filter((_, i) => !Number.isFinite(each[i])).reduce((t, x) => t + guess(x.name), 0);
-  return dearest ? { fe: Math.max(dearest, guessed), from: 'its dearest line at the cheapest market listing seen with it' }
-    : { fe: guessed, from: 'slate price assumed (no listing with its lines seen): check /market' };
-}
+/** a slate listing the market has read (market.ts keeps them in .cache/slate-listings.json; its base and shape are in the key) */
+export type SeenSlate = { talents: number[]; price: number; at: string; baseId: number; shapeId: number };
 
 /** Slate talents to look for (user, 2026-10-16: "we need more buckets"): every talent the game shows (any tree, cores too; one per distinct effect) priced as one
  *  more slate talent on the character, the gains above 0.5 % best first. A core the build already holds adds nothing (CT1). Which slate can roll which talent

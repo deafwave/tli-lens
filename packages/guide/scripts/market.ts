@@ -120,7 +120,7 @@ const versus = (f: Figure): number | string => (rankable(base!, f) ? f.kill / ba
 const GAINS = `${root}packages/guide/.cache/market-gains.json`, pin = pinCommit().slice(0, 8);
 const gains: Record<string, number | string> = existsSync(GAINS) ? JSON.parse(readFileSync(GAINS, 'utf8')) : {};
 let unsaved = false;
-/** every slate listing read from the game, for the plan's slate prices (slateCost); a week old, dropped */
+/** every slate listing read from the game, the plan's slates to buy; a week old, dropped */
 const SEEN = `${root}packages/guide/.cache/slate-listings.json`;
 const seen: Record<string, SeenSlate> = existsSync(SEEN) ? JSON.parse(readFileSync(SEEN, 'utf8')) : {};
 function remember(slates: Listing[]) {

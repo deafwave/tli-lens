@@ -37,6 +37,8 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 - `pnpm guide ideal [--live]` — writes `guide.json`. `live [--every M]` (default 60) reruns it and commits + pushes `guide.json`.
   `auto [--every M]` (default 30) — reads the game, runs advise into the page's `advice.json` (overwriting `plan`'s), commits + pushes; repeats.
 - `pnpm guide figure <loadout.json> [--skill hoa|iceShot] [--level N]` — one figure.
+- `pnpm guide det [export.json]` — Deterioration's release breakpoints on the newest read: the duration's inc (+ its more, Profane's 7 %), the releases it
+  makes, and the inc the next three need (`det.ts`, bisected on dps-debug's own schedule; ~1.5 min). A gear line's "additional Deterioration Duration" is inc.
 - Shared: `--workers --bombs --roll-budget --budget-minutes --target --out --prices` (not every command uses every flag).
   Prices: `prices.json` at the repo root when it exists (or `--prices <file>`: `{ "<item name>": FE }`) laid over etor (`withPrices`).
 - `pnpm guide:bosses [--etor <dir>] [--prices <file>]` — which boss maps pay: ETor's run log (`%APPDATA%/etor` IndexedDB) per map, net FE/h after tax

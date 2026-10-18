@@ -1,10 +1,11 @@
-/** guide plan [<export.json>, default a fresh read of the running game] [--target dummy|cube3|traveler, default dummy (raw DPS; traveler = the dummy's capped at 15T)] [--goal N, default 2e11 | --kill-seconds S: the target dead within S seconds] [--prism-fe N] [--steps N] [--budget N: only what fits in N FE] | ideal [--live] [--out path] | live [--every M, default 60]: ideal --live every M minutes, each committed and pushed | advise <export.json> [--fe N] [--season N] [--out path] [--hoa: an Ice Shot character planned as switched to Hammer of Ash now] [--steps N, default 0: the next-buys list only] [--budget-minutes N, default 30] | figure <loadout.json> [--skill hoa|iceShot] [--level N]   (ideal / advise: [--prices <file>, default prices.json at the repository root when it exists: { "<item name>": FE }]; all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<20] [--target <dps-debug BOSSES key | dummy>, default cube3: what Hammer of Ash is priced against]) */
+/** guide plan [<export.json>, default a fresh read of the running game] [--target dummy|cube3|traveler, default dummy (raw DPS; traveler = the dummy's capped at 15T)] [--goal N, default 2e11 | --kill-seconds S: the target dead within S seconds] [--prism-fe N] [--steps N] [--budget N: only what fits in N FE] | ideal [--live] [--out path] | live [--every M, default 60]: ideal --live every M minutes, each committed and pushed | advise <export.json> [--fe N] [--season N] [--out path] [--hoa: an Ice Shot character planned as switched to Hammer of Ash now] [--steps N, default 0: the next-buys list only] [--budget-minutes N, default 30] | figure <loadout.json> [--skill hoa|iceShot] [--level N] | det [<export.json>, default the newest dps-debug read]: Deterioration's release breakpoints   (ideal / advise: [--prices <file>, default prices.json at the repository root when it exists: { "<item name>": FE }]; all: [--workers N] [--bombs N, default 10] [--budget-minutes N] [--roll-budget N, default 1<<20] [--target <dps-debug BOSSES key | dummy>, default cube3: what Hammer of Ash is priced against]) */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { writeAtomic } from './atomic';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mainSid } from './candidates/gems';
+import { detLayer } from './det';
 import { createEvaluator, DEFAULT_FIGHT } from './engine/pool';
 import { localHistory, localItems, runAdvise, runIdeal } from './modes';
 import { runPlan } from './plan';
@@ -146,8 +147,16 @@ async function main() {
       const r = await ev.run(loadout, [], { level: num('level') ?? loadout.hero?.level ?? 100, skill });
       console.log(JSON.stringify({ pin: ev.pin, skill, figure: r.figure, inputs: r.inputs }, null, 1));
     } finally { await ev.close(); }
+  } else if (cmd === 'det') {
+    // Deterioration's release breakpoints (det.ts) on the newest dps-debug read unless an export is given
+    const ex = fileURLToPath(new URL('../../../../dps-debug/game/exports/', import.meta.url));
+    const file = positional ?? readdirSync(ex).sort().reverse().map((d) => resolve(ex, d, `export-${d}.json`)).find(existsSync)!;
+    const state = fromExport(readJson(file), 0), d = detLayer(state.loadout, state.level);
+    console.log(`${file}
+Deterioration duration +${d.inc}% (more: ${d.more.map((m) => `+${m}%`).join(' ') || 'none'}): ${d.seconds.toFixed(4)} s, ${d.releases} releases`);
+    for (const n of d.next) console.log(`  ${n.releases} releases: +${n.inc.toFixed(2)}%, you need +${(n.inc - d.inc).toFixed(2)}% more (with no more: +${n.incNoMore.toFixed(2)}%)`);
   } else {
-    throw new Error('usage: guide ideal [--live] | live [--every M] | advise <export.json> | figure <loadout.json>');
+    throw new Error('usage: guide ideal [--live] | live [--every M] | advise <export.json> | figure <loadout.json> | det [export.json]');
   }
 }
 main().then(() => process.exit(0), (e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

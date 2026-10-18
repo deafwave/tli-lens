@@ -33,6 +33,8 @@ description: "Rank the auction house search the player has open in Torchlight: I
    - Max 2 advanced affixes per item. A listing with an advanced T1 mod outside the target (for example T1 Strength on a maul) can be a cheaper alternative. Mention it.
 
 Notes:
+- Deterioration duration breakpoints (Ruinous Star and any duration line): `pnpm -s guide det` prints your inc, the releases it makes and the inc each next
+  release needs. A listing's "additional Deterioration Duration" adds to that inc: compare its roll against your chest's, do not price each listing for it.
 - To test without the game: `pnpm -s guide:market --file <saved listings.json>`.
 - `--watch` keeps running: one reader stays attached to the game and reads the screen 10 times a second; a new page shows at once and its rows fill in as each
   figure lands (the page on screen is priced first, a page flipped past waits; workers start at once and stay warm, your slates' own worth is priced before a

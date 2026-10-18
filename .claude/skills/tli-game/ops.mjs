@@ -33,7 +33,7 @@ function waitFront() {
 }
 const game = (...a) => (a[0] === "click" && waitFront(), execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(here, "game.ps1"), ...a.map(String)],
   { stdio: ["ignore", "pipe", "pipe"] }).toString());
-const LOG = path.resolve(here, "../../../../scratch/removed.json");
+const LOG = path.resolve(here, "../../../.cache/tli-game/removed.json");
 const removed = () => fs.existsSync(LOG) ? JSON.parse(fs.readFileSync(LOG, "utf8")) : [];
 const die = msg => { console.error(`ABORT: ${msg}`); process.exit(1); };
 
@@ -136,7 +136,7 @@ if (cmd === "state") {
   console.log(`installed ${got} in slot ${slot} socket ${socket}`);
 } else if (cmd === "equip" || cmd === "gear-restore") {
   // right-click a gear-page bag item: the game equips it and drops the old piece into the same bag cell
-  const GLOG = path.resolve(here, "../../../../scratch/gear-swaps.json");
+  const GLOG = path.resolve(here, "../../../.cache/tli-game/gear-swaps.json");
   const swaps = fs.existsSync(GLOG) ? JSON.parse(fs.readFileSync(GLOG, "utf8")) : [];
   const rec = cmd === "gear-restore" ? swaps.at(-1) : null;
   if (cmd === "gear-restore" && !rec) die("no gear swap to restore");
@@ -164,6 +164,7 @@ if (cmd === "state") {
   const [slot] = changed[0];
   const out = u.gear.bag.find(b => b.instanceId === before[slot]);
   game("click", 3354, 56); sleep(600);   // bag X (ESC would also close the dummy panel)
+  fs.mkdirSync(path.dirname(GLOG), { recursive: true });
   if (rec) fs.writeFileSync(GLOG, JSON.stringify(swaps.slice(0, -1), null, 1));
   else fs.writeFileSync(GLOG, JSON.stringify([...swaps, { slot, equipped: item.instanceId, equippedName: item.uniqueName ?? item.baseName,
     removed: before[slot], removedName: out?.uniqueName ?? out?.baseName }], null, 1));

@@ -5,5 +5,5 @@ import { pinRoot } from './src/pin.ts';
 const pin = pinRoot();
 export default defineConfig({
   resolve: { alias: [{ find: /^@dps\/(.*)$/, replacement: `${pin.replaceAll('\\', '/')}/model/$1` }] },
-  test: { testTimeout: 120_000 },
+  test: { testTimeout: 120_000, setupFiles: ['test/setup.ts'] },
 });

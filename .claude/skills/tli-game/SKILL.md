@@ -79,13 +79,13 @@ category (Deterioration ticks have their own HP-removal style). Count hits with 
 
 `node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` reads `tli_dump --combat-watch`: DPS =
 Δ dummy total damage / Δ **game time** (logic frames / 30 — never `wallDps`), buff uptime %, dummy debuffs with stacks
-(Deterioration, Timid, Frostbitten). Appends to `../scratch/measurements.jsonl` (outside the repo). Needs the dummy
+(Deterioration, Timid, Frostbitten). Appends to `.cache/tli-game/measurements.jsonl`. Needs the dummy
 count running: 0 game-s from `combat.mjs 5` means it is stopped — with the dummy panel open, `game.ps1 click 310 545`
 (its Recount button, client pixels; game in front) restarts it in place. **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
 Kaleidoscope's 8s rotation). Never move between A and B.
 
 `--hits` adds `tli_dump --hit-watch` over the same window: one row per hit the dummy takes
-(`../scratch/watch/<label>-hits.csv`: frame, kind, crit, damage, source, hit_id, skill, flags, index; layout in
+(`.cache/tli-game/watch/<label>-hits.csv`: frame, kind, crit, damage, source, hit_id, skill, flags, index; layout in
 poorchlight `docs/MEMORY_LAYOUT.md` "Per-hit damage events"). Kind 4 = Deterioration ticks; kind 0 with flags 16 = the
 main hit (one per bomb) and flags 40 = a 7-hit Ember volley (index 9..15). The row gets `hits`, `hitsPerS`, `hitTypes`
 and `hitSumRatio` (Σ hits ÷ the dummy total over the same frames; flagged unless within 0.5% — it reads 1.00000).

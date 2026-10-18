@@ -12,8 +12,7 @@ Fix the calculator in dps-debug itself (owner, 2026-10-17: the rule never to edi
 
 Refresh: `git -C <pin> checkout --detach main`, `npm ci` in `model/` if its lockfile moved, run tli-lens with `GUIDE_REAL=1` and pin only
 if green. dps-debug's own guide gates (`GUIDE_GATES=1`, `model/guide/`) were red on main at the last pin (season figures moved): re-baseline
-them before trusting a bit-equal claim. vitest reports one "Timeout calling onTaskUpdate" unhandled error on every run (its RPC, not a test) and so `pnpm test` exits 1:
-read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
+them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust its exit code.
 
 ## Layout
 
@@ -25,7 +24,8 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 | `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/advice.json` |
 | `data/`, `scripts/` | etor price history, affix library; fetch/build helpers; `scripts/blend_recipes.py` reads the belt blend recipes and your unlocked ones from the client into `packages/guide/src/data/blends.json` (open the blend window once first) |
 | root | `prices.json` (your prices), `roll-prices.json` (read by `plan`), `market-targets.json` (market skill) |
-| `.claude/skills/` | `tli-game`, `market`, `tlidb-lookup`, `tli-build` |
+| `docs/` | `etor-api.md`: the etor price API (reverse-engineered; `pricing.ts` and `scripts/fetch_etor_history.py` use it) |
+| `.claude/skills/` | `tli-game` (writes its measurements to `.cache/tli-game/`), `market`, `tlidb-lookup` |
 
 ## Commands
 
@@ -42,7 +42,7 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 - `pnpm guide:bosses [--etor <dir>] [--prices <file>]` — which boss maps pay: ETor's run log (`%APPDATA%/etor` IndexedDB) per map, net FE/h after tax
   with a ± (standard error); always-drops ETor does not log (`ALWAYS_DROPS`, `src/bosses.ts`) priced from `prices.json`.
 - `pnpm dev` / `pnpm build` / `pnpm test` (guide: `tsc --noEmit && vitest run`). `GUIDE_REAL=1` adds real-figure tests. The pool pauses
-  while the busy file exists (`DEFAULT_BUSY_FILE` in `engine/pool.ts`, env `GUIDE_BUSY_FILE`; `test/real.ts` reads only the default).
+  while the busy file exists (`DEFAULT_BUSY_FILE` = `../dps-debug/.cache/game.busy`, env `GUIDE_BUSY_FILE`; `test/real.ts` reads only the default).
 
 ## Working rules
 
@@ -55,6 +55,8 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 - Stopping a background shell on Windows can leave its node process running: check for `cli.ts` processes before a new run and kill the
   tree (`taskkill //F //T //PID n`).
 - Write files with LF line endings (no `.gitattributes`; Python on Windows writes CRLF in text mode).
+- Commit messages: a subject line under 72 characters; details in the body.
+- Scratch goes in `.tmp/` (ignored), never committed.
 
 ## Policies the code applies
 

@@ -1,9 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/etor-api/:path*",
-      "destination": "https://etor-beta.710421059.xyz/etor-api/:path*"
-    }
-  ]
-}

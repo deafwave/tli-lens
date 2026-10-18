@@ -1,7 +1,8 @@
 /** Figure memo keyed by pin + skill + level + canonical JSON of (loadout, changes). In-process always; on disk only when the pin is clean. */
 import { FIRST_ROLL_BUDGET } from './apply';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /** JSON with object keys sorted, so equal values give equal text */
@@ -17,8 +18,9 @@ export const DEFAULT_MEMO_ENTRIES = 20000;
 /** `max`: settled results kept in memory (least recently used leave first; in-flight computations are always kept) */
 export function createMemo<T>(pin: string, dir?: string, max = DEFAULT_MEMO_ENTRIES) {
   const inflight = new Map<string, Promise<T>>(), settled = new Map<string, Promise<T>>();
-  // a +dirty pin names no fixed tree: never persisted
-  const disk = dir && !pin.endsWith('+dirty') ? dir : undefined;
+  // a +dirty pin names no fixed tree: never persisted. One subdirectory per pin; the other pins' entries can never hit again, so they go.
+  const disk = dir && !pin.endsWith('+dirty') ? join(dir, pin) : undefined;
+  if (disk && existsSync(dir!)) for (const d of readdirSync(dir!)) if (d !== pin) void rm(join(dir!, d), { recursive: true, force: true });
   const file = (hash: string) => join(disk!, `${hash}.json`);
   return {
     /** the memoised value for `key`, else `compute()` (concurrent callers share one computation). `keep: false` = answer the caller, cache nowhere. */

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -30,6 +30,8 @@ function stub(f: (j: Job) => JobResult['fig'] = () => fig(200, 100), delay = 0, 
 }
 const ctx = { level: 100, skill: 'hoa' } as const;
 const lo = { a: 1 };
+/** the on-disk memo entries of `pin` under `dir` (memo.ts: one subdirectory per pin) */
+const memoFiles = (dir: string, pin = 'abc') => existsSync(join(dir, pin)) ? readdirSync(join(dir, pin)) : [];
 const ch = [{ kind: 'stub' }] as unknown as Change[];
 
 describe('evaluator (stub workers)', () => {
@@ -93,7 +95,8 @@ describe('evaluator (stub workers)', () => {
   it('a figure from the on-disk memo is filtered by the notes as they are now (a rule added later applies to figures priced before it)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
     const key = memoKey('p', ctx.skill, ctx.level, lo, [], DEFAULT_FIGHT, 1 << 20, 'cube3');
-    writeFileSync(join(dir, `${createHash('sha256').update(key).digest('hex')}.json`), JSON.stringify({ loadout: lo, dropped: [], figure: { life100: 1, life0: 1, kill: 1, partial: ['not in this figure: node 2700 (Q1: inert in the client - x)', 'node 9: real'] } }));
+    mkdirSync(join(dir, 'p'));
+    writeFileSync(join(dir, 'p', `${createHash('sha256').update(key).digest('hex')}.json`), JSON.stringify({ loadout: lo, dropped: [], figure: { life100: 1, life0: 1, kill: 1, partial: ['not in this figure: node 2700 (Q1: inert in the client - x)', 'node 9: real'] } }));
     const ev = await createEvaluator({ factory: stub(() => ({ life100: 2, life0: 2, left: [], needs: [] })).factory, workers: 1, pin: 'p', memoDir: dir });
     expect((await ev.run(lo, [], ctx)).figure.partial).toEqual(['node 9: real']);
   });
@@ -150,14 +153,20 @@ describe('evaluator (stub workers)', () => {
       const dir = mkdtempSync(join(tmpdir(), 'memo-'));
       const ev = await createEvaluator({ factory: stub().factory, workers: 1, pin, memoDir: dir });
       await ev.run(lo, [], ctx);
-      expect(readdirSync(dir)).toHaveLength(files);
+      expect(memoFiles(dir, pin)).toHaveLength(files);
       if (files) { // a fresh evaluator reads it back without running
         const s = stub();
         await (await createEvaluator({ factory: s.factory, workers: 1, pin, memoDir: dir })).run(lo, [], ctx);
         expect(s.jobs).toHaveLength(0);
-        expect(JSON.parse(readFileSync(join(dir, readdirSync(dir)[0]), 'utf8')).figure.kill).toBe(killSpeed(200, 100));
+        expect(JSON.parse(readFileSync(join(dir, pin, memoFiles(dir, pin)[0]), 'utf8')).figure.kill).toBe(killSpeed(200, 100));
       }
     }
+  });
+  it("a new pin prunes the other pins' memo directories", async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'memo-'));
+    await (await createEvaluator({ factory: stub().factory, workers: 1, pin: 'old', memoDir: dir })).run(lo, [], ctx);
+    await (await createEvaluator({ factory: stub().factory, workers: 1, pin: 'new', memoDir: dir })).run(lo, [], ctx);
+    await vi.waitFor(() => expect(readdirSync(dir)).toEqual(['new']));
   });
   it('fight inputs: workers get them (default bombs 10); evaluators with different fight never share a memo entry', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
@@ -170,7 +179,7 @@ describe('evaluator (stub workers)', () => {
     expect(d.fightNote).toBe('training dummy stands still (dps-debug STILL / e2e1-lib.ts)');
     // same bombs, different named input: its own entry too
     await (await mk({ bombs: 5, inputs: { x: 1 } })).run(lo, [], ctx);
-    expect(readdirSync(dir)).toHaveLength(3);
+    expect(memoFiles(dir)).toHaveLength(3);
   });
   it('roll budget: workers get it (default 1 << 20); different budgets never share a memo entry', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
@@ -180,7 +189,7 @@ describe('evaluator (stub workers)', () => {
     await d.run(lo, [], ctx); await small.run(lo, [], ctx);
     expect(s.jobs.map(j => j.rollBudget)).toEqual([1 << 20, 1000]);
     expect(d.rollBudget).toBe(1 << 20);
-    expect(readdirSync(dir)).toHaveLength(2);
+    expect(memoFiles(dir)).toHaveLength(2);
   });
   it('a throwing job returns figure.stop with the message; the pool stays alive', async () => {
     const f = stub().factory;
@@ -353,12 +362,12 @@ describe('worker death, startup, close', () => {
     const dir = mkdtempSync(join(tmpdir(), 'memo-'));
     const mk = () => createEvaluator({ factory: stub().factory, workers: 1, pin: 'abc', memoDir: dir });
     await (await mk()).run(lo, [], ctx);
-    const [f] = readdirSync(dir);
-    writeFileSync(join(dir, f), '{"torn');
+    const [f] = memoFiles(dir);
+    writeFileSync(join(dir, 'abc', f), '{"torn');
     const s = stub();
     expect((await (await createEvaluator({ factory: s.factory, workers: 1, pin: 'abc', memoDir: dir })).run(lo, [], ctx)).figure.kill).toBe(killSpeed(200, 100));
     expect(s.jobs).toHaveLength(1);
-    expect(readdirSync(dir).filter(x => x.endsWith('.tmp'))).toHaveLength(0);
+    expect(memoFiles(dir).filter(x => x.endsWith('.tmp'))).toHaveLength(0);
   });
   it('startup failure throws and closes the workers that started', async () => {
     let closedWorkers = 0, i = 0;

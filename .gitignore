@@ -19,3 +19,6 @@ Torchlight Sanity Retention.xlsx
 
 # guide advise output (pnpm guide advise writes it in packages/guide)
 packages/guide/advice.json
+
+# scratch (never committed)
+.tmp/

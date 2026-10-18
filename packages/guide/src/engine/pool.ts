@@ -88,7 +88,7 @@ export interface EvaluatorOpts {
   /** called with true when the pool pauses on the busy file, false when it resumes */
   onBusy?: (paused: boolean) => void;
 }
-export const DEFAULT_BUSY_FILE = 'C:/Users/deafwave/Documents/no_access/tli/dps-debug/.worktrees/track-a/.cache/game.busy';
+export const DEFAULT_BUSY_FILE = fileURLToPath(new URL('../../../../../dps-debug/.cache/game.busy', import.meta.url));
 
 /** HEAD sha of the pin, plus `+dirty` when its tree has changes (same rule as dps-debug's pinOf) */
 function gitPin(root: string): string {

@@ -5,9 +5,9 @@
    drifts; never compare wall-clock numbers to the model. --buffs adds a buff/debuff uptime pass (one
    --combat-json read per ~1.1s for the same duration, run afterwards).
    --hits runs `tli_dump --hit-watch` over the same window: one CSV row per hit the dummy takes (kept as
-   scratch/watch/<label>-hits.csv); adds hits, hitsPerS (per game second), hitTypes and hitSumRatio (Σ per-hit ÷
+   .cache/tli-game/watch/<label>-hits.csv); adds hits, hitsPerS (per game second), hitTypes and hitSumRatio (Σ per-hit ÷
    the dummy's own total over the same frames — must be 1 within 0.5%, else the run is flagged).
-   Appends one JSON line per run to scratch/measurements.jsonl and keeps the per-frame CSV in scratch/watch/. */
+   Appends one JSON line per run to .cache/tli-game/measurements.jsonl and keeps the per-frame CSV in .cache/tli-game/watch/. */
 import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -42,8 +42,8 @@ if (args.includes("--buffs")) {
 }
 await done;
 const csv = path.join(poor, "tli_dump/diagnostics/_last_combat_watch.csv");
-// keep each run's per-frame capture: ../scratch/watch/<label>.csv (then <label>-2.csv, …)
-const watchDir = path.resolve(here, "../../../../scratch/watch");
+// keep each run's per-frame capture: .cache/tli-game/watch/<label>.csv (then <label>-2.csv, …)
+const watchDir = path.resolve(here, "../../../.cache/tli-game/watch");
 fs.mkdirSync(watchDir, { recursive: true });
 let kept = path.join(watchDir, `${label || "unlabeled"}.csv`);
 for (let i = 2; fs.existsSync(kept); i++) kept = path.join(watchDir, `${label || "unlabeled"}-${i}.csv`);
@@ -85,6 +85,6 @@ if (hitWatch) {
   for (const [k, v] of Object.entries(types)) console.log(`    ${k.padEnd(10)} ${String(v.n).padStart(5)}  crit ${v.crit}`);
   if (bad) out.hitSumBad = true;
 }
-const log = path.resolve(here, "../../../../scratch/measurements.jsonl");
+const log = path.resolve(here, "../../../.cache/tli-game/measurements.jsonl");
 fs.mkdirSync(path.dirname(log), { recursive: true });
 fs.appendFileSync(log, JSON.stringify(out) + "\n");

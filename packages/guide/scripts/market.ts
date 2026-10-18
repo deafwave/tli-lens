@@ -290,6 +290,10 @@ try {
     let shown: Listing[] | undefined, at = '', printed = '', drawing = false, again = false, keptGen = gen;
     const kept = new Map<string, Map<string, Row>>(), pages = new Map<string, Listing[]>(), done = new Set<string>();
     const kindOf = (ls: Listing[]) => (ls.some((l) => l.talents?.length) ? 'slates' : 'gear');
+    // the slate listings read in the last 6 hours (slate-listings.json, keyed by the listing itself) are queued again, behind the page on screen: a restart
+    // keeps the queue (owner, 2026-10-18)
+    const recent = Object.entries(seen).filter(([, v]) => Date.now() - Date.parse(v.at) < 6 * 36e5).map(([k]) => JSON.parse(k) as Listing);
+    for (let i = 0; i < recent.length; i += 25) pages.set(`remembered|${i}`, recent.slice(i, i + 25).map((l, j) => ({ ...l, n: j + 1 })));
     let backAt = 0;
     const cut = (s: string) => { const w = (process.stdout.columns || 120) - 1; return s.length > w ? `${s.slice(0, w - 1)}…` : s; };
     const draw = async () => {

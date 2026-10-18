@@ -1,6 +1,6 @@
 # TLI Lens
 
-Torchlight: Infinite build-progression guide. `packages/guide` drives the **dps-debug** calculator (pinned checkout, read-only) over a hero
+Torchlight: Infinite build-progression guide. `packages/guide` drives the **dps-debug** calculator (pinned checkout) over a hero
 state; the Vite page (`packages/page`) renders `packages/page/src/data/advice.json` (your plan, written by `plan`). `ideal` / `live` still write
 `src/data/guide.json`, which the page no longer shows. Nothing on the page is typed in by hand.
 
@@ -8,7 +8,7 @@ state; the Vite page (`packages/page`) renders `packages/page/src/data/advice.js
 
 `@dps/*` resolves to `<tli>/dps-debug/.worktrees/tli-lens-pin/model/*` (a detached, locked worktree of dps-debug) via tsconfig paths + the
 vitest alias; env `DPS_DEBUG_PIN` overrides (`packages/guide/src/pin.ts`). Every output records the pin commit and the memo key includes it.
-Never edit dps-debug from here. Current pin and why: `git log -- CLAUDE.md` / the last `pin:` commit.
+Fix the calculator in dps-debug itself (owner, 2026-10-17: the rule never to edit it from here is lifted), then re-pin. Current pin and why: `git log -- CLAUDE.md` / the last `pin:` commit.
 
 Refresh: `git -C <pin> checkout --detach main`, `npm ci` in `model/` if its lockfile moved, run tli-lens with `GUIDE_REAL=1` and pin only
 if green. dps-debug's own guide gates (`GUIDE_GATES=1`, `model/guide/`) were red on main at the last pin (season figures moved): re-baseline

@@ -23,7 +23,7 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 | `packages/guide/scripts` | `market.ts` (`pnpm guide:market`, the market skill), `bosses.ts` (`pnpm guide:bosses`), `owned-pacts`, `support-census`, `verify-affix-ids` |
 | `packages/guide/docs` | gear / prism / talent rules the candidates use, with sources |
 | `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/advice.json` |
-| `data/`, `scripts/` | etor price history, affix library; fetch/build helpers |
+| `data/`, `scripts/` | etor price history, affix library; fetch/build helpers; `scripts/blend_recipes.py` reads the belt blend recipes and your unlocked ones from the client into `packages/guide/src/data/blends.json` (open the blend window once first) |
 | root | `prices.json` (your prices), `roll-prices.json` (read by `plan`), `market-targets.json` (market skill) |
 | `.claude/skills/` | `tli-game`, `market`, `tlidb-lookup`, `tli-build` |
 
@@ -87,6 +87,10 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
   unlocks a socket is not read) through dps-debug's tag gate. A step that takes out a piece the model does not price (Grudge's paralysis) is refused, named with its gain.
 - Advise prices every acquisition first (`nextBuys`: exact gain, `buy` = item x quantity) and writes it before the path; the page ranks it by
   the player's typed prices (etor's by default, kept in the browser, exported as `prices.json`).
+- Belt blends (`blendCands`, `plan.ts`): every recipe the game's window shows that you unlocked and that grants one affix, on the belt you wear, at its spices' etor price;
+  random-outcome recipes and unlocked ones the read had no row for are named in `notSearched`.
+- A change that seals more Mana than you have is priced with each active aura switched off (`aura-off`, the server's switch); the best that fits is offered,
+  naming the aura (owner, 2026-10-18).
 - Cull sources the model does not count are named (`CULL_NOT_COUNTED` in `kill.ts`); corrosion is not offered (server-side odds).
 - Unported rules are skipped and named in `notSearched`, never guessed.
 

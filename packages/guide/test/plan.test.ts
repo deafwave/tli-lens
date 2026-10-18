@@ -171,6 +171,25 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     expect(sl.find((c) => c.label.endsWith('with Ranger: chance to gain Agility Blessing on Critical Strike'))!.costFE).toBe(100);
     expect(sl.find((c) => /Agility Blessing.* \+ Lich/.test(c.label))!.costFE).toBe(370);
   });
+  it("a blend on your belt (owner, 2026-10-18: +1 Attack Skill Level on Dawn Break): every shown recipe you unlocked that grants one affix, at its spices' price (src/data/blends.json, read from the client)", () => {
+    const c = cs.filter((x) => x.key.startsWith('blend|'));
+    const atk = c.find((x) => x.key === 'blend|340004')!;
+    const p = (n: string) => ctx.prices.price(n, 90)!;
+    expect(atk.costFE).toBeCloseTo(3 * p('Sage Lv. 1') + 1 * p('Silver Mound Lv. 2') + 3 * p('Gloomy Daffodil Lv. 5'));
+    expect(atk.changes).toEqual([{ kind: 'patch', op: 'gear-blend', slot: 'belt', id: 3401003 }]);
+    expect(atk.label).toMatch(/Blend .*Attack Skill Level.* on your (Radiant Lunar Girdle|[A-Z][^:]+): 3 Sage Lv\. 1, 1 Silver Mound Lv\. 2, 3 Gloomy Daffodil Lv\. 5/);
+    expect(new Set(c.map((x) => x.group))).toEqual(new Set(['blend|belt']));   // a belt holds one blend
+    expect(c.length).toBeGreaterThanOrEqual(36);
+    // hidden in the game's window (Show 0) or a random outcome: not offered
+    expect(c.some((x) => /^blend\|38/.test(x.key))).toBe(false);
+  });
+  it("gear-blend puts the one blend on the slot's item, in place of the one it had", () => {
+    const one = applyPatch(live.loadout, { kind: 'patch', op: 'gear-blend', slot: 'belt', id: 3401003 }) as { gear: { slot: string; affixes: { id: number; list: string }[] }[] };
+    const two = applyPatch(one as never, { kind: 'patch', op: 'gear-blend', slot: 'belt', id: 3401029 }) as typeof one;
+    const blends = (l: typeof one) => l.gear.find((g) => g.slot === 'belt')!.affixes.filter((a) => a.list === 'EnchantAffixList').map((a) => a.id);
+    expect(blends(one)).toEqual([3401003]);
+    expect(blends(two)).toEqual([3401029]);
+  });
 });
 
 describe('runPlan: no step raises the projectile speed (owner, 2026-10-16: Precise Projectiles, Wind Projectiles cost embers in game)', () => {
@@ -211,6 +230,28 @@ describe('runPlan: your free Mana never shrinks (owner, 2026-10-17: Precise: Mal
     expect(r.plan!.steps.some((x) => /Multiple Projectiles/.test(x.label))).toBe(true);
     expect(r.notCalculable.some((n) => /Critical Strike Damage Increase.*free Mana 19 -> 0/.test(n))).toBe(true);
   }, 300_000);
+});
+
+describe("runPlan: an aura that no longer fits is turned off when the build is better without it (owner, 2026-10-18: \"Aura unsealing is fine if it is a dps increase\")", () => {
+  it('a change that over-seals Mana is priced with each active aura switched off; the best that fits is taken, named with the aura', async () => {
+    const mana = (reserved: number) => ({ reserved, capacity: 485, margin: 485 - reserved, fits: reserved <= 485, life: { reserved: 1729, capacity: 2161, margin: 432 } });
+    const fig = (k: number, m: ReturnType<typeof mana>) => ({ life100: k, life0: k, kill: k, partial: [], target: 'traveler', lifeMax: 1.6e12, mana: m });
+    const off = (slot: number) => `"op":"aura-off","place":{"kind":"passive","slot":${slot}}`;
+    const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
+      run: async (loadout, changes) => { const j = JSON.stringify(changes);
+        const csd = /"name":"Critical Strike Damage Increase"/.test(j);
+        return { loadout, dropped: [], figure: csd && j.includes(off(3)) ? fig(1.3e10, mana(400)) : csd && /aura-off/.test(j) ? fig(1.02e10, mana(400)) : csd ? fig(1.4e10, mana(515))
+          : /"name":"Multiple Projectiles"/.test(j) ? fig(1.1e10, mana(466)) : fig(1e10, mana(466)) }; } };
+    const r = await runPlan(ev, s, ctx.prices, { goal: 1e12, maxSteps: 1 });
+    const step = r.plan!.steps[0];
+    expect(step.label).toMatch(/Critical Strike Damage Increase.*, with .+ turned off \(Sealed Mana 515 over 485 with it on\)/);
+    expect(step.figure.kill).toBe(1.3e10);
+    expect(r.notCalculable.some((n) => /Critical Strike Damage Increase.*unseals an aura/.test(n))).toBe(false);
+  }, 300_000);
+  it("aura-off switches the passive in that place off, as the server's switch does", () => {
+    const l = applyPatch(live.loadout, { kind: 'patch', op: 'aura-off', place: { kind: 'passive', slot: 3 } }) as { skills: { place: { kind: string; slot?: number }; switch?: unknown }[] };
+    expect(l.skills.find((x) => x.place.kind === 'passive' && x.place.slot === 3)!.switch).toEqual({ pendingDeactivate: true, activated: false });
+  });
 });
 
 describe('runPlan: the start names your training dummy figure beside the boss one (owner, 2026-10-17: "the website still says 551b dps")', () => {

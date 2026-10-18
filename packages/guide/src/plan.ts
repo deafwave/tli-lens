@@ -1,6 +1,6 @@
 /** `guide plan`: your character to a damage goal on a boss at the least FE, one step at a time, from the live read (user, 2026-10-16: "200 billion in the
  *  cheapest manner possible"). Each round every candidate is priced on the build as it stands after the steps before it; the step taken is the one with the
- *  most damage per FE (a free one first). A candidate is refused when the model cannot price it whole (a new omission), when it unseals an aura (MANA2:
+ *  most damage per FE (a free one first). A candidate is refused when the model cannot price it whole (a new omission), when no aura switched off makes it fit (MANA2:
  *  the auras' Sealed Mana no longer fits), or when it breaks a rule of the game the generators do not know (listed in GuideOut.startNotes). */
 import { gearMoves, whiteBaseMoves } from './candidates/gear';
 import { gemLevelAt, gemMoves, gemsHeld } from './candidates/gems';
@@ -19,6 +19,7 @@ import { buildSheet } from './sheet';
 import { pinRoot, table } from './pin';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import blends from './data/blends.json';
 import type { Evaluator, Figure, GenCtx, GuideOut, Move, PriceBook, State } from './types';
 
 export interface PlanOpts { target: string; goal: number; /** your FE: an option dearer than the FE left is not priced; the plan stops when none fits */ budget?: number; /** the goal as a time to kill the target (s): goal = its max Life / goalSeconds */ goalSeconds?: number; maxSteps: number;
@@ -41,7 +42,7 @@ const RULES = [
   'Physical -> Cold / Lightning / Fire conversion lines are left out (owner: they do nothing for an Erosion build).',
   'A Magnificent or Noble support is never levelled (max level 5, levelled by consuming copies).',
   'A legendary you wear or own is never bought.',
-  'A change that unseals an aura (Sealed Mana over your Mana, MANA2) is refused.',
+  'A change that seals more Mana than you have (MANA2) is priced with each active aura switched off; the best that fits is offered, naming the aura (owner, 2026-10-18).',
   'Projectile speed is never raised (any aura, support, slate line or item that adds it is refused); Wind Projectiles is not offered and Slow Projectile is never taken out. The model overrates faster projectiles (your dummy, 2026-10-16: Passivation -> Wind Projectiles measured 22.5 B -> 16.9 B where the model said -8 %).',
   'Every step raises both the Traveler kill speed and your damage at full Life (the number the training dummy shows, the "Dummy" column): check each step there.',
   'Talent points are only moved (a respec is free at level 90 and below), never added: the plan does not assume a point you do not have.',
@@ -119,6 +120,38 @@ function memoryCands(s: State, ctx: GenCtx): Cand[] {
   }
   return out;
 }
+/** A blend on the belt you wear (src/data/blends.json, read from the client by scripts/blend_recipes.py): every recipe the game's window shows (Show) and you
+ *  unlocked that grants one affix, in place of the belt's blend, at its spices' price. A recipe with a random outcome or without a row in the read is named. */
+function blendCands(s: State, ctx: GenCtx): Cand[] {
+  const belt = ((s.loadout.gear ?? []) as { slot: string; label: string }[]).find((g) => g.slot === 'belt');
+  if (!belt) return [];
+  const unlocked = new Set(blends.unlocked), name = (id: string) => table<{ rows: Record<string, string> }>('lang_en').rows[`item_base|name|${id}`] ?? id;
+  const shown = blends.recipes.filter((r) => r.show && unlocked.has(r.id) && r.type4.some((t) => BELT_TYPE4.has(t)));
+  const random = shown.filter((r) => Object.keys(r.mods).length !== 1);
+  if (random.length) ctx.notSearched.add(`blend: ${random.length} recipe(s) with a random outcome not offered (${random.map((r) => r.id).join(', ')})`);
+  if (blends.unlockedNotRead.length) ctx.notSearched.add(`blend: ${blends.unlockedNotRead.length} unlocked recipe(s) had no row in the client's read (scripts/blend_recipes.py after opening each tab of the blend window)`);
+  return shown.filter((r) => !random.includes(r)).flatMap((r) => {
+    const id = Number(Object.keys(r.mods)[0]), use = Object.entries(r.consume).map(([k, n]) => [name(k), n] as const);
+    const fe = use.reduce((t, [n, q]) => t + q * (ctx.prices.price(n, s.level) ?? NaN), 0);
+    if (!Number.isFinite(fe)) { ctx.notSearched.add(`blend ${r.id}: a spice has no price (${use.map(([n]) => n).join(', ')})`); return []; }
+    return [{ key: `blend|${r.id}`, group: 'blend|belt', kind: 'craft', costFE: fe, label: `Blend ${blendText(id)} on your ${ownedUniques(s, true).get('belt') ?? belt.label}: ${use.map(([n, q]) => `${q} ${n}`).join(', ')}`,
+      changes: [{ kind: 'patch', op: 'gear-blend', slot: 'belt', id } as never] }];
+  });
+}
+// config_item_base Type4 of the belts (the recipes' default Type4 [23, 170, 171], the read's defaults row)
+const BELT_TYPE4 = new Set([23, 170, 171]);
+/** a blend modifier's game text: its bindings carry the values (`<affix class>_<value>..._mt34`), each class's description filled with its own */
+function blendText(id: number): string {
+  const b = (table<{ rows: Record<string, { bindings?: string[] }> }>('config_modifier').rows[id]?.bindings ?? [])[0]?.split('_').slice(0, -1) ?? [];
+  const parts: string[] = [];
+  for (let i = 0; i < b.length; ) {
+    const cls = b[i++], vals: string[] = [];
+    while (i < b.length && b[i].length < 6) vals.push(b[i++]);
+    const t = table<{ rows: Record<string, string> }>('lang_en').rows[`affix_class|description|${cls}`];
+    if (t) parts.push(t.replace(/<[^>]+>/g, '').replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim().replace(/\$([+-]?)P(\d)\$/g, (_, sg: string, k: string) => `${sg}${vals[+k - 1] ?? '?'}`));
+  }
+  return parts.length ? parts.join(' / ') : `modifier ${id}`;
+}
 /** a modifier's game text at a roll ($+P1$ -> +18), else its id */
 export function lineText(id: number, dyn: number[]): string {
   const b = (table<{ rows: Record<string, { bindings?: string[] }> }>('config_modifier').rows[id]?.bindings ?? [])[0], t = b && table<{ rows: Record<string, string> }>('lang_en').rows[`affix_class|description|${b.split('_')[0]}`];
@@ -151,6 +184,9 @@ type Cand = { key: string; /** taken once per group */ group?: string;
   /** options this one gives at most, by name (a kismet in place of yours at most what it gives on a free point, while yours is not worse than none: `unless` the
    *  key of the move that takes yours out, priced and not raising the kill), a bound as `like` is, also in the first round */ under?: { by: string; unless: string }[]; /** a better roll of a worn legendary: the lowest roll with the same figure is found when taken */ roll?: { slot: string; id: number; now: number[]; best: number[]; range: [number, number][] }; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
 const fits = (f: Figure) => !f.mana || 'stop' in f.mana || f.mana.fits;
+/** the passive places whose aura is on (the server's switch) */
+const auraPlaces = (s: State) => ((s.loadout.skills ?? []) as { place: { kind: string; slot?: number }; switch?: { pendingDeactivate?: boolean; activated?: boolean } }[])
+  .filter((x) => x.place.kind === 'passive' && x.switch?.pendingDeactivate !== true && x.switch?.activated !== false).map((x) => x.place.slot!);
 
 export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: number; name: string }[], held = heldUniques(s)): Cand[] {
   const L = s.loadout as { skills: { name: string; level: number; sid: number; place: { kind: string; slot?: number; ownerKind?: string; ownerSlot?: number } }[]; slateItems?: Record<string, unknown>[] };
@@ -221,6 +257,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   // a worn hero memory levelled (MEM1: base attr = group x 100 + BaseAttrTier) and its random affixes rerolled. A higher rarity is a new memory bought
   // (owner, 2026-10-16): its base from the market, not here
   for (const c of memoryCands(s, ctx)) out.push(c);
+  for (const c of blendCands(s, ctx)) out.push(c);
   // a gem to level 20 (time, no FE); a Magnificent / Noble support is levelled by consuming copies (max 5): never a time step
   for (const g of L.skills.filter((x) => x.level < 20 && !/\((Magnificent|Noble)\)/.test(x.name))) {
     const at = (x: typeof g) => JSON.stringify(x.place) === JSON.stringify(g.place) && x.sid === g.sid;
@@ -313,7 +350,20 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
   const lap = (what: string) => { console.log(`[time] ${what}: ${figures} figures, ${((Date.now() - t0) / 1000).toFixed(0)} s`); figures = 0; t0 = Date.now(); };
   const rate = async (c: Cand) => {
     figures++;
-    const e = await ev.run(s.loadout, c.changes, C), g = e.figure;
+    let e = await ev.run(s.loadout, c.changes, C), g = e.figure;
+    // an aura that no longer fits (owner, 2026-10-18: "Aura unsealing is fine if it is a dps increase"): the change with each active aura switched off, the best that fits
+    if (!g.stop && !fits(g)) {
+      const over = g.mana as { reserved: number; capacity: number };
+      const tries = await Promise.all(auraPlaces(s).map(async (slot) => ({ slot, e: await ev.run(s.loadout, [...c.changes, { kind: 'patch', op: 'aura-off', place: { kind: 'passive', slot } } as never], C) })));
+      figures += tries.length;
+      const best = tries.filter((t) => !t.e.figure.stop && fits(t.e.figure)).sort((a, b) => b.e.figure.kill - a.e.figure.kill)[0];
+      if (best) {
+        const name = ((best.e.loadout.skills ?? []) as { name: string; place: { kind: string; slot?: number } }[]).find((x) => x.place.kind === 'passive' && x.place.slot === best.slot)?.name ?? `aura ${best.slot}`;
+        c = { ...c, changes: [...c.changes, { kind: 'patch', op: 'aura-off', place: { kind: 'passive', slot: best.slot } } as never],
+          label: `${c.label}, with ${name} turned off (Sealed Mana ${over.reserved} over ${over.capacity} with it on)` };
+        e = best.e; g = e.figure;
+      }
+    }
     // both ways: a change that takes out a piece the model does not price (an omission gone) would read as a gain it cannot judge
     const now = new Set(g.partial.map(pieceKey)), lost = f.partial.filter((p) => !now.has(pieceKey(p)));
     const why = g.stop ? undefined : !rankable(f, g) ? `not priced whole: ${g.partial.filter((p) => !f.partial.includes(p))[0]?.slice(0, 160)}`

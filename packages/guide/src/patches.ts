@@ -9,7 +9,11 @@ export type LoadoutPatch =
   | { kind: 'patch'; op: 'memories'; items: unknown[] } | { kind: 'patch'; op: 'vorax'; items: unknown[] }
   | { kind: 'patch'; op: 'skill-group'; place: { kind: string; slot: number }; items: unknown[] }
   /** one modifier of the item worn in `slot` at the roll `dyn` (another copy of a legendary, bought with that roll) */
-  | { kind: 'patch'; op: 'gear-roll'; slot: string; id: number; dyn: number[]; /** the line's id after (a corrupted tier) */ newId?: number };
+  | { kind: 'patch'; op: 'gear-roll'; slot: string; id: number; dyn: number[]; /** the line's id after (a corrupted tier) */ newId?: number }
+  /** the blend of the item worn in `slot` (EnchantAffixList: an item holds one) becomes modifier `id` */
+  | { kind: 'patch'; op: 'gear-blend'; slot: string; id: number }
+  /** the passive in `place` switched off, as the server's switch (dps-debug build.ts PS1: a pendingDeactivate passive runs nothing and seals nothing) */
+  | { kind: 'patch'; op: 'aura-off'; place: { kind: 'passive'; slot: number } };
 
 export const isPatch = (c: Change | LoadoutPatch): c is LoadoutPatch => (c as { kind: string }).kind === 'patch';
 
@@ -39,6 +43,16 @@ export function applyPatch(lo: Loadout, p: LoadoutPatch): Loadout {
   if (p.op === 'slate-board') { l.slateItems = structuredClone(p.items); return l; }
   if (p.op === 'gear-roll') {
     for (const g of (l.gear ?? []) as { slot?: string; affixes?: { id: number; dyn: number[] }[] }[]) if (g.slot === p.slot) for (const a of g.affixes ?? []) if (a.id === p.id) { a.dyn = [...p.dyn]; if (p.newId) a.id = p.newId; }
+    return l;
+  }
+  if (p.op === 'gear-blend') {
+    for (const g of (l.gear ?? []) as { slot?: string; affixes?: { id: number; dyn: number[]; list?: string }[] }[])
+      if (g.slot === p.slot) g.affixes = [...(g.affixes ?? []).filter((a) => a.list !== 'EnchantAffixList'), { id: p.id, dyn: [], list: 'EnchantAffixList' }];
+    return l;
+  }
+  if (p.op === 'aura-off') {
+    for (const g of (l.skills ?? []) as { place: { kind: string; slot?: number }; switch?: unknown }[])
+      if (g.place.kind === 'passive' && g.place.slot === p.place.slot) g.switch = { pendingDeactivate: true, activated: false };
     return l;
   }
   if (p.op === 'memories') { l.heroMemories = structuredClone(p.items); return l; }

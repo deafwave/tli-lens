@@ -8,7 +8,7 @@ import { costOf } from './priceOf';
 import { kismetMoves } from './candidates/kismets';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
-import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateMoves, slateWants } from './candidates/slates';
+import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateCost, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
 import { applyPatch } from './patches';
 import { talentMovesWith } from './candidates/talents';
 import { targetMoves } from './candidates/target';
@@ -23,7 +23,8 @@ import blends from './data/blends.json';
 import type { Evaluator, Figure, GenCtx, GuideOut, Move, PriceBook, State } from './types';
 
 export interface PlanOpts { target: string; goal: number; /** your FE: an option dearer than the FE left is not priced; the plan stops when none fits */ budget?: number; /** the goal as a time to kill the target (s): goal = its max Life / goalSeconds */ goalSeconds?: number; maxSteps: number;
-  /** FE of a slate carrying one wanted line, by line (the owner's prices); others `slateFE` */ slatePrices: [RegExp, number][]; slateFE: number;
+  /** FE of a slate carrying one wanted line, by line (the owner's prices); others `slateFE`: a line no market listing seen carries (slateCost) */ slatePrices: [RegExp, number][]; slateFE: number;
+  /** the slate listings the market has read in the last week (.cache/slate-listings.json) */ slateListings?: SeenSlate[];
   /** FE of the talent prism like the example build's (the owner's price) */ prismFE: number;
   /** talent nodes whose points never move (set by runPlan) */ locked?: Set<number>;
   /** the character's talent points: the points it has spent at the start (set by runPlan) */ points?: number;
@@ -282,15 +283,16 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
   // one more slate where the board, re-laid out (moving and rotating a slate costs next to nothing: owner, 2026-10-16), still has room: packBoard
   const added = ((s.loadout.slateItems ?? []) as { itemId: string; shapeId?: number }[]).filter((x) => x.itemId.startsWith('guide-add-')).map((x) => x.shapeId!);
   // a line already on a board slate is never offered on another (owner, 2026-10-17: an added slate with the Proximity line the board has)
+  const guess = (n: string) => o.slatePrices.find(([r]) => r.test(n))?.[1] ?? o.slateFE;
   const elsewhere = (skip?: number) => new Set(((s.loadout.slateItems ?? []) as { talents: number[] }[]).flatMap((x, j) => (j === skip ? [] : x.talents)));
   const kinds: [number, string][] = [[2020, 'a 2-cell slate (the type of your 2-cell slates)'], [2030, 'a 3-cell slate (the type of your 3-cell slate)']];
   for (const [shape, what] of kinds) {
     if (!fitsLayout(applyPatch(s.loadout, addSlate(s, shape, []) as never), s.level, [...added, shape])) continue;
     for (const set of [...lines.slice(0, 10).map((a) => [a]), ...lines.slice(0, 6).flatMap((a, i) => lines.slice(i + 1, 6).map((b) => [a, b]))]) {
       if (set.some((x) => elsewhere().has(x.id))) continue;
-      const names = set.map((x) => x.name), price = (n: string) => o.slatePrices.find(([r]) => r.test(n))?.[1] ?? o.slateFE;
-      out.push({ key: `add|${added.length}|${shape}|${set.map((x) => x.id).join('-')}`, group: `add|${added.length}`, kind: 'slate', costFE: names.reduce((t, n) => t + price(n), 0),
-        note: 'slate price assumed: check /market; the board re-laid out to fit it (the slate board shows where each goes)',
+      const names = set.map((x) => x.name), cost = slateCost(set, o.slateListings ?? [], guess);
+      out.push({ key: `add|${added.length}|${shape}|${set.map((x) => x.id).join('-')}`, group: `add|${added.length}`, kind: 'slate', costFE: cost.fe,
+        note: `${cost.from}; the board re-laid out to fit it (the slate board shows where each goes)`,
         label: `Add ${what} with ${names.join(' + ')}`, changes: [addSlate(s, shape, set.map((x) => x.id))] });
     }
   }
@@ -306,7 +308,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
       label: `Put your ${SLATE_KIND[own.baseId] ?? 'slate'} (level ${own.level}: ${own.talents!.map(talentName).join(', ')}) from your ${where}${own.where === 'stash' ? '' : `, slot ${own.slot}`} in place of board slate ${i + 1} (${it.talents.map(talentName).join(', ')})`, changes: [replaceSlate(s, i, own.talents!, { baseId: own.baseId, shapeId: own.shapeId })] }));
   }
   // a slate in place of one of yours, same shape (so it fits the board), carrying one or two wanted lines (its other lines priced as nothing)
-  const slates = L.slateItems ?? [], price = (n: string) => o.slatePrices.find(([r]) => r.test(n))?.[1] ?? o.slateFE;
+  const slates = L.slateItems ?? [];
   const sets = [...lines.slice(0, 10).map((a) => [a]), ...lines.slice(0, 6).flatMap((a, i) => lines.slice(i + 1, 6).map((b) => [a, b]))];
   slates.forEach((it, i) => {
     if (o.slateSlots && !o.slateSlots.includes(i)) return;
@@ -315,7 +317,8 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
       if (set.some((x) => there.has(x.id))) continue;
       const ids = set.map((x) => x.id), names = set.map((x) => x.name);
 
-      out.push({ key: `slate|${i}|${ids.join('-')}`, kind: 'slate', costFE: names.reduce((t, n) => t + price(n), 0), note: 'slate price assumed: check /market',
+      const cost = slateCost(set, o.slateListings ?? [], guess);
+      out.push({ key: `slate|${i}|${ids.join('-')}`, kind: 'slate', costFE: cost.fe, note: cost.from,
         label: `Replace your slate ${i + 1} (${was}) with a slate of the same shape with ${names.join(' + ')}`, changes: [replaceSlate(s, i, ids)] });
     }
   });
@@ -391,7 +394,7 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
       : lay && JSON.stringify(lay[i]) !== nowCells[i] ? { source: 'on your board: move or rotate it to where it shows', changed: true } : { source: 'on your board', changed: false }), lay ?? undefined) };
   };
   const out = (partialRun: boolean): GuideOut => ({ mode: 'advise', board: board(), pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt },
-    knobs: { plan: { ...o, slatePrices: o.slatePrices.map(([r, v]) => `${r.source}: ${v}`) }, fight: ev.fight, rollBudget: ev.rollBudget, target: o.target, partialRun },
+    knobs: { plan: { ...o, slatePrices: o.slatePrices.map(([r, v]) => `${r.source}: ${v}`), slateListings: o.slateListings?.length ?? 0 }, fight: ev.fight, rollBudget: ev.rollBudget, target: o.target, partialRun },
     character: { level: s0.level, skill: 'hoa', fe: s0.fe, owned: s0.owned.length, gear: ((s0.loadout.gear ?? []) as { slot?: string; label: string; name?: string }[]).map((g) => ({ slot: g.slot ?? '', label: g.name ?? g.label })) },
     start: first, startNotes: notes, steps: [], notSearched: [...ctx.notSearched], unpriced: [], notCalculable: [...refused].map(([l, w]) => `${l}: ${w}`),
     slates: lines.slice(0, 25), plan: { target: o.target, goal: o.goal, ...(o.goalSeconds ? { goalSeconds: o.goalSeconds } : {}), at: new Date().toISOString(), start: { label: 'your character as read from the game', figure: first, dummy }, steps,

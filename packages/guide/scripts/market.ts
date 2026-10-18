@@ -23,7 +23,7 @@ import { places, type Listing } from '../src/listing';
 import { localItems } from '../src/modes';
 import { fetchSeason, fetchSnapshot, snapshotBook, type EtorItems } from '../src/pricing';
 import { pinCommit, table } from '../src/pin';
-import { freed, replaceable, replaceSlate } from '../src/candidates/slates';
+import { freed, replaceable, replaceSlate, type SeenSlate } from '../src/candidates/slates';
 import { createEvaluator } from '../src/engine/pool';
 import { canonical } from '../src/engine/memo';
 import { talentName } from '../src/names';
@@ -120,6 +120,16 @@ const versus = (f: Figure): number | string => (rankable(base!, f) ? f.kill / ba
 const GAINS = `${root}packages/guide/.cache/market-gains.json`, pin = pinCommit().slice(0, 8);
 const gains: Record<string, number | string> = existsSync(GAINS) ? JSON.parse(readFileSync(GAINS, 'utf8')) : {};
 let unsaved = false;
+/** every slate listing read from the game, for the plan's slate prices (slateCost); a week old, dropped */
+const SEEN = `${root}packages/guide/.cache/slate-listings.json`;
+const seen: Record<string, SeenSlate> = existsSync(SEEN) ? JSON.parse(readFileSync(SEEN, 'utf8')) : {};
+function remember(slates: Listing[]) {
+  const fresh = slates.filter((l) => l.priceType === FE && !(rowId(l) in seen));
+  if (!fresh.length || file) return;
+  for (const l of fresh) seen[rowId(l)] = { talents: l.talents!, price: l.price, at: new Date().toISOString() };
+  for (const [k, v] of Object.entries(seen)) if (Date.now() - Date.parse(v.at) > 7 * 864e5) delete seen[k];
+  writeAtomic(SEEN, JSON.stringify(seen));
+}
 const settled = new Map<string, number | string>(), asked = new Set<string>(), waiting: { page: number; k: string; changes: Change[] }[] = [];
 let page = 0, running = 0, landed = () => {};
 function pump() {
@@ -215,6 +225,7 @@ const pct = (g: number) => `${g >= 0 ? '+' : ''}${(g * 100).toFixed(2)}%`;
 async function rank(listings: Listing[]): Promise<Ranked> {
   if (!listings.length) return { lines: ['no market search result on screen (open a search in the auction house first)'], pending: 0 };
   const slates = listings.filter((l) => l.talents?.length);
+  remember(slates);
   const r = { kind: slates.length ? 'slates' : 'gear', ...(slates.length ? rankSlates(slates) : has('craft') ? await rankGear(listings) : rankWorn(listings)) };
   if (!r.pending && unsaved) { writeAtomic(GAINS, JSON.stringify(gains)); unsaved = false; }
   return r;

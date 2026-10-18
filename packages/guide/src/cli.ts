@@ -11,6 +11,7 @@ import { runPlan } from './plan';
 import { fetchSeason, fetchSnapshot, legBooks, LEG_WINDOWS, snapshotBook, withPrices } from './pricing';
 import { fromExport } from './start';
 import type { GuideOut, PriceBook, Skill } from './types';
+import type { SeenSlate } from './candidates/slates';
 
 const [cmd, ...args] = process.argv.slice(2);
 /** a path the caller typed, from the caller's directory (`pnpm guide` runs in packages/guide; pnpm keeps the caller's in INIT_CWD) */
@@ -21,6 +22,9 @@ const num = (name: string) => { const v = flag(name); if (v !== undefined && !Nu
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
 /** a file at the repository root, when it exists, as plan option `key` (roll-prices.json, vorax-grafts.json, inverse-images.json) */
 const rootJson = (file: string, key: string) => { const f = fileURLToPath(new URL(`../../../${file}`, import.meta.url)); return existsSync(f) ? { [key]: readJson(f) } : {}; };
+/** the slate listings the market has read (market.ts) in the last week, as plan option slateListings */
+const seenSlates = () => { const f = fileURLToPath(new URL('../.cache/slate-listings.json', import.meta.url));
+  return existsSync(f) ? { slateListings: Object.values(readJson(f) as Record<string, SeenSlate>).filter((x) => Date.now() - Date.parse(x.at) < 7 * 864e5) } : {}; };
 const bombs = num('bombs');
 const rollBudget = num('roll-budget');
 const budgetMinutes = num('budget-minutes');
@@ -109,7 +113,7 @@ async function main() {
     try {
       final(out, dump(await runPlan(ev, state, book, { ...(flag('target') ? { target: flag('target')! } : {}), ...(num('goal') ? { goal: num('goal')! } : {}), ...(num('kill-seconds') ? { goalSeconds: num('kill-seconds')! } : {}), ...(num('steps') ? { maxSteps: num('steps')! } : {}), ...(num('budget') ? { budget: num('budget')! } : {}),
         ...(num('slate-fe') ? { slateFE: num('slate-fe')! } : {}), ...(num('prism-fe') ? { prismFE: num('prism-fe')! } : {}),
-        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages') }, (o) => writeAtomic(out, dump(o)))));
+        ...rootJson('roll-prices.json', 'rollPrices'), ...rootJson('vorax-grafts.json', 'grafts'), ...rootJson('inverse-images.json', 'inverseImages'), ...seenSlates() }, (o) => writeAtomic(out, dump(o)))));
     } finally { await ev.close(); }
     console.log(`wrote ${out}`);
   } else if (cmd === 'advise') {

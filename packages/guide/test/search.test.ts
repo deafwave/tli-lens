@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DEFAULT_KNOBS, newMem, path, rankable, resolve, step } from '../src/search';
+import { DEFAULT_KNOBS, newMem, path, rankable, rankedOn, resolve, step } from '../src/search';
 import type { LoadoutPatch } from '../src/patches';
 import type { Change, Evaluator, Figure, GenCtx, Generator, Move, State } from '../src/types';
 
@@ -357,4 +357,10 @@ describe('new behaviours (final fix wave)', () => {
     expect((await run({ continueSteps: 1 })).steps).toHaveLength(2);
     expect((await run({ continueSteps: 0 })).steps).toHaveLength(1);
   });
+});
+
+test('on the dummy a figure ranks by its damage at full Life, not the lock-capped kill speed (the market ranked a 40T dummy goal under the 15T lock)', async () => {
+  const ev = { pin: 'stub', async close() {}, run: async () => ({ loadout: {}, figure: { life100: 3, life0: 2, kill: 1, partial: [] } }) } as unknown as Evaluator;
+  expect((await rankedOn(ev, 'dummy').run({} as never, [], { level: 90, skill: 'hoa' })).figure.kill).toBe(3);
+  expect((await rankedOn(ev, 'traveler').run({} as never, [], { level: 90, skill: 'hoa' })).figure.kill).toBe(1);
 });

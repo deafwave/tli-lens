@@ -64,6 +64,10 @@ function memoEv(ev: Evaluator): Evaluator {
 /** the evaluation context of a state: its level, skill and boss */
 /** `target` 'dummy' is the training ground's dummy: dps-debug's null target */
 export const ctxOfState = (s: State, skill = s.skill): EvalCtx => ({ level: s.level, skill, ...(s.target !== undefined ? { target: s.target === 'dummy' ? null : s.target } : {}) });
+/** the training dummy never dies: what it shows is the damage at full Life, so that is what a figure on it ranks by and reaches, not the lock-capped kill
+ *  speed (owner, 2026-10-18: 40 trillion dummy) */
+export const rankedOn = (ev: Evaluator, target: string | undefined): Evaluator => target !== 'dummy' ? ev
+  : { ...ev, run: async (...a) => { const e = await ev.run(...a); return { ...e, figure: { ...e.figure, kill: e.figure.life100 } }; } };
 const evalMove = (s: State, m: Move, ev: Evaluator) => ev.run(s.loadout, m.changes, ctxOfState(s, m.skill ?? s.skill));
 const apply = (s: State, m: Move, e: Evaluated): State => ({
   ...s, loadout: e.loadout, fe: s.fe - (m.costFE ?? 0), skill: m.skill ?? s.skill,

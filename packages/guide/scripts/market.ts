@@ -27,7 +27,7 @@ import { freed, replaceable, replaceSlate } from '../src/candidates/slates';
 import { createEvaluator } from '../src/engine/pool';
 import { canonical } from '../src/engine/memo';
 import { talentName } from '../src/names';
-import { rankable, ctxOfState } from '../src/search';
+import { rankable, rankedOn, ctxOfState } from '../src/search';
 import { fromExport } from '../src/start';
 import { DEFAULT_PLAN } from '../src/plan';
 import type { Change, EvalCtx, Evaluator, Figure, State } from '../src/types';
@@ -102,7 +102,7 @@ function reread() {
 let warmRun: Promise<void> | undefined, ev: Evaluator | undefined, base: Figure | undefined, gen = 0;
 // 12 workers (~1.5 GB each) by default: 96 slate figures took 3.32 figures/s on 8, 4.16 on 12, 4.05 on 16, 3.67 on 20 (2026-10-18, 16 cores, the game running): the figures are bound by memory
 // bandwidth, not cores (8 single-threaded processes on one CCD price as many as 16 across both)
-const warm = () => warmRun ??= createEvaluator({ memoDir: `${root}packages/guide/.cache/memo`, workers: Number(arg('workers')) || 12 }).then((e) => { ev = e; return rebase(); });
+const warm = () => warmRun ??= createEvaluator({ memoDir: `${root}packages/guide/.cache/memo`, workers: Number(arg('workers')) || 12 }).then((e) => { ev = rankedOn(e, arg('target') ?? DEFAULT_PLAN.target); return rebase(); });
 async function rebase() {
   const g = gen, { state, ctx } = character(), f = (await ev!.run(state.loadout, [], ctx)).figure;
   if (g !== gen) return;

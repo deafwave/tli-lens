@@ -250,6 +250,21 @@ describe('whiteBaseMoves', () => {
     expect([...c.notSearched].some(n => /side full/.test(n))).toBe(false);
   });
 
+  it('a T1 line upgraded to T0 on a two-handed weapon (owner, 2026-10-18: Basic 600 Precious Ember + 2 Sacred Fossil + 60 FE, Advanced 600 Matchless + 6 Fossil + 180 FE, Ultimate 12 Ultimate Ember + 12 Fossil + 360 FE, 30% a try): a try / 0.3; never from T2; other gear named, its cost not known', () => {
+    const helmT1 = Number(library.find(a => a.slot === 'STR Helmet' && a.grade === 'Basic')!.tiers.find(t => t.tier === 'T1')!.tierAffixId);
+    const worn = { ...item('mainHand', 1019, 'Sierra Reverberation Maul'), level: 100, affixes: [{ id: 110110001, dyn: [-20, 90], list: 'SuffixInfoList' }, { id: 140111402, dyn: [140], list: 'SuffixInfoList' }, { id: 107110001, dyn: [70], list: 'PrefixInfoList' }] };
+    const helm = { ...HELM, level: 100, affixes: [{ id: helmT1, dyn: [1], list: 'PrefixInfoList' }] }, c = ctx(100, { 'Precious Ember': 0.06, 'Sacred Fossil': 20, 'Matchless Ember': 0.27 });
+    const up = gearMoves(state('hoa', 100, [worn, helm]), c).filter(m => /^Upgrade your /.test(m.label));
+    const t0 = (m: Move) => [...(swapped(m).modifiers.prefix ?? []), ...swapped(m).modifiers.suffix].map((x: { id: number }) => x.id).filter((id: number) => id % 100 === 0);
+    expect(up.map(t0).sort()).toEqual([[107110000], [110110000]]);
+    const basic = up.find(m => t0(m)[0] === 110110000)!, adv = up.find(m => t0(m)[0] === 107110000)!;
+    expect(basic.costFE).toBeCloseTo((600 * 0.06 + 2 * 20 + 60) / 0.3);
+    expect(adv.costFE).toBeCloseTo((600 * 0.27 + 6 * 20 + 180) / 0.3);
+    expect(swapped(basic).modifiers.suffix[0].dynArgs).toEqual([-20, 112.5]);   // T0 at the midpoint of its rolls
+    expect(basic.label).toMatch(/to T0 .*30% a try: about 3\.3 tries of 600 Precious Ember \+ 2 Sacred Fossil \+ 60 FE/);
+    expect([...c.notSearched].some(n => /^T0 upgrade on helmet: /.test(n))).toBe(true);
+  });
+
   it('at most 2 lines of each grade on an item (owner, 2026-10-18: "Game rule, all gear"): on a 2 Ultimate / 2 Advanced / 2 Basic maul a craft only swaps a line for one of its grade', async () => {
     const { rollPlans } = await import('../src/candidates/gear');
     const grade = new Map(library.flatMap(a => a.tiers.map(t => [Number(t.tierAffixId), a.grade] as const)));

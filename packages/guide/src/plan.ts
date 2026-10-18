@@ -210,7 +210,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
     const like = fate ? [`kismet|${fate}`, `kismet|${at![1]}|${fate}`] : at ? [`kismet|${at[1]}|${at[0]}`] : m.like;
     // the same kismet in place of yours: what it adds less what yours gave (at the same price)
     const under = at && !fate ? [{ by: `kismet|${at[0]}`, unless: `kismet|Remove the kismet on ${at[1]}` }] : undefined;
-    out.push({ key: `${m.kind}|${label}`, label: t ? `${label} (${t.note})` : label, costFE: cost, kind: m.kind, changes: t ? t.changes : m.changes, ...(like ? { like } : {}), ...(under ? { under } : {}) });
+    out.push({ key: `${m.kind}|${label}`, label: t ? `${label} (${t.note})` : label, costFE: cost, kind: m.kind, changes: t ? t.changes : m.changes, ...(like ? { like } : {}), ...(under ? { under } : {}), ...(m.group ? { group: m.group } : {}) });
   };
   // Wind Projectiles: the model's figure is off against the owner's dummy (RULES)
   const MEASURED_WRONG = /Wind Projectiles|Slow Projectile -> /;

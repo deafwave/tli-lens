@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { table as catalogTable } from '../pin';
-import { craftOptions, EMBER_FOR_GRADE, embersPerCraft, topRoll, type CraftOption, type LibraryAffix } from '../craft';
+import { craftOptions, EMBER_FOR_GRADE, embersPerCraft, topRoll, TWO_HANDED, type CraftOption, type LibraryAffix } from '../craft';
 import affixIds from '../data/affix-ids.json';
 import { costOf, priceOfGold } from '../priceOf';
 import type { Change, GenCtx, Generator, Move, Skill, State } from '../types';
@@ -255,6 +255,16 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
           buy: { name: t.ember, qty: t.qty }, minLevel: 0,
           changes: swap(slot, withMods(dump, { [side]: (dump.modifiers[side] ?? []).map(x => (x === m ? { id: t.id, dynArgs: t.dynArgs } : x)) }, `guide-recraft-${slot}-${t.id}`)),
         });
+    // a T1 line upgraded to T0 (T0_TRY): its catalog T0 (group x 100 + 0) at the midpoint of its rolls; a two-handed weapon's price only
+    for (const side of ['prefix', 'suffix'] as const) for (const m of dump.modifiers[side] ?? []) {
+      const g = gradeOf(m.id), t0 = m.id - 1, r0 = cat().rolls[t0];
+      if (!g || m.id % 100 !== 1 || !r0) continue;
+      if (!TWO_HANDED.has(base.lib)) { ctx.notSearched.add(`T0 upgrade on ${slot}: its cost on a ${base.lib} is not known (your prices are a two-handed weapon's)`); continue; }
+      const t = T0_TRY[g], one = Object.entries(t.use).reduce((a, [n, q]) => a + q * (ctx.prices.price(n, ctx.level) ?? NaN), t.fe);
+      moves.push({ kind: 'craft', acquisition: true, minLevel: 0, costFE: Number.isFinite(one) ? one / T0_P : null,
+        label: `Upgrade your ${gradeTextOf(m.id)} (${side}) on ${slot} to T0 (${r0.map(([lo, hi]) => (lo === hi ? lo : `${lo}-${hi}`)).join(' / ')}): ${T0_P * 100}% a try: about ${(1 / T0_P).toFixed(1)} tries of ${Object.entries(t.use).map(([n, q]) => `${q} ${n}`).join(' + ')} + ${t.fe} FE`,
+        changes: swap(slot, withMods(dump, { [side]: (dump.modifiers[side] ?? []).map(x => (x === m ? { id: t0, dynArgs: mids(t0)! } : x)) }, `guide-t0-${slot}-${t0}`)) });
+    }
     if (skipped.size) ctx.notSearched.add(`craft on ${slot}: ${skipped.size} tiers whose library text ranges differ from the catalog rolls`);
 
     // base upgrade: the best rare base of the same line at the hero level (a white base is a drop unless etor prices it)
@@ -310,9 +320,10 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
   return moves;
 };
 
-/** A rare you mean to make (dream-gear.json, owner 2026-10-18): a fresh base you buy with its implicit and sequence for `baseFE` (your prices), every line then
- *  crafted at T1 (expected embers at the book's price), priced whole in place of what you wear in `slot`; the implicit and lines at the midpoint of their rolls
- *  (docs/gear-rules.md). One that breaks a rule of the game (a line outside the base's pool, a family twice, more than SIDE_MAX a side, GRADE_MAX of a grade) is named. */
+/** A rare you mean to make (dream-gear.json, owner 2026-10-18): a fresh base you buy with its implicit and sequence for `baseFE` (your prices) and any subset of its
+ *  lines crafted at T1 (expected embers at the book's price; "doesn't have to be fully crafted here": the rest are later crafts), each priced whole in place of
+ *  what you wear in `slot`, one of them taken; the implicit and lines at the midpoint of their rolls (docs/gear-rules.md). One that breaks a rule of the game (a line
+ *  outside the base's pool, a family twice, more than SIDE_MAX a side, GRADE_MAX of a grade) is named. */
 export interface Dream { slot: string; baseId: number; baseFE: number; note: string; implicit: number; sequence?: number; lines: number[] }
 export function dreamMoves(ctx: GenCtx, dreams: Dream[]): Move[] {
   return dreams.flatMap((d): Move[] => {
@@ -324,12 +335,15 @@ export function dreamMoves(ctx: GenCtx, dreams: Dream[]): Move[] {
     for (const g of ['Basic', 'Advanced', 'Ultimate']) { const n = lines.filter(o => o.grade === g).length; if (n > GRADE_MAX) return why(`${n} ${g} lines (at most ${GRADE_MAX} an item)`); }
     for (const sd of ['Prefix', 'Suffix']) if (lines.filter(o => o.side === sd).length > SIDE_MAX) return why(`more than ${SIDE_MAX} ${sd.toLowerCase()} lines`);
     if (new Set(d.lines.map(id => Math.floor(id / 100))).size < d.lines.length) return why('an affix family twice');
-    const at = (id: number) => ({ id, dynArgs: mids(id) ?? [] }), side = (sd: string) => lines.filter(o => o.side === sd).map(o => at(Number(o.tierAffixId)));
-    const craft = lines.reduce<number | null>((t, o) => { const p = ctx.prices.price(o.ember, ctx.level); return t === null || p === null ? null : t + o.expectedEmbers * p; }, 0);
-    const item: Dump = { baseId: d.baseId, baseName: r.name, itemId: `guide-dream-${d.baseId}`, level: 100,
-      modifiers: { baseAttr: attrMods(r), baseAffix: [at(d.implicit)], ...(d.sequence ? { chip: [at(d.sequence)] } : {}), prefix: side('Prefix'), suffix: side('Suffix') } };
-    return [{ kind: 'gear', acquisition: true, minLevel: r.level, costFE: craft === null ? null : d.baseFE + craft, changes: swap(d.slot, item),
-      label: `Make your dream ${r.name}: ${d.note} (${d.baseFE} FE: your prices), then craft ${lines.map(o => `${o.tier} ${o.text.replace(/\n/g, ' / ')}`).join(', ')} (about ${craft === null ? '?' : Math.round(craft)} FE in embers)` }];
+    const at = (id: number) => ({ id, dynArgs: mids(id) ?? [] }), say = (os: CraftOption[]) => os.map(o => `${o.tier} ${o.text.replace(/\n/g, ' / ')}`).join(', ');
+    return Array.from({ length: 2 ** lines.length }, (_, mask) => lines.filter((_, i) => mask & (1 << i))).map((made): Move => {
+      const side = (sd: string) => made.filter(o => o.side === sd).map(o => at(Number(o.tierAffixId))), later = lines.filter(o => !made.includes(o));
+      const craft = made.reduce<number | null>((t, o) => { const p = ctx.prices.price(o.ember, ctx.level); return t === null || p === null ? null : t + o.expectedEmbers * p; }, 0);
+      const item: Dump = { baseId: d.baseId, baseName: r.name, itemId: `guide-dream-${d.baseId}-${made.map(o => o.tierAffixId).join('-')}`, level: 100,
+        modifiers: { baseAttr: attrMods(r), baseAffix: [at(d.implicit)], ...(d.sequence ? { chip: [at(d.sequence)] } : {}), ...(side('Prefix').length ? { prefix: side('Prefix') } : {}), ...(side('Suffix').length ? { suffix: side('Suffix') } : {}) } };
+      return { kind: 'gear', acquisition: true, minLevel: r.level, costFE: craft === null ? null : d.baseFE + craft, changes: swap(d.slot, item), group: `dream|${d.slot}|${d.baseId}`,
+        label: `Make your dream ${r.name}: ${d.note} (${d.baseFE} FE: your prices)${made.length ? `, then craft ${say(made)} (about ${craft === null ? '?' : Math.round(craft)} FE in embers)` : ''}${later.length ? ` (the rest later: ${say(later)})` : ''}` };
+    });
   });
 }
 
@@ -340,6 +354,12 @@ export function dreamMoves(ctx: GenCtx, dreams: Dream[]): Move[] {
 export interface RollOutcome { p: number; label: string; changes: Change[] }
 /** lines of one grade (Basic, Advanced, Ultimate) an item holds at most (owner: 2 Advanced, 2026-10-17; every grade, "Game rule, all gear", 2026-10-18) */
 const GRADE_MAX = 2;
+/** one try to upgrade a T1 line to T0 on a two-handed weapon, by grade: its materials and FE, T0_P a try, a failed try leaving the T1 (owner, 2026-10-18; "likely
+ *  different for 1 handed weapons") */
+const T0_TRY: Record<string, { use: Record<string, number>; fe: number }> = {
+  Basic: { use: { 'Precious Ember': 600, 'Sacred Fossil': 2 }, fe: 60 }, Advanced: { use: { 'Matchless Ember': 600, 'Sacred Fossil': 6 }, fe: 180 },
+  Ultimate: { use: { 'Ultimate Ember': 12, 'Sacred Fossil': 12 }, fe: 360 } };
+const T0_P = 0.3;
 let grades: Map<number, { grade: string; text: string }> | undefined;
 const gradeIndex = () => grades ??= new Map(library.flatMap(a => a.tiers.map(t => [Number(t.tierAffixId), { grade: a.grade, text: `${t.tier} ${topRoll(t.text).replace(/\n/g, ' / ')}` }] as const)));
 const gradeOf = (id: number) => gradeIndex().get(id)?.grade;

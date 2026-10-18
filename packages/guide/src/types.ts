@@ -47,6 +47,8 @@ export interface Move {
   then?: { changes: Move['changes']; costFE: number; note: string };
   /** hero level gate */
   minLevel: number;
+  /** taken once per group (one of several variants of one purchase) */
+  group?: string;
   /** dps-debug what-if changes applied in order (dps-debug model/src/core/whatif.ts `Change`; a `LoadoutPatch` is applied by applyPatch, runs of Changes by applyChanges) */
   changes: (Change | LoadoutPatch)[];
   /** mode 2: the owned itemId this move uses (cost 0, consumed once) */

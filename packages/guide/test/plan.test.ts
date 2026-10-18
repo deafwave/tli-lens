@@ -98,12 +98,21 @@ describe('a rare you mean to make (dream-gear.json; owner, 2026-10-18: the Lucky
   it("priced whole: your base price + each line's expected embers at T1; the implicit and lines at the midpoint of their rolls, the sequence on the item", async () => {
     const { craftStep } = await import('../src/candidates/gear');
     const c = candidates(s, ctx, { ...DEFAULT_PLAN, dreams: [dream] }, lines).filter((x) => /^Make your dream Sierra Reverberation Maul/.test(x.label));
-    expect(c.length).toBe(1);
-    expect(c[0].costFE).toBeCloseTo(12500 + dream.lines.reduce((t, id) => t + craftStep(1019, id, ctx)!.costFE!, 0));
-    const mods = (c[0].changes[0] as unknown as { item: { modifiers: Record<string, { id: number; dynArgs: number[] }[]> } }).item.modifiers;
+    const full = c.filter((x) => !/ later: /.test(x.label));
+    expect(full.length).toBe(1);
+    expect(full[0].costFE).toBeCloseTo(12500 + dream.lines.reduce((t, id) => t + craftStep(1019, id, ctx)!.costFE!, 0));
+    const mods = (full[0].changes[0] as unknown as { item: { modifiers: Record<string, { id: number; dynArgs: number[] }[]> } }).item.modifiers;
     expect(mods.baseAffix).toEqual([{ id: 1501119, dynArgs: [-45] }]);
     expect(mods.chip.map((m) => m.id)).toEqual([160517011]);
     expect([mods.prefix.length, mods.suffix.length]).toEqual([3, 3]);
+  });
+  it('also partly crafted (owner, 2026-10-18: "the dream maul doesn\'t have to be fully crafted here"): the base with every subset of its lines, the rest named as later crafts, one of them taken', () => {
+    const c = candidates(s, ctx, { ...DEFAULT_PLAN, dreams: [dream] }, lines).filter((x) => /^Make your dream/.test(x.label));
+    expect(c.length).toBe(2 ** dream.lines.length);
+    expect(new Set(c.map((x) => x.group)).size).toBe(1);
+    const bare = c.find((x) => !/then craft/.test(x.label))!;
+    expect(bare.costFE).toBe(12500);
+    expect(bare.label).toMatch(/ later: T1 \+80% Gear Physical Damage, /);
   });
   it('a dream that breaks a rule of the game (3 Ultimate lines) is named, not offered', () => {
     const n = { ...ctx, notSearched: new Set<string>() }, three = { ...dream, lines: [140110901, 140111901, 115110501, 111110401, 110110001, 140111401] };

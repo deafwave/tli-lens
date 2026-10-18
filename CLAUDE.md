@@ -99,7 +99,8 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
   A side no listing was read for is offered at your price for the name (`pricedCopiers`, prices.json; owner, 2026-10-18: single-sided Sparks about 500 FE).
 - Gear: an item holds at most 2 lines of each grade, Basic, Advanced and Ultimate (`GRADE_MAX`, `gear.ts`; owner, 2026-10-18: a rule of the game on all gear).
   A rare you mean to make (`dream-gear.json`: base, implicit, sequence, lines, and your price for the base with its implicit and sequence) is priced whole
-  (`dreamMoves`): that price + each line's expected embers at T1, implicit and lines at the midpoint of their rolls; one breaking a rule of the game is named.
+  (`dreamMoves`): that price + any subset of its lines' expected embers at T1 (the rest later), implicit and lines at the midpoint of their rolls; one breaking a rule
+  of the game is named. A T1 line on a two-handed weapon is upgraded to T0 at one try's cost / 0.3 (`T0_TRY`, owner's prices by grade); other gear is named.
 - Kismets: a page holds at most 9 Micro and 4 Medium Destinies (`DESTINY_CAP`, owner's pact page 2026-10-18); at the cap a kismet only replaces one.
 - Belt blends (`blendCands`, `plan.ts`): every recipe the game's window shows that you unlocked and that grants one affix, on the belt you wear, at its spices' etor price;
   random-outcome recipes and unlocked ones the read had no row for are named in `notSearched`.

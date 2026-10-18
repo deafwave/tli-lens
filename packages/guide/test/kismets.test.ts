@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { kismetMoves, pointName } from '../src/candidates/kismets';
+import { kismetMoves, pointName, pointProbes } from '../src/candidates/kismets';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
 const l100 = loadout(L100);   // kismets on 103 104 108 305 307, Undetermined Fates on 111 [1,1] and 211 [2]; 311 is a free Fate slot
-const run = (l: Record<string, unknown>, prices: Record<string, number> = {}) => {
+const run = (l: Record<string, unknown>, prices: Record<string, number> = {}, pointCost?: Map<number, number>) => {
   const notSearched = new Set<string>();
-  return { moves: kismetMoves({ loadout: l, owned: [], fe: 0, level: 100, skill: 'hoa' }, { prices: fakePrices(prices), level: 100, notSearched }), notSearched };
+  return { moves: kismetMoves({ loadout: l, owned: [], fe: 0, level: 100, skill: 'hoa' }, { prices: fakePrices(prices), level: 100, notSearched, ...(pointCost ? { pointCost } : {}) }), notSearched };
 };
 const ch = (m: { changes: unknown[] }) => m.changes[0] as { kind: string; action: string; point: number; modifierId?: number; rolls?: number[]; baseId?: number; extra?: number[] };
 type K = { node: number; modifierId: number | null };
@@ -89,6 +89,23 @@ describe('kismetMoves', () => {
     const mighty = run(one).moves.filter(m => m.changes.some(c => (c as { modifierId?: number }).modifierId === 100350734));
     expect(mighty.length).toBeGreaterThan(0);
     expect(mighty.every(m => m.changes.length === 1 && /^(Socket|Replace)/.test(m.label))).toBe(true);
+  });
+  it('pointProbes: one socket per free small / middle point, of a Dual Kismet the build holds none of (one copy grants nothing)', () => {
+    const probes = pointProbes({ loadout: l100, owned: [], fe: 0, level: 100, skill: 'hoa' });
+    const held = new Set((l100.kismets as K[]).map(k => k.node)), mods = new Set(probes.map(p => ch(p).modifierId));
+    expect(probes.length).toBeGreaterThan(0);
+    expect(probes.every(p => !held.has(p.point) && ch(p).point === p.point && ch(p).action === 'socket')).toBe(true);
+    expect(mods.size).toBe(1);
+    expect([...mods][0]).not.toBe(100350734);   // Mighty Arrow: l100 holds the pair
+    expect(probes.map(p => p.point)).toEqual(expect.arrayContaining([105, 106, 109, 201, 207, 301, 308]));
+  });
+  it('with point costs, a kismet goes on the cheapest free point of each area and a set on the cheapest points of its size', () => {
+    const cost = new Map([[109, 0.99], [207, 0.98], [208, 0.95], [209, 0.97], [308, 0.9]]);
+    const { moves: ms } = run(l100, {}, cost);
+    const middle = new Set(ms.filter(m => plain(m, 'socket') && m.changes.length === 1 && /Medium Fate/.test(m.label)).map(m => ch(m).point));
+    expect([...middle].sort()).toEqual([109, 207, 308]);   // area 2: 207 (0.98) over 209 and 208
+    const set = ms.find(m => m.changes.length === 2)!;
+    expect(set.changes.map(c => (c as { point: number }).point)).toEqual([109, 207]);
   });
   it('the planner-file schema (servant page nodes) is not searched', () => {
     const r = run(loadout('re/evidence/loadout_probuild-hanshansi-bing.json'));

@@ -95,6 +95,8 @@ export interface GenCtx {
   prices: PriceBook; level: number; notSearched: Set<string>;
   /** a live character's talent points (what it holds; Path of Progression adds points, so its level does not give them); unset: `pointsAtLevel` */
   talentBudget?: number;
+  /** kismet: per free contract point, the figure with it occupied over the build's (kismets.ts pointProbes); unset: the first free point is used */
+  pointCost?: Map<number, number>;
 }
 export type Generator = (s: State, ctx: GenCtx) => Move[];
 

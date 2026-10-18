@@ -5,7 +5,7 @@
 import { gearMoves, whiteBaseMoves } from './candidates/gear';
 import { gemLevelAt, gemMoves, gemsHeld } from './candidates/gems';
 import { costOf } from './priceOf';
-import { kismetMoves } from './candidates/kismets';
+import { kismetMoves, pointProbes } from './candidates/kismets';
 import { pactMoves } from './candidates/pacts';
 import { prismMoves } from './candidates/prisms';
 import { addSlate, boardView, overCap, packBoard, replaceable, replaceSlate, slateCost, slateMoves, slateWants, type SeenSlate } from './candidates/slates';
@@ -335,6 +335,9 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
   // the training dummy the owner checks a step on, beside the boss the plan is priced on (owner, 2026-10-17: a Cube 3 figure read as the dummy's)
   const dummy = (await ev.run(s.loadout, [], { ...C, target: null })).figure.life100;
   if (first.stop) throw new Error(`your character cannot be priced on ${bossName(o.target)}: ${first.stop}`);
+  // what occupying each free contract point costs (the point's own pactspirit bonus): kismets go on the cheapest ones
+  if (first.kill > 0) ctx.pointCost = new Map((await Promise.all(pointProbes(s).map(async (p) => [p.point, (await ev.run(s.loadout, p.changes, C)).figure] as const)))
+    .filter(([, g]) => !g.stop).map(([n, g]) => [n, g.kill / first.kill]));
   if (o.goalSeconds) { if (!first.lifeMax) throw new Error(`${o.target}: no max Life to set a kill time against`); o.goal = first.lifeMax / o.goalSeconds; }
   const lines = (await slateWants(ev, s, first, 0, 25, false)).filter((x) => !CONVERSION.test(x.name));
   // talent points that stay where they are: the owner's (Paralysis is applied in game, Sealed Mana Compensation keeps the auras on) and a node the model prices

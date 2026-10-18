@@ -36,9 +36,26 @@ function candidates(): Cand[] {
       rolls: ((rolls[t.Modifier[0]] ?? []) as number[][]).map(r => (r[0] + r[1]) / 2), need: (t.ActiveNum ?? 1) as number }));
 }
 
+type L = { kismets?: K[]; contractKeys?: number[]; pacts?: { slot?: number; name?: string }[] };
+/** the free small / middle points of the equipped pacts, in page-key order */
+const freePoints = (l: L): number[] => {
+  const cp = rows('config_contract_point'), at = new Set((l.kismets ?? []).map(k => k.node)), equipped = new Set((l.pacts ?? []).map(p => p.slot));
+  return (l.contractKeys ?? []).filter(n => equipped.has(Math.floor(n / 100)) && !at.has(n) && [SMALL, MIDDLE].includes(cp[n]?.i10));
+};
+
+/** A kismet on a contract point replaces the point's own pactspirit bonus (dps-debug build.ts pactWalk: c30 / c40 only on a point without a kismet), and
+ *  points differ. One probe per free point: a single copy of a Dual Kismet the build holds none of, which grants nothing (its set counter at count 1), so its
+ *  figure over the build's is what occupying the point costs (GenCtx.pointCost). The model does not check a kismet's size against the point's. */
+export function pointProbes(s: State): { point: number; changes: Change[] }[] {
+  const l = s.loadout as L;
+  if (!l.kismets || l.kismets.some(k => k.servantId !== null)) return [];
+  const inert = candidates().find(c => c.need > 1 && !l.kismets!.some(k => k.modifierId === c.modifierId));
+  return inert ? freePoints(l).map(point => ({ point, changes: [{ kind: 'kismet', action: 'socket', point, modifierId: inert.modifierId, rolls: inert.rolls } as Change] })) : [];
+}
+
 export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
-  const ns = ctx.notSearched, l = s.loadout as { kismets?: K[]; contractKeys?: number[]; pacts?: { slot?: number; name?: string }[] };
-  ns.add('kismet: big points, secret points without a Fate, and the order of equivalent free points in one area are not searched (the first free point of each area and size stands for the rest)');
+  const ns = ctx.notSearched, l = s.loadout as L;
+  ns.add(`kismet: big points and secret points without a Fate are not searched; the ${ctx.pointCost ? 'cheapest free point to occupy (pointProbes)' : 'first free point'} of each area and size stands for the rest`);
   ns.add("kismet: a kismet / fate costs its etor price by its game item name (priceOfBase); the owner's own kismet is not credited when it is replaced");
   if (!l.kismets || !l.contractKeys) { ns.add('kismet: the loadout has no kismets / contractKeys'); return []; }
   if (l.kismets.some(k => k.servantId !== null)) { ns.add('kismet: the loadout addresses kismets by servant page node (the planner file), not by contract point'); return []; }
@@ -53,8 +70,9 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
 
   const onPage = [...keys].filter(n => equipped.has(Math.floor(n / 100)));
   const occupied = onPage.filter(n => at.has(n) && at.get(n)!.modifierId !== null && [SMALL, MIDDLE].includes(kindOf(n)));
-  const seenFree = new Set<string>();
-  const free = onPage.filter(n => !at.has(n) && [SMALL, MIDDLE].includes(kindOf(n))).filter(n => {
+  const seenFree = new Set<string>(), kept = (n: number) => ctx.pointCost ? ctx.pointCost.get(n) ?? 0 : 1;   // a point whose probe did not price goes last
+  const allFree = freePoints(l).sort((a, b) => kept(b) - kept(a));   // the cheapest to occupy first (stable: page order without costs)
+  const free = allFree.filter(n => {
     const g = `${Math.floor(n / 100)}/${kindOf(n)}`;
     return seenFree.has(g) ? false : (seenFree.add(g), true);
   });
@@ -64,7 +82,7 @@ export const kismetMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
     const short = c.need - l.kismets.filter(k => k.modifierId === c.modifierId).length;
     if (short <= 0 && c.need > 1) continue;   // the set is complete: another copy adds nothing (config_set_items has no higher count)
     if (short > 1) {
-      const ps = onPage.filter(n => !at.has(n) && kindOf(n) === c.kind).slice(0, short), each = price(c.baseId);
+      const ps = allFree.filter(n => kindOf(n) === c.kind).slice(0, short), each = price(c.baseId);
       if (ps.length < short) { ns.add(`kismet: ${c.name} needs ${short} free points of its size (sockets only; replacing kismets for a set is not searched)`); continue; }
       moves.push({ kind: 'kismet', label: `${short} x ${c.name} on ${ps.map(p => pt(p)).join(' and ')} (a set: one copy alone grants nothing)`, acquisition: true,
         costFE: each === null ? null : short * each, minLevel: c.level, like: [`kismetset|${c.name}`], changes: ps.map(p => socketChange(c, p, 'socket')) });

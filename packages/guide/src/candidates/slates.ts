@@ -124,6 +124,13 @@ export function replaceSlate(s: State, index: number, talents: number[], as?: { 
  *  a 2-line Corner of Divinity holding the lines of two of your 1-line ones frees one's place; a line capped at one copy (config_talent i8) adds nothing twice) */
 export const redundant = (items: { talents: number[] }[], index: number, talents: number[]) =>
   items.map((_, j) => j).filter((j) => j !== index && items[j].talents.length > 0 && items[j].talents.every((t) => talents.includes(t)));
+/** the slates to empty when a slate carrying `talents` goes in place of your slate `index` (`fits`: the slates it can go in place of), none when that prices nothing new:
+ *  only when `index` is redundant itself (a consolidation: the one place freed is the gain) or a freed slate is one it cannot replace (a cap); else the same slate in place
+ *  of the redundant one already prices that board, `index` kept (owner, 2026-10-18: a page in under 10 s) */
+export const freed = (items: { talents: number[] }[], index: number, talents: number[], fits: number[]) => {
+  const free = redundant(items, index, talents);
+  return redundant(items, -1, talents).includes(index) || free.some((j) => !fits.includes(j)) ? free : [];
+};
 
 /** Slate talents to look for (user, 2026-10-16: "we need more buckets"): every talent the game shows (any tree, cores too; one per distinct effect) priced as one
  *  more slate talent on the character, the gains above 0.5 % best first. A core the build already holds adds nothing (CT1). Which slate can roll which talent

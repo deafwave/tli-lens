@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { redundant, replaceable, slateMoves } from '../src/candidates/slates';
+import { freed, redundant, replaceable, slateMoves } from '../src/candidates/slates';
 import { table } from '../src/pin';
 import { GROUND, L100, applyAll, fakePrices, loadout } from './apply';
 
@@ -62,4 +62,7 @@ describe('redundant', () => {
   const mine = [{ talents: [1] }, { talents: [2] }, { talents: [1, 3] }, { talents: [] }];
   it('in place of the X corner it frees the Y corner (owner, 2026-10-18: work around a 2-line Corner of Divinity)', () => expect(redundant(mine, 0, [1, 2])).toEqual([1]));
   it('in place of another slate it frees both 1-line corners, never one carrying a line it lacks or an empty one', () => expect(redundant(mine, 2, [1, 2])).toEqual([0, 1]));
+  it('frees a slate when the one it replaces is redundant too (a consolidation)', () => expect(freed(mine, 0, [1, 2], [0, 1, 2, 3])).toEqual([1]));
+  it('frees none in place of an unrelated slate it could put in place of the redundant one instead', () => expect(freed(mine, 2, [1, 2], [0, 1, 2, 3])).toEqual([]));
+  it('frees them in place of an unrelated slate when a cap keeps it out of a redundant one', () => expect(freed(mine, 2, [1, 2], [2, 3])).toEqual([0, 1]));
 });

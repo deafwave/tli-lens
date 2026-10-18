@@ -10,7 +10,7 @@
  *  A vorax limb search: each in its slot type's slot; a hero memory search: each in place of yours of its kind.
  *  --watch: keep running, read your character fresh from the game, re-read the screen 10 times a second and redraw the ranking as each figure lands (the page
  *  on screen is priced first; the workers start at once and stay warm).
- *  usage (repo root, elevated shell, game running, a market search open): pnpm guide:market [--top N] [--watch] [--workers N, default 8] [--exact] [--file <saved listings.json>] [--export <export.json>] */
+ *  usage (repo root, elevated shell, game running, a market search open): pnpm guide:market [--top N] [--watch] [--workers N, default 12] [--exact] [--file <saved listings.json>] [--export <export.json>] */
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -23,7 +23,7 @@ import { places, type Listing } from '../src/listing';
 import { localItems } from '../src/modes';
 import { fetchSeason, fetchSnapshot, snapshotBook, type EtorItems } from '../src/pricing';
 import { pinCommit, table } from '../src/pin';
-import { redundant, replaceable, replaceSlate } from '../src/candidates/slates';
+import { freed, replaceable, replaceSlate } from '../src/candidates/slates';
 import { createEvaluator } from '../src/engine/pool';
 import { canonical } from '../src/engine/memo';
 import { talentName } from '../src/names';
@@ -100,8 +100,9 @@ function reread() {
 }
 /** the evaluator, started on the first figure a search needs (--watch: at once) and kept; your character's figure, again when it changed (`gen`) */
 let warmRun: Promise<void> | undefined, ev: Evaluator | undefined, base: Figure | undefined, gen = 0;
-// 8 workers (~1.4 GB each) by default: the 16 a plan takes held 21 GB for a page of slates, and 12 or 16 price no more figures a second than 8 (2026-10-17)
-const warm = () => warmRun ??= createEvaluator({ memoDir: `${root}packages/guide/.cache/memo`, workers: Number(arg('workers')) || 8 }).then((e) => { ev = e; return rebase(); });
+// 12 workers (~1.5 GB each) by default: 96 slate figures took 3.32 figures/s on 8, 4.16 on 12, 4.05 on 16, 3.67 on 20 (2026-10-18, 16 cores, the game running): the figures are bound by memory
+// bandwidth, not cores (8 single-threaded processes on one CCD price as many as 16 across both)
+const warm = () => warmRun ??= createEvaluator({ memoDir: `${root}packages/guide/.cache/memo`, workers: Number(arg('workers')) || 12 }).then((e) => { ev = e; return rebase(); });
 async function rebase() {
   const g = gen, { state, ctx } = character(), f = (await ev!.run(state.loadout, [], ctx)).figure;
   if (g !== gen) return;
@@ -191,7 +192,7 @@ function rankSlates(slates: Listing[]): Ranked {
     // ponytail: a freed place valued at your weakest slate of its base (what one more such slate gives at least); slateWants would price what to put there
     const place = (j: number) => { const w = mine.flatMap((m, k) => (m.baseId === mine[j].baseId ? [drop[k]] : [])); return w.includes(undefined) ? undefined : Math.max(0, -Math.max(...w.map(num))); };
     const gs = tries.flatMap((i) => {
-      const free = redundant(mine, i, l.talents!), one = { g: slate(i, l.talents!, l.baseId), slot: i };
+      const free = freed(mine, i, l.talents!, fits), one = { g: slate(i, l.talents!, l.baseId), slot: i };
       if (!free.length) return [one];
       const gc = slate(i, l.talents!, l.baseId, free), ps = free.map(place);
       return [one, { g: typeof gc === 'number' && !ps.includes(undefined) ? gc + ps.reduce((a, b) => a! + b!, 0)! : gc, gc, slot: i, free }];

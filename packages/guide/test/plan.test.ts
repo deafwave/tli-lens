@@ -61,11 +61,13 @@ describe('plan candidates keep the rules of the game (owner, 2026-10-16)', () =>
     expect(candidates(s, priced, DEFAULT_PLAN, lines, new Set()).some(lwc)).toBe(true);
     expect(candidates(s, priced, DEFAULT_PLAN, lines, new Set(['Last Words of Chaos'])).some(lwc)).toBe(false);
   });
-  it('another copy of a worn legendary with one line at its best roll, priced at its market price, named in game words', () => {
-    const priced = { ...ctx, prices: withPrices(ctx.prices, { 'Ruinous Star': 1433 }).book };
-    const c = candidates(s, priced, DEFAULT_PLAN, lines).find((x) => /^Buy another Ruinous Star with \+30% additional Deterioration Duration \(yours: \d+\)/.test(x.label));
-    expect(c?.costFE).toBe(1433);
-    expect(c?.changes).toEqual([{ kind: 'patch', op: 'gear-roll', slot: 'chest', id: 80935371, dyn: [30] }]);
+  it("another copy of a worn legendary at a better roll only at a price you gave that roll; the name's market price is any roll's, so it is named, not ranked (owner, 2026-10-18: a +100 Crit Rating Death's Touch is not 1300 FE)", () => {
+    const priced = { ...ctx, prices: withPrices(ctx.prices, { 'Ruinous Star': 1433 }).book, notSearched: new Set<string>() };
+    expect(candidates(s, priced, DEFAULT_PLAN, lines).filter((x) => /^Buy another Ruinous Star/.test(x.label))).toEqual([]);
+    expect([...priced.notSearched].some((n) => /^Ruinous Star .*roll-prices\.json/.test(n))).toBe(true);
+    const c = candidates(s, priced, { ...DEFAULT_PLAN, rollPrices: [{ item: 'Ruinous Star', line: 80935371, rolls: [[30, 250]] }] }, lines)
+      .find((x) => /^Buy another Ruinous Star with \+30% additional Deterioration Duration \(yours: \d+\)/.test(x.label));
+    expect(c?.costFE).toBe(250);
   });
   it('a hero memory levelled to its rarity cap at the scraps and threads it takes; never awakened to another rarity (a new memory is bought: owner, 2026-10-16)', () => {
     const priced = { ...ctx, prices: withPrices(ctx.prices, { 'Memory Scrap': 0.1, 'Memory Thread - Epic': 1, 'Crude Lunar Dust': 1, 'Luminous Lunar Dust': 1 }).book };

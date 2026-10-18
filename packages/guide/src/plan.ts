@@ -185,7 +185,7 @@ type Cand = { key: string; /** taken once per group */ group?: string;
    *  rerolled / crafted to the same line): a new candidate takes the lowest last score of the ones it shares a name with as its bound, as a stale score is (a gain
    *  shrinks as the build grows), and is priced only when it could win */ like?: string[];
   /** options this one gives at most, by name (a kismet in place of yours at most what it gives on a free point, while yours is not worse than none: `unless` the
-   *  key of the move that takes yours out, priced and not raising the kill), a bound as `like` is, also in the first round */ under?: { by: string; unless: string }[]; /** a better roll of a worn legendary: the lowest roll with the same figure is found when taken */ roll?: { slot: string; id: number; now: number[]; best: number[]; range: [number, number][] }; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
+   *  key of the move that takes yours out, priced and not raising the kill), a bound as `like` is, also in the first round */ under?: { by: string; unless: string }[]; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
 const fits = (f: Figure) => !f.mana || 'stop' in f.mana || f.mana.fits;
 /** the passive places whose aura is on (the server's switch) */
 const auraPlaces = (s: State) => ((s.loadout.skills ?? []) as { place: { kind: string; slot?: number }; switch?: { pendingDeactivate?: boolean; activated?: boolean } }[])
@@ -222,12 +222,12 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
       label: `Buy the Inverse Image listed #${x.n} (${x.medium >= 0 ? '+' : ''}${x.medium}% reflected Medium Talent effects) for ${x.fe} FE: it reflects the Onslaughter crit and two-handed Medium talents, as the example build's` });
     else add({ ...m, costFE: o.prismFE }, "An Inverse Image talent prism like the example build (it reflects the Onslaughter crit and two-handed Medium talents; with the example build's +17.5 Strength on three Medium talents) at your price");
   }
-  // another copy of a legendary you wear, bought with one line at its best roll (user, 2026-10-16: a Ruinous Star with Deterioration Duration 28+ is a breakpoint);
-  // the lowest roll that gives the same figure is found once the step is taken (runPlan)
+  // another copy of a legendary you wear with one line at a better roll, at the price you gave that roll (roll-prices.json); the name's market price is any
+  // roll's (owner, 2026-10-18: a +100 Crit Rating Death's Touch is not its 1300 FE), so a line you gave no price is named, not ranked
   const rolls = table<{ rows: Record<string, [number, number][]> }>('config_modifier_rolls').rows;
   for (const [slot, name] of ownedUniques(s, true)) {
-    const fe = ctx.prices.price(name, s.level), g = ((s.loadout.gear ?? []) as { slot: string; affixes?: { id: number; dyn: number[]; list: string }[] }[]).find((x) => x.slot === slot);
-    if (fe === null || !g) continue;
+    const g = ((s.loadout.gear ?? []) as { slot: string; affixes?: { id: number; dyn: number[]; list: string }[] }[]).find((x) => x.slot === slot);
+    if (!g) continue;
     for (const a of (g.affixes ?? []).filter((x) => x.list !== 'BaseAttrInfoList')) {
       const r = rolls[a.id], best = r?.map(([lo, hi], i) => (lo < 0 ? Math.min(lo, a.dyn[i]) : Math.max(hi, a.dyn[i])));
       if (!r) continue;
@@ -242,10 +242,8 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
         }
         continue;
       }
-      if (!r || !best || best.every((v, i) => v === a.dyn[i])) continue;
-
-      out.push({ key: `roll|${slot}|${a.id}`, group: `roll|${slot}`, kind: 'unique', costFE: fe, roll: { slot, id: a.id, now: a.dyn, best, range: r },
-        label: `Buy another ${name} with ${lineText(a.id, best)} (yours: ${a.dyn.join(' / ')}); replace yours`, changes: [{ kind: 'patch', op: 'gear-roll', slot, id: a.id, dyn: best } as never] });
+      if (best && best.some((v, i) => v !== a.dyn[i]))
+        ctx.notSearched.add(`${name} with ${lineText(a.id, best)} (yours: ${a.dyn.join(' / ')}): no price for the roll (the market prices the name at any roll); give it one in roll-prices.json, or check /market`);
     }
   }
   // a vorax Ultimate line re-grafted until tier T or better lands (owner, 2026-10-17: a graft always replaces the line, its tier drawn at the odds): FE per graft / P(T or better),
@@ -441,15 +439,6 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
       if (w && (!next || w.v >= score.get(next.key)!)) break;
     }
     if (!w) continue;
-    // a better roll: the lowest single-line roll that still gives this figure (Deterioration Duration 28 is the same breakpoint as 30)
-    if (w.c.roll && w.c.roll.best.length === 1) {
-      const { slot, id, now, best, range } = w.c.roll, up = best[0] > now[0];
-      for (let v = best[0] + (up ? -1 : 1); up ? v > now[0] : v < now[0]; v += up ? -1 : 1) {
-        const e = await ev.run(s.loadout, [{ kind: 'patch', op: 'gear-roll', slot, id, dyn: [v] } as never], C);
-        if (e.figure.kill < w.e.figure.kill * 0.999 || e.figure.life100 < w.e.figure.life100 * 0.999) break;
-        w.e = e; w.c = { ...w.c, label: w.c.label.replace(lineText(id, best), `${lineText(id, [v])} or ${up ? 'more' : 'less'} (range ${range[0][0]}-${range[0][1]})`) };
-      }
-    }
     // the board slot a slate step fills, and where that slate comes from (the slate viewer)
     const own = /^ownslate\|(.+)\|(\d+)$/.exec(w.c.key), buy = /^slate\|(\d+)\|/.exec(w.c.key);
     if (own) { const o = s0.owned.find((x) => x.itemId === own[1]); slateFrom[+own[2]] = `from your ${placeOf(o?.where)}${o && o.where !== 'stash' ? `, slot ${o.slot}` : ''} (free, step ${steps.length + 1})`; }

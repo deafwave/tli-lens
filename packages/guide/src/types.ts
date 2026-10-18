@@ -136,7 +136,7 @@ export interface GuideOut {
   final?: { target: string; figure: Figure }[];
   /** plan: your slate board now and after the plan (slates.ts boardView) */ board?: { now: import('./candidates/slates').BoardView; after: import('./candidates/slates').BoardView };
   /** plan (plan.ts): your character to `goal` damage per second on `target`, the most damage per FE first; `build` = the build at the end */
-  plan?: { target: string; goal: number; /** the goal as a kill time (s) */ goalSeconds?: number; at: string; start: { label: string; figure: Figure }; steps: { label: string; costFE: number; totalFE: number; figure: Figure; note?: string }[];
+  plan?: { target: string; goal: number; /** the goal as a kill time (s) */ goalSeconds?: number; at: string; start: { label: string; figure: Figure; /** full-Life damage on the training dummy (no boss) */ dummy?: number }; steps: { label: string; costFE: number; totalFE: number; figure: Figure; note?: string }[];
     build?: import('./sheet').Sheet[] };
   /** advise: the price book's FE for every `next[].buy.name` (null = no price), the page's default */
   prices?: Record<string, number | null>;

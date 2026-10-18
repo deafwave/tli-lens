@@ -280,6 +280,8 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
   let s: State = { ...s0, skill: 'hoa', target: o.target };
   const ctx: GenCtx = { prices: books, level: s.level, notSearched: new Set() };
   const C = ctxOfState(s), first = (await ev.run(s.loadout, [], C)).figure;
+  // the training dummy the owner checks a step on, beside the boss the plan is priced on (owner, 2026-10-17: a Cube 3 figure read as the dummy's)
+  const dummy = (await ev.run(s.loadout, [], { ...C, target: null })).figure.life100;
   if (first.stop) throw new Error(`your character cannot be priced on ${bossName(o.target)}: ${first.stop}`);
   if (o.goalSeconds) { if (!first.lifeMax) throw new Error(`${o.target}: no max Life to set a kill time against`); o.goal = first.lifeMax / o.goalSeconds; }
   const lines = (await slateWants(ev, s, first, 0, 25, false)).filter((x) => !CONVERSION.test(x.name));
@@ -328,7 +330,7 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
     knobs: { plan: { ...o, slatePrices: o.slatePrices.map(([r, v]) => `${r.source}: ${v}`) }, fight: ev.fight, rollBudget: ev.rollBudget, target: o.target, partialRun },
     character: { level: s0.level, skill: 'hoa', fe: s0.fe, owned: s0.owned.length, gear: ((s0.loadout.gear ?? []) as { slot?: string; label: string; name?: string }[]).map((g) => ({ slot: g.slot ?? '', label: g.name ?? g.label })) },
     start: first, startNotes: notes, steps: [], notSearched: [...ctx.notSearched], unpriced: [], notCalculable: [...refused].map(([l, w]) => `${l}: ${w}`),
-    slates: lines.slice(0, 25), plan: { target: o.target, goal: o.goal, ...(o.goalSeconds ? { goalSeconds: o.goalSeconds } : {}), at: new Date().toISOString(), start: { label: 'your character as read from the game', figure: first }, steps,
+    slates: lines.slice(0, 25), plan: { target: o.target, goal: o.goal, ...(o.goalSeconds ? { goalSeconds: o.goalSeconds } : {}), at: new Date().toISOString(), start: { label: 'your character as read from the game', figure: first, dummy }, steps,
       build: buildSheet(s.loadout) } });
   const keep = heldUniques(s0);
   // the weakest board slates (the least lost when emptied): a new slate is tried in place of these 2 only (6 figures, again after a slate step)

@@ -212,6 +212,16 @@ describe('runPlan: your free Mana never shrinks (owner, 2026-10-17: Precise: Mal
   }, 300_000);
 });
 
+describe('runPlan: the start names your training dummy figure beside the boss one (owner, 2026-10-17: "the website still says 551b dps")', () => {
+  it('the dummy (target null) is priced once and written with the start', async () => {
+    const fig = (k: number) => ({ life100: k, life0: k, kill: k, partial: [], target: 'cube3', lifeMax: 1.6e12 });
+    const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {}, run: async (loadout, _c, ctx) => ({ loadout, dropped: [], figure: ctx.target === null ? fig(5.6e12) : fig(5.6e11) }) };
+    const r = await runPlan(ev, s, ctx.prices, { target: 'cube3', goal: 1e12, maxSteps: 1 });
+    expect(r.plan!.start.dummy).toBe(5.6e12);
+    expect(r.plan!.start.figure.life100).toBe(5.6e11);
+  }, 300_000);
+});
+
 describe('runPlan: within your FE (owner, 2026-10-17: "within the 641 FE budget I have right now")', () => {
   it('an option dearer than the FE left is never priced, and the plan stops when none fits', async () => {
     const fig = (k: number) => ({ life100: k, life0: k, kill: k, partial: [], target: 'traveler', lifeMax: 1.6e12 });

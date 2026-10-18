@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pinRoot } from '../src/pin';
 import { candidates, DEFAULT_PLAN, runPlan } from '../src/plan';
+import { applyPatch } from '../src/patches';
 import { snapshotBook, withPrices } from '../src/pricing';
 import { localItems } from '../src/modes';
 import type { Evaluator, State } from '../src/types';
@@ -245,5 +246,47 @@ describe('runPlan: every write carries the slate board (owner, 2026-10-17: a sto
     await runPlan(ev, s, ctx.prices, { goal: 1e12, maxSteps: 1 }, (o) => writes.push(o));
     expect(writes.length).toBeGreaterThan(0);
     for (const w of writes) expect(w.board).toMatchObject({ now: { slates: expect.any(Array) }, after: { slates: expect.any(Array) } });
+  }, 300_000);
+});
+
+describe('runPlan: an option at another place starts from its own score as its bound (a kismet on the next free point, a memory slot rerolled again)', () => {
+  type Lo = Record<string, any>;   // eslint-disable-line @typescript-eslint/no-explicit-any
+  /** a stub that applies the moves (kismets socketed, patches) and prices the loadout by what it holds, `gain(lo)` x 1e10; `priced[i]`: the figures after step i */
+  const run = async (gain: (lo: Lo) => number, steps: number, prices = ctx.prices) => {
+    let after = 0;
+    const priced: string[][] = [[]];
+    const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
+      run: async (loadout, changes) => {
+        let lo = loadout as Lo;
+        for (const c of changes as Lo[]) {
+          if (c.kind === 'patch') lo = applyPatch(lo, c as never);
+          else if (c.kind === 'kismet' && c.action === 'socket') lo = { ...lo, kismets: [...lo.kismets, { node: c.point, modifierId: c.modifierId, servantId: null, rolls: c.rolls }] };
+        }
+        (priced[after] ??= []).push(JSON.stringify(changes));
+        const k = 1e10 * gain(lo);
+        return { loadout: lo, dropped: [], figure: { life100: k, life0: k, kill: k, partial: [], target: 'traveler', lifeMax: 1.6e12 } };
+      } };
+    const r = await runPlan(ev, s, prices, { goal: 1e14, maxSteps: steps }, () => { after++; });
+    return { r, priced };
+  };
+  it('a kismet socketed on a free point: the others of its size move to the next free point and are priced only when their score could win', async () => {
+    const all = candidates(s, ctx, DEFAULT_PLAN, lines).filter((c) => /^Socket Micro Fate: (Fire|Cold) Resistance on /.test(c.label));
+    const mod = (c: (typeof all)[number]) => (c.changes[0] as unknown as { modifierId: number }).modifierId;
+    const fire = all.find((c) => /Fire/.test(c.label))!, cold = all.find((c) => /Cold/.test(c.label))!;
+    const g: Record<number, number> = { [mod(fire)]: 1.5, [mod(cold)]: 1.2 };
+    const { r, priced } = await run((lo) => [...new Set((lo.kismets as { modifierId: number }[]).map((k) => k.modifierId))].reduce((t, m) => t * (g[m] ?? 1), 1), 2);
+    expect(r.plan!.steps.map((x) => x.label.replace(/ on .*/, ''))).toEqual(['Socket Micro Fate: Fire Resistance', 'Socket Micro Fate: Cold Resistance']);
+    expect(r.plan!.steps[1].label).not.toBe(cold.label);   // on the next free point
+    expect(priced[1].length).toBeLessThan(40);   // not every kismet of its size again
+  }, 300_000);
+  it('a memory affix rerolled: the rerolls of that slot to every other affix are priced only when their score could win', async () => {
+    const prices = withPrices(ctx.prices, { 'Memory Scrap': 0.1, 'Memory Thread - Rare': 2, 'Memory Thread - Epic': 1, 'Crude Lunar Dust': 1, 'Luminous Lunar Dust': 1 }).book;
+    const rr = candidates(s, { ...ctx, prices }, DEFAULT_PLAN, lines).filter((c) => c.key.startsWith('memroll|1|402165302|')).map((c) => Number(c.key.split('|')[3]));
+    const x = rr.find((id) => id % 100 === 3)!, y = rr.find((id) => id % 100 === 2 && Math.floor(id / 100) !== Math.floor(x / 100))!;
+    const g: Record<number, number> = { [x]: 1.5, [y]: 1.6 };   // y: the better line, at a dearer tier
+    const ids = (lo: Lo) => new Set((lo.heroMemories as { affixes: { id: number }[] }[]).flatMap((m) => m.affixes.map((a) => a.id)));
+    const { r, priced } = await run((lo) => [...ids(lo)].reduce((t, id) => t * (g[id] ?? 1), 1), 2, prices);
+    expect(r.plan!.steps.map((z) => [z.label.replace(/ to .*/, ''), z.figure.kill])).toEqual([[expect.stringMatching(/^Reroll your Memory of Origin's \+\d+% Fire Skill Critical Strike Damage$/), 1.5e10], [expect.stringMatching(/^Reroll your Memory of Origin's /), 1.6e10]]);
+    expect(priced[1].length).toBeLessThan(40);   // not every reroll of that slot again
   }, 300_000);
 });

@@ -243,7 +243,7 @@ export const gearMoves: Generator = (s: State, ctx: GenCtx): Move[] => {
           kind: 'craft', label: `Craft ${o.tier} ${o.text.replace(/\n/g, ' / ')} (${side}) on ${slot}${v ? ` in place of your ${gradeTextOf(v.id)}` : ''}`, acquisition: true,
           costFE: price === null ? null : o.expectedEmbers * price, buy: { name: o.ember, qty: o.expectedEmbers }, minLevel: o.requiredLevel,
           changes: swap(slot, withMods(dump, { [side]: next }, `guide-craft-${slot}-${o.tierAffixId}${v ? `-${v.id}` : ''}`)),
-          enabler: ENABLER.test(o.text) || undefined,
+          enabler: ENABLER.test(o.text) || undefined, ...(v ? { like: [`craft|${slot}|${side}|${list.indexOf(v)}|${o.tierAffixId}`] } : {}),
         });
       }
     }

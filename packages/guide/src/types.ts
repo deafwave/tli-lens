@@ -56,6 +56,8 @@ export interface Move {
   enabler?: boolean;
   /** the skill after the move (only `switch` moves change it) */
   skill?: Skill;
+  /** names the option shares with the one before a step (plan.ts Cand.like) */
+  like?: string[];
 }
 
 /** `target`: the dps-debug BOSSES key Hammer of Ash is priced against for this call (null = the training dummy; absent = the evaluator's) */

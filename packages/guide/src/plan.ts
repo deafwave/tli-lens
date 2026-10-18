@@ -94,7 +94,7 @@ function memoryCands(s: State, ctx: GenCtx): Cand[] {
     // a random affix you have, rerolled to another (or the same group at a better tier)
     if (Number.isFinite(rerollFE)) for (const a of random) for (const o of outcomes(random.filter((x) => x !== a)))
       if (Math.floor(o.id / 100) !== Math.floor(a.id / 100) || o.id % 100 < a.id % 100)
-        out.push({ key: `memroll|${m.slot}|${a.id}|${o.id}`, kind: 'memory', costFE: rerollFE / o.p, note: `${(o.p * 100).toFixed(2)} % a reroll (that tier or better)`,
+        out.push({ key: `memroll|${m.slot}|${a.id}|${o.id}`, like: [`memroll|${m.slot}|${random.indexOf(a)}|${o.id}`], kind: 'memory', costFE: rerollFE / o.p, note: `${(o.p * 100).toFixed(2)} % a reroll (that tier or better)`,
           label: `Reroll your ${m.label}'s ${lineText(a.id, a.dyn)} to ${lineText(o.id, mid(o.id))}: about ${Math.round(1 / o.p)} rerolls of ${said(rr!.ItemConsume)}`,
           changes: write(m.affixes.map((x) => (x === a ? { ...x, id: o.id, dyn: mid(o.id) } : x))) });
     // levelled to its cap: the base stat only (a random affix it rolls on the way is not priced: at least this)
@@ -144,7 +144,10 @@ function skillPool(kind: number): { sid: number; name: string }[] {
   }
   return pools.get(kind) ?? [];
 }
-type Cand = { key: string; /** taken once per group */ group?: string; /** a better roll of a worn legendary: the lowest roll with the same figure is found when taken */ roll?: { slot: string; id: number; now: number[]; best: number[]; range: [number, number][] }; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
+type Cand = { key: string; /** taken once per group */ group?: string;
+  /** the option as the one before a step (a kismet on the next free point of its size, or in place of the one a step socketed; a memory slot or an item's mod
+   *  rerolled / crafted to the same line): a new candidate takes the lowest last score of the ones it shares a name with as its bound, as a stale score is (a gain
+   *  shrinks as the build grows), and is priced only when it could win */ like?: string[]; /** a better roll of a worn legendary: the lowest roll with the same figure is found when taken */ roll?: { slot: string; id: number; now: number[]; best: number[]; range: [number, number][] }; label: string; costFE: number; kind: string; note?: string; changes: Move['changes'] };
 const fits = (f: Figure) => !f.mana || 'stop' in f.mana || f.mana.fits;
 
 export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: number; name: string }[], held = heldUniques(s)): Cand[] {
@@ -158,7 +161,10 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
     // a fate prices the same on any free point of its kind (the steps show only the next copy's smaller gain): offered on the first one only
     const fate = m.kind === 'kismet' && /^Socket (.+) on .+ \d-\d$/.exec(label)?.[1];
     if (fate) { if (fates.has(fate)) return; fates.add(fate); }
-    out.push({ key: `${m.kind}|${label}`, label: t ? `${label} (${t.note})` : label, costFE: cost, kind: m.kind, changes: t ? t.changes : m.changes });
+    // a kismet socketed on a point is what replacing the kismet a step put there with it is
+    const at = m.kind === 'kismet' ? (/^Socket (.+) on (.+ \d-\d)$/.exec(label)?.slice(1) ?? /^Replace the kismet on (.+ \d-\d) with (.+)$/.exec(label)?.slice(1).reverse()) : undefined;
+    const like = fate ? [`kismet|${fate}`, `kismet|${at![1]}|${fate}`] : at ? [`kismet|${at[1]}|${at[0]}`] : m.like;
+    out.push({ key: `${m.kind}|${label}`, label: t ? `${label} (${t.note})` : label, costFE: cost, kind: m.kind, changes: t ? t.changes : m.changes, ...(like ? { like } : {}) });
   };
   // Wind Projectiles: the model's figure is off against the owner's dummy (RULES)
   const MEASURED_WRONG = /Wind Projectiles|Slow Projectile -> /;
@@ -389,6 +395,10 @@ export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Par
     if (/^(own)?slate\||^add\|/.test(w.c.key)) await weakest();
     if (w.c.key.startsWith('skill|')) await weakSkills();
     const seen = new Set(cands.map((c) => c.key)), next = candidates(s, ctx, o, lines, keep).filter(fitsFE);
+    const was = new Map<string, number>();
+    for (const c of cands) if (score.has(c.key)) for (const n of c.like ?? []) was.set(n, Math.min(was.get(n) ?? Infinity, score.get(c.key)!));
+    for (const c of next) { const b = seen.has(c.key) ? undefined : (c.like ?? []).filter((n) => was.has(n)).map((n) => was.get(n)!);
+      if (b?.length) { score.set(c.key, Math.min(...b)); seen.add(c.key); } }
     await Promise.all(next.filter((c) => !seen.has(c.key)).map(rate));
     cands = next;
   }

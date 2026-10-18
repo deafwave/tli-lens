@@ -108,11 +108,14 @@ async function rebase() {
   if (g !== gen) return;
   base = f;
   // what each of your slates is worth, which a slate search needs before any listing: priced while you open the search
-  if (watch) ((state.loadout.slateItems ?? []) as unknown[]).forEach((_, i) => slate(i, []));
+  if (watch) ((state.loadout.slateItems ?? []) as unknown[]).forEach((_, i) => { slate(i, []); dropDamage(i); });
   pump(); landed();
 }
 /** a figure against your character's: the kill-speed gain, or what a partial figure dropped / why it stopped (never ranked) */
 const versus = (f: Figure): number | string => (rankable(base!, f) ? f.kill / base!.kill - 1 : f.stop ?? f.partial.filter((p) => !base!.partial.includes(p)).join('; '));
+/** the same, the damage at full Life: what the slate screen multiplies. Kill speed does not multiply where the damage lock binds (owner's 2026-10-18 11:27 read:
+ *  1.90e13 against a 1.50e13 lock; a listing screened at -0.72 % is +3.17 % exact) */
+const damageVs = (f: Figure): number | string => (rankable(base!, f) ? f.life100 / base!.life100 - 1 : versus(f));
 
 /** Figures as they land. `want` gives a key's gain once settled, else queues it once and gives undefined. The evaluator is handed no more than it runs at
  *  once and the page on screen goes first, so a page flipped past never holds up the one shown; `landed` redraws. */
@@ -130,23 +133,23 @@ function remember(slates: Listing[]) {
   for (const [k, v] of Object.entries(seen)) if (Date.now() - Date.parse(v.at) > 7 * 864e5) delete seen[k];
   writeAtomic(SEEN, JSON.stringify(seen));
 }
-const settled = new Map<string, number | string>(), asked = new Set<string>(), waiting: { page: number; k: string; changes: Change[] }[] = [];
+const settled = new Map<string, number | string>(), asked = new Set<string>(), waiting: { page: number; k: string; changes: Change[]; damage?: boolean }[] = [];
 let page = 0, running = 0, landed = () => {};
 function pump() {
   while (base && running < (ev!.parallelism ?? 8) && waiting.length) {
     const [w] = waiting.splice(Math.max(0, waiting.findIndex((x) => x.page === page)), 1), { state, ctx } = character(), g = gen;
     running++;
-    ev!.run(state.loadout, w.changes, ctx).then((r) => g === gen && settled.set(w.k, versus(r.figure)), (e: Error) => g === gen && settled.set(w.k, e.message))
+    ev!.run(state.loadout, w.changes, ctx).then((r) => g === gen && settled.set(w.k, (w.damage ? damageVs : versus)(r.figure)), (e: Error) => g === gen && settled.set(w.k, e.message))
       .finally(() => { running--; pump(); landed(); });
   }
 }
 /** peek: a page flipped past, its figures not yet asked queued behind the page on screen, none moved ahead of it */
 let peek = false;
-function want(k: string, changes: () => Change[]): number | string | undefined {
+function want(k: string, changes: () => Change[], damage = false): number | string | undefined {
   const disk = `${pin}|${character().key}|${k}`;
   if (disk in gains) return gains[disk];
   if (settled.has(k)) { const g = settled.get(k)!; if (!/figure worker|evaluator closed/.test(String(g))) { gains[disk] = g; unsaved = true; } return g; }
-  if (!asked.has(k)) { asked.add(k); waiting.push({ page: peek ? -1 : page, k, changes: changes() }); void warm(); pump(); }
+  if (!asked.has(k)) { asked.add(k); waiting.push({ page: peek ? -1 : page, k, changes: changes(), damage }); void warm(); pump(); }
   else if (!peek) { const w = waiting.find((x) => x.k === k); if (w) w.page = page; }
   return undefined;
 }
@@ -183,6 +186,8 @@ function rankWorn(listings: Listing[]): Ranked {
  *  the `freed` slates emptied */
 const slate = (i: number, t: number[], baseId?: number, freed: number[] = []) =>
   want(`slate|${i}|${baseId ?? ''}|${[...t].sort()}${freed.length ? `|free ${freed}` : ''}`, () => [replaceSlate(character().state, i, t, baseId === undefined ? undefined : { baseId }, freed)]);
+/** your slate i emptied, as damage at full Life (the screen's unit) */
+const dropDamage = (i: number) => want(`dmg|slate|${i}`, () => [replaceSlate(character().state, i, [])], true);
 
 /** A slate search: each listing's talents (on its own base) in place of one of your slates the board's caps let it replace */
 function rankSlates(slates: Listing[]): Ranked {
@@ -215,21 +220,24 @@ function rankSlates(slates: Listing[]): Ranked {
     ? `, freeing your slate${r.free.length > 1 ? 's' : ''} ${r.free.map((j) => j + 1).join(' + ')} (${pct(r.gc as number)} with ${r.free.length > 1 ? 'them' : 'it'} empty, + ${pct(r.g - (r.gc as number))}: each place at your weakest slate of its type)` : '');
   // every listing screened from its lines (one figure a line, shared by every listing that carries it: screenSlate) in place of each slate it fits; only the page's
   // best screens get their exact figures (owner, 2026-10-18: 8,942 slates read, 21 priced, the snipes sold first); --exact prices every listing
-  const line = (t: number) => want(`line|${t}`, () => [withSlate(state, [t])!]);
+  const line = (t: number) => want(`dmg|line|${t}`, () => [withSlate(state, [t])!], true), dropD = mine.map((_, i) => dropDamage(i));
+  // the screen is damage (it multiplies); its rows are kill speed only on the dummy (rankedOn), else they rank below the priced ones and stay off the lists
+  const sameUnit = state.target === 'dummy';
   const screen = (l: Listing): { e?: number; slot?: number } => {
-    const fits = l.priceType === FE ? replaceable(mine, l.baseId).filter((i) => (!same || mine[i].shapeId === l.shapeId) && typeof drop[i] === 'number') : [];
+    const fits = l.priceType === FE ? replaceable(mine, l.baseId).filter((i) => (!same || mine[i].shapeId === l.shapeId) && typeof dropD[i] === 'number') : [];
     const gs = new Map(l.talents!.map((t) => [t, line(t)]));
     if (!fits.length || [...gs.values()].includes(undefined)) return {};
     const g = (t: number) => { const x = gs.get(t); return typeof x === 'number' ? 1 + x : 1; };
-    return fits.map((i) => ({ e: screenSlate(l.talents!, g, 1 + (drop[i] as number), mine[i].talents) - 1, slot: i })).sort((a, b) => b.e - a.e)[0];
+    return fits.map((i) => ({ e: screenSlate(l.talents!, g, 1 + (dropD[i] as number), mine[i].talents) - 1, slot: i })).sort((a, b) => b.e - a.e)[0];
   };
   const est = slates.map((l) => ({ l, ...screen(l) })), ok = est.filter((x) => x.e !== undefined && x.e > 0.005);
   const pick = new Set([...[...ok].sort((a, b) => b.e! / Math.max(b.l.price, 1) - a.e! / Math.max(a.l.price, 1)).slice(0, 3), ...[...ok].sort((a, b) => b.e! - a.e!).slice(0, 2)].map((x) => x.l));
   const rows = est.map(({ l, e, slot }) => (exact || pick.has(l) || e === undefined ? { l, ...gain(l) } : { l, g: e, slot, est: true, free: undefined })), pending = rows.filter((r) => r.g === undefined).length;
-  const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ~ = screened from its lines, not priced; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
-  for (const r of rows.sort((a, b) => num(b.g) - num(a.g)).slice(0, top))
+  const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ~ = screened from its lines: damage at full Life, not priced${sameUnit ? '' : ` (listed below the priced ones, which are kill speed vs ${state.target})`}; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
+  const rankOf = (r: { g?: number | string }) => ('est' in r && !sameUnit ? -1e9 : 0) + num(r.g);
+  for (const r of rows.sort((a, b) => rankOf(b) - rankOf(a)).slice(0, top))
     lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${('est' in r ? '~' : '') + pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
-  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), gain: r.g, per: r.g > 0 ? r.g / Math.max(r.l.price, 1) : r.g - 1,
+  const short = rows.flatMap((r) => (typeof r.g === 'number' && (sameUnit || !('est' in r)) ? [{ id: rowId(r.l), gain: r.g, per: r.g > 0 ? r.g / Math.max(r.l.price, 1) : r.g - 1,
     text: `${'est' in r ? '~' : ' '}${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  slate ${r.slot! + 1}${r.free ? ` (frees ${r.free.map((j) => j + 1).join('+')})` : ''}: ${r.l.talents!.map(talentName).join(' + ')}` }] : []));
   return { lines, pending, rows: short };
 }

@@ -30,7 +30,7 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 ## Commands
 
 - `pnpm guide plan [export.json]` — your character (read fresh from the running game via dps-debug `reader/export.py` when no file is given)
-  to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `traveler`), `--goal` (default 2e11),
+  to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `traveler`; `dummy`: ranked by and aimed at the damage at full Life, what the dummy shows), `--goal` (default 2e11),
   `--budget N` (FE; stops when nothing fits), `--slate-fe` (100), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--dps-debug <dir>`.
 - `pnpm guide advise <export.json> [--fe N] [--season N] [--steps N] [--hoa]` — next-buys list (`--steps N` adds a path; `--hoa`: an Ice Shot
   character planned as switched now); `--budget-minutes` defaults to 30. Writes `./advice.json` (cwd) and copies it to the clipboard.

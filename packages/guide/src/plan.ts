@@ -322,8 +322,10 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
 }
 
 /** your character to `o.goal` damage per second on `o.target`: the steps, cheapest damage per FE first */
-export async function runPlan(ev: Evaluator, s0: State, books: PriceBook, k: Partial<PlanOpts> = {}, onStep?: (o: GuideOut) => void): Promise<GuideOut> {
+export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Partial<PlanOpts> = {}, onStep?: (o: GuideOut) => void): Promise<GuideOut> {
   const o = { ...DEFAULT_PLAN, ...k };
+  // the training dummy never dies: what it shows is the damage at full Life, so that is what a plan on it ranks by and reaches (owner, 2026-10-18: 40 trillion dummy)
+  const ev: Evaluator = o.target !== 'dummy' ? ev0 : { ...ev0, run: async (...a) => { const e = await ev0.run(...a); return { ...e, figure: { ...e.figure, kill: e.figure.life100 } }; } };
   let s: State = { ...s0, skill: 'hoa', target: o.target };
   const ctx: GenCtx = { prices: books, level: s.level, notSearched: new Set() };
   const C = ctxOfState(s), first = (await ev.run(s.loadout, [], C)).figure;

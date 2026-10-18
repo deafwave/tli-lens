@@ -254,6 +254,21 @@ describe("runPlan: an aura that no longer fits is turned off when the build is b
   });
 });
 
+describe('runPlan on the training dummy (owner, 2026-10-18: "I\'m really trying to get to 40 trillion dummy")', () => {
+  it('--target dummy prices on the dummy (target null) and ranks by the damage it shows (full Life): the goal is that number', async () => {
+    const asked: unknown[] = [];
+    const fig = (life100: number) => ({ life100, life0: 0, kill: 0, partial: [] });
+    const ev: Evaluator = { pin: 'stub', parallelism: 4, close: async () => {},
+      run: async (loadout, changes, c) => { asked.push(c.target); const j = JSON.stringify(changes);
+        return { loadout, dropped: [], figure: /"name":"Multiple Projectiles"/.test(j) ? fig(5e13) : fig(1e13) }; } };
+    const r = await runPlan(ev, s, ctx.prices, { target: 'dummy', goal: 4e13, maxSteps: 5 });
+    expect(asked.every((t) => t === null)).toBe(true);
+    expect(r.plan!.steps).toHaveLength(1);
+    expect(r.plan!.steps[0].label).toMatch(/Multiple Projectiles/);
+    expect(r.plan!.steps[0].figure.kill).toBe(5e13);
+  }, 300_000);
+});
+
 describe('runPlan: the start names your training dummy figure beside the boss one (owner, 2026-10-17: "the website still says 551b dps")', () => {
   it('the dummy (target null) is priced once and written with the start', async () => {
     const fig = (k: number) => ({ life100: k, life0: k, kill: k, partial: [], target: 'cube3', lifeMax: 1.6e12 });

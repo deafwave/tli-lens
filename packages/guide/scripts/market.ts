@@ -32,8 +32,8 @@ import { fromExport } from '../src/start';
 import { DEFAULT_PLAN } from '../src/plan';
 import type { Change, EvalCtx, Evaluator, Figure, State } from '../src/types';
 
-/** rows: the ranked listings for --watch's list kept across pages (id: the listing without its place on the page; key: its rank, higher first) */
-type Row = { id: string; key: number; text: string };
+/** rows: the ranked listings for --watch's lists kept across pages (id: the listing without its place on the page; gain, and per: gain per FE, a loss below every gain) */
+type Row = { id: string; gain: number; per: number; text: string };
 type Ranked = { lines: string[]; pending: number; kind?: string; rows?: Row[] };
 const rowId = (l: Listing) => JSON.stringify({ ...l, n: 0 });
 const FE = 100300;   // item_base|name|100300 Flame Elementium: a listing's PriceType
@@ -140,12 +140,14 @@ function pump() {
       .finally(() => { running--; pump(); landed(); });
   }
 }
+/** peek: a page flipped past, its figures not yet asked queued behind the page on screen, none moved ahead of it */
+let peek = false;
 function want(k: string, changes: () => Change[]): number | string | undefined {
   const disk = `${pin}|${character().key}|${k}`;
   if (disk in gains) return gains[disk];
   if (settled.has(k)) { const g = settled.get(k)!; if (!/figure worker|evaluator closed/.test(String(g))) { gains[disk] = g; unsaved = true; } return g; }
-  if (!asked.has(k)) { asked.add(k); waiting.push({ page, k, changes: changes() }); void warm(); pump(); }
-  else { const w = waiting.find((x) => x.k === k); if (w) w.page = page; }
+  if (!asked.has(k)) { asked.add(k); waiting.push({ page: peek ? -1 : page, k, changes: changes() }); void warm(); pump(); }
+  else if (!peek) { const w = waiting.find((x) => x.k === k); if (w) w.page = page; }
   return undefined;
 }
 /** a row's gain for sorting: pending rows last, partial ones just above them */
@@ -172,7 +174,7 @@ function rankWorn(listings: Listing[]): Ranked {
       : `${pct(r.g).padStart(8)}  ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE | ${r.slot} | ${tiers}${r === best && r.g > 0 ? ' | best outright' : ''}`}`);
   }
   if (!rows.slice(0, top).includes(best) && typeof best.g === 'number' && best.g > 0) lines.push(`best outright: #${best.l.n} ${best.l.price} FE ${pct(best.g)}`);
-  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), key: per(r),
+  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), gain: r.g, per: per(r),
     text: `${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  ${lang[`item_base|name|${r.l.baseId}`] ?? r.l.baseId}` }] : []));
   return { lines, pending, rows: short };
 }
@@ -215,7 +217,7 @@ function rankSlates(slates: Listing[]): Ranked {
   const lines = [`${slates.length} slates${pending ? ` (${pending} pricing)` : ''}; ranked by damage gain (kill speed vs ${state.target}) in place of ${exact ? 'one of your slates' : 'your weakest slate (or one sharing a talent)'} the board's caps allow${same ? ', of the same shape' : ''} (a slate whose lines it all carries freed), on ${exp} (L${state.level} ${state.skill}); your slates: ${mine.map((m, i) => `${i + 1} shape ${m.shapeId}${typeof drop[i] === 'number' ? ` (${pct(drop[i] as number)} without it)` : ''}`).join(', ')}`];
   for (const r of rows.sort((a, b) => num(b.g) - num(a.g)).slice(0, top))
     lines.push(`#${String(r.l.n).padStart(2)}  ${String(r.l.price).padStart(5)} FE  ${r.g === undefined ? '  pricing' : typeof r.g === 'string' ? '  partial' : `${pct(r.g).padStart(8)}  ${(r.g * 100 / Math.max(r.l.price, 1) * 100).toFixed(2).padStart(6)}%/100FE`} | ${r.l.talents!.map(talentName).join(' + ')}${r.slot !== undefined && typeof r.g === 'number' ? ` | in place of your slate ${r.slot + 1}${freeing(r)}` : ''}${typeof r.g === 'string' ? ` | not ranked: ${r.g.slice(0, 160)}` : ''}`);
-  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), key: r.g,
+  const short = rows.flatMap((r) => (typeof r.g === 'number' ? [{ id: rowId(r.l), gain: r.g, per: r.g > 0 ? r.g / Math.max(r.l.price, 1) : r.g - 1,
     text: `${pct(r.g).padStart(8)} ${(r.g * 1e4 / Math.max(r.l.price, 1)).toFixed(2).padStart(6)}%/100FE ${String(r.l.price).padStart(6)} FE  slate ${r.slot! + 1}${r.free ? ` (frees ${r.free.map((j) => j + 1).join('+')})` : ''}: ${r.l.talents!.map(talentName).join(' + ')}` }] : []));
   return { lines, pending, rows: short };
 }
@@ -266,7 +268,9 @@ try {
     // character, one line each, cut to the terminal's width
     const tty = process.stdout.isTTY, read = file ? async () => readFileSync(file, 'utf8') : reader();
     let shown: Listing[] | undefined, at = '', printed = '', drawing = false, again = false, keptGen = gen;
-    const kept = new Map<string, Map<string, Row>>();
+    const kept = new Map<string, Map<string, Row>>(), pages = new Map<string, Listing[]>(), done = new Set<string>();
+    const kindOf = (ls: Listing[]) => (ls.some((l) => l.talents?.length) ? 'slates' : 'gear');
+    let backAt = 0;
     const cut = (s: string) => { const w = (process.stdout.columns || 120) - 1; return s.length > w ? `${s.slice(0, w - 1)}…` : s; };
     const draw = async () => {
       if (drawing) return void (again = true);
@@ -276,14 +280,27 @@ try {
           again = false;
           if (!shown) continue;
           const p = page, r = await rank(shown), p2 = `${p}|${gen}`;
-          if (keptGen !== gen) { kept.clear(); keptGen = gen; }
+          if (keptGen !== gen) { kept.clear(); done.clear(); keptGen = gen; }
           let lines = r.lines, head = `${at}${base || !warmRun ? '' : ' (the evaluator is starting)'}${note}`;
           if (r.rows) {
             const m = kept.get(r.kind!) ?? new Map<string, Row>();
             kept.set(r.kind!, m);
             for (const row of r.rows) m.set(row.id, row);
-            lines = [...m.values()].sort((a, b) => b.key - a.key).slice(0, top).map((x) => x.text);
-            head = `${at} ${r.kind} vs ${character().state.target}: best of ${m.size}${r.pending ? `, ${r.pending} pricing` : ''}${head.slice(at.length)}`;
+            // the pages flipped past, as their figures land (every 2 s: ~10k listings take a while to rank); a page all priced is merged once
+            if (Date.now() - backAt > 2000) {
+              backAt = Date.now(); peek = true;
+              try {
+                for (const [t, ls] of pages) {
+                  if (done.has(t) || ls === shown || kindOf(ls) !== r.kind) continue;
+                  const b = await rank(ls);
+                  for (const row of b.rows ?? []) m.set(row.id, row);
+                  if (!b.pending) done.add(t);
+                }
+              } finally { peek = false; }
+            }
+            const list = (by: 'gain' | 'per') => [...m.values()].sort((a, b) => b[by] - a[by]).slice(0, top).map((x) => x.text);
+            lines = ['by gain:', ...list('gain'), 'by gain per FE:', ...list('per')];
+            head = `${at} ${r.kind} vs ${character().state.target}: best of ${m.size}${waiting.length ? `, ${waiting.length} figures queued` : ''}${head.slice(at.length)}`;
           }
           const out = [head, ...lines].map(cut).join('\n');
           if (tty) process.stdout.write(`\x1b[H\x1b[J${out}\n`);
@@ -296,7 +313,7 @@ try {
     for (let last = ''; ;) {
       try {
         const text = await read();
-        if (text !== last) { last = text; page++; shown = parse(text); at = new Date().toLocaleTimeString(); void draw(); }
+        if (text !== last) { last = text; page++; shown = pages.get(text) ?? parse(text); pages.set(text, shown); at = new Date().toLocaleTimeString(); void draw(); }
       } catch (e) { console.warn(`market: ${(e as Error).message.split(/\r?\n/).filter(Boolean).at(-1)}`); }
       await new Promise((r) => setTimeout(r, 100));
     }

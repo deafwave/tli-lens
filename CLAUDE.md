@@ -20,7 +20,7 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 | Path | What |
 |---|---|
 | `packages/guide/src` | `types` shared interfaces, `pin`, `pricing` + `priceOf` (etor), `candidates/*` (gear gems kismets memories pacts prisms slates switch talents target traits), `craft`, `patches`, `search`, `kill`, `engine/{pool,worker,apply,memo}` (the workers run dps-debug's figure module bundled by esbuild into `.cache/figure-<hash>.mjs`), `modes` (ideal/advise), `plan` (your character to a damage goal, cheapest first), `start` (start states, export import), `talentRules` (talent legality, `trimPage`), `listing` (a market listing worn in place of yours), `names`, `sheet`, `cli`, `atomic`, `data/` |
-| `packages/guide/scripts` | `market.ts` (`pnpm guide:market`, the market skill), `owned-pacts`, `support-census`, `verify-affix-ids` |
+| `packages/guide/scripts` | `market.ts` (`pnpm guide:market`, the market skill), `bosses.ts` (`pnpm guide:bosses`), `owned-pacts`, `support-census`, `verify-affix-ids` |
 | `packages/guide/docs` | gear / prism / talent rules the candidates use, with sources |
 | `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/advice.json` |
 | `data/`, `scripts/` | etor price history, affix library; fetch/build helpers |
@@ -39,6 +39,8 @@ read the Tests line (2026-10-17: 321 passed, 6 skipped without `GUIDE_REAL`).
 - `pnpm guide figure <loadout.json> [--skill hoa|iceShot] [--level N]` — one figure.
 - Shared: `--workers --bombs --roll-budget --budget-minutes --target --out --prices` (not every command uses every flag).
   Prices: `prices.json` at the repo root when it exists (or `--prices <file>`: `{ "<item name>": FE }`) laid over etor (`withPrices`).
+- `pnpm guide:bosses [--etor <dir>] [--prices <file>]` — which boss maps pay: ETor's run log (`%APPDATA%/etor` IndexedDB) per map, net FE/h after tax
+  with a ± (standard error); always-drops ETor does not log (`ALWAYS_DROPS`, `src/bosses.ts`) priced from `prices.json`.
 - `pnpm dev` / `pnpm build` / `pnpm test` (guide: `tsc --noEmit && vitest run`). `GUIDE_REAL=1` adds real-figure tests. The pool pauses
   while the busy file exists (`DEFAULT_BUSY_FILE` in `engine/pool.ts`, env `GUIDE_BUSY_FILE`; `test/real.ts` reads only the default).
 

@@ -405,8 +405,8 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
       : lost.length ? `takes out a piece the model does not price: ${lost[0].slice(0, 160)}`
       // the kill speed averages the damage from the boss's full Life down to 0; the training dummy (what the owner checks a step on) stays at full Life. A step
       // must raise both: Passivation -> Wind Projectiles was +8.6 % on the kill speed, -8 % at full Life in the model and -25 % on the owner's dummy (2026-10-16)
-      // faster embers: the model has Gale turn the speed into damage and every ember still landing; the owner's dummy says the shotgun loses more (Wind Projectiles
-      // 22.5 B -> 16.9 B, Precise Projectiles 56.7 B where the model said x1.16, 2026-10-16): no step raises the projectile speed
+      // faster embers: the owner's dummy lost more than the model said (Wind Projectiles 22.5 B -> 16.9 B, Precise Projectiles 56.7 B where the model said x1.16,
+      // 2026-10-16), measured before the model flew the embers in a ring (dps-debug c50a2384): no step raises the projectile speed until a dummy A/B checks the ring
       : g.projectile && f.projectile && g.projectile.speedInc > f.projectile.speedInc + 0.5 ? `raises projectile speed (+${f.projectile.speedInc.toFixed(0)}% -> +${g.projectile.speedInc.toFixed(0)}%), which costs embers in your game`
       : g.life100 < f.life100 * 0.995 ? `lowers your damage at full Life (what the training dummy shows) by ${((1 - g.life100 / f.life100) * 100).toFixed(1)} %` : !fits(g) ? `unseals an aura (Sealed Mana ${(g.mana as { reserved: number }).reserved} over ${(g.mana as { capacity: number }).capacity})`
       : g.mana && 'margin' in g.mana && g.mana.margin < freeMana ? `seals Mana you cast with (free Mana ${freeMana} -> ${g.mana.margin})` : undefined;

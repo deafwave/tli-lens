@@ -1,4 +1,4 @@
-/* One-call Skill-panel operations, verified step by step from memory (tli_dump --ui-json). Elevated shell,
+/* One-call Skill-panel operations, verified step by step from memory (tli ui). Elevated shell,
    Torchlight in front (clicks need the real cursor). Never screenshots; aborts on the first unexpected state.
    usage:
      node ops.mjs state                                   loadout, open views, equipped gear with item ids (memory)
@@ -16,7 +16,7 @@ import path from "node:path";
 const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const poor = path.resolve(here, "../../../../poorchlight");
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-const ui = () => JSON.parse(execFileSync(path.join(poor, "target/release/tli_dump.exe"), ["--ui-json"],
+const ui = () => JSON.parse(execFileSync(path.join(poor, "target/release/tli.exe"), ["ui"],
   { cwd: poor, stdio: ["ignore", "pipe", "ignore"] }).toString("utf8"));
 const front = () => execFileSync("powershell", ["-NoProfile", "-Command",
   "Add-Type -Name F -Namespace U -MemberDefinition '[DllImport(\"user32.dll\")] public static extern IntPtr GetForegroundWindow(); [DllImport(\"user32.dll\")] public static extern int GetWindowThreadProcessId(IntPtr h, out int p);'; $p=0; [U.F]::GetWindowThreadProcessId([U.F]::GetForegroundWindow(),[ref]$p)|Out-Null; (Get-Process -Id $p).ProcessName"],

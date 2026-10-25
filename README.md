@@ -12,7 +12,7 @@ Elevated shell, game running, sibling `../poorchlight` checkout:
 - `pnpm dev` - the page.
 - `pnpm test` - light tests; `GUIDE_REAL=1 pnpm test` adds real-figure tests.
 
-A saved read: `target/release/tli_dump.exe --export` in poorchlight (elevated) writes `game/exports/<stamp>/export-<stamp>.json` (and copies it to the clipboard);
+A saved read: `target/release/tli.exe export` in poorchlight (elevated) writes `game/exports/<stamp>/export-<stamp>.json` (and copies it to the clipboard);
 pass it to `pnpm guide plan <file>` or `pnpm guide advise <file>`.
 
 ## Known limits

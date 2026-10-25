@@ -5,7 +5,7 @@ import { inverseImage } from './candidates/target';
 import { table } from './pin';
 import type { Change, State } from './types';
 
-/** an item as poorchlight's `tli_dump --export` loadout reads one: `list` = the AffixList list the affix is in */
+/** an item as poorchlight's `tli export` loadout reads one: `list` = the AffixList list the affix is in */
 export type Aff = { id: number; tier: number; text: string; dyn: number[]; list: string };
 /** `type` = the item's Type1 (1 gear, 26 slate, 34 hero memory, 39 talent prism, 41 vorax limb); `awaken` = a hero memory's AwakenData */
 export type Listing = { n: number; price: number; priceType: number; baseId: number; level: number; type: number; affixes: Aff[]; awaken?: { boost: number; affixes: Aff[] };

@@ -1,4 +1,4 @@
-/* Measure at the training dummy from memory (elevated shell; poorchlight reader/hits.py, and its tli_dump for --buffs).
+/* Measure at the training dummy from memory (elevated shell; poorchlight reader/hits.py, and its tli.exe for --buffs).
    usage: node combat.mjs [secs=30] [--label name] [--buffs]
    DPS is the damage BEFORE the damage lock only (owner, 2026-10-18: "ONLY use pre-lock damage, ever"): the dummy's unlimited counter
    (UWoodStakeMgr, hits.STAKE) over the window ÷ game seconds (logic frames / 30, the dummy panel's own clock; the client simulates slower than
@@ -6,7 +6,7 @@
    damage was 2.5e13 on 2026-10-18) and is never reported. Every hit is read too (hits.py's CSV kept as .cache/tli-game/watch/<label>-hits.csv):
    per source (a follower's hits are another source; the largest is taken as you), hit types, and Σ per-hit pre-lock (FHurtHit +0x38) ÷ the
    counter, which must be 1 within 0.5 %, else the run is flagged.
-   --buffs adds a buff/debuff uptime pass (one tli_dump --combat-json read per ~1.1s over the same window).
+   --buffs adds a buff/debuff uptime pass (one tli combat read per ~1.1s over the same window).
    Appends one JSON line per run to .cache/tli-game/measurements.jsonl. */
 import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
@@ -17,7 +17,7 @@ const secs = Number(args.find(a => /^\d+$/.test(a)) ?? 30);
 const label = args.includes("--label") ? args[args.indexOf("--label") + 1] : "";
 const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const poor = path.resolve(here, "../../../../poorchlight"), dd = poor;
-const exe = path.join(poor, "target/release/tli_dump.exe");
+const exe = path.join(poor, "target/release/tli.exe");
 const fmt = n => n >= 1e12 ? `${(n / 1e12).toFixed(3)}T` : `${(n / 1e9).toFixed(1)}B`;
 
 const watchDir = path.resolve(here, "../../../.cache/tli-game/watch");
@@ -32,7 +32,7 @@ const up = {}, stacks = {}; let n = 0;
 if (args.includes("--buffs")) {
   let finished = false; done.then(() => { finished = true; });
   while (!finished) {
-    const j = JSON.parse(execFileSync(exe, ["--combat-json"], { cwd: poor, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1 << 24 }).toString("utf8"));
+    const j = JSON.parse(execFileSync(exe, ["combat"], { cwd: poor, stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1 << 24 }).toString("utf8"));
     n++;
     for (const x of j.buffs ?? []) up[x.name] = (up[x.name] ?? 0) + 1;
     for (const x of j.target?.debuffs ?? []) {

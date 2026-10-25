@@ -6,9 +6,9 @@ description: "Read and drive the running Torchlight: Infinite client — memory-
 # tli-game
 
 **Memory first, screen second.** Everything a build page shows is in memory; read it with `state.mjs`.
-The logged-in character (no build page needed) is read by poorchlight's `tli_dump --export` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
+The logged-in character (no build page needed) is read by poorchlight's `tli export` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
 character sheet, the dummy DPS readout) or to open a page so memory can be read. All of it needs
-the **elevated** shell and the sibling repo `../poorchlight` (`target/release/tli_dump.exe` built).
+the **elevated** shell and the sibling repo `../poorchlight` (`target/release/tli.exe` built).
 
 ## Memory reads
 
@@ -79,7 +79,7 @@ category (Deterioration ticks have their own HP-removal style). Count hits with 
 
 **Only pre-lock damage, ever** (owner, 2026-10-18). The game's damage lock (the model's CAP1) caps each attacker's damage per window:
 the dummy panel and its counter are after the lock and stall near 1.43-1.47e13 / s (2026-10-18: 14.4T on the panel, 25.5T dealt).
-Hits past the budget post 0. Never quote the panel, the locked counter or FHurtHit `+0x20` (`tli_dump --combat-watch` / `--hit-watch`).
+Hits past the budget post 0. Never quote the panel, the locked counter or FHurtHit `+0x20` (`tli watch combat` / `tli watch hit`).
 
 `node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` runs poorchlight `reader/hits.py`: DPS =
 Δ the dummy's pre-lock counter (`hits.STAKE`, per client) / Δ **game time** (logic frames / 30), split per source (a follower is another
@@ -98,7 +98,7 @@ Double / Triple Damage show in `damage_prelock` as 2x / 3x outliers (Triple roll
 hit's `erosion` value (Deterioration's base) scales with them.
 The dummy must be the targeted health bar (hit it once).
 
-**A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli_dump --ui-json`: open views, Skill-panel
+**A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli ui`: open views, Skill-panel
 selection, the 9-slot loadout with item ids, aura activation, sealed life/mana):
 
 ```bash

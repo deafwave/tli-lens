@@ -1,4 +1,4 @@
-/* Readable summary of the build page open in game, from memory (tli_dump). Elevated shell.
+/* Readable summary of the build page open in game, from memory (tli snapshot --portable). Elevated shell.
    usage: node state.mjs [--reuse] [--section gear|skills|memories|traits|talents|slates|prisms|pacts|kismets|issues]
    --reuse reads the last dump instead of reading the game again. */
 import { execFileSync } from "node:child_process";
@@ -11,7 +11,7 @@ const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z
 const poor = path.resolve(here, "../../../../poorchlight");
 const portablePath = path.join(poor, "tli_dump/diagnostics/_last_live_portable.json");
 if (!args.includes("--reuse"))
-  execFileSync(path.join(poor, "target/release/tli_dump.exe"), ["--portable-json"], { cwd: poor, stdio: ["ignore", "ignore", "inherit"], maxBuffer: 1 << 28 });
+  execFileSync(path.join(poor, "target/release/tli.exe"), ["snapshot", "--portable"], { cwd: poor, stdio: ["ignore", "ignore", "inherit"], maxBuffer: 1 << 28 });
 const portable = JSON.parse(fs.readFileSync(portablePath, "utf8"));
 const lo = portable.proBuild?.loadout ?? {};
 const list = v => (Array.isArray(v) ? v : Object.values(v ?? {})).filter(Boolean);

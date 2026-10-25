@@ -84,12 +84,12 @@ function load(): { exp: string; state: State; ctx: EvalCtx; key: string } {
 }
 let who: ReturnType<typeof load> | undefined, note = '';
 const character = () => (who ??= load());
-/** --watch on the game prices against the newest read at once and reads your character again alongside (poorchlight `tli_dump --export`, under 1 s): when it changed
+/** --watch on the game prices against the newest read at once and reads your character again alongside (poorchlight `tli export`, under 1 s): when it changed
  *  since, every figure is priced again against the new read. Not readable (the game at character select, a shell not elevated): the newest read, said so. */
 function reread() {
   const dd = resolve(exports, '../..');
   note = ' (reading your character)';
-  execFile(resolve(dd, 'target/release/tli_dump.exe'), ['--export', '--no-clipboard'], { cwd: dd, maxBuffer: 64 << 20 }, (e, _out, err) => {
+  execFile(resolve(dd, 'target/release/tli.exe'), ['export', '--no-clipboard'], { cwd: dd, maxBuffer: 64 << 20 }, (e, _out, err) => {
     if (e) { note = ` (could not read your character: ${String(err || e.message).trim().split(/\r?\n/).at(-1)})`; return landed(); }
     const next = load(), old = character();
     note = next.key === old.key ? '' : ` (your character changed since ${basename(old.exp)}: priced again)`;

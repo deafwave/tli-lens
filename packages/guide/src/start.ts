@@ -1,4 +1,4 @@
-/** Start states: the ideal Bing1 character at map entry (spec §3.3) and a live character from a tli-lens export (poorchlight `tli_dump --export`). */
+/** Start states: the ideal Bing1 character at map entry (spec §3.3) and a live character from a tli-lens export (poorchlight `tli export`). */
 import { stoneName, uniqueName } from './names';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

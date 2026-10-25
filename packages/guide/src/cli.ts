@@ -21,6 +21,8 @@ const flag = (name: string) => { const i = args.indexOf(`--${name}`); const v = 
 const positional = at(args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')));
 const num = (name: string) => { const v = flag(name); if (v !== undefined && !Number.isFinite(Number(v))) throw new Error(`--${name} needs a number`); return v === undefined ? undefined : Number(v); };
 const readJson = (p: string) => JSON.parse(readFileSync(p, 'utf8'));
+/** poorchlight's `tli export` reads the running game (elevated shell) and prints {path, items, ..}: the export's path */
+const tliExport = (dd: string): string => JSON.parse(execFileSync(resolve(dd, 'target/release/tli.exe'), ['export', '--no-clipboard'], { cwd: dd, encoding: 'utf8' }).trim().split(/\r?\n/).at(-1)!).path;
 /** a file at the repository root, when it exists, as plan option `key` (roll-prices.json, vorax-grafts.json, inverse-images.json, dream-gear.json) */
 const rootJson = (file: string, key: string) => { const f = fileURLToPath(new URL(`../../../${file}`, import.meta.url)); return existsSync(f) ? { [key]: readJson(f) } : {}; };
 /** the slate listings the market has read (market.ts) in the last week, as plan option slateListings */
@@ -83,7 +85,7 @@ async function main() {
       }
     } finally { await ev.close(); }
   } else if (cmd === 'auto') {
-    // your own plan with no pasting: every M minutes poorchlight's `tli_dump --export` reads the running game (elevated shell), advise prices the next buys on
+    // your own plan with no pasting: every M minutes poorchlight's `tli export` reads the running game (elevated shell), advise prices the next buys on
     // it, and packages/page/src/data/advice.json is committed and pushed (the page shows it first); a failed read is logged and tried again next round
     const every = num('every') ?? 30, repo = fileURLToPath(new URL('../../../', import.meta.url)), out = resolve(repo, 'packages/page/src/data/advice.json');
     const dd = flag('poorchlight') ?? fileURLToPath(new URL('../../../../poorchlight/', import.meta.url)), mine = yours();
@@ -93,9 +95,7 @@ async function main() {
       for (;;) {
         const t = Date.now();
         try {
-          const line = execFileSync(resolve(dd, 'target/release/tli_dump.exe'), ['--export', '--no-clipboard'], { cwd: dd, encoding: 'utf8' }).trim().split(/\r?\n/).at(-1)!;
-          const path = line.split(' items=')[0].trim();
-          const state = fromExport(readJson(path), num('fe')), book = mine.wrap(await liveBook());   // --fe N: plan on N FE instead of the read FE
+          const state = fromExport(readJson(tliExport(dd)), num('fe')), book = mine.wrap(await liveBook());   // --fe N: plan on N FE instead of the read FE
           final(out, dump(await runAdvise(ev, state, { budgetMinutes: budgetMinutes ?? 20, maxSteps: num('steps') ?? 0, focusHoa: args.includes('--hoa'), ...mine.knobs }, book, (o) => writeAtomic(out, dump(o)))));
           try { git('add', out); git('commit', '-m', `data: your plan from the live game (L${state.level}, etor ${book.fetchedAt})`, '--', out); git('push'); }
           catch { console.log(new Date().toISOString(), 'auto: nothing new to push'); }
@@ -108,7 +108,7 @@ async function main() {
     // your character to a damage goal on a boss at the least FE (plan.ts): read fresh from the running game unless an export is given (a plan from an old read
     // told the owner to add a gem already socketed), written to the page's advice.json
     const dd = flag('poorchlight') ?? fileURLToPath(new URL('../../../../poorchlight/', import.meta.url));
-    const file = positional ?? execFileSync(resolve(dd, 'target/release/tli_dump.exe'), ['--export', '--no-clipboard'], { cwd: dd, encoding: 'utf8' }).trim().split(/\r?\n/).at(-1)!.split(' items=')[0].trim();
+    const file = positional ?? tliExport(dd);
     console.log(`character: ${file}`);
     const state = fromExport(readJson(file), num('fe')), mine = yours(), book = mine.wrap(await liveBook());
     const out = flag('out') ?? fileURLToPath(new URL('../../page/src/data/advice.json', import.meta.url));
@@ -133,7 +133,7 @@ async function main() {
     // the export button waits on this: by default the next-buys list only (every upgrade's exact gain, ranked on the page by your prices); --steps N adds a
     // multi-step plan at etor prices, stopped after --budget-minutes (default 30; the page shows a partial run)
     try { final(out, dump(await runAdvise(ev, state, { budgetMinutes: budgetMinutes ?? 30, maxSteps: num('steps') ?? 0, focusHoa: args.includes('--hoa'), ...prices.knobs }, prices.book, (o) => writeAtomic(out, dump(o))))); } finally { await ev.close(); }
-    // UTF-8 through an env-named file, as poorchlight's tli_dump --export does, so non-ASCII names survive
+    // UTF-8 through an env-named file, as poorchlight's tli export does, so non-ASCII names survive
     execFileSync('powershell', ['-NoProfile', '-Command', 'Set-Clipboard -Value ([IO.File]::ReadAllText($env:ADVICE_FILE, [Text.Encoding]::UTF8))'], { env: { ...process.env, ADVICE_FILE: out } });
     console.log(`wrote ${out} and copied it to the clipboard`);
   } else if (cmd === 'figure') {

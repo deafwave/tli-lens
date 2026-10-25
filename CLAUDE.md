@@ -27,7 +27,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 | `data/`, `scripts/` | etor price history, affix library; fetch/build helpers; `scripts/blend_recipes.py` reads the belt blend recipes and your unlocked ones from the client into `packages/guide/src/data/blends.json` (open the blend window once first) |
 | root | `prices.json` (your prices), `roll-prices.json` and `dream-gear.json` (read by `plan`), `market-targets.json` (market skill) |
 | `docs/` | `etor-api.md`: the etor price API (reverse-engineered; `pricing.ts` and `scripts/fetch_etor_history.py` use it) |
-| `.claude/skills/` | `tli-game` (writes its measurements to `.cache/tli-game/`), `market`, `tlidb-lookup` |
+| `.claude/skills/` | `tli-game` (a pointer to poorchlight's skill), `market`, `tlidb-lookup` |
 
 ## Commands
 

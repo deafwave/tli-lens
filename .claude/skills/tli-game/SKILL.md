@@ -1,126 +1,19 @@
 ---
 name: tli-game
-description: "Read and drive the running Torchlight: Infinite client — memory-read the build page (gear, skills+supports, talents, slates, prisms, memories, pactspirits, kismets), measure dummy DPS from memory, screenshot, press keys, click and hover the UI, and compare model inputs against the in-game character sheet. Use when checking the model against the game, reading a Pro Build or the user's own build, or navigating game menus."
+description: "Read and drive the running Torchlight: Infinite client: the skill lives in poorchlight (../poorchlight/.claude/skills/tli-game). Use when checking the model against the game, reading a Pro Build or the user's own build, measuring dummy DPS, or navigating game menus."
 ---
 
 # tli-game
 
-**Memory first, screen second.** Everything a build page shows is in memory; read it with `state.mjs`.
-The logged-in character (no build page needed) is read by poorchlight's `tli export` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
-character sheet, the dummy DPS readout) or to open a page so memory can be read. All of it needs
-the **elevated** shell and the sibling repo `../poorchlight` (`target/release/tli.exe` built).
+The skill and its scripts (`state.mjs`, `ops.mjs`, `combat.mjs`, `game.ps1`) live in poorchlight, the repo that reads the game:
+read `../poorchlight/.claude/skills/tli-game/SKILL.md` and run them from `../poorchlight` (they write under poorchlight's `.cache/` and `game/`).
+Any in-game change or measurement follows poorchlight's `game-protocol` skill. tli-lens reads the game only through `tli.exe`
+(`tli export` for `plan`, `tli market` for the market skill).
 
-## Memory reads
+Notes for tli-lens's use of a build-page read (`state.mjs`):
 
-| Command (repo root) | What |
-|---|---|
-| `node .claude/skills/tli-game/state.mjs [--reuse] [--section gear\|skills\|memories\|traits\|talents\|slates\|prisms\|pacts\|kismets\|issues]` | readable dump of the open build page — every affix with its in-game text, supports by socket with Magnificent rolls, talent points per node, pact levels |
-
-The page read is whatever **build page** is open: a Pro Build, a Hunter File, or the user's own build
-(`sourcePage` `ViewPlayerBDReference`, `hero.sourceName` = character name). Any tab works.
-
-Where things live (`poorchlight/tli_dump/diagnostics/`):
-- `_last_live_portable.json` → `proBuild.loadout.{hero, heroMemories, gear, skills, skillTree, divinity, etherealPrisms, pactspirits, kismets, vorax}`; affix text is in `affixes.*[].Simple` (strip `<p>`/`<e>` tags), raw ids in `.Id`, rolls in `DynArgs`.
-- `_last_live_snapshot.json` (raw) → `GeniusInfos` (talent `GeniusList` node→points, `BonusTalents`), `EtherealPrismState.Placements` (the portable projection drops placements).
-- Skills: `data.compendiumPlacement` = `{kind, slot, ownerKind, ownerSlot}`; level = `itemLevel`; Magnificent roll = `data.ServerPlayerItem.Prefix[].DynArgs`, tier from `identity.base.metadata.skillTierProgression`.
-- Pactspirit level = `StarRank`. Six are equipped: slots 1-3 battle (`installServantType` 1), 4-6 drop pactspirits (type 2, loot only; checked on the owner's read 2026-10-17).
-- Talent node id `<tree:2><col:2><row:2>00` (cols = point thresholds 0…18 → 1…7, rows 1…5).
-- Known exporter gaps: Magnificent tiers missing from poorchlight's catalog (restored from the item's tier table); 1,069 catalog GUIDs carry two game ids — index game ids from the raw entry list, never a GUID-keyed map; prism base attribute `1204509011` has no text anywhere.
-
-## Screen and input (background — never steals focus)
-
-`powershell -NoProfile -ExecutionPolicy Bypass -File .claude/skills/tli-game/game.ps1 <cmd>` — coordinates are
-**game client pixels** (3440×1440). The user may be using the PC while you work:
-
-- **keys** are posted window messages preceded by a posted WM_ACTIVATEAPP/WM_ACTIVATE/WM_SETFOCUS (the game drops
-  input it believes is unfocused). No focus change, no global input — works while another app is in front.
-- **screenshots** use PrintWindow (flag 3): work while the game is unfocused or covered.
-- **click / hover / wheel** need the real cursor (the game ignores message coordinates): the tool flicks the
-  cursor there for ~0.2s and restores it, and **refuses unless Torchlight is the foreground window**
-  (`TLI_FORCE_FLICK=1` overrides). Clicking outside a panel walks the character. Blink aims at the real cursor
-  too — Blink A/Bs need the game in front.
-
-| cmd | |
-|---|---|
-| `shot <out.png> [x y w h] [scale]` | screenshot (default whole client at 0.5); `Read` the png. Crop + scale 0.6–1 to read numbers |
-| `key F2` / `key ESC SPACE` | posted key presses (VK codes: A–Z, 0–9, F1–F10, ESC, SPACE, TAB, ENTER) |
-| `click x y` · `hover x y <out.png> [crop] [scale]` · `wheel x y -6` | cursor flick (game must be in front) |
-| `aimkey x y KEY` | press KEY with the cursor at x,y (Blink). At the hideout dummy spot aim **into the trees on the left (800,800)** — Blink is blocked there so the character stays in range; `measure` uses that aim (`TLI_AIM=x,y` overrides) |
-| `measure <prefix> [secs] [KEY every-s]` | needs the dummy count **running**; shoots the panel at start/end (`<prefix>-0/-1.png`); interval DPS = (avg₁·t₁ − avg₀·t₀)/(t₁ − t₀) — no clicks |
-| `burst <out.png> <frames> <ms> <x y w h> [cols] [scale]` | timestamped contact sheet — throws (crop `1640 480 160 180`), buff uptime (`400 20 420 60`), dummy debuffs/stacks (`1540 130 180 55`) |
-
-PowerShell gotcha: variables are case-insensitive (`$h` and `$H` are one variable).
-
-Keys (ESC menu lists them): **B** inventory + character sheet, F1 Trade House, F2 Skill, F3 Talent, F4 Hero Trait,
-F5 Pact, M World Map, P Boon, K Season Pass, J Outfit, O Help; skill bar SPACE, R, mouse, E, Q, F (what sits
-where is the build's: read it with `ops.mjs state`). **ESC** opens/closes the menu; close panels with their X (character sheet X at
-3354,54; menu back arrow 3370,76) — B does not always toggle the sheet shut.
-
-Character sheet (B), right panel at x≈1900–2460: tab icons at y=320 — Overview x=2016, **Damage x=2132**,
-Defense x=2248, 4th x=2364. Damage tab has a skill dropdown (Hammer of Ash) and rows; wheel over x=2180
-to scroll. **Hover a row → tooltip; click the row to pin it, then click the tooltip's `Base`/`Additional
-Bonus ▼` bar to expand the per-category breakdown** (Base Value / Talent / Hero Memories / Gear / Skill / Others).
-
-**The sheet is static data only.** Its DPS is orders of magnitude below the dummy's: it ignores buffs, procs, Deterioration,
-enemy-taken and conditional lines; "Additional Damage Bonus" lists only buffs live at that instant and
-hides "additional Base Damage" lines. Use it to check inputs, not outcomes: Strength, crit chance/damage,
-typed increased pools, attack speed, penetration, projectile count, knockback.
-
-On 2026-10-10 these sheet inputs matched the model exactly on the owner's build (Strength, crit chance/damage, typed increased,
-attack speed, knockback, erosion pen, projectiles).
-
-The dummy panel's **Info** tab (click 450,174) is the same sheet **captured in combat**:
-its Damage section (269,269) shows live buffs (Kaleidoscope turns, Bull's Rage) — sample it, values change by the second.
-
-Floating damage numbers over the dummy (crop `1950 380 700 450`, burst 150ms) merge: with the game's "draw each hit" setting off, each logic frame's hits become one number per
-category (Deterioration ticks have their own HP-removal style). Count hits with `combat.mjs`, not screenshots.
-
-## Memory combat reads (preferred)
-
-**Only pre-lock damage, ever** (owner, 2026-10-18). The game's damage lock (the model's CAP1) caps each attacker's damage per window:
-the dummy panel and its counter are after the lock and stall near 1.43-1.47e13 / s (2026-10-18: 14.4T on the panel, 25.5T dealt).
-Hits past the budget post 0. Never quote the panel, the locked counter or FHurtHit `+0x20` (`tli watch combat` / `tli watch hit`).
-
-`node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` runs poorchlight `reader/hits.py`: DPS =
-Δ the dummy's pre-lock counter (`hits.STAKE`, per client) / Δ **game time** (logic frames / 30), split per source (a follower is another
-source, ~0 on 2026-10-18; its Shockwave Warcry's 20 % Double Damage is in your hits), buff uptime %, dummy debuffs with stacks
-(Deterioration, Timid, Frostbitten). A new client patch moves hits.py's offsets: fix them in poorchlight (`hits.GUOBJ` / `hits.STAKE`). Appends to `.cache/tli-game/measurements.jsonl`. Needs the dummy
-count running: 0 game-s from `combat.mjs 5` means it is stopped — with the dummy panel open, `game.ps1 click 310 545`
-(its Recount button, client pixels; game in front) restarts it in place. **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
-Kaleidoscope's 8s rotation). Never move between A and B.
-
-Every run keeps one row per hit the dummy takes
-(`.cache/tli-game/watch/<label>-hits.csv`, hits.py's columns; use `damage_prelock`, never `damage`; layout in
-poorchlight `docs/MEMORY_LAYOUT.md` "Per-hit damage events"). Kind 4 = Deterioration ticks; kind 0 with flags 16 = the
-main hit (one per bomb) and flags 40 = a 7-hit Ember volley (index 9..15). The row gets `hits`, `hitsPerS`, `hitTypes`
-and `prelockSumRatio` (Σ per-hit pre-lock ÷ the pre-lock counter; flagged unless within 0.5% — it reads 1.00000).
-Double / Triple Damage show in `damage_prelock` as 2x / 3x outliers (Triple rolls per bomb: the main hit and its whole volley), and the
-hit's `erosion` value (Deterioration's base) scales with them.
-The dummy must be the targeted health bar (hit it once).
-
-**A/Bs are one call each — no screenshots** (`ops.mjs`, verified from `tli ui`: open views, Skill-panel
-selection, the 9-slot loadout with item ids, aura activation, sealed life/mana):
-
-```bash
-O="node .claude/skills/tli-game/ops.mjs"; C="node .claude/skills/tli-game/combat.mjs"
-$O state                                   # loadout + open views
-$O unequip "Hammer of Ash" Passivation      # support (or: $O unequip "Flame Core" for a whole skill)
-$O equip "Black Pass Claymore" --bagslot 15   # gear-tab bag item (right-click); $O gear-restore undoes it
-sleep 10; $C 30 --label passivation-off --buffs   # 30 game-s is enough to iterate (±~5%: Kaleidoscope 8s rotation)
-$O restore                                  # puts back the SAME item (item id checked), closes the panel
-$O aura "Precise Projectiles" off|on        # Activate/Deactivate (note: Seal Conversion auras also unseal Life)
-```
-
-Every step aborts on an unexpected state (wrong slot selected, wrong socket, any other loadout change). Clicks need
-Torchlight in front; `ops` waits (TLI_WAIT_S, default 30 min) instead of failing, and posts keys in the background.
-The dummy's frame counter stops while the Skill panel is open — always end with the panel closed (`$O close`).
-
-Bag clicks: the gear grid shows 3 rows at (2556 + col·100, 996 + visibleRow·140); `ops` derives the visible row from
-`inventory.grid.scrollOffset / cellHeight` and wheels the grid as needed. Close the bag with its X (3354,56) — ESC
-closes every panel including the dummy's (its counter keeps running; restart it from Sidney if the user wants it shown).
-Other panels can cover the bag (e.g. Talent) — `views` lists them; a click that changes nothing aborts the op.
-
-## DPS readings (screen)
-
-The training dummy's panel (top-left of the hideout, crop `0 140 680 300`, as `measure` uses) shows span average, duration,
-best 5s and 5s average. Prefer `combat.mjs`; the panel is for when the user runs their timing macro.
+- The page read is whatever build page is open: a Pro Build, a Hunter File or the user's own build (`sourcePage` `ViewPlayerBDReference`,
+  `hero.sourceName` = the character name). Any tab works.
+- Six pactspirits are equipped: slots 1-3 battle (`installServantType` 1), 4-6 drop pactspirits (type 2, loot only; the owner's read 2026-10-17).
+- Known exporter gaps: Magnificent tiers missing from poorchlight's catalog (restored from the item's tier table); 1,069 catalog GUIDs carry
+  two game ids (index game ids from the raw entry list, never a GUID-keyed map); prism base attribute `1204509011` has no text anywhere.

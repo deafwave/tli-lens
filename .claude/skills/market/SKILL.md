@@ -11,7 +11,7 @@ description: "Rank the auction house search the player has open in Torchlight: I
    pnpm -s guide:market --top 8
    ```
 
-   - It reads the open search result from memory: `scripts/market_listings.py`, which uses poorchlight's reader through `POORCHLIGHT`, by default the sibling `../poorchlight`.
+   - It reads the open search result from memory: poorchlight's `target/release/tli.exe market` (`--watch`: one `tli market --serve` kept attached), from `POORCHLIGHT`, by default the sibling `../poorchlight`.
      A listing is read as poorchlight's `tli export` loadout reads an item you own: every AffixList list (a ring's, necklace's or belt's implicit is `FixedBaseAffix`), a hero memory's awaken data.
    - "no market search result on screen" means the auction house search isn't open. Ask the user to open it and run the command again.
    - Never click, type or press keys in the game.

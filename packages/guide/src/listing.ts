@@ -1,4 +1,4 @@
-/** An auction house listing (scripts/market_listings.py) put on your character: the change that wears it in place of what you wear. */
+/** An auction house listing (poorchlight `tli market`) put on your character: the change that wears it in place of what you wear. */
 import { createHash } from 'node:crypto';
 import { LIST_KEY, slotsOfBase, TYPE_SLOTS } from './candidates/gear';
 import { inverseImage } from './candidates/target';

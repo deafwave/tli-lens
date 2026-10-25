@@ -41,7 +41,8 @@ const root = fileURLToPath(new URL('../../../', import.meta.url));
 const argv = process.argv, has = (f: string) => argv.includes(`--${f}`), arg = (f: string) => (has(f) ? argv[argv.indexOf(`--${f}`) + 1] : undefined);
 const top = Number(arg('top')) || 8, watch = has('watch'), exact = has('exact'), same = has('same-shape');
 const file = arg('file') && resolve(process.env.INIT_CWD ?? process.cwd(), arg('file')!);   // --file <listings.json>: a saved read instead of the live game
-const screen = () => (file ? readFileSync(file, 'utf8') : execFileSync('python', [`${root}scripts/market_listings.py`], { encoding: 'utf8', maxBuffer: 64 << 20 }));
+const poorchlight = process.env.POORCHLIGHT ?? `${root}../poorchlight`, tli = resolve(poorchlight, 'target/release/tli.exe');   // its `tli market` reads the search result
+const screen = () => (file ? readFileSync(file, 'utf8') : execFileSync(tli, ['market'], { encoding: 'utf8', maxBuffer: 64 << 20 }));
 
 /** etor's live snapshot, kept on disk and fetched again once it is 30 minutes old (etor down: the old one, said so) */
 const SNAPSHOT = `${root}packages/guide/.cache/etor-snapshot.json`, SNAPSHOT_MS = 30 * 60_000;
@@ -75,7 +76,7 @@ async function rankGear(listings: Listing[]): Promise<Ranked> {
 }
 
 /** your character: the newest poorchlight read (--export to choose), on the target the plan ranks on (plan.ts DEFAULT_PLAN, --target to change) */
-const exports = resolve(process.env.POORCHLIGHT ?? `${root}../poorchlight`, 'game/exports');
+const exports = resolve(poorchlight, 'game/exports');
 function load(): { exp: string; state: State; ctx: EvalCtx; key: string } {
   const exp = arg('export') ? resolve(process.env.INIT_CWD ?? process.cwd(), arg('export')!)
     : readdirSync(exports).sort().reverse().map((d) => resolve(exports, d, `export-${d}.json`)).find((f) => { try { return readFileSync(f).length > 0; } catch { return false; } })!;
@@ -272,17 +273,17 @@ async function rank(listings: Listing[]): Promise<Ranked> {
 }
 const parse = (text: string): Listing[] => JSON.parse(text).map((l: Listing, i: number) => ({ ...l, n: l.n ?? i + 1 }));
 
-/** --watch reads through one python kept attached to the game (a new one costs ~0.8 s to start and attach, a read ~0.2 s) */
+/** --watch reads through one `tli market --serve` kept attached to the game (one JSON line per line it is sent) */
 function reader() {
-  let out: AsyncIterator<string>, py: ReturnType<typeof spawn>;
+  let out: AsyncIterator<string>, tm: ReturnType<typeof spawn>;
   const start = () => {
-    py = spawn('python', [`${root}scripts/market_listings.py`, '--serve'], { stdio: ['pipe', 'pipe', 'inherit'] });
-    py.stdin!.on('error', () => {});   // a reader that died: its exit is the error, read below
-    out = createInterface({ input: py.stdout! })[Symbol.asyncIterator]();
+    tm = spawn(tli, ['market', '--serve'], { stdio: ['pipe', 'pipe', 'inherit'] });
+    tm.stdin!.on('error', () => {});   // a reader that died: its exit is the error, read below
+    out = createInterface({ input: tm.stdout! })[Symbol.asyncIterator]();
   };
   start();
   return async () => {
-    py.stdin!.write('\n');
+    tm.stdin!.write('\n');
     const { value, done } = await out.next();
     if (done) { start(); throw new Error('the market reader exited: started again'); }
     const r = JSON.parse(value);

@@ -1,9 +1,9 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createEvaluator } from '../src/engine/pool';
 import { places, type Listing } from '../src/listing';
-import { pinRoot } from '../src/pin';
+import { dataRoot } from '../src/pin';
 import { ctxOfState } from '../src/search';
 import { fromExport } from '../src/start';
 import type { State } from '../src/types';
@@ -55,7 +55,7 @@ describe('a listing on your character (places)', () => {
 });
 
 // the owner's newest read (dps-debug game/exports): every piece you wear, as the market reader reads a listing, prices at exactly your figure
-const exports = resolve(pinRoot(), '../../game/exports'), newest = existsSync(exports) ? readdirSync(exports).sort().reverse().map((d) => resolve(exports, d, `export-${d}.json`)).find(existsSync) : undefined;
+const exports = join(dataRoot(), 'game', 'exports'), newest = existsSync(exports) ? readdirSync(exports).sort().reverse().map((d) => resolve(exports, d, `export-${d}.json`)).find(existsSync) : undefined;
 const skip = realSkip() ?? (newest ? undefined : `no read in ${exports}`);
 describe('your worn pieces as listings (real workers)', () => {
   it.skipIf(!!skip)('price at +0 exactly in their own slot: gear, vorax limb, hero memories', async () => {

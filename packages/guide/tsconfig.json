@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "types": ["node"],
     "baseUrl": ".",
-    "paths": { "@dps/*": ["../../../dps-debug/.worktrees/tli-lens-pin/model/*", "../../../../../dps-debug/.worktrees/tli-lens-pin/model/*", "../../../../../../dps-debug/.worktrees/tli-lens-pin/model/*"] }
+    "paths": { "@dps/*": ["../../../poorchlight/.worktrees/tli-lens-pin/model/*", "../../../../../poorchlight/.worktrees/tli-lens-pin/model/*", "../../../../../../poorchlight/.worktrees/tli-lens-pin/model/*"] }
   },
   "include": ["src", "test", "scripts"]
 }

@@ -3,13 +3,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadCatalog } from '@dps/src/harness/catalog';
 import { applyGearChange, applyOtherChange } from '@dps/src/harness/whatif';
-import { pinRoot } from '../src/pin';
+import { pinFile } from '../src/pin';
 import type { Move, PriceBook } from '../src/types';
 
 type Cat = ReturnType<typeof loadCatalog>;
 let cat: Cat | undefined;
-export const catalog = (): Cat => (cat ??= loadCatalog('0x6aa39847', join(pinRoot(), 'catalog')));
-export const loadout = (p: string) => JSON.parse(readFileSync(join(pinRoot(), p), 'utf8'));
+export const catalog = (): Cat => (cat ??= loadCatalog('0x6aa39847', pinFile('catalog')));
+export const loadout = (p: string) => JSON.parse(readFileSync(pinFile(p), 'utf8'));
 /** state captures whose hero level / world ground the figure of the owner's L100 (HoA) and L94 (Ice Shot) loadouts */
 export const GROUND = { hoa: 'L100.state-20261013-165251', iceShot: 'L94.state-20261013-160318' };
 export const L100 = 'game/loadout_l100-20261013-165302.json';

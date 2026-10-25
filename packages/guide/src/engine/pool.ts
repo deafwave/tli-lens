@@ -88,15 +88,15 @@ export interface EvaluatorOpts {
   /** called with true when the pool pauses on the busy file, false when it resumes */
   onBusy?: (paused: boolean) => void;
 }
-export const DEFAULT_BUSY_FILE = fileURLToPath(new URL('../../../../../dps-debug/.cache/game.busy', import.meta.url));
+export const DEFAULT_BUSY_FILE = fileURLToPath(new URL('../../../../../poorchlight/.cache/game.busy', import.meta.url));
 
-/** HEAD sha of the pin, plus `+dirty` when its tree has changes (same rule as dps-debug's pinOf) */
+/** HEAD sha of the pin, plus `+dirty` when its tree has changes (same rule as the model's pinOf) */
 function gitPin(root: string): string {
   const git = (...a: string[]) => execFileSync('git', ['-c', 'safe.directory=*', '-C', root, ...a], { encoding: 'utf8' }).trim();
   return git('rev-parse', 'HEAD') + (git('status', '--porcelain').length ? '+dirty' : '');
 }
 
-/** dps-debug's figure module as one ES module built from the pin (each file's import.meta.url kept its own), in .cache by content. tsx's per-file transform
+/** the model's figure module as one ES module built from the pin (each file's import.meta.url kept its own), in .cache by content. tsx's per-file transform
  *  keeps every function's name (an `__name` call per closure made, a fifth of a figure's CPU): 6 slate figures 28.8 -> 22.4 s CPU, bit-equal (2026-10-17). */
 async function bundleFigure(root: string): Promise<string> {
   const r = await build({ entryPoints: [join(root, 'model', 'guide', 'figure.ts')], bundle: true, platform: 'node', format: 'esm', target: 'node24', write: false, logLevel: 'error',

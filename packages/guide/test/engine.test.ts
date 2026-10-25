@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { applyPatch, type LoadoutPatch } from '../src/patches';
 import { killSpeed } from '../src/kill';
 import { memoKey } from '../src/engine/memo';
-import { pinRoot } from '../src/pin';
+import { pinFile } from '../src/pin';
 import { applyInOrder, figureDefaultFirst, FIRST_ROLL_BUDGET, withAsked } from '../src/engine/apply';
 import { type Knobs, overBudget, rankable } from '../src/search';
 import { writeAtomic } from '../src/atomic';
@@ -405,7 +405,7 @@ if (skipReal) console.warn(skipReal);
 describe('evaluator (real workers, pinned dps-debug)', () => {
   it.skipIf(!!skipReal)('equals guideFigure in-process on the target build; patches applied; iceShot stops', async () => {
     const fx = await import('@dps/guide/figure');
-    const root = pinRoot(), read = (p: string) => JSON.parse(readFileSync(join(root, p), 'utf8'));
+    const read = (p: string) => JSON.parse(readFileSync(pinFile(p), 'utf8'));
     // target assembly of dps-debug guide/figure.test.ts (a): the slate file filtered to the build's slates
     const l = read('re/evidence/loadout_probuild-hanshansi-bing.json');
     const mine = new Set<number>(l.slates);
@@ -435,7 +435,7 @@ describe('evaluator (real workers, pinned dps-debug)', () => {
 describe('figure session reuse (real worker)', () => {
   it.skipIf(!!skipReal)('one worker, same loadout twice plus a patched one: each equals a cold guideFigure', async () => {
     const fx = await import('@dps/guide/figure');
-    const root = pinRoot(), read = (p: string) => JSON.parse(readFileSync(join(root, p), 'utf8'));
+    const read = (p: string) => JSON.parse(readFileSync(pinFile(p), 'utf8'));
     const l = read('re/evidence/loadout_probuild-hanshansi-bing.json');
     const mine = new Set<number>(l.slates);
     l.slateItems = read('re/evidence/t5_slate_v2_probuild.json').filter((v: any) => v.EffectTalentIds.every((t: number) => mine.has(t)))
@@ -459,7 +459,7 @@ describe('figure session reuse (real worker)', () => {
 
 describe('stated fight inputs (real worker)', () => {
   it.skipIf(!!skipReal)("the L100 Phantom Delivery loadout prices: bombs, castLogSum and Old King's Armor's movement bonus are stated", async () => {
-    const dir = join(pinRoot(), 'game'), f = readdirSync(dir).filter(x => /^loadout_l100-.*\.json$/.test(x)).sort().pop()!;
+    const dir = pinFile('game'), f = readdirSync(dir).filter(x => /^loadout_l100-.*\.json$/.test(x)).sort().pop()!;
     const ev = await createEvaluator({ workers: 1 });
     try {
       const r = await ev.run(JSON.parse(readFileSync(join(dir, f), 'utf8')), [], { level: 93, skill: 'hoa' });

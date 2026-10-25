@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { areaMediums, catalog, pinRoot, placeChanges, planPrism, prismMoves } from '../src/candidates/prisms';
+import { areaMediums, catalog, placeChanges, planPrism, prismMoves } from '../src/candidates/prisms';
+import { pinFile } from '../src/pin';
 import type { OwnedItem, State } from '../src/types';
 
-const pin = pinRoot();
-const json = (p: string) => JSON.parse(readFileSync(join(pin, p), 'utf8'));
+const json = (p: string) => JSON.parse(readFileSync(pinFile(p), 'utf8'));
 const HAZE = [1214308031, 1214300171, 1204509011, 1204200101];   // 360502: area 10008 shape 3, 10007 type 11 -> 1204400071, 10009, 10004 (provide)
 const owned = (ids: number[], itemId = 'haze'): OwnedItem => ({ itemId, baseId: 360502, baseName: 'Haze', level: 86, where: 'bag', page: 0, slot: 0, count: 1,
   modifiers: { m: ids.map(id => ({ id, dynArgs: [] })) } });

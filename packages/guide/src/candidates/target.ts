@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyChanges, openCatalog } from '@dps/guide/figure';
-import { pinRoot, table } from '../pin';
+import { pinFile, table } from '../pin';
 import { priceOfBase, priceOfGold, priceOfName } from '../priceOf';
 import { craftGroupStep, craftStep, craftTiers, slotsOfBase } from './gear';
 import { gemsHeld } from './gems';
@@ -28,7 +28,7 @@ interface Target { gear: TGear[]; pacts: { servantId: number; rank: number; prom
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rows = (f: string): Record<string, any> => table<{ rows: Record<string, any> }>(f).rows;
 let target: Target | undefined;
-const loadTarget = (): Target => target ??= JSON.parse(readFileSync(join(pinRoot(), 're/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
+const loadTarget = (): Target => target ??= JSON.parse(readFileSync(pinFile('re/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
 
 /** An Inverse Image at reflected Medium Talent effect `medium` %, placed like the target's (its three Medium copies) on your page: each copy at your points on
  *  its source, your originals and your prisms' affixes kept (re/evidence/prisms.md (c): the target's 12040100 is at Point 0, its points on the copy, only
@@ -46,7 +46,7 @@ export function inverseImage(lo: { resolvedTalents?: { talents?: [number, number
 let board: Extract<LoadoutPatch, { op: 'slate-board' }>['items'] | undefined;
 const targetBoard = () => board ??= (() => {
   const mine = new Set(loadTarget().slates);
-  const v2 = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/t5_slate_v2_probuild.json'), 'utf8')) as (Record<string, unknown> & { id: number; EffectTalentIds: number[] })[];
+  const v2 = JSON.parse(readFileSync(pinFile('re/evidence/t5_slate_v2_probuild.json'), 'utf8')) as (Record<string, unknown> & { id: number; EffectTalentIds: number[] })[];
   return v2.filter(v => v.EffectTalentIds.every(t => mine.has(t))).map(v => ({ itemId: `probuild_${v.id}`, baseId: 0, talents: v.EffectTalentIds, influence: v }));
 })();
 
@@ -76,7 +76,7 @@ const applied = new Map<string, string | null>();
 function applyError(l: Record<string, unknown>, changes: Move["changes"], level: number): string | null {
   const key = JSON.stringify([l, changes, level]);
   if (!applied.has(key)) {
-    try { applyChanges(cat ??= openCatalog(join(pinRoot(), 'catalog')), l as never, changes as never, 'hoa', { heroLevel: level }); applied.set(key, null); }
+    try { applyChanges(cat ??= openCatalog(pinFile('catalog')), l as never, changes as never, 'hoa', { heroLevel: level }); applied.set(key, null); }
     catch (e) { applied.set(key, (e as Error).message); }
   }
   return applied.get(key)!;

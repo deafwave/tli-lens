@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { pinRoot } from '../src/pin';
+import { pinFile } from '../src/pin';
 import { candidates, DEFAULT_PLAN, runPlan } from '../src/plan';
 import { applyPatch } from '../src/patches';
 import { snapshotBook, withPrices } from '../src/pricing';
@@ -9,7 +9,7 @@ import { localItems } from '../src/modes';
 import type { Evaluator, State } from '../src/types';
 
 // the owner's live Hammer of Ash character (export 20261016-122806, dps-debug MANA1's fixture)
-const live = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/mana1_live.json'), 'utf8'));
+const live = JSON.parse(readFileSync(pinFile('re/evidence/mana1_live.json'), 'utf8'));
 const s: State = { loadout: live.loadout, owned: [], fe: 0, level: 90, skill: 'hoa', target: 'traveler' };
 const ctx = { prices: snapshotBook(localItems()), level: 90, notSearched: new Set<string>() };
 const lines = [{ id: 43040200, name: 'Ranger: chance to gain Agility Blessing on Critical Strike' }, { id: 54070400, name: "Lich: All Skills' Levels" }];
@@ -25,7 +25,7 @@ describe('a worn legendary is named by its own name, not its base (owner, 2026-1
 
 // the owner's board of 2026-10-18 11:57 with two Sparks of Moth Fire on the Attack Skill Level slate (dps-debug game/slates-sparks-20261018-115710.json: the Lua
 // slates read, the server's arrays), on the live character
-const sparksLua = JSON.parse(readFileSync(join(pinRoot(), 'game/slates-sparks-20261018-115710.json'), 'utf8'));
+const sparksLua = JSON.parse(readFileSync(pinFile('game/slates-sparks-20261018-115710.json'), 'utf8'));
 const listOf = (x: unknown): number[] => (Array.isArray(x) ? x : []);
 type Item = { itemId: string; baseId: number; shapeId: number; link: { SlotId: number }; talents: number[]; influenceId?: number; influence: { TalentIdCopy?: unknown } };
 const sparksBoard: Item[] = Object.values(sparksLua.placed as Record<string, { ItemId: string; ConfigBaseId: number; LinkData: { SlotId: number }; TalentDatas: Record<string, never> }>).map((r) => ({

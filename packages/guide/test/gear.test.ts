@@ -3,11 +3,10 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { basesFor, gearMoves, whiteBaseMoves } from '../src/candidates/gear';
 import { craftOptions, type LibraryAffix } from '../src/craft';
-import { pinRoot, table } from '../src/pin';
+import { dataRoot, table } from '../src/pin';
 import { GROUND, L100, applyAll, loadout } from './apply';
 import type { GenCtx, Move, PriceBook, Skill, State } from '../src/types';
 
-const PIN = pinRoot();
 const rows = (f: string) => table<{ rows: any }>(f).rows;
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const library: LibraryAffix[] = JSON.parse(readFileSync(here('../../../data/affix_library.json'), 'utf8')).affixes;
@@ -201,7 +200,7 @@ describe('gearMoves', () => {
   });
 
   it('a swapped base carries exactly the base-attribute ids of a real bag dump (base 1019) and the implicit gap is named', () => {
-    const dump = JSON.parse(readFileSync(`${PIN}/game/bagdump-1019-20261013-061901-4.json`, 'utf8'));
+    const dump = JSON.parse(readFileSync(`${dataRoot()}/game/bagdump-1019-20261013-061901-4.json`, 'utf8'));
     const real = (dump.modifiers['baseAttr(BaseAttrAffix)'] ?? dump.modifiers.baseAttr).map((m: { id: number }) => m.id);
     const c = ctx(100), mh = gearMoves(state('hoa', 100, [MAUL]), c).find(m => m.kind === 'gear' && (m.changes[0] as { slot?: string }).slot === 'mainHand')!;
     expect(swapped(mh).baseId).toBe(1019);

@@ -83,10 +83,10 @@ async function main() {
       }
     } finally { await ev.close(); }
   } else if (cmd === 'auto') {
-    // your own plan with no pasting: every M minutes dps-debug's reader/export.py reads the running game (elevated shell), advise prices the next buys on
+    // your own plan with no pasting: every M minutes poorchlight's reader/export.py reads the running game (elevated shell), advise prices the next buys on
     // it, and packages/page/src/data/advice.json is committed and pushed (the page shows it first); a failed read is logged and tried again next round
     const every = num('every') ?? 30, repo = fileURLToPath(new URL('../../../', import.meta.url)), out = resolve(repo, 'packages/page/src/data/advice.json');
-    const dd = flag('dps-debug') ?? fileURLToPath(new URL('../../../../dps-debug/', import.meta.url)), mine = yours();
+    const dd = flag('poorchlight') ?? fileURLToPath(new URL('../../../../poorchlight/', import.meta.url)), mine = yours();
     const git = (...a: string[]) => execFileSync('git', ['-C', repo, ...a], { stdio: 'inherit' });
     const ev = await evaluator();
     try {
@@ -107,7 +107,7 @@ async function main() {
   } else if (cmd === 'plan') {
     // your character to a damage goal on a boss at the least FE (plan.ts): read fresh from the running game unless an export is given (a plan from an old read
     // told the owner to add a gem already socketed), written to the page's advice.json
-    const dd = flag('dps-debug') ?? fileURLToPath(new URL('../../../../dps-debug/', import.meta.url));
+    const dd = flag('poorchlight') ?? fileURLToPath(new URL('../../../../poorchlight/', import.meta.url));
     const file = positional ?? execFileSync('python', ['-I', resolve(dd, 'reader/export.py'), '--no-clipboard'], { cwd: dd, encoding: 'utf8' }).trim().split(/\r?\n/).at(-1)!.split(' items=')[0].trim();
     console.log(`character: ${file}`);
     const state = fromExport(readJson(file), num('fe')), mine = yours(), book = mine.wrap(await liveBook());
@@ -148,8 +148,8 @@ async function main() {
       console.log(JSON.stringify({ pin: ev.pin, skill, figure: r.figure, inputs: r.inputs }, null, 1));
     } finally { await ev.close(); }
   } else if (cmd === 'det') {
-    // Deterioration's release breakpoints (det.ts) on the newest dps-debug read unless an export is given
-    const ex = fileURLToPath(new URL('../../../../dps-debug/game/exports/', import.meta.url));
+    // Deterioration's release breakpoints (det.ts) on the newest poorchlight read unless an export is given
+    const ex = fileURLToPath(new URL('../../../../poorchlight/game/exports/', import.meta.url));
     const file = positional ?? readdirSync(ex).sort().reverse().map((d) => resolve(ex, d, `export-${d}.json`)).find(existsSync)!;
     const state = fromExport(readJson(file), 0), d = detLayer(state.loadout, state.level);
     console.log(`${file}

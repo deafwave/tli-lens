@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { dumpToItem } from '@dps/src/core/whatif';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { pinRoot, table } from '../src/pin';
+import { pinFile, table } from '../src/pin';
 import { goldOf, targetMoves } from '../src/candidates/target';
 import type { Move, Skill } from '../src/types';
 import { createEvaluator } from '../src/engine/pool';
@@ -76,7 +76,7 @@ describe('targetMoves', () => {
   it('Ice Shot states get no target moves', () => {
     expect(gen(loadout('game/loadout_l94-20261013-160234.json'), 'iceShot').moves).toEqual([]);
   });
-  const tg = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8')) as { gear: { label: string; affixes: { id: number; dyn: number[] }[] }[] };
+  const tg = JSON.parse(readFileSync(pinFile('re/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8')) as { gear: { label: string; affixes: { id: number; dyn: number[] }[] }[] };
   const pairs = (a: { id: number; dyn: number[] }[]) => JSON.stringify(a.map(x => [x.id, x.dyn]).sort());
   const gearItem = (m: Move) => (m.changes[0] as unknown as { slot: string; item: Parameters<typeof dumpToItem>[0] });
   it('each legendary gear move carries exactly the target item affixes (dumpToItem round trip)', () => {
@@ -164,10 +164,10 @@ describe('targetMoves', () => {
 const skipReal = realSkip();
 describe('target slate board (real figures)', () => {
   it.skipIf(!!skipReal)('target without slates + the board patch has the figure of the target build', async () => {
-    const target = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
+    const target = JSON.parse(readFileSync(pinFile('re/evidence/loadout_probuild-hanshansi-bing.json'), 'utf8'));
     const patch = gen(target).moves.find(m => m.kind === 'slate')!.changes[0] as Parameters<typeof applyPatch>[1];
     // the target figure's own assembly (dps-debug guide/figure.test.ts (a)), written out independently of the patch
-    const mine = new Set<number>(target.slates), v2 = JSON.parse(readFileSync(join(pinRoot(), 're/evidence/t5_slate_v2_probuild.json'), 'utf8')) as { id: number; EffectTalentIds: number[] }[];
+    const mine = new Set<number>(target.slates), v2 = JSON.parse(readFileSync(pinFile('re/evidence/t5_slate_v2_probuild.json'), 'utf8')) as { id: number; EffectTalentIds: number[] }[];
     const ref = { ...target, slateItems: v2.filter(v => v.EffectTalentIds.every(t => mine.has(t))).map(v => ({ itemId: `probuild_${v.id}`, baseId: 0, talents: v.EffectTalentIds, influence: v })) };
     const bare = { ...target, slates: [], slateScale: [], slateItems: [] };
     const ev = await createEvaluator({ workers: 2 });

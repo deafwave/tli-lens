@@ -1,11 +1,11 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { pageVariants, talentMoves, talentMovesWith } from '../src/candidates/talents';
-import { pinRoot } from '../src/pin';
+import { dataRoot } from '../src/pin';
 import { talentName, treeName } from '../src/names';
 import { POINT_OBSERVATIONS, copiesOf, coreSet, treeNodes, legalAllocation, nodeRow, pointsAtLevel, treeCores, treeOf, treeSlotsAllowed, trimPage, violations } from '../src/talentRules';
 
-const pin = pinRoot();
+const pin = dataRoot();   // game/ and captures/ are data; re/evidence is in the data root too
 const l94 = JSON.parse(readFileSync(`${pin}/game/loadout_l94-20261013-160234.json`, 'utf8'));
 const state = { loadout: l94, owned: [], fe: 0, level: 94, skill: 'iceShot' as const };
 const tr = (t: Record<string, number>) => {

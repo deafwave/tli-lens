@@ -1,4 +1,4 @@
-/* Measure at the training dummy from memory (elevated shell; dps-debug reader/hits.py, poorchlight tli_dump for --buffs).
+/* Measure at the training dummy from memory (elevated shell; poorchlight reader/hits.py, and its tli_dump for --buffs).
    usage: node combat.mjs [secs=30] [--label name] [--buffs]
    DPS is the damage BEFORE the damage lock only (owner, 2026-10-18: "ONLY use pre-lock damage, ever"): the dummy's unlimited counter
    (UWoodStakeMgr, hits.STAKE) over the window ÷ game seconds (logic frames / 30, the dummy panel's own clock; the client simulates slower than
@@ -16,7 +16,7 @@ const args = process.argv.slice(2);
 const secs = Number(args.find(a => /^\d+$/.test(a)) ?? 30);
 const label = args.includes("--label") ? args[args.indexOf("--label") + 1] : "";
 const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
-const poor = path.resolve(here, "../../../../poorchlight"), dd = path.resolve(here, "../../../../dps-debug");
+const poor = path.resolve(here, "../../../../poorchlight"), dd = poor;
 const exe = path.join(poor, "target/release/tli_dump.exe");
 const fmt = n => n >= 1e12 ? `${(n / 1e12).toFixed(3)}T` : `${(n / 1e9).toFixed(1)}B`;
 

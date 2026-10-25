@@ -16,7 +16,7 @@ import { bossName, ownedGear, ownedUniques } from './modes';
 import { ctxOfState, pieceKey, rankable, rankedOn } from './search';
 import { talentName } from './names';
 import { buildSheet } from './sheet';
-import { pinRoot, table } from './pin';
+import { pinFile, table } from './pin';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import blends from './data/blends.json';
@@ -68,8 +68,8 @@ const heldUniques = (s: State) => new Set([...ownedUniques(s, true).values(), ..
 type Enh = Record<string, { Rarity: number[]; CurrentEnhanceLevel: number; TargetEnhanceLevel: number; BaseAttrTier: number; RandomAffixMod: number; ItemConsume: Record<string, number> }>;
 type Reroll = Record<string, { Rarity: number[]; ItemLevel: [number, number]; ItemConsume: Record<string, number>; AffixTier: { Key: number; Value: number }[] }>;
 let enh: Enh | undefined, reroll: Reroll | undefined;
-const ENH = (): Enh => (enh ??= JSON.parse(readFileSync(join(pinRoot(), 'catalog/0x6ac8071f/lua_config_hero_item_enhance.json'), 'utf8')).rows as Enh);
-const REROLL = (): Reroll => (reroll ??= JSON.parse(readFileSync(join(pinRoot(), 'catalog/0x6ac8071f/lua_config_hero_item_reroll.json'), 'utf8')).rows as Reroll);
+const ENH = (): Enh => (enh ??= JSON.parse(readFileSync(pinFile('catalog/0x6ac8071f/lua_config_hero_item_enhance.json'), 'utf8')).rows as Enh);
+const REROLL = (): Reroll => (reroll ??= JSON.parse(readFileSync(pinFile('catalog/0x6ac8071f/lua_config_hero_item_reroll.json'), 'utf8')).rows as Reroll);
 const MEM_ITEM: Record<string, string> = { 5140: 'Memory Scrap', 5141: 'Memory Thread - Normal', 5142: 'Memory Thread - Magic', 5143: 'Memory Thread - Rare', 5144: 'Memory Thread - Epic', 391000: 'Crude Lunar Dust', 391001: 'Luminous Lunar Dust', 391002: 'Flawless Lunar Dust' };
 /** a memory's random affix groups (its base: Origin 71001, Discipline 71002, Progress 71003): one block of 19 from 4021569 and one of 26 from 4021650, in that
  *  order (the reads: Origin rolls 4021653 and 4021666, Progress 4021717; Affliction Effect, which the game lists, is only in the first block) */

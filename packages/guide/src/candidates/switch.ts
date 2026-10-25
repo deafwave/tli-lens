@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { pinRoot, table } from '../pin';
+import { pinFile, table } from '../pin';
 import { basesFor, goldItem, twoHandedTwins } from './gear';
 import { costOf, priceOfGold } from '../priceOf';
 import { gemLevelAt, gemRequires, gemsHeld, mainSid, supportsFor } from './gems';
@@ -19,7 +19,7 @@ const TARGET = 're/evidence/loadout_probuild-hanshansi-bing.json';
 const RUINOUS_STAR = 112158;
 type TargetFile = { skills: Gem[]; talents: Record<string, number>; coreTalents: number[] };
 let target: TargetFile | undefined;
-const targetFile = (): TargetFile => target ??= JSON.parse(readFileSync(join(pinRoot(), TARGET), 'utf8'));
+const targetFile = (): TargetFile => target ??= JSON.parse(readFileSync(pinFile(TARGET), 'utf8'));
 const targetSkills = (): Gem[] => targetFile().skills;
 
 /** The planned leg change (ideal mode): the switch move plus the target build's talent page (every point and core of the current page removed, the

@@ -1,13 +1,13 @@
 """The auction house search result on screen, read from the running game's Lua state (read-only): every listed item's price and affixes.
 LuaObjectMap[*_AuctionHouseShowGoodV2].GoodDatas[i].GoodData._Raw_Data: PriceNum / PriceType (100300 = Flame Elementium), ItemData._Raw_Data: the item
-record ItemMgr.Items holds for an owned item (Type1 1 gear, 26 slate, 34 hero memory, 41 vorax limb), read as dps-debug's reader/loadout.py reads one:
+record ItemMgr.Items holds for an owned item (Type1 1 gear, 26 slate, 34 hero memory, 41 vorax limb), read as poorchlight's reader/loadout.py reads one:
 every AffixList list in its LIST_ORDER (FixedBaseAffix holds a ring's, necklace's or belt's implicit and a legendary's; Chip, Enchant), each affix's
 Id, TLv (tier), Complex (text), DynArgs as floats; a hero memory's AwakenData.BaseAttrBoostValue / AwakenAffix, a slate's TalentDatas.
-usage (elevated shell, game running, a market search open): python scripts/market_listings.py  -> JSON on stdout. Env DPS_DEBUG: the dps-debug checkout
-(its reader/ supplies the memory and Lua access; default: the sibling ../dps-debug)."""
+usage (elevated shell, game running, a market search open): python scripts/market_listings.py  -> JSON on stdout. Env POORCHLIGHT: the poorchlight checkout
+(its reader/ supplies the memory and Lua access; default: the sibling ../poorchlight)."""
 import json, os, re, sys
 from pathlib import Path
-DD = Path(os.environ.get('DPS_DEBUG') or Path(__file__).resolve().parents[2] / 'dps-debug')
+DD = Path(os.environ.get('POORCHLIGHT') or Path(__file__).resolve().parents[2] / 'poorchlight')
 sys.path[:0] = [str(DD / 'reader'), str(DD / 're' / 'tools')]
 from mem import Proc
 from lua import Lua

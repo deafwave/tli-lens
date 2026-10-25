@@ -7,14 +7,14 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sup1 from '../data/sup1.json';
 import { tagGate } from '@dps/src/core/build';
-import { pinRoot, table } from '../pin';
+import { pinFile, table } from '../pin';
 import { costOf } from '../priceOf';
 import type { Generator, Move, Skill } from '../types';
 
 /** the main skill's sid, read from the active slot 0 gem of the pin's loadouts: Ice Shot = game/loadout_l94-*.json (the owner's Ice Shot build), Hammer of Ash = re/evidence/loadout_probuild-hanshansi-bing.json (the target build) */
 const MAIN_SOURCE: Record<Skill, () => string> = {
-  iceShot: () => join(pinRoot(), 'game', readdirSync(join(pinRoot(), 'game')).filter(f => /^loadout_l94-.*\.json$/.test(f)).sort()[0]),
-  hoa: () => join(pinRoot(), 're', 'evidence', 'loadout_probuild-hanshansi-bing.json'),
+  iceShot: () => pinFile('game', readdirSync(pinFile('game')).filter(f => /^loadout_l94-.*\.json$/.test(f)).sort()[0]),
+  hoa: () => pinFile('re', 'evidence', 'loadout_probuild-hanshansi-bing.json'),
 };
 const mainSids = new Map<Skill, number>();
 /** gem names the character holds (bag, stash or socketed): a plan that uses one does not buy it */

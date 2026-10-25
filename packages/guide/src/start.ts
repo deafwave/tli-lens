@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { basesFor, bareItem, familyOf } from './candidates/gear';
 import { fill } from './candidates/talents';
 import { gemLevelAt, mainSid } from './candidates/gems';
-import { pinRoot } from './pin';
+import { pinFile } from './pin';
 import { pointsAtLevel, treeOf } from './talentRules';
 import type { OwnedItem, Skill, State } from './types';
 
@@ -19,7 +19,7 @@ const FE_BASES = new Set([100300, 101300]);
 
 /** The L94 Ice Shot loadout stripped by the ledger ruling; every strip step is a named note. */
 export function idealStartNotes(level = START_LEVEL): { state: State; notes: string[] } {
-  const l: Dict = structuredClone(JSON.parse(readFileSync(join(pinRoot(), START_LOADOUT), 'utf8')));
+  const l: Dict = structuredClone(JSON.parse(readFileSync(pinFile(START_LOADOUT), 'utf8')));
   delete l._about; delete l._missing;
   const notes = [`base loadout: ${START_LOADOUT} (the owner's L94 Ice Shot character, dps-debug pin)`];
 

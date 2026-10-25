@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { gemLevelAt, gemMoves, gemRequires, supportsFor } from '../src/candidates/gems';
 import { tagGate } from '@dps/src/core/build';
-import { pinRoot, table } from '../src/pin';
+import { dataRoot, table } from '../src/pin';
 import type { Skill } from '../src/types';
 import { GROUND, L100, L94, applyAll, fakePrices, loadout } from './apply';
 
@@ -32,7 +32,7 @@ describe('gemMoves', () => {
       const hero = loadout('captures/L100.state-20261013-165251/pre/player.json').cfg.level;
       expect(hero).toBe(93);
       let n = 0;
-      for (const f of readdirSync(`${pinRoot()}/game`).filter(x => /^loadout_l.*\.json$/.test(x))) {
+      for (const f of readdirSync(`${dataRoot()}/game`).filter(x => /^loadout_l.*\.json$/.test(x))) {
         for (const g of (loadout(`game/${f}`).skills ?? []) as { sid: number; level: number }[]) {
           if (!rows[g.sid]) continue;
           n++;

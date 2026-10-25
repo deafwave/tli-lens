@@ -7,7 +7,7 @@ import { accumulate, attrScalar, finalRange } from '@dps/src/core/attrs';
 import { detMods, instanceTags, layerDuration, node1011, parseDetCfg, schedule } from '@dps/src/core/dot';
 import { figureDefaultFirst, withAsked } from './engine/apply';
 import { DEFAULT_FIGHT } from './engine/pool';
-import { pinRoot } from './pin';
+import { pinFile } from './pin';
 import type { Loadout } from './types';
 
 /** the least x in (lo, hi] with ok(x), ok monotone (false then true), to `eps` */
@@ -20,7 +20,7 @@ export interface DetLayer { inc: number; more: number[]; seconds: number; releas
 
 /** the layer of `loadout` (Hammer of Ash, the figure's own store) and the inc the next `count` releases need */
 export function detLayer(loadout: Loadout, level: number, count = 3): DetLayer {
-  const cat = openCatalog(join(pinRoot(), 'catalog')), T = cat.tables as Record<string, Record<string, Record<string, any>>>, F = DEFAULT_FIGHT;
+  const cat = openCatalog(pinFile('catalog')), T = cat.tables as Record<string, Record<string, Record<string, any>>>, F = DEFAULT_FIGHT;
   const lim = T.config_char_buff_limits['180']['0'], cfg = parseDetCfg(T.config_char_buff['180']['0'].affixList), node = node1011((T.affix_node_1011 as any)['147709584']['1'][0]);
   let c: { att: any; vic: any } | undefined;
   const fig = withAsked((extra) => figureDefaultFirst((o) => {

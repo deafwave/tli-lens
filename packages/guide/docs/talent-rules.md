@@ -1,6 +1,6 @@
 # Talent rules used by the guide
 
-Catalog = `dps-debug/.worktrees/tli-lens-pin/catalog/0x6aa39847/config_talent.r2.json` (2542 rows). Confidence: confirmed / inferred / UNSOURCED.
+Catalog = `poorchlight/catalog/0x6aa39847/config_talent.r2.json` (2542 rows). Confidence: confirmed / inferred / UNSOURCED.
 
 | Rule | Value | Source | Status |
 |---|---|---|---|

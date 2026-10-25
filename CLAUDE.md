@@ -1,24 +1,26 @@
 # TLI Lens
 
-Torchlight: Infinite build-progression guide. `packages/guide` drives the **dps-debug** calculator (pinned checkout) over a hero
+Torchlight: Infinite build-progression guide. `packages/guide` drives the DPS model (`poorchlight/model`, pinned checkout; called dps-debug in older notes) over a hero
 state; the Vite page (`packages/page`) renders `packages/page/src/data/advice.json` (your plan, written by `plan`). `ideal` / `live` still write
 `src/data/guide.json`, which the page no longer shows. Nothing on the page is typed in by hand.
 
 ## The pin
 
-`@dps/*` resolves to `<tli>/dps-debug/.worktrees/tli-lens-pin/model/*` (a detached, locked worktree of dps-debug) via tsconfig paths + the
-vitest alias; env `DPS_DEBUG_PIN` overrides (`packages/guide/src/pin.ts`). Every output records the pin commit and the memo key includes it.
-Fix the calculator in dps-debug itself (owner, 2026-10-17: the rule never to edit it from here is lifted), then re-pin. Current pin and why: `git log -- CLAUDE.md` / the last `pin:` commit.
+`@dps/*` resolves to `<tli>/poorchlight/.worktrees/tli-lens-pin/model/*` (a detached, locked worktree of poorchlight) via tsconfig paths + the
+vitest alias; env `TLI_LENS_PIN` overrides (`packages/guide/src/pin.ts`). The worktree carries no data: captures/, catalog/ and game/ are read
+from the main poorchlight checkout (`dataRoot()` / `pinFile()` in `pin.ts`, `model/src/harness/data.ts` in the model; env `TLI_DATA` overrides).
+Every output records the pin commit and the memo key includes it.
+Fix the calculator in poorchlight itself (owner, 2026-10-17: the rule never to edit it from here is lifted), then re-pin. Current pin and why: `git log -- CLAUDE.md` / the last `pin:` commit.
 
 Refresh: `git -C <pin> checkout --detach main`, `npm ci` in `model/` if its lockfile moved, run tli-lens with `GUIDE_REAL=1` and pin only
-if green. dps-debug's own guide gates (`GUIDE_GATES=1`, `model/guide/`) were red on main at the last pin (season figures moved): re-baseline
+if green. The model's own guide gates (`GUIDE_GATES=1`, `model/guide/`) were red on main at the last pin (season figures moved): re-baseline
 them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust its exit code.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `packages/guide/src` | `types` shared interfaces, `pin`, `pricing` + `priceOf` (etor), `candidates/*` (gear gems kismets memories pacts prisms slates switch talents target traits), `craft`, `patches`, `search`, `kill`, `engine/{pool,worker,apply,memo}` (the workers run dps-debug's figure module bundled by esbuild into `.cache/figure-<hash>.mjs`), `modes` (ideal/advise), `plan` (your character to a damage goal, cheapest first), `start` (start states, export import), `talentRules` (talent legality, `trimPage`), `listing` (a market listing worn in place of yours), `names`, `sheet`, `cli`, `atomic`, `data/` |
+| `packages/guide/src` | `types` shared interfaces, `pin`, `pricing` + `priceOf` (etor), `candidates/*` (gear gems kismets memories pacts prisms slates switch talents target traits), `craft`, `patches`, `search`, `kill`, `engine/{pool,worker,apply,memo}` (the workers run the model's figure module bundled by esbuild into `.cache/figure-<hash>.mjs`), `modes` (ideal/advise), `plan` (your character to a damage goal, cheapest first), `start` (start states, export import), `talentRules` (talent legality, `trimPage`), `listing` (a market listing worn in place of yours), `names`, `sheet`, `cli`, `atomic`, `data/` |
 | `packages/guide/scripts` | `market.ts` (`pnpm guide:market`, the market skill), `bosses.ts` (`pnpm guide:bosses`), `owned-pacts`, `support-census`, `verify-affix-ids` |
 | `packages/guide/docs` | gear / prism / talent rules the candidates use, with sources |
 | `packages/page` | Vite shell, single entry `index.html`, `src/main.ts` renders `src/data/advice.json` |
@@ -29,26 +31,26 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 
 ## Commands
 
-- `pnpm guide plan [export.json]` — your character (read fresh from the running game via dps-debug `reader/export.py` when no file is given)
+- `pnpm guide plan [export.json]` — your character (read fresh from the running game via poorchlight `reader/export.py` when no file is given)
   to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `dummy`: the raw DPS at full Life the dummy shows; `cube3`: the DPS on Cube 3; `traveler`: the dummy's DPS capped at 15T), `--goal` (default 2e11),
-  `--budget N` (FE; stops when nothing fits), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--dps-debug <dir>`.
+  `--budget N` (FE; stops when nothing fits), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--poorchlight <dir>`.
 - `pnpm guide advise <export.json> [--fe N] [--season N] [--steps N] [--hoa]` — next-buys list (`--steps N` adds a path; `--hoa`: an Ice Shot
   character planned as switched now); `--budget-minutes` defaults to 30. Writes `./advice.json` (cwd) and copies it to the clipboard.
 - `pnpm guide ideal [--live]` — writes `guide.json`. `live [--every M]` (default 60) reruns it and commits + pushes `guide.json`.
   `auto [--every M]` (default 30) — reads the game, runs advise into the page's `advice.json` (overwriting `plan`'s), commits + pushes; repeats.
 - `pnpm guide figure <loadout.json> [--skill hoa|iceShot] [--level N]` — one figure.
 - `pnpm guide det [export.json]` — Deterioration's release breakpoints on the newest read: the duration's inc (+ its more, Profane's 7 %), the releases it
-  makes, and the inc the next three need (`det.ts`, bisected on dps-debug's own schedule; ~1.5 min). A gear line's "additional Deterioration Duration" is inc.
+  makes, and the inc the next three need (`det.ts`, bisected on the model's own schedule; ~1.5 min). A gear line's "additional Deterioration Duration" is inc.
 - Shared: `--workers --bombs --roll-budget --budget-minutes --target --out --prices` (not every command uses every flag).
   Prices: `prices.json` at the repo root when it exists (or `--prices <file>`: `{ "<item name>": FE }`) laid over etor (`withPrices`).
 - `pnpm guide:bosses [--etor <dir>] [--prices <file>]` — which boss maps pay: ETor's run log (`%APPDATA%/etor` IndexedDB) per map, net FE/h after tax
   with a ± (standard error); always-drops ETor does not log (`ALWAYS_DROPS`, `src/bosses.ts`) priced from `prices.json`.
 - `pnpm dev` / `pnpm build` / `pnpm test` (guide: `tsc --noEmit && vitest run`). `GUIDE_REAL=1` adds real-figure tests. The pool pauses
-  while the busy file exists (`DEFAULT_BUSY_FILE` = `../dps-debug/.cache/game.busy`, env `GUIDE_BUSY_FILE`; `test/real.ts` reads only the default).
+  while the busy file exists (`DEFAULT_BUSY_FILE` = `../poorchlight/.cache/game.busy`, env `GUIDE_BUSY_FILE`; `test/real.ts` reads only the default).
 
 ## Working rules
 
-- One session in tli-lens at a time, one in dps-debug. Don't leave uncommitted edits for the next session.
+- One session in tli-lens at a time, one in poorchlight's model. Don't leave uncommitted edits for the next session.
 - The owner's plan comes from `pnpm guide plan` (or advise), never a one-off script writing advice.json: it must be rerunnable and carry no
   hand-typed assumptions.
 - Read the character fresh before every plan (`plan` does). A plan from an old read is wrong advice.
@@ -113,7 +115,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 
 ## Invariants
 
-1. dps-debug is the only calculator. No DPS math lives in this repo (`test/no-old-math.test.ts`).
+1. The pinned model is the only calculator. No DPS math lives in this repo (`test/no-old-math.test.ts`).
 2. Figures are never hand-written into docs or code; tests recompute them.
 3. `guide.json` and `advice.json` are generated (`ideal`/`live`, `plan`/`advise`); never hand-edit.
 4. Failing test first. A partial figure (dropped pieces / stop) is flagged, never ranked as complete.

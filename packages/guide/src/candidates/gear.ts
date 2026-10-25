@@ -1,5 +1,5 @@
 /* Gear candidates: ember crafts, rare-base upgrades and uniques, each a dps-debug `gear` what-if change with an FE cost and a level gate.
-   Catalog tables are read from the pinned dps-debug checkout (read-only; env DPS_DEBUG_PIN overrides its root). */
+   Catalog tables are read from the pin's data root (pin.ts: read-only; env TLI_DATA overrides it). */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { table as catalogTable } from '../pin';

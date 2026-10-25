@@ -3,7 +3,7 @@
  *  name; each missing T1 at craftStep's expected embers at etor prices, cached 30 minutes). No damage figures.
  *  A slate search (listings with talents) is ranked instead by the model's damage gain of the listing's talents in place of one of your slates (the best one
  *  named; the owner rebuilds the board around the slates bought, so the shape is not held to the replaced one's; --same-shape holds it)
- *  (--export <export.json>, default the newest dps-debug game/exports read). A listing only goes in place of a slate the board's caps allow (SLATE_CAP: a
+ *  (--export <export.json>, default the newest poorchlight game/exports read). A listing only goes in place of a slate the board's caps allow (SLATE_CAP: a
  *  Pedigree only in place of your Pedigree); of those, your weakest slate (the one whose removal costs least) and any slate sharing one of its talents; each also with
  *  your slates whose talents it all carries emptied (a 2-line Corner of Divinity frees one of your 1-line ones), each place freed valued at your weakest slate of its type;
  *  --exact prices it in place of every one it can replace.
@@ -74,8 +74,8 @@ async function rankGear(listings: Listing[]): Promise<Ranked> {
   return { lines, pending: 0 };
 }
 
-/** your character: the newest dps-debug read (--export to choose), on the target the plan ranks on (plan.ts DEFAULT_PLAN, --target to change) */
-const exports = resolve(process.env.DPS_DEBUG ?? `${root}../dps-debug`, 'game/exports');
+/** your character: the newest poorchlight read (--export to choose), on the target the plan ranks on (plan.ts DEFAULT_PLAN, --target to change) */
+const exports = resolve(process.env.POORCHLIGHT ?? `${root}../poorchlight`, 'game/exports');
 function load(): { exp: string; state: State; ctx: EvalCtx; key: string } {
   const exp = arg('export') ? resolve(process.env.INIT_CWD ?? process.cwd(), arg('export')!)
     : readdirSync(exports).sort().reverse().map((d) => resolve(exports, d, `export-${d}.json`)).find((f) => { try { return readFileSync(f).length > 0; } catch { return false; } })!;
@@ -84,7 +84,7 @@ function load(): { exp: string; state: State; ctx: EvalCtx; key: string } {
 }
 let who: ReturnType<typeof load> | undefined, note = '';
 const character = () => (who ??= load());
-/** --watch on the game prices against the newest read at once and reads your character again alongside (dps-debug reader/export.py, ~16 s): when it changed
+/** --watch on the game prices against the newest read at once and reads your character again alongside (poorchlight reader/export.py, ~16 s): when it changed
  *  since, every figure is priced again against the new read. Not readable (the game at character select, a shell not elevated): the newest read, said so. */
 function reread() {
   const dd = resolve(exports, '../..');

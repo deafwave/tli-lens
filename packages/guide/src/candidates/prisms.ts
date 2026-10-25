@@ -4,7 +4,7 @@
  * Everything else goes to ctx.notSearched with its reason.
  */
 import { talentName, treeName } from '../names';
-import { pinRoot, table } from '../pin';
+import { table } from '../pin';
 import type { LoadoutPatch } from '../patches';
 import type { Change, Generator, Move, OwnedItem, State } from '../types';
 
@@ -16,7 +16,6 @@ interface Catalog {
   talent: Rows<{ i4: number; i18: number; a40: [number, number] }>;
 }
 
-export { pinRoot };   // tests import it from here
 
 let cat: Catalog | undefined;
 export function catalog(): Catalog {

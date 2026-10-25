@@ -1,13 +1,11 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { applyPatch, isPatch } from '../src/patches';
 import { planPrism, providePatch } from '../src/candidates/prisms';
-import { pinRoot, table } from '../src/pin';
+import { pinFile, table } from '../src/pin';
 import type { OwnedItem } from '../src/types';
 
-const pin = pinRoot();
-const json = (p: string) => JSON.parse(readFileSync(join(pin, p), 'utf8'));
+const json = (p: string) => JSON.parse(readFileSync(pinFile(p), 'utf8'));
 const L104 = () => json('game/loadout_l104-20261013-205555.json');
 const haze = (ids: number[]): OwnedItem => ({ itemId: 'h', baseId: 360502, baseName: 'Haze', level: 86, where: 'bag', page: 0, slot: 0, count: 1, modifiers: { m: ids.map(id => ({ id, dynArgs: [] })) } });
 const HAZE = [1214308031, 1214300171, 1204509011, 1204200101];

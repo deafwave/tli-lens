@@ -6,7 +6,7 @@ description: "Read and drive the running Torchlight: Infinite client — memory-
 # tli-game
 
 **Memory first, screen second.** Everything a build page shows is in memory; read it with `state.mjs`.
-The logged-in character (no build page needed) is read by dps-debug's `reader/export.py` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
+The logged-in character (no build page needed) is read by poorchlight's `reader/export.py` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
 character sheet, the dummy DPS readout) or to open a page so memory can be read. All of it needs
 the **elevated** shell and the sibling repo `../poorchlight` (`target/release/tli_dump.exe` built).
 
@@ -77,14 +77,14 @@ category (Deterioration ticks have their own HP-removal style). Count hits with 
 
 ## Memory combat reads (preferred)
 
-**Only pre-lock damage, ever** (owner, 2026-10-18). The game's damage lock (dps-debug CAP1) caps each attacker's damage per window:
+**Only pre-lock damage, ever** (owner, 2026-10-18). The game's damage lock (the model's CAP1) caps each attacker's damage per window:
 the dummy panel and its counter are after the lock and stall near 1.43-1.47e13 / s (2026-10-18: 14.4T on the panel, 25.5T dealt).
 Hits past the budget post 0. Never quote the panel, the locked counter or FHurtHit `+0x20` (`tli_dump --combat-watch` / `--hit-watch`).
 
-`node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` runs dps-debug `reader/hits.py`: DPS =
+`node .claude/skills/tli-game/combat.mjs [secs=30] [--label x] [--buffs]` runs poorchlight `reader/hits.py`: DPS =
 Δ the dummy's pre-lock counter (`hits.STAKE`, per client) / Δ **game time** (logic frames / 30), split per source (a follower is another
 source, ~0 on 2026-10-18; its Shockwave Warcry's 20 % Double Damage is in your hits), buff uptime %, dummy debuffs with stacks
-(Deterioration, Timid, Frostbitten). A new client patch moves hits.py's offsets: fix them in dps-debug (`hits.GUOBJ` / `hits.STAKE`). Appends to `.cache/tli-game/measurements.jsonl`. Needs the dummy
+(Deterioration, Timid, Frostbitten). A new client patch moves hits.py's offsets: fix them in poorchlight (`hits.GUOBJ` / `hits.STAKE`). Appends to `.cache/tli-game/measurements.jsonl`. Needs the dummy
 count running: 0 game-s from `combat.mjs 5` means it is stopped — with the dummy panel open, `game.ps1 click 310 545`
 (its Recount button, client pixels; game in front) restarts it in place. **30-second windows, A-B-A, two per state** (the user's choice; ±~5% per window from
 Kaleidoscope's 8s rotation). Never move between A and B.

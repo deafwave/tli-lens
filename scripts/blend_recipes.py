@@ -2,15 +2,15 @@
 The client's Lua caches each recipe row of wolf.UEquipEnchantS10InfoMgr (Id, EnchantAffixType, EnchantAffixTier {modifier: weight},
 EnchantConsume {item id: count}, Show, Type4, ...) once the blend window has been opened; a row leaves out the fields it shares with the
 defaults row (Id -1: Type4 [23, 170, 171] = the belts, Show 1). The character's unlocked recipes are EquipEnchantS10Mgr.UnlockFormulaIdMap.
-Read-only: dps-debug re/tools/lua_dump.py walks the Lua graph into a temporary directory.
-usage (repo root, elevated shell, game running, the blend window opened once this session): python -I scripts/blend_recipes.py [--dps-debug DIR]"""
+Read-only: poorchlight re/tools/lua_dump.py walks the Lua graph into a temporary directory.
+usage (repo root, elevated shell, game running, the blend window opened once this session): python -I scripts/blend_recipes.py [--poorchlight DIR]"""
 import gzip, json, os, subprocess, sys, tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'packages/guide/src/data/blends.json'
-DD = Path(sys.argv[sys.argv.index('--dps-debug') + 1]) if '--dps-debug' in sys.argv else ROOT.parent / 'dps-debug'
+DD = Path(sys.argv[sys.argv.index('--poorchlight') + 1]) if '--poorchlight' in sys.argv else ROOT.parent / 'poorchlight'
 
 def walk(d):
     subprocess.run([sys.executable, 're/tools/lua_dump.py', 'walk', d], cwd=DD, check=True, stdout=subprocess.DEVNULL)

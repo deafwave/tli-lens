@@ -6,7 +6,7 @@
 import { join } from 'node:path';
 import { openCatalog } from '@dps/guide/figure';
 import { pageKeys } from '@dps/src/core/fate';
-import { pinRoot, table } from '../pin';
+import { pinFile, table } from '../pin';
 import owned from '../data/owned-pacts.json';
 import type { Generator, Move } from '../types';
 
@@ -48,7 +48,7 @@ export const pactMoves: Generator = (s, ctx) => {
         kind: 'pact', label: `Equip ${name} (level ${o.rank + 1}, owned) in battle slot ${slot}${outName ? ` instead of ${outName}` : ''}`, acquisition: true, costFE: 0, market: 'drop',
         costNote: "owned (read from your game); its slot's contract points as the page starts (no Fates installed)", minLevel: BATTLE_SLOTS[slot],
         changes: [{ kind: 'multi', changes: [...(out ? [{ kind: 'pact' as const, action: 'remove' as const, servantId: out.servantId }] : []),
-          { kind: 'pact' as const, action: 'equip' as const, servantId: o.servantId, slot, rank: o.rank, promotionLevels: [], contractKeys: pageKeys(cat ??= openCatalog(join(pinRoot(), 'catalog')), slot, []) }] }],
+          { kind: 'pact' as const, action: 'equip' as const, servantId: o.servantId, slot, rank: o.rank, promotionLevels: [], contractKeys: pageKeys(cat ??= openCatalog(pinFile('catalog')), slot, []) }] }],
       });
     }
   }

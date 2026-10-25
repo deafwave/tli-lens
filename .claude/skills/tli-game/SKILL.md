@@ -6,7 +6,7 @@ description: "Read and drive the running Torchlight: Infinite client — memory-
 # tli-game
 
 **Memory first, screen second.** Everything a build page shows is in memory; read it with `state.mjs`.
-The logged-in character (no build page needed) is read by poorchlight's `reader/export.py` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
+The logged-in character (no build page needed) is read by poorchlight's `tli_dump --export` (what `pnpm guide plan` uses). Use screenshots/input only for what memory does not hold yet (the
 character sheet, the dummy DPS readout) or to open a page so memory can be read. All of it needs
 the **elevated** shell and the sibling repo `../poorchlight` (`target/release/tli_dump.exe` built).
 

@@ -11,7 +11,8 @@ DD = Path(os.environ.get('POORCHLIGHT') or Path(__file__).resolve().parents[2] /
 sys.path[:0] = [str(DD / 'reader'), str(DD / 're' / 'tools')]
 from mem import Proc
 from lua import Lua
-from loadout import LIST_ORDER
+# the order poorchlight's tli_dump --export lists an item's affixes in (export.rs LIST_ORDER)
+LIST_ORDER = ('BAffixInfoList', 'FixedBaseAffix', 'BaseAttrInfoList', 'PrefixInfoList', 'SuffixInfoList', 'ChipAffixList', 'EnchantAffixList')
 
 def fast(L):
     """A reader that walks each table once (`L.get` walks the whole table per key) and reads a string at one address once per screen read, in one

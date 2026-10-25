@@ -7,7 +7,7 @@ export type Skill = 'iceShot' | 'hoa';
 export type Loadout = Record<string, unknown>;
 export type { Change };
 
-/** One owned item from a tli-lens export (dps-debug reader/export.py, schema tli-lens-export/1). */
+/** One owned item from a tli-lens export (poorchlight `tli_dump --export`, schema tli-lens-export/1). */
 export interface OwnedItem {
   itemId: string; baseId: number; baseName: string | null; level: number;
   where: string; page: number; slot: number; count: number;

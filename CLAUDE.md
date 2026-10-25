@@ -31,7 +31,7 @@ them before trusting a bit-equal claim. `pnpm test` exits 0 when green; trust it
 
 ## Commands
 
-- `pnpm guide plan [export.json]` — your character (read fresh from the running game via poorchlight `reader/export.py` when no file is given)
+- `pnpm guide plan [export.json]` — your character (read fresh from the running game via poorchlight `tli_dump --export` when no file is given)
   to a damage goal at the least FE; writes `packages/page/src/data/advice.json`. Flags: `--target` (default `dummy`: the raw DPS at full Life the dummy shows; `cube3`: the DPS on Cube 3; `traveler`: the dummy's DPS capped at 15T), `--goal` (default 2e11),
   `--budget N` (FE; stops when nothing fits), `--prism-fe` (4000: the target's prism is an Inverse Image), `--kill-seconds S`, `--steps N` (60), `--fe N`, `--poorchlight <dir>`.
 - `pnpm guide advise <export.json> [--fe N] [--season N] [--steps N] [--hoa]` — next-buys list (`--steps N` adds a path; `--hoa`: an Ice Shot

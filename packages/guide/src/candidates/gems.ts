@@ -52,7 +52,9 @@ export interface Support { sid: number; name: string }
 export const NOT_THIS_SEASON = new Set(['Fire Penetration', 'Cold Penetration', 'Lightning Penetration', 'Erosion Penetration', 'Greater Multiple Projectiles', 'Devastator',
   'Shadowmask', 'Slash Duet', 'Selfless', 'Selfishness', 'Stand as One', 'Abysmal Hatred', 'Powerful Warcry', 'Speed-up Formation', 'Servant Speed', 'Superpower', 'Ceaselessness',
   'Mania', 'Overclock', 'Self-Sacrifice', 'Armor Infusion', 'Strategic Strike', 'Shadow Will', 'Silhouette', 'Limber Stretch', 'Disciplined', 'Concentrated', 'Malleable',
-  'Safety in Numbers', 'Torrent', 'Meditation', 'Reclusion', 'Uplifting', 'Precise: Focus Acceleration', 'Precise: Torrent']);
+  'Safety in Numbers', 'Torrent', 'Meditation', 'Reclusion', 'Uplifting', 'Precise: Focus Acceleration', 'Precise: Torrent',
+  // owner, 2026-10-28: Reaping Agony is in neither the shop nor the auction house (etor lists no row for it); the Mind Control plan took it as a free drop
+  'Reaping Agony']);
 /** supports that break the skill's own build, with why (user, 2026-10-16: Elemental Fusion stops Ice Shot inflicting Frostbite, which its Frostbite talents pay through) */
 const COVERAGE: Partial<Record<Skill, Set<string>>> = { iceShot: new Set(['Multiple Projectiles', 'Greater Multiple Projectiles', 'Projectile Penetration']) };
 export const NOT_FOR: Partial<Record<Skill, Record<string, string>>> = { iceShot: { 'Elemental Fusion': 'it stops inflicting Frostbite, which a Frostbite build pays through' } };

@@ -152,4 +152,6 @@ describe('Mind Control (the owner\'s Thea 3 channel)', () => {
     expect(sup.length).toBeGreaterThan(10);
     expect(sup.every(x => tagGate(stones[x.sid] as never, stones[1390].ab0).ok)).toBe(true);
   });
+  it('Reaping Agony is not offered: not in this season (owner, 2026-10-28: in neither the shop nor the auction house)', () =>
+    expect(supportsFor('mindControl').map(x => x.name)).not.toContain('Reaping Agony'));
 });

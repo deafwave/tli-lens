@@ -356,7 +356,7 @@ export function candidates(s: State, ctx: GenCtx, o: PlanOpts, lines: { id: numb
 export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Partial<PlanOpts> = {}, onStep?: (o: GuideOut) => void): Promise<GuideOut> {
   const o = { ...DEFAULT_PLAN, ...k };
   const ev = rankedOn(ev0, o.target);
-  let s: State = { ...s0, skill: 'hoa', target: o.target };
+  let s: State = { ...s0, target: o.target };
   const ctx: GenCtx = { prices: books, level: s.level, notSearched: new Set() };
   const C = ctxOfState(s), first = (await ev.run(s.loadout, [], C)).figure;
   // the training dummy the owner checks a step on, beside the boss the plan is priced on (owner, 2026-10-17: a Cube 3 figure read as the dummy's)
@@ -425,7 +425,7 @@ export async function runPlan(ev0: Evaluator, s0: State, books: PriceBook, k: Pa
   };
   const out = (partialRun: boolean): GuideOut => ({ mode: 'advise', board: board(), pin: ev.pin, etor: { season: books.season, fetchedAt: books.fetchedAt },
     knobs: { plan: { ...o, slateListings: o.slateListings?.length ?? 0 }, fight: ev.fight, rollBudget: ev.rollBudget, target: o.target, partialRun },
-    character: { level: s0.level, skill: 'hoa', fe: s0.fe, owned: s0.owned.length, gear: ((s0.loadout.gear ?? []) as { slot?: string; label: string; name?: string }[]).map((g) => ({ slot: g.slot ?? '', label: g.name ?? g.label })) },
+    character: { level: s0.level, skill: s0.skill, fe: s0.fe, owned: s0.owned.length, gear: ((s0.loadout.gear ?? []) as { slot?: string; label: string; name?: string }[]).map((g) => ({ slot: g.slot ?? '', label: g.name ?? g.label })) },
     start: first, startNotes: notes, steps: [], notSearched: [...ctx.notSearched], unpriced: [], notCalculable: [...refused].map(([l, w]) => `${l}: ${w}`),
     slates: lines.slice(0, 25), plan: { target: o.target, goal: o.goal, ...(o.goalSeconds ? { goalSeconds: o.goalSeconds } : {}), at: new Date().toISOString(), start: { label: 'your character as read from the game', figure: first, dummy }, steps,
       build: buildSheet(s.loadout) } });

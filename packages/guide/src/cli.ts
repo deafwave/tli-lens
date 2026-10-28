@@ -137,11 +137,11 @@ async function main() {
     execFileSync('powershell', ['-NoProfile', '-Command', 'Set-Clipboard -Value ([IO.File]::ReadAllText($env:ADVICE_FILE, [Text.Encoding]::UTF8))'], { env: { ...process.env, ADVICE_FILE: out } });
     console.log(`wrote ${out} and copied it to the clipboard`);
   } else if (cmd === 'figure') {
-    if (!positional) throw new Error('usage: guide figure <loadout.json> [--skill hoa|iceShot] [--level N]');
+    if (!positional) throw new Error('usage: guide figure <loadout.json> [--skill hoa|iceShot|mindControl] [--level N]');
     const loadout = readJson(positional);
     const main0 = (loadout.skills as { sid: number; place: { kind: string; slot: number } }[] | undefined)?.find((g) => g.place.kind === 'active' && g.place.slot === 0);
-    const skill = (flag('skill') ?? (['hoa', 'iceShot'] as Skill[]).find((s) => mainSid(s) === main0?.sid)) as Skill | undefined;
-    if (skill !== 'hoa' && skill !== 'iceShot') throw new Error('cannot tell the main skill; pass --skill hoa|iceShot');
+    const skill = (flag('skill') ?? (['hoa', 'iceShot', 'mindControl'] as Skill[]).find((s) => mainSid(s) === main0?.sid)) as Skill | undefined;
+    if (skill !== 'hoa' && skill !== 'iceShot' && skill !== 'mindControl') throw new Error('cannot tell the main skill; pass --skill hoa|iceShot|mindControl');
     const ev = await evaluator();
     try {
       const r = await ev.run(loadout, [], { level: num('level') ?? loadout.hero?.level ?? 100, skill });

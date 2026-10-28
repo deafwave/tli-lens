@@ -105,8 +105,8 @@ export function fromExport(json: unknown, fe?: number): State {
   for (const g of (loadout.gear ?? []) as Dict[]) { const n = uniqueName(g.baseId, ((g.affixes ?? []) as { id: number }[]).map(a => a.id)); if (n) g.name = n; }
   // a read that named no skill (2026-10-17: every name null) names each by its stone: labels and the rules that match a name (Blink, Slow Projectile) need it
   for (const g of (loadout.skills ?? []) as Dict[]) g.name ??= stoneName(g.sid) ?? null;
-  const skill = (['iceShot', 'hoa'] as Skill[]).find(sk => mainSid(sk) === active?.sid);
-  if (!skill) throw new Error(`export main skill (sid ${active?.sid}) is neither Ice Shot nor Hammer of Ash`);
+  const skill = (['iceShot', 'hoa', 'mindControl'] as Skill[]).find(sk => mainSid(sk) === active?.sid);
+  if (!skill) throw new Error(`export main skill (sid ${active?.sid}) is none of Ice Shot, Hammer of Ash, Mind Control`);
   const owned: OwnedItem[] = (j.items as Dict[]).filter(i => i.where !== 'equipped' && !FE_BASES.has(i.baseId)).map(i => ({
     itemId: i.itemId, baseId: i.baseId, baseName: i.baseName ?? null, level: i.level, where: i.where, page: i.page, slot: i.slot, count: i.count, modifiers: i.modifiers ?? {}, ...(Array.isArray(i.talents) ? { talents: i.talents, shapeId: i.shapeId } : {}) }));
   return { loadout, owned, fe: budget, level: j.hero.level, skill };

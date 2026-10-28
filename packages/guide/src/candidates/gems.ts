@@ -15,6 +15,8 @@ import type { Generator, Move, Skill } from '../types';
 const MAIN_SOURCE: Record<Skill, () => string> = {
   iceShot: () => pinFile('game', readdirSync(pinFile('game')).filter(f => /^loadout_l94-.*\.json$/.test(f)).sort()[0]),
   hoa: () => pinFile('re', 'evidence', 'loadout_probuild-hanshansi-bing.json'),
+  // Mind Control: the owner's MC9 export (poorchlight game/exports, written with its capture)
+  mindControl: () => { const d = pinFile('game', 'exports', 'MC9-20261028-125401'); return join(d, readdirSync(d)[0], 'loadout.json'); },
 };
 const mainSids = new Map<Skill, number>();
 /** gem names the character holds (bag, stash or socketed): a plan that uses one does not buy it */
@@ -54,7 +56,8 @@ export const NOT_THIS_SEASON = new Set(['Fire Penetration', 'Cold Penetration', 
 /** supports that break the skill's own build, with why (user, 2026-10-16: Elemental Fusion stops Ice Shot inflicting Frostbite, which its Frostbite talents pay through) */
 const COVERAGE: Partial<Record<Skill, Set<string>>> = { iceShot: new Set(['Multiple Projectiles', 'Greater Multiple Projectiles', 'Projectile Penetration']) };
 export const NOT_FOR: Partial<Record<Skill, Record<string, string>>> = { iceShot: { 'Elemental Fusion': 'it stops inflicting Frostbite, which a Frostbite build pays through' } };
-export const supportsFor = (skill: Skill): Support[] => (sup1 as unknown as Record<Skill, Support[]>)[skill].filter((x) => !NOT_THIS_SEASON.has(x.name) && !NOT_FOR[skill]?.[x.name]);
+// a skill with no SUP1 census (Mind Control) is offered the supports the tag gate (G2) passes for its stone: one that does not compile is refused when priced
+export const supportsFor = (skill: Skill): Support[] => ((sup1 as unknown as Partial<Record<Skill, Support[]>>)[skill] ?? gatedFor(mainSid(skill)) ?? []).filter((x) => !NOT_THIS_SEASON.has(x.name) && !NOT_FOR[skill]?.[x.name]);
 type StoneRow = { i4: number; i18: number; ab0: number[]; ae0: number[][]; af0: number[][] };
 let catalogSupports: Support[] | undefined;
 /** the supports dps-debug's tag gate (G2) lets stone `sid` take, from the catalog's support gems (config_item_base p5c stone, row +4 = 2) this season; null: a summoner's stone, whose gate is not ported */

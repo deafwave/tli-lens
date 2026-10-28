@@ -22,7 +22,7 @@ import { talentName, treeName } from './names';
 import { table } from './pin';
 import { buildSheet, talentTrees } from './sheet';
 import { prismOf } from './patches';
-import type { Evaluator, Figure, GenCtx, Generator, GuideOut, Leg, Move, NextBuy, PriceBook, Skill, State, Step } from './types';
+import type { Evaluator, Figure, GenCtx, Generator, GuideOut, Leg, LegSkill, Move, NextBuy, PriceBook, Skill, State, Step } from './types';
 
 export const SEASON = 1501;
 const etorFile = (f: string) => JSON.parse(readFileSync(fileURLToPath(new URL(`../../../data/etor/${f}_${SEASON}.json`, import.meta.url)), 'utf8'));
@@ -83,20 +83,20 @@ export function unpricedAcquisitions(acq: Generator[], s: State, ctx: GenCtx): M
 }
 
 /** `prices`: one book for both legs (tests), or one per leg; default `legBooks` (Ice Shot at day-1 prices, Hammer of Ash at days 1-3) */
-export async function runIdeal(ev: Evaluator, k: Partial<IdealKnobs> = {}, prices?: PriceBook | Record<Skill, PriceBook>, onStep?: (out: GuideOut) => void): Promise<GuideOut> {
+export async function runIdeal(ev: Evaluator, k: Partial<IdealKnobs> = {}, prices?: PriceBook | Record<LegSkill, PriceBook>, onStep?: (out: GuideOut) => void): Promise<GuideOut> {
   const K = { ...DEFAULT_IDEAL, ...k };
   setTalentPoints(K.talentPoints);
   try { return await ideal(ev, K, prices, onStep); } finally { setTalentPoints(DEFAULT_IDEAL.talentPoints); }
 }
 
-async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | Record<Skill, PriceBook> | undefined, onStep?: (out: GuideOut) => void): Promise<GuideOut> {
+async function ideal(ev: Evaluator, K: IdealKnobs, prices: PriceBook | Record<LegSkill, PriceBook> | undefined, onStep?: (out: GuideOut) => void): Promise<GuideOut> {
   const t0 = Date.now();
-  const isBook = (p: PriceBook | Record<Skill, PriceBook>): p is PriceBook => typeof (p as PriceBook).price === 'function';
-  const legBook: Record<Skill, PriceBook> = !prices ? legBooks(localItems(), localHistory()) : isBook(prices) ? { iceShot: prices, hoa: prices } : prices, books = legBook.iceShot;
+  const isBook = (p: PriceBook | Record<LegSkill, PriceBook>): p is PriceBook => typeof (p as PriceBook).price === 'function';
+  const legBook: Record<LegSkill, PriceBook> = !prices ? legBooks(localItems(), localHistory()) : isBook(prices) ? { iceShot: prices, hoa: prices } : prices, books = legBook.iceShot;
   const acq = ALL.map(only(true)), recon = ALL.map(only(false));
   // the Hammer of Ash leg on the known build's path: its pieces only, the white-base swap the only reconfiguration
   const gen = (skill: Skill) => (skill === 'hoa' && K.hoaTarget ? { acq: [targetMoves].map(only(true)), recon: [whiteBaseMoves].map(only(false)) } : { acq, recon });
-  const ctxOf = (s: State): GenCtx => ({ prices: legBook[s.skill], level: s.level, notSearched: new Set() });
+  const ctxOf = (s: State): GenCtx => ({ prices: legBook[s.skill as LegSkill], level: s.level, notSearched: new Set() });
   const start = idealStartNotes(K.startLevel);
   let s: State = { ...start.state, level: K.startLevel };
   const notes = [...start.notes];

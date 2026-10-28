@@ -2,7 +2,9 @@
 import type { Change } from '@dps/src/core/whatif';
 import type { LoadoutPatch } from './patches';
 
-export type Skill = 'iceShot' | 'hoa';
+export type Skill = 'iceShot' | 'hoa' | 'mindControl';
+/** the ideal guide's legs (the levelling Ice Shot and Hammer of Ash): Mind Control is planned from a live character only */
+export type LegSkill = Exclude<Skill, 'mindControl'>;
 /** A dps-debug loadout file (dps-debug model/src/core/loadout.ts `Loadout`), kept opaque here. */
 export type Loadout = Record<string, unknown>;
 export type { Change };

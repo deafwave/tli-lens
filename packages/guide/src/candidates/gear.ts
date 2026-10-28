@@ -22,7 +22,8 @@ const UNVERIFIED = new Set([...affixIds.mismatches, ...affixIds.rollMismatches])
 
 /** Bing1 weapon rule (config_weapon row = config_item_base i24): iceShot = bow family, hoa = two-handed hammers/mauls. */
 const WEAPON_GROUPS: Record<number, string> = { 9: 'Bow', 29: 'Crossbow', 26: 'Pistol', 27: 'Musket', 28: 'Fire Cannon', 11: 'Two-Handed Hammer' };
-const SKILL_GROUPS: Record<Skill, number[]> = { iceShot: [9, 29, 26, 27, 28], hoa: [11] };
+// Mind Control: the scepters (config_item_base i24 34), the family of the owner's Dark Gaze Scepter, whose reap the build's figure prices
+const SKILL_GROUPS: Record<Skill, number[]> = { iceShot: [9, 29, 26, 27, 28], hoa: [11], mindControl: [34] };
 /** loadout slot -> config_item_base i20 (slot type); the catalog's helmets are 15 (11 is the shield) */
 const SLOT_TYPE: Record<string, number> = { helmet: 15, gloves: 12, boots: 13, chest: 14, necklace: 16, belt: 17, ring1: 18, ring2: 18 };
 export const TYPE_SLOTS: Record<number, string[]> = { 15: ['helmet'], 12: ['gloves'], 13: ['boots'], 14: ['chest'], 16: ['necklace'], 17: ['belt'], 18: ['ring1', 'ring2'] };

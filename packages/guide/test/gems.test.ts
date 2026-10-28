@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readdirSync } from 'node:fs';
-import { gemLevelAt, gemMoves, gemRequires, supportsFor } from '../src/candidates/gems';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { gemLevelAt, gemMoves, gemRequires, mainSid, supportsFor } from '../src/candidates/gems';
+import { fromExport } from '../src/start';
 import { tagGate } from '@dps/src/core/build';
 import { dataRoot, table } from '../src/pin';
 import type { Skill } from '../src/types';
@@ -135,5 +137,19 @@ describe('what you buy (Move.buy)', () => {
     const { moves } = gen(l100, 'hoa');
     const m = moves.find(x => x.acquisition)!;
     expect(m.buy).toEqual({ name: m.label.replace(/^.* socket \d+: (?:.* -> |add )/, ''), qty: 1 });   // "<skill> socket N: <old> -> <new>" or ": add <new>"
+  });
+});
+
+describe('Mind Control (the owner\'s Thea 3 channel)', () => {
+  const ex = join(dataRoot(), 'game', 'exports', 'MC9-20261028-125401'), dir = join(ex, readdirSync(ex)[0]);
+  const exported = JSON.parse(readFileSync(join(dir, readdirSync(dir).find(f => f.startsWith('export-'))!), 'utf8'));
+  it('an export whose active slot 0 is Mind Control (sid 1390) is planned as mindControl', () => {
+    expect(mainSid('mindControl')).toBe(1390);
+    expect(fromExport(exported, 0).skill).toBe('mindControl');
+  });
+  it('with no SUP1 census its supports are the ones the G2 tag gate passes for its stone', () => {
+    const stones = table<{ rows: Record<string, { ab0: number[] }> }>('config_skill_stone').rows, sup = supportsFor('mindControl');
+    expect(sup.length).toBeGreaterThan(10);
+    expect(sup.every(x => tagGate(stones[x.sid] as never, stones[1390].ab0).ok)).toBe(true);
   });
 });

@@ -152,6 +152,11 @@ describe('Mind Control (the owner\'s Thea 3 channel)', () => {
     expect(sup.length).toBeGreaterThan(10);
     expect(sup.every(x => tagGate(stones[x.sid] as never, stones[1390].ab0).ok)).toBe(true);
   });
+  it('a gem whose stone the catalog does not name takes the name of its item in the read (Concentrate, stone 10003735)', () => {
+    const live = { ...exported, loadout: { ...exported.loadout, skills: [...exported.loadout.skills, { name: null, sid: 10003735, level: 1, itemId: 'x1', place: { kind: 'support', ownerKind: 'active', ownerSlot: 0, slot: 3 } }] },
+      items: [...exported.items, { itemId: 'x1', baseId: 7895, baseName: 'Mind Control: Concentrate (Magnificent)', where: 'equipped' }] };
+    expect((fromExport(live, 0).loadout.skills as { sid: number; name: string }[]).find(g => g.sid === 10003735)?.name).toBe('Mind Control: Concentrate (Magnificent)');
+  });
   it('Reaping Agony is not offered: not in this season (owner, 2026-10-28: in neither the shop nor the auction house)', () =>
     expect(supportsFor('mindControl').map(x => x.name)).not.toContain('Reaping Agony'));
 });

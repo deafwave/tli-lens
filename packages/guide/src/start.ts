@@ -104,7 +104,9 @@ export function fromExport(json: unknown, fe?: number): State {
   // a worn legendary is named by its own name (the read labels it by its base: Old King's Sabatons is Boots of Devastation); `label` stays the base
   for (const g of (loadout.gear ?? []) as Dict[]) { const n = uniqueName(g.baseId, ((g.affixes ?? []) as { id: number }[]).map(a => a.id)); if (n) g.name = n; }
   // a read that named no skill (2026-10-17: every name null) names each by its stone: labels and the rules that match a name (Blink, Slow Projectile) need it
-  for (const g of (loadout.skills ?? []) as Dict[]) g.name ??= stoneName(g.sid) ?? null;
+  // a gem whose stone has no item name in the catalog (Mind Control: Concentrate (Magnificent), stone 10003735) is named by its own item in the read
+  const itemNames = new Map(((j.items ?? []) as Dict[]).map(i => [i.itemId, i.baseName]));
+  for (const g of (loadout.skills ?? []) as Dict[]) g.name ??= stoneName(g.sid) ?? itemNames.get(g.itemId) ?? null;
   const skill = (['iceShot', 'hoa', 'mindControl'] as Skill[]).find(sk => mainSid(sk) === active?.sid);
   if (!skill) throw new Error(`export main skill (sid ${active?.sid}) is none of Ice Shot, Hammer of Ash, Mind Control`);
   const owned: OwnedItem[] = (j.items as Dict[]).filter(i => i.where !== 'equipped' && !FE_BASES.has(i.baseId)).map(i => ({

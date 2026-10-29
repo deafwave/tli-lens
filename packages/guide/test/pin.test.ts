@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { catalogDir, pinCommit, pinRoot, table } from '../src/pin';
+import { catalogDir, dataRoot, pinCommit, pinRoot, table } from '../src/pin';
+import { withSeasonTable } from '@dps/src/harness/season';
 
 const saved = process.env.TLI_LENS_PIN;
 afterEach(() => { if (saved === undefined) delete process.env.TLI_LENS_PIN; else process.env.TLI_LENS_PIN = saved; });
@@ -17,8 +18,9 @@ describe('pin', () => {
   });
   it('table() returns the highest revision, parsed once', () => {
     delete process.env.TLI_LENS_PIN;
-    const t = table<{ rows: object }>('config_talent');
-    expect(t).toEqual(JSON.parse(readFileSync(join(catalogDir(), 'config_talent.r2.json'), 'utf8')));
+    const t = table<{ rows: Record<string, unknown> }>('config_talent'), file = JSON.parse(readFileSync(join(catalogDir(), 'config_talent.r2.json'), 'utf8'));
+    // the later clients' rows laid over the file's (the model's withSeasonTable)
+    expect(t).toEqual({ ...file, rows: withSeasonTable('config_talent', file.rows, join(dataRoot(), 'catalog')) });
     expect(table('config_talent')).toBe(t);
     expect(table('config_item_base')).toBeDefined();   // unrevised table
     expect(() => table('no_such_table')).toThrow(/not found/);

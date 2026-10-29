@@ -3,17 +3,10 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withSeasonTable } from '@dps/src/harness/season';
+import { pinRoot } from './root';
 
-/** env TLI_LENS_PIN, else walk up from this module's directory until `<ancestor>/poorchlight/.worktrees/tli-lens-pin` exists
- *  (works from the main checkout and from `.worktrees/<t>`); throws `poorchlight pin not found (set TLI_LENS_PIN)` */
-export function pinRoot(): string {
-  if (process.env.TLI_LENS_PIN) return process.env.TLI_LENS_PIN;
-  for (let d = dirname(fileURLToPath(import.meta.url)); dirname(d) !== d; d = dirname(d)) {
-    const p = join(d, 'poorchlight', '.worktrees', 'tli-lens-pin');
-    if (existsSync(p)) return p;
-  }
-  throw new Error('poorchlight pin not found (set TLI_LENS_PIN)');
-}
+export { pinRoot };
 
 /** the git-ignored data (captures/, catalog/, game/), which the pin worktree does not carry: env TLI_DATA, else the pin's main checkout
  *  (the model resolves it the same way: model/src/harness/data.ts) */
@@ -33,14 +26,17 @@ export function pinFile(...p: string[]): string {
 export function catalogDir(): string { return join(dataRoot(), 'catalog', '0x6aa39847'); }
 
 const tables = new Map<string, unknown>();
-/** catalog table `name` at its highest revision (`name.json`, `name.r2.json`, … → the largest rN), JSON-parsed once per process */
+/** catalog table `name` at its highest revision (`name.json`, `name.r2.json`, … → the largest rN), the later clients' rows laid over it, JSON-parsed once per process */
 export function table<T = unknown>(name: string): T {
   if (!tables.has(name)) {
     const dir = catalogDir(), re = new RegExp(`^${name}(?:\\.r(\\d+))?\\.json$`);
     const rev = (f: string) => { const m = re.exec(f); return m ? Number(m[1] ?? 1) : 0; };
     const best = readdirSync(dir).filter(f => rev(f) > 0).sort((a, b) => rev(b) - rev(a))[0];
     if (!best) throw new Error(`catalog table ${name} not found in ${dir}`);
-    tables.set(name, JSON.parse(readFileSync(join(dir, best), 'utf8')));
+    // the season client's and the installed client's rows over the pinned ones (the model's withSeason, one table): the season's gems, stones and names
+    const t = JSON.parse(readFileSync(join(dir, best), 'utf8')) as { rows?: Record<string, unknown> };
+    if (t.rows) t.rows = withSeasonTable(name, t.rows, join(dataRoot(), 'catalog'));
+    tables.set(name, t);
   }
   return tables.get(name) as T;
 }

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { pinRoot } from './src/pin.ts';
+import { pinRoot } from './src/root.ts';
 
 // @dps/* = the pinned poorchlight model (read-only). TLI_LENS_PIN overrides the pin's root (the poorchlight checkout, not model/).
 const pin = pinRoot();

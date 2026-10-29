@@ -21,7 +21,7 @@ const library: LibraryAffix[] = JSON.parse(readFileSync(fileURLToPath(new URL('.
 const UNVERIFIED = new Set([...affixIds.mismatches, ...affixIds.rollMismatches]);
 
 /** Bing1 weapon rule (config_weapon row = config_item_base i24): iceShot = bow family, hoa = two-handed hammers/mauls. */
-const WEAPON_GROUPS: Record<number, string> = { 9: 'Bow', 29: 'Crossbow', 26: 'Pistol', 27: 'Musket', 28: 'Fire Cannon', 11: 'Two-Handed Hammer' };
+const WEAPON_GROUPS: Record<number, string> = { 9: 'Bow', 29: 'Crossbow', 26: 'Pistol', 27: 'Musket', 28: 'Fire Cannon', 11: 'Two-Handed Hammer', 34: 'Scepter' };
 // Mind Control: the scepters (config_item_base i24 34), the family of the owner's Dark Gaze Scepter, whose reap the build's figure prices
 const SKILL_GROUPS: Record<Skill, number[]> = { iceShot: [9, 29, 26, 27, 28], hoa: [11], mindControl: [34] };
 /** loadout slot -> config_item_base i20 (slot type); the catalog's helmets are 15 (11 is the shield) */

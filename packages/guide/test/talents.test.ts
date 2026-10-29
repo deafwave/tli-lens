@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
+import { basename } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { pageVariants, talentMoves, talentMovesWith } from '../src/candidates/talents';
 import { dataRoot } from '../src/pin';
@@ -114,10 +115,13 @@ describe('talent moves', () => {
     const cm = talentMoves(low, { prices: {} as any, level: 94, notSearched: new Set() }).filter(m => m.kind === 'core');
     expect(cm).toHaveLength(0);
   });
-  it('every loadout in game/ without Inverse Image copies satisfies the row rule', () => {
+  // the season client's talent rows (config_talent, laid over the pinned ones by table()) are the rule: the loadouts read on it (game/exports/<stamp>/loadout.json,
+  // from 2026-10-15 on) are checked; the pinned client's game/loadout_*.json of 2026-10-13 / 14 are not (L100's tree 14 breaks the season's rows)
+  it('every loadout the season client read, without Inverse Image copies, satisfies the row rule', () => {
     let checked = 0;
-    for (const f of readdirSync(`${pin}/game`).filter(f => /^loadout_.*json$/.test(f))) {
-      const l = JSON.parse(readFileSync(`${pin}/game/${f}`, 'utf8'));
+    const ex = `${dataRoot()}/game/exports`;
+    for (const f of readdirSync(ex, { recursive: true }).map(String).filter(f => basename(f) === 'loadout.json')) {
+      const l = JSON.parse(readFileSync(`${ex}/${f}`, 'utf8'));
       // a copy can stand in for an original (prisms.md (c)); those states are not checkable from `talents` alone
       if ((l.resolvedTalents?.talents ?? []).some((x: any) => String(x[2]).startsWith('talent:-'))) continue;
       for (const [t, p] of tr(l.talents ?? {})) expect(legalAllocation(t, p), `${f} tree ${t}`).toBe(true);

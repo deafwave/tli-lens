@@ -8,6 +8,8 @@ describe('pieceKey / rankable (dps-debug coordinator, 2026-10-16)', () => {
     expect(pieceKey('held buffs left off: 11210 (carried: 10)')).not.toBe(pieceKey('held buffs left off: 320 (carried: 10)'));
   });
   it("U2-IS's cast-rate line is a statement, so a faster build still ranks", () => {
+    expect(isPiece("MC3 inputs: a curse cast lands the frame after its hit or cast (M1c lag 1); the curse casts' phase against skill 2450's: 0")).toBe(false);
+    expect(isPiece("the ground's buffs 230 on the target are left off: no triggered add of this build puts them there")).toBe(false);
     expect(isPiece("U2-IS: the uptime rules over the figure's own hit rates (2 hit classes at 6.25000 casts / s; event 1000060 not stated)")).toBe(false);
     const f = (partial: string[], kill = 1) => ({ life100: kill, life0: kill, kill, partial });
     expect(rankable(f(['held buffs left off: 11210 (carried: 10, 15101)']), f(['held buffs left off: 11210 (carried: 10, 320, 15101)'], 2))).toBe(true);

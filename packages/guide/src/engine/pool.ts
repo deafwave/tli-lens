@@ -35,7 +35,9 @@ export const INFO: (string | RegExp)[] = ['price:', /^held buff \d+ \(.*\) not c
   // Fervor and no fixed rating would be a real gap (the coordinator, 2026-10-16)
   /^not in this figure: node 627 \(.* - affix class 411268 row \d+ \(buff 390 class 411268\)/,
   /^not in this figure: node \d+ \(execute 0x1407d0580/, /^not in this figure: node \d+ \(Q1: inert in the client/, /^not in this figure: node 1003 \(a hit that kills the target/, /^the target's buff \(IN1\): .* stated at \d+ of its mix of states \(U2-MIX/,
-  /^the target's buff \(IN1\): .* stated at \d+ \(POL1/];
+  /^the target's buff \(IN1\): .* stated at \d+ \(POL1/,
+  // Mind Control (poorchlight MC3): the curse slot's stated inputs, and a ground debuff the build does not add left off the target - statements, not omissions
+  /^MC3 inputs: /, /^the ground's buffs [\d, ]+ on the target are left off: no triggered add of this build puts them there$/];
 
 /** Stated fight inputs (dps-debug Carry.fight): `bombs` = bombs on the battlefield, `inputs` = other named per-cast / fight inputs */
 export interface Fight { bombs?: number; inputs?: Record<string, number> }
